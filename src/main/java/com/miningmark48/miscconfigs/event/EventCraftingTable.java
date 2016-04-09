@@ -1,10 +1,7 @@
 package com.miningmark48.miscconfigs.event;
 
-import akka.actor.FSM;
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
-import cpw.mods.fml.common.eventhandler.Event;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
