@@ -1,0 +1,6 @@
+config.craftingTables.title=Disable Crafting Tables
+config.craftingTables.desc=Prevents vanilla crafting tables from working.
+config.saplingGrowthMultiplier.title=Sapling Growth Multiplier
+config.saplingGrowthMultiplier.desc=Multiplier to increase time it takes for sapling to grow. (Normal = 0)
+
+chat.event.noWorkbench=The Crafting Table has been disabled!
