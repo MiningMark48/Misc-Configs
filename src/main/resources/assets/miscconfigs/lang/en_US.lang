@@ -1,3 +1,6 @@
+config.category.chatMessage.title=Custom Chat Message
+config.category.chatMessage.desc=Custom chat message that is displayed when they player joins the game.
+
 config.craftingTables.title=Disable Crafting Tables
 config.craftingTables.desc=Prevents vanilla crafting tables from working.
 config.doChatMessage.title=Use Custom Chat Message
