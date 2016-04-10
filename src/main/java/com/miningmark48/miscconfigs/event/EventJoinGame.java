@@ -6,11 +6,15 @@ import cpw.mods.fml.common.gameevent.PlayerEvent;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 
+import java.util.StringTokenizer;
+
 public class EventJoinGame{
 
         @SubscribeEvent
         public void onJoin(PlayerEvent.PlayerLoggedInEvent e){
+
             if (!e.player.getEntityWorld().isRemote) {
+
                 if (ConfigurationHandler.doChatMessage) {
                     if (ConfigurationHandler.chatMessageColor == 1) {
                         e.player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.RED + ConfigurationHandler.chatMessage));
