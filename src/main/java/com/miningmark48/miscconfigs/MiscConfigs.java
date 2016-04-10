@@ -1,6 +1,7 @@
 package com.miningmark48.miscconfigs;
 
 import com.miningmark48.miscconfigs.event.EventCraftingTable;
+import com.miningmark48.miscconfigs.event.EventJoinGame;
 import com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier;
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.proxy.ClientProxy;
@@ -39,6 +40,7 @@ public class MiscConfigs {
     public void init(FMLInitializationEvent event){
         MinecraftForge.EVENT_BUS.register(new EventCraftingTable());
         MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
+        FMLCommonHandler.instance().bus().register(new EventJoinGame());
 
         LogHelper.info(StatCollector.translateToLocal( "log.info.init"));
     }
