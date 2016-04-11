@@ -2,16 +2,12 @@ package com.miningmark48.miscconfigs.event;
 
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.reference.Reference;
-import com.miningmark48.miscconfigs.utility.LogHelper;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
-
-import java.sql.Ref;
-import java.util.StringTokenizer;
 
 public class EventJoinGame{
 
