@@ -7,6 +7,7 @@ import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
+import java.util.Locale;
 
 public class ConfigurationHandler {
 
@@ -14,6 +15,7 @@ public class ConfigurationHandler {
 
     public static boolean craftingTables;
     public static boolean doChatMessage;
+    public static boolean sendChatMessageOnce;
     public static String chatMessage;
     public static int chatMessageColor;
     public static int saplingGrowthMultiplier;
@@ -43,6 +45,7 @@ public class ConfigurationHandler {
 
         craftingTables = configuration.getBoolean(StatCollector.translateToLocal("config.craftingTables.title"), Configuration.CATEGORY_GENERAL, false, StatCollector.translateToLocal("config.craftingTables.desc"));
         doChatMessage = configuration.getBoolean(StatCollector.translateToLocal("config.doChatMessage.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), true, StatCollector.translateToLocal("config.doChatMessage.desc"));
+        sendChatMessageOnce = configuration.getBoolean(StatCollector.translateToLocal("config.sendChatMessageOnce.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), false, StatCollector.translateToLocal("config.sendChatMessageOnce.desc"));
         chatMessage = configuration.getString(StatCollector.translateToLocal("config.chatMessage.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), StatCollector.translateToLocal("config.chatMessage.default"), StatCollector.translateToLocal("config.chatMessage.desc"));
         chatMessageColor = configuration.getInt(StatCollector.translateToLocal("config.chatMessageColor.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), 4, 0, 4, StatCollector.translateToLocal("config.chatMessageColor.desc"));
         saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 0, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
