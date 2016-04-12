@@ -39,15 +39,14 @@ public class MiscConfigs {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event){
         MinecraftForge.EVENT_BUS.register(new EventCraftingTable());
-        MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
-        FMLCommonHandler.instance().bus().register(new EventJoinGame());
+        MinecraftForge.EVENT_BUS.register(new EventJoinGame());
 
         LogHelper.info(StatCollector.translateToLocal( "log.info.init"));
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event){
-
+        MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
         LogHelper.info(StatCollector.translateToLocal("log.info.postinit"));
     }
 

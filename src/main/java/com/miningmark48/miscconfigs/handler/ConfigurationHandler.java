@@ -5,6 +5,7 @@ import cpw.mods.fml.client.event.ConfigChangedEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 
 import java.io.File;
 import java.util.Locale;
@@ -48,7 +49,7 @@ public class ConfigurationHandler {
         sendChatMessageOnce = configuration.getBoolean(StatCollector.translateToLocal("config.sendChatMessageOnce.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), false, StatCollector.translateToLocal("config.sendChatMessageOnce.desc"));
         chatMessage = configuration.getString(StatCollector.translateToLocal("config.chatMessage.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), StatCollector.translateToLocal("config.chatMessage.default"), StatCollector.translateToLocal("config.chatMessage.desc"));
         chatMessageColor = configuration.getInt(StatCollector.translateToLocal("config.chatMessageColor.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), 4, 0, 4, StatCollector.translateToLocal("config.chatMessageColor.desc"));
-        saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 0, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
+        saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 100000, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
 
         if (configuration.hasChanged()){
             configuration.save();
