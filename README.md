@@ -34,11 +34,11 @@ This project is under a custom license.
  * a. You have the ability to view the code and art.
  * b. You have the ability to use portions of the code if you wish.
  * c. Any art or sound material is not for public use unless otherwise stated.
- * d. You may not redistibute this project by no means, only to which you may provide a link to the official download page.
+ * d. You may not redistribute this project by no means, only to which you may provide a link to the official download page.
  * e. You may include this in your private and/or public mod pack, downloads must come from the official download page.
 
 ##### Article III - Contributions
- * a. You have the ability to submit and offer contibutions such as code or textures.
+ * a. You have the ability to submit and offer contributions such as code or textures.
  * b. Any contributions made are submitted to this license but are however for the public domain.
  
 ***
