@@ -2,6 +2,7 @@ package com.miningmark48.miscconfigs;
 
 import com.miningmark48.miscconfigs.event.EventCraftingTable;
 import com.miningmark48.miscconfigs.event.EventJoinGame;
+import com.miningmark48.miscconfigs.event.EventNoRain;
 import com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier;
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.proxy.ClientProxy;
@@ -40,6 +41,7 @@ public class MiscConfigs {
     public void init(FMLInitializationEvent event){
         MinecraftForge.EVENT_BUS.register(new EventCraftingTable());
         MinecraftForge.EVENT_BUS.register(new EventJoinGame());
+        FMLCommonHandler.instance().bus().register(new EventNoRain());
 
         LogHelper.info(StatCollector.translateToLocal( "log.info.init"));
     }
@@ -47,13 +49,12 @@ public class MiscConfigs {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event){
         FMLCommonHandler.instance().bus().register(new EventSaplingGrowthMultiplier());
-        //MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
+        MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
         LogHelper.info(StatCollector.translateToLocal("log.info.postinit"));
     }
 
     @Mod.EventHandler
     public void serverLoad(FMLServerStartingEvent event){
-        MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
     }
 
 }

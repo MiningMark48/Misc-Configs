@@ -10,7 +10,7 @@ public class EventSaplingGrowthMultiplier {
     @SubscribeEvent
     public void onSaplingGrowTreeEvent(TickEvent.WorldTickEvent event)
     {
-        LogHelper.info("GROW");
+        //LogHelper.info("GROW");
     }
 
 }
