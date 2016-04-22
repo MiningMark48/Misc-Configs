@@ -5,6 +5,8 @@ config.category.disableFeatures.desc=Disable certain aspects of the game.
 
 config.craftingTables.title=Disable Crafting Tables
 config.craftingTables.desc=Prevents vanilla crafting tables from working.
+config.enchanting.title=Disable enchanting
+config.enchanting.desc=Prevents vanilla enchanting tables from working.
 config.doChatMessage.title=Use Custom Chat Message
 config.doChatMessage.desc=Should a custom chat message be sent when the player joins the game?
 config.chatMessage.title=Custom Chat Message
@@ -20,3 +22,4 @@ config.noRain.title=No rain.
 config.noRain.desc=Turn off the rain.
 
 chat.event.noWorkbench=The Crafting Table has been disabled!
+chat.event.noEnchanting=The Enchanting Table has been disabled!

@@ -15,6 +15,7 @@ public class ConfigurationHandler {
     public static Configuration configuration;
 
     public static boolean craftingTables;
+    public static boolean enchanting;
     public static boolean doChatMessage;
     public static boolean sendChatMessageOnce;
     public static boolean noRain;
@@ -57,6 +58,7 @@ public class ConfigurationHandler {
 
         //Disable Features
         craftingTables = configuration.getBoolean(StatCollector.translateToLocal("config.craftingTables.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"), false, StatCollector.translateToLocal("config.craftingTables.desc"));
+        enchanting = configuration.getBoolean(StatCollector.translateToLocal("config.enchanting.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"), false, StatCollector.translateToLocal("config.endchanting.desc"));
 
         if (configuration.hasChanged()){
             configuration.save();
