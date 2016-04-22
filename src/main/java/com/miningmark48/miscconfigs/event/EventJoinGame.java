@@ -2,6 +2,7 @@ package com.miningmark48.miscconfigs.event;
 
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.reference.Reference;
+import com.miningmark48.miscconfigs.utility.LogHelper;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,14 +19,16 @@ public class EventJoinGame{
 
             NBTTagCompound tag = e.player.getEntityData();
 
-            if(tag.getString(Reference.MOD_ID + "doChatMessage") == "") {
-                tag.setString(Reference.MOD_ID + "doChatMessage", "send");
-            }
-
             if (ConfigurationHandler.sendChatMessageOnce) {
-                if (tag.getString(Reference.MOD_ID + "doChatMessage") == "send") {
-                    sendChatMessage(e.player);
-                    tag.setString(Reference.MOD_ID + "doChatMessage", "noSend");
+                if (tag.getString(Reference.MOD_ID + "doChatMessage") == "") {
+                    tag.setString(Reference.MOD_ID + "doChatMessage", "send");
+                }
+
+                if (ConfigurationHandler.sendChatMessageOnce) {
+                    if (tag.getString(Reference.MOD_ID + "doChatMessage") == "send") {
+                        sendChatMessage(e.player);
+                        tag.setString(Reference.MOD_ID + "doChatMessage", "noSend");
+                    }
                 }
             }else{
                 sendChatMessage(e.player);

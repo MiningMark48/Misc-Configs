@@ -40,7 +40,7 @@ public class MiscConfigs {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event){
         MinecraftForge.EVENT_BUS.register(new EventCraftingTable());
-        MinecraftForge.EVENT_BUS.register(new EventJoinGame());
+        FMLCommonHandler.instance().bus().register(new EventJoinGame());
         FMLCommonHandler.instance().bus().register(new EventNoRain());
 
         LogHelper.info(StatCollector.translateToLocal( "log.info.init"));
