@@ -58,7 +58,7 @@ public class ConfigurationHandler {
 
         //Disable Features
         craftingTables = configuration.getBoolean(StatCollector.translateToLocal("config.craftingTables.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"), false, StatCollector.translateToLocal("config.craftingTables.desc"));
-        enchanting = configuration.getBoolean(StatCollector.translateToLocal("config.enchanting.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"), false, StatCollector.translateToLocal("config.endchanting.desc"));
+        enchanting = configuration.getBoolean(StatCollector.translateToLocal("config.enchanting.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"), false, StatCollector.translateToLocal("config.enchanting.desc"));
 
         if (configuration.hasChanged()){
             configuration.save();
