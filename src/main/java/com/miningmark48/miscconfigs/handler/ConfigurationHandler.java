@@ -51,7 +51,7 @@ public class ConfigurationHandler {
         noRain = configuration.getBoolean(StatCollector.translateToLocal("config.noRain.title"), Configuration.CATEGORY_GENERAL, false, StatCollector.translateToLocal("config.noRain.desc"));
         chatMessage = configuration.getString(StatCollector.translateToLocal("config.chatMessage.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), StatCollector.translateToLocal("config.chatMessage.default"), StatCollector.translateToLocal("config.chatMessage.desc"));
         chatMessageColor = configuration.getInt(StatCollector.translateToLocal("config.chatMessageColor.title"), StatCollector.translateToLocal("config.category.chatMessage.title"), 4, 0, 4, StatCollector.translateToLocal("config.chatMessageColor.desc"));
-        saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 100000, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
+        saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 0, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
 
         if (configuration.hasChanged()){
             configuration.save();
