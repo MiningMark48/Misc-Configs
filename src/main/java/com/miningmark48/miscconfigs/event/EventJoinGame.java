@@ -10,46 +10,54 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 
+import java.util.Random;
+
 public class EventJoinGame{
 
     @SubscribeEvent
     public void onJoin(PlayerEvent.PlayerLoggedInEvent e){
 
-        if (!e.player.getEntityWorld().isRemote) {
+        if (ConfigurationHandler.doChatMessage) {
+            Random rand = new Random();
+            String message;
 
-            NBTTagCompound tag = e.player.getEntityData();
-
-            if (ConfigurationHandler.sendChatMessageOnce) {
-                if (tag.getString(Reference.MOD_ID + "doChatMessage") == "") {
-                    tag.setString(Reference.MOD_ID + "doChatMessage", "send");
-                }
-
-                if (ConfigurationHandler.sendChatMessageOnce) {
-                    if (tag.getString(Reference.MOD_ID + "doChatMessage") == "send") {
-                        sendChatMessage(e.player);
-                        tag.setString(Reference.MOD_ID + "doChatMessage", "noSend");
-                    }
-                }
-            }else{
-                sendChatMessage(e.player);
+            if (ConfigurationHandler.doRandomMessage) {
+                message = ConfigurationHandler.chatMessage[rand.nextInt(ConfigurationHandler.chatMessage.length)];
+            } else {
+                message = ConfigurationHandler.chatMessage[0];
             }
 
+            if (!e.player.getEntityWorld().isRemote) {
+
+                NBTTagCompound tag = e.player.getEntityData();
+
+                if (ConfigurationHandler.sendChatMessageOnce) {
+                    if (tag.getString(Reference.MOD_ID + "doChatMessage") == "") {
+                        tag.setString(Reference.MOD_ID + "doChatMessage", "send");
+                    }
+                    if (tag.getString(Reference.MOD_ID + "doChatMessage") == "send") {
+                        sendChatMessage(e.player, message);
+                        tag.setString(Reference.MOD_ID + "doChatMessage", "noSend");
+                    }
+                } else {
+                    sendChatMessage(e.player, message);
+                }
+
+            }
         }
     }
 
-    private void sendChatMessage(EntityPlayer player){
-        if (ConfigurationHandler.doChatMessage) {
-            if (ConfigurationHandler.chatMessageColor == 1) {
-                player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.RED + ConfigurationHandler.chatMessage));
-            }else if (ConfigurationHandler.chatMessageColor == 2) {
-                player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GREEN + ConfigurationHandler.chatMessage));
-            }else if (ConfigurationHandler.chatMessageColor == 3) {
-                player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.BLUE + ConfigurationHandler.chatMessage));
-            }else if (ConfigurationHandler.chatMessageColor == 4) {
-                player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GOLD + ConfigurationHandler.chatMessage));
-            }else{
-                player.addChatComponentMessage(new ChatComponentTranslation(ConfigurationHandler.chatMessage));
-            }
+    private void sendChatMessage(EntityPlayer player, String message){
+        if (ConfigurationHandler.chatMessageColor == 1) {
+            player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.RED + message));
+        }else if (ConfigurationHandler.chatMessageColor == 2) {
+            player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GREEN + message));
+        }else if (ConfigurationHandler.chatMessageColor == 3) {
+            player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.BLUE + message));
+        }else if (ConfigurationHandler.chatMessageColor == 4) {
+            player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GOLD + message));
+        }else{
+            player.addChatComponentMessage(new ChatComponentTranslation(message));
         }
     }
 

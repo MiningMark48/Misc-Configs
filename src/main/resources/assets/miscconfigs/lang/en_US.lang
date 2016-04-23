@@ -16,6 +16,8 @@ config.chatMessageColor.title=Chat message color
 config.chatMessageColor.desc=Color for chat message: 0=White, 1=Red, 2=Green, 3=Blue, 4=Gold
 config.sendChatMessageOnce.title=Send chat message once
 config.sendChatMessageOnce.desc=The chat message will only be sent once if enabled
+config.doRandomMessage.title=Uses random message.
+config.doRandomMessage.desc=Picks a random message from set messages (Uses first message if disabled)
 config.saplingGrowthMultiplier.title=Sapling Growth Multiplier
 config.saplingGrowthMultiplier.desc=Multiplier to increase time it takes for sapling to grow. (Normal = 0)
 config.noRain.title=No rain.
