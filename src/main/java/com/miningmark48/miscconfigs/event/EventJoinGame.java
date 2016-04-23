@@ -48,13 +48,20 @@ public class EventJoinGame{
     }
 
     private void sendChatMessage(EntityPlayer player, String message){
-        if (ConfigurationHandler.chatMessageColor == 1) {
+        int color;
+        if (ConfigurationHandler.doRandomColor){
+            Random rand = new Random();
+            color = rand.nextInt(4) + 1;
+        }else{
+            color = ConfigurationHandler.chatMessageColor;
+        }
+        if (color == 1) {
             player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.RED + message));
-        }else if (ConfigurationHandler.chatMessageColor == 2) {
+        }else if (color == 2) {
             player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GREEN + message));
-        }else if (ConfigurationHandler.chatMessageColor == 3) {
+        }else if (color == 3) {
             player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.BLUE + message));
-        }else if (ConfigurationHandler.chatMessageColor == 4) {
+        }else if (color == 4) {
             player.addChatComponentMessage(new ChatComponentTranslation(EnumChatFormatting.GOLD + message));
         }else{
             player.addChatComponentMessage(new ChatComponentTranslation(message));

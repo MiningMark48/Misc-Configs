@@ -2,8 +2,39 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e6b80340-436d-4a2d-a01b-9c0992e660f0" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-1.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-1.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-2.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-2.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-3.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-3.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-4.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-4.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-5.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-5.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-6.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-6.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/logs/2016-04-22-7.log.gz" afterPath="$PROJECT_DIR$/logs/2016-04-22-7.log.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/DIM-1/data/villages.dat" afterPath="$PROJECT_DIR$/saves/GRASS/DIM-1/data/villages.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/DIM1/data/villages.dat" afterPath="$PROJECT_DIR$/saves/GRASS/DIM1/data/villages.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/data/Village.dat" afterPath="$PROJECT_DIR$/saves/GRASS/data/Village.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/data/villages.dat" afterPath="$PROJECT_DIR$/saves/GRASS/data/villages.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/level.dat" afterPath="$PROJECT_DIR$/saves/GRASS/level.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/level.dat_old" afterPath="$PROJECT_DIR$/saves/GRASS/level.dat_old" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/playerdata/a500574d-29ab-3de0-aeea-a0c1c98dfb89.dat" afterPath="$PROJECT_DIR$/saves/GRASS/playerdata/a500574d-29ab-3de0-aeea-a0c1c98dfb89.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/region/r.1.1.mca" afterPath="$PROJECT_DIR$/saves/GRASS/region/r.1.1.mca" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/region/r.1.2.mca" afterPath="$PROJECT_DIR$/saves/GRASS/region/r.1.2.mca" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/region/r.2.1.mca" afterPath="$PROJECT_DIR$/saves/GRASS/region/r.2.1.mca" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/region/r.2.2.mca" afterPath="$PROJECT_DIR$/saves/GRASS/region/r.2.2.mca" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/session.lock" afterPath="$PROJECT_DIR$/saves/GRASS/session.lock" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/New World/level.dat" afterPath="$PROJECT_DIR$/saves/New World/level.dat" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/New World/level.dat_old" afterPath="$PROJECT_DIR$/saves/New World/level.dat_old" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/New World/region/r.-2.2.mca" afterPath="$PROJECT_DIR$/saves/New World/region/r.-2.2.mca" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/New World/session.lock" afterPath="$PROJECT_DIR$/saves/New World/session.lock" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/bin/assets/miscconfigs/lang/en_US.lang" afterPath="$PROJECT_DIR$/bin/assets/miscconfigs/lang/en_US.lang" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/config/miscconfigs.cfg" afterPath="$PROJECT_DIR$/config/miscconfigs.cfg" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/config/splash.properties" afterPath="$PROJECT_DIR$/config/splash.properties" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/GRASS/stats/a500574d-29ab-3de0-aeea-a0c1c98dfb89.json" afterPath="$PROJECT_DIR$/saves/GRASS/stats/a500574d-29ab-3de0-aeea-a0c1c98dfb89.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/saves/New World/stats/a500574d-29ab-3de0-aeea-a0c1c98dfb89.json" afterPath="$PROJECT_DIR$/saves/New World/stats/a500574d-29ab-3de0-aeea-a0c1c98dfb89.json" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java" afterPath="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/handler/ConfigurationHandler.java" afterPath="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/handler/ConfigurationHandler.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang" afterPath="$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang" />
     </list>
     <ignored path="Misc-Configs.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -28,8 +59,8 @@
       <file leaf-file-name="en_US.lang" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="365">
-              <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+            <state relative-caret-position="425">
+              <caret line="25" column="37" selection-start-line="25" selection-start-column="37" selection-end-line="25" selection-end-column="37" />
               <folding />
             </state>
           </provider>
@@ -38,18 +69,28 @@
       <file leaf-file-name="ModGuiConfig.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/gui/ModGuiConfig.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="29" column="0" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
+            <state relative-caret-position="340">
+              <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ConfigurationHandler.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ConfigurationHandler.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/handler/ConfigurationHandler.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="178">
-              <caret line="51" column="162" selection-start-line="51" selection-start-column="162" selection-end-line="51" selection-end-column="162" />
+            <state relative-caret-position="496">
+              <caret line="67" column="33" selection-start-line="67" selection-start-column="33" selection-end-line="67" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="mcmod.info" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/resources/mcmod.info">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="306">
+              <caret line="18" column="1" selection-start-line="18" selection-start-column="1" selection-end-line="18" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -68,18 +109,39 @@
       <file leaf-file-name="Configuration.java" pinned="false" current-in-tab="false">
         <entry file="jar://$USER_HOME$/.gradle/caches/minecraft/net/minecraftforge/forge/1.7.10-10.13.4.1614-1.7.10/forgeSrc-1.7.10-10.13.4.1614-1.7.10-sources.jar!/net/minecraftforge/common/config/Configuration.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="196">
+            <state relative-caret-position="25653">
               <caret line="1567" column="71" selection-start-line="1567" selection-start-column="71" selection-end-line="1567" selection-end-column="71" />
-              <folding />
+              <folding>
+                <element signature="n#!!doc" expanded="false" />
+                <element signature="imports" expanded="false" />
+                <element signature="e#2434#2458#0" expanded="false" />
+                <element signature="e#2523#2546#0" expanded="false" />
+                <element signature="e#3096#3097#0" expanded="false" />
+                <element signature="e#3128#3129#0" expanded="false" />
+                <element signature="e#4890#4891#0" expanded="false" />
+                <element signature="e#4935#4936#0" expanded="false" />
+                <element signature="e#4986#4987#0" expanded="false" />
+                <element signature="e#5034#5035#0" expanded="false" />
+                <element signature="e#5084#5085#0" expanded="false" />
+                <element signature="e#5131#5132#0" expanded="false" />
+                <element signature="e#30240#30241#0" expanded="false" />
+                <element signature="e#30295#30296#0" expanded="false" />
+                <element signature="e#51720#51721#0" expanded="false" />
+                <element signature="e#51770#51771#0" expanded="false" />
+                <element signature="e#52756#52757#0" expanded="false" />
+                <element signature="e#52819#52820#0" expanded="false" />
+                <element signature="e#66173#66174#0" expanded="false" />
+                <element signature="e#66200#66201#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="EventJoinGame.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="EventJoinGame.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="399">
-              <caret line="38" column="59" selection-start-line="38" selection-start-column="59" selection-end-line="38" selection-end-column="59" />
+            <state relative-caret-position="408">
+              <caret line="58" column="92" selection-start-line="58" selection-start-column="92" selection-end-line="58" selection-end-column="92" />
               <folding />
             </state>
           </provider>
@@ -90,9 +152,7 @@
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="544">
               <caret line="49" column="59" selection-start-line="49" selection-start-column="59" selection-end-line="49" selection-end-column="59" />
-              <folding>
-                <element signature="imports" expanded="false" />
-              </folding>
+              <folding />
             </state>
           </provider>
         </entry>
@@ -128,9 +188,9 @@
         <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/gui/ModGuiConfig.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventDisableFeatures.java" />
         <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/utility/MoreUtils.java" />
-        <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java" />
-        <option value="$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang" />
         <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/handler/ConfigurationHandler.java" />
+        <option value="$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang" />
+        <option value="$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java" />
       </list>
     </option>
   </component>
@@ -168,8 +228,26 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Misc-Configs" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Misc-Configs" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Misc-Configs" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
       <pane id="PackagesPane">
         <subPane>
           <PATH>
@@ -412,26 +490,8 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="ProjectPane">
-        <subPane>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Misc-Configs" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Misc-Configs" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="Misc-Configs" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-        </subPane>
-      </pane>
+      <pane id="Scope" />
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -445,6 +505,12 @@
     <property name="restartRequiresConfirmation" value="true" />
     <property name="dynamic.classpath" value="false" />
     <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file://C:/Users/Mark/Desktop/Mark's Stuff/Minecraft Mods/Misc-Configs/src/main/resources/assets/miscconfigs/lang/en_US.lang" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Pearcel-Mod" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RunManager" selected="Application.Client">
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
@@ -768,16 +834,16 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24934725" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24934725" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2464146" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.138125" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1725" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3537859" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3537859" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -844,9 +910,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="47" column="21" selection-start-line="47" selection-start-column="21" selection-end-line="47" selection-end-column="21" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -884,9 +948,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="46" column="0" selection-start-line="46" selection-start-column="0" selection-end-line="46" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -946,9 +1008,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="42" column="72" selection-start-line="42" selection-start-column="72" selection-end-line="42" selection-end-column="72" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -986,9 +1046,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="42" column="72" selection-start-line="42" selection-start-column="72" selection-end-line="42" selection-end-column="72" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1084,13 +1142,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/resources/mcmod.info">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="5" column="17" selection-start-line="5" selection-start-column="17" selection-end-line="5" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/reference/Reference.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1116,9 +1167,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="289">
           <caret line="17" column="9" selection-start-line="17" selection-start-column="9" selection-end-line="17" selection-end-column="9" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1133,7 +1181,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="68">
           <caret line="8" column="13" selection-start-line="8" selection-start-column="13" selection-end-line="8" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1141,9 +1188,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="544">
           <caret line="49" column="59" selection-start-line="49" selection-start-column="59" selection-end-line="49" selection-end-column="59" />
-          <folding>
-            <element signature="imports" expanded="false" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -1155,53 +1200,161 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/gui/ModGuiConfig.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="29" column="0" selection-start-line="29" selection-start-column="0" selection-end-line="29" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="jar://$USER_HOME$/.gradle/caches/minecraft/net/minecraftforge/forge/1.7.10-10.13.4.1614-1.7.10/forgeSrc-1.7.10-10.13.4.1614-1.7.10-sources.jar!/net/minecraftforge/common/config/Configuration.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="196">
+        <state relative-caret-position="25653">
           <caret line="1567" column="71" selection-start-line="1567" selection-start-column="71" selection-end-line="1567" selection-end-column="71" />
+          <folding>
+            <element signature="n#!!doc" expanded="false" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#2434#2458#0" expanded="false" />
+            <element signature="e#2523#2546#0" expanded="false" />
+            <element signature="e#3096#3097#0" expanded="false" />
+            <element signature="e#3128#3129#0" expanded="false" />
+            <element signature="e#4890#4891#0" expanded="false" />
+            <element signature="e#4935#4936#0" expanded="false" />
+            <element signature="e#4986#4987#0" expanded="false" />
+            <element signature="e#5034#5035#0" expanded="false" />
+            <element signature="e#5084#5085#0" expanded="false" />
+            <element signature="e#5131#5132#0" expanded="false" />
+            <element signature="e#30240#30241#0" expanded="false" />
+            <element signature="e#30295#30296#0" expanded="false" />
+            <element signature="e#51720#51721#0" expanded="false" />
+            <element signature="e#51770#51771#0" expanded="false" />
+            <element signature="e#52756#52757#0" expanded="false" />
+            <element signature="e#52819#52820#0" expanded="false" />
+            <element signature="e#66173#66174#0" expanded="false" />
+            <element signature="e#66200#66201#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/utility/MoreUtils.java" />
+    <entry file="file://$PROJECT_DIR$/src/main/resources/mcmod.info">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="306">
+          <caret line="18" column="1" selection-start-line="18" selection-start-column="1" selection-end-line="18" selection-end-column="1" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/utility/MoreUtils.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/gui/ModGuiConfig.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="1" column="0" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="399">
-          <caret line="38" column="59" selection-start-line="38" selection-start-column="59" selection-end-line="38" selection-end-column="59" />
+        <state relative-caret-position="340">
+          <caret line="31" column="0" selection-start-line="31" selection-start-column="0" selection-end-line="31" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/resources/assets/miscconfigs/lang/en_US.lang">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="365">
-          <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+        <state relative-caret-position="425">
+          <caret line="25" column="37" selection-start-line="25" selection-start-column="37" selection-end-line="25" selection-end-column="37" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/handler/ConfigurationHandler.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="51" column="162" selection-start-line="51" selection-start-column="162" selection-end-line="51" selection-end-column="162" />
+        <state relative-caret-position="496">
+          <caret line="67" column="33" selection-start-line="67" selection-start-column="33" selection-end-line="67" selection-end-column="33" />
           <folding />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/com/miningmark48/miscconfigs/event/EventJoinGame.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="58" column="92" selection-start-line="58" selection-start-column="92" selection-end-line="58" selection-end-column="92" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>No facets are configured</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>1.7</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>Misc-Configs</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>1.7</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
   </component>
 </project>
