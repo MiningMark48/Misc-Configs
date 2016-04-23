@@ -46,7 +46,7 @@ public class ConfigurationHandler {
     private static void loadConfiguration(){
 
         configuration.addCustomCategoryComment(StatCollector.translateToLocal("config.category.chatMessage.title"), StatCollector.translateToLocal("config.category.chatMessage.desc"));
-        configuration.addCustomCategoryComment(StatCollector.translateToLocal("config.category.disableFeatures.title"), StatCollector.translateToLocal("config.category.disableFeatures.title"));
+        configuration.addCustomCategoryComment(StatCollector.translateToLocal("config.category.disableFeatures.title"), StatCollector.translateToLocal("config.category.disableFeatures.desc"));
 
         noRain = configuration.getBoolean(StatCollector.translateToLocal("config.noRain.title"), Configuration.CATEGORY_GENERAL, false, StatCollector.translateToLocal("config.noRain.desc"));
         saplingGrowthMultiplier = configuration.getInt(StatCollector.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 0, 0, Integer.MAX_VALUE, StatCollector.translateToLocal("config.saplingGrowthMultiplier.desc"));
