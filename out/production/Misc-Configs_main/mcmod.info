@@ -1,0 +1,19 @@
+[
+{
+"modid": "miscconfigs",
+"name": "Misc Configs",
+"description": "A mod that adds miscellaneous configs.",
+"version": "0.0.4",
+"credits": "Parcel31u : Wanted configs, So I added them.",
+"logoFile": "",
+"mcversion": "1.9.4",
+"url": "http://minecraft.curseforge.com/projects/misc-configs",
+"updateUrl": "",
+"authorList": [ "MiningMark48"],
+"parent":"",
+"screenshots": [],
+"dependencies": [
+"mod_MinecraftForge"
+]
+}
+]
