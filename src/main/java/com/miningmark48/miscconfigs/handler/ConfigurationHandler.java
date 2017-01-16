@@ -12,8 +12,12 @@ public class ConfigurationHandler {
 
     public static Configuration configuration;
 
-    public static boolean craftingTables;
-    public static boolean enchanting;
+    //Disable
+    public static boolean disable_craftingTables;
+    public static boolean disable_enchanting;
+    public static boolean disable_chests;
+    public static boolean disable_furnaces;
+
     public static boolean doChatMessage;
     public static boolean sendChatMessageOnce;
     public static boolean noRain;
@@ -66,8 +70,10 @@ public class ConfigurationHandler {
         chatMessageColor = configuration.getInt(Translate.translateToLocal("config.chatMessageColor.title"), Translate.translateToLocal("config.category.chatMessage.title"), 4, 0, 4, Translate.translateToLocal("config.chatMessageColor.desc"));
 
         //Disable Features
-        craftingTables = configuration.getBoolean(Translate.translateToLocal("config.craftingTables.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.craftingTables.desc"));
-        enchanting = configuration.getBoolean(Translate.translateToLocal("config.enchanting.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.enchanting.desc"));
+        disable_craftingTables = configuration.getBoolean(Translate.translateToLocal("config.disable_crafting_tables.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.disable_crafting_tables.desc"));
+        disable_enchanting = configuration.getBoolean(Translate.translateToLocal("config.disable_enchanting.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.disable_enchanting.desc"));
+        disable_chests = configuration.getBoolean(Translate.translateToLocal("config.disable_chests.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.disable_chests.desc"));
+        disable_furnaces = configuration.getBoolean(Translate.translateToLocal("config.disable_furnace.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.disable_furnace.desc"));
 
         //Window Name
         setWindowName = configuration.getBoolean(Translate.translateToLocal("config.setWindowName.title"), Translate.translateToLocal("config.category.windowName.title"), false, Translate.translateToLocal("config.setWindowName.desc"));
