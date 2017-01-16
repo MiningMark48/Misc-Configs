@@ -20,7 +20,8 @@ public class ModGuiConfig extends GuiConfig {
                 Arrays.asList(new IConfigElement[]{
                     new ConfigElement(ConfigurationHandler.configuration.getCategory(Configuration.CATEGORY_GENERAL)),
                     new ConfigElement(ConfigurationHandler.configuration.getCategory(Translate.translateToLocal("config.category.chatMessage.title").toLowerCase())),
-                    new ConfigElement(ConfigurationHandler.configuration.getCategory(Translate.translateToLocal("config.category.disableFeatures.title").toLowerCase()))
+                    new ConfigElement(ConfigurationHandler.configuration.getCategory(Translate.translateToLocal("config.category.disableFeatures.title").toLowerCase())),
+                    new ConfigElement(ConfigurationHandler.configuration.getCategory(Translate.translateToLocal("config.category.windowName.title").toLowerCase()))
                 }),
                 Reference.MOD_ID,
                 false,

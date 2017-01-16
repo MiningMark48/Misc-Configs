@@ -1,5 +1,6 @@
 package com.miningmark48.miscconfigs;
 
+import com.miningmark48.miscconfigs.config.ConfigWindowName;
 import com.miningmark48.miscconfigs.event.EventDisableFeatures;
 import com.miningmark48.miscconfigs.event.EventJoinGame;
 import com.miningmark48.miscconfigs.event.EventNoRain;
@@ -8,7 +9,6 @@ import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.proxy.ClientProxy;
 import com.miningmark48.miscconfigs.proxy.IProxy;
 import com.miningmark48.miscconfigs.reference.Reference;
-import com.miningmark48.miscconfigs.utility.LogHelper;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -32,6 +32,8 @@ public class MiscConfigs {
     public void preInit(FMLPreInitializationEvent event){
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
         FMLCommonHandler.instance().bus().register(new ConfigurationHandler());
+
+        ConfigWindowName.setWindowName();
 
         //LogHelper.info(Translate.translateToLocal("log.info.preinit"));
     }

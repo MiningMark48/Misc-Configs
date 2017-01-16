@@ -19,7 +19,9 @@ public class ConfigurationHandler {
     public static boolean noRain;
     public static boolean doRandomMessage;
     public static boolean doRandomColor;
+    public static boolean setWindowName;
     public static String[] chatMessage;
+    public static String windowName;
     public static int chatMessageColor;
     public static int saplingGrowthMultiplier;
 
@@ -46,6 +48,11 @@ public class ConfigurationHandler {
 
         configuration.addCustomCategoryComment(Translate.translateToLocal("config.category.chatMessage.title"), Translate.translateToLocal("config.category.chatMessage.desc"));
         configuration.addCustomCategoryComment(Translate.translateToLocal("config.category.disableFeatures.title"), Translate.translateToLocal("config.category.disableFeatures.desc"));
+        configuration.addCustomCategoryComment(Translate.translateToLocal("config.category.toolValues.title"), Translate.translateToLocal("config.category.toolValues.desc"));
+        configuration.addCustomCategoryComment(Translate.translateToLocal("config.category.weaponValues.title"), Translate.translateToLocal("config.category.weaponValues.desc"));
+        configuration.addCustomCategoryComment(Translate.translateToLocal("config.category.windowName.title"), Translate.translateToLocal("config.category.windowName.desc"));
+
+        configuration.setCategoryRequiresMcRestart(Translate.translateToLocal("config.category.windowName.title"), true);
 
         noRain = configuration.getBoolean(Translate.translateToLocal("config.noRain.title"), Configuration.CATEGORY_GENERAL, false, Translate.translateToLocal("config.noRain.desc"));
         saplingGrowthMultiplier = configuration.getInt(Translate.translateToLocal("config.saplingGrowthMultiplier.title"), Configuration.CATEGORY_GENERAL, 0, 0, Integer.MAX_VALUE, Translate.translateToLocal("config.saplingGrowthMultiplier.desc"));
@@ -61,6 +68,11 @@ public class ConfigurationHandler {
         //Disable Features
         craftingTables = configuration.getBoolean(Translate.translateToLocal("config.craftingTables.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.craftingTables.desc"));
         enchanting = configuration.getBoolean(Translate.translateToLocal("config.enchanting.title"), Translate.translateToLocal("config.category.disableFeatures.title"), false, Translate.translateToLocal("config.enchanting.desc"));
+
+        //Window Name
+        setWindowName = configuration.getBoolean(Translate.translateToLocal("config.setWindowName.title"), Translate.translateToLocal("config.category.windowName.title"), false, Translate.translateToLocal("config.setWindowName.desc"));
+        windowName = configuration.getString(Translate.translateToLocal("config.windowName.title"), Translate.translateToLocal("config.category.windowName.title"), new String(Translate.translateToLocal("config.windowName.default")), Translate.translateToLocal("config.windowName.desc"));
+
 
         if (configuration.hasChanged()){
             configuration.save();

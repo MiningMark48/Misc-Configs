@@ -1,101 +1,120 @@
 Symbol range map extraction starting
-Processing 15 files
-startProcessing "com\miningmark48\miscconfigs\MiscConfigs.java" md5: e85dd024138a6da6c114364eef57a2a1
+Processing 16 files
+startProcessing "com\miningmark48\miscconfigs\MiscConfigs.java" md5: 0987aa530bf4015ed15b7d43cfc4b2f4
 @|com\miningmark48\miscconfigs\MiscConfigs.java|8|36|com.miningmark48.miscconfigs|package|com.miningmark48.miscconfigs|(file)
 Class Start: com.miningmark48.miscconfigs.MiscConfigs
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1042|1045|Mod|class|net.minecraftforge.fml.common.Mod
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1046|1051|modid|method|net.minecraftforge.fml.common.Mod|modid|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1053|1062|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1063|1069|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1071|1075|name|method|net.minecraftforge.fml.common.Mod|name|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1076|1085|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1086|1094|MOD_NAME|field|com.miningmark48.miscconfigs.reference.Reference|MOD_NAME
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1096|1103|version|method|net.minecraftforge.fml.common.Mod|version|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1104|1113|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1114|1121|VERSION|field|com.miningmark48.miscconfigs.reference.Reference|VERSION
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1123|1133|guiFactory|method|net.minecraftforge.fml.common.Mod|guiFactory|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1136|1145|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1146|1163|GUI_FACTORY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|GUI_FACTORY_CLASS
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1178|1189|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1247|1258|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1198|1210|Mod.Instance|class|net.minecraftforge.fml.common.Mod.Instance
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1211|1220|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1221|1227|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1247|1258|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1259|1267|instance|field|com.miningmark48.miscconfigs.MiscConfigs|instance|
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1386|1392|IProxy|class|com.miningmark48.miscconfigs.proxy.IProxy
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1275|1285|SidedProxy|class|net.minecraftforge.fml.common.SidedProxy
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1286|1296|clientSide|method|net.minecraftforge.fml.common.SidedProxy|clientSide|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1297|1306|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1307|1325|CLIENT_PROXY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|CLIENT_PROXY_CLASS
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1327|1337|serverSide|method|net.minecraftforge.fml.common.SidedProxy|serverSide|()Ljava/lang/String;
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1338|1347|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1348|1366|SERVER_PROXY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|SERVER_PROXY_CLASS
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1386|1392|IProxy|class|com.miningmark48.miscconfigs.proxy.IProxy
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1393|1398|proxy|field|com.miningmark48.miscconfigs.MiscConfigs|proxy|
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1418|1429|ClientProxy|class|com.miningmark48.miscconfigs.proxy.ClientProxy
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1418|1429|ClientProxy|class|com.miningmark48.miscconfigs.proxy.ClientProxy
-   @|com\miningmark48\miscconfigs\MiscConfigs.java|1430|1436|cProxy|field|com.miningmark48.miscconfigs.MiscConfigs|cProxy|
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1048|1051|Mod|class|net.minecraftforge.fml.common.Mod
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1052|1057|modid|method|net.minecraftforge.fml.common.Mod|modid|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1059|1068|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1069|1075|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1077|1081|name|method|net.minecraftforge.fml.common.Mod|name|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1082|1091|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1092|1100|MOD_NAME|field|com.miningmark48.miscconfigs.reference.Reference|MOD_NAME
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1102|1109|version|method|net.minecraftforge.fml.common.Mod|version|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1110|1119|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1120|1127|VERSION|field|com.miningmark48.miscconfigs.reference.Reference|VERSION
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1129|1139|guiFactory|method|net.minecraftforge.fml.common.Mod|guiFactory|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1142|1151|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1152|1169|GUI_FACTORY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|GUI_FACTORY_CLASS
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1184|1195|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1253|1264|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1204|1216|Mod.Instance|class|net.minecraftforge.fml.common.Mod.Instance
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1217|1226|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1227|1233|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1253|1264|MiscConfigs|class|com.miningmark48.miscconfigs.MiscConfigs
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1265|1273|instance|field|com.miningmark48.miscconfigs.MiscConfigs|instance|
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1392|1398|IProxy|class|com.miningmark48.miscconfigs.proxy.IProxy
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1281|1291|SidedProxy|class|net.minecraftforge.fml.common.SidedProxy
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1292|1302|clientSide|method|net.minecraftforge.fml.common.SidedProxy|clientSide|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1303|1312|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1313|1331|CLIENT_PROXY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|CLIENT_PROXY_CLASS
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1333|1343|serverSide|method|net.minecraftforge.fml.common.SidedProxy|serverSide|()Ljava/lang/String;
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1344|1353|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1354|1372|SERVER_PROXY_CLASS|field|com.miningmark48.miscconfigs.reference.Reference|SERVER_PROXY_CLASS
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1392|1398|IProxy|class|com.miningmark48.miscconfigs.proxy.IProxy
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1399|1404|proxy|field|com.miningmark48.miscconfigs.MiscConfigs|proxy|
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1424|1435|ClientProxy|class|com.miningmark48.miscconfigs.proxy.ClientProxy
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1424|1435|ClientProxy|class|com.miningmark48.miscconfigs.proxy.ClientProxy
+   @|com\miningmark48\miscconfigs\MiscConfigs.java|1436|1442|cProxy|field|com.miningmark48.miscconfigs.MiscConfigs|cProxy|
    Method Start: preInit(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1511|1516|event|param|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1444|1460|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1477|1484|preInit|method|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1485|1510|FMLPreInitializationEvent|class|net.minecraftforge.fml.common.event.FMLPreInitializationEvent
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1527|1547|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1548|1552|init|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1553|1558|event|param|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1559|1588|getSuggestedConfigurationFile|method|net.minecraftforge.fml.common.event.FMLPreInitializationEvent|getSuggestedConfigurationFile|()Ljava/io/File;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1601|1617|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1618|1626|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1629|1632|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1635|1643|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1648|1668|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1517|1522|event|param|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1450|1466|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1483|1490|preInit|method|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1491|1516|FMLPreInitializationEvent|class|net.minecraftforge.fml.common.event.FMLPreInitializationEvent
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1533|1553|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1554|1558|init|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1559|1564|event|param|com.miningmark48.miscconfigs.MiscConfigs|preInit|(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1565|1594|getSuggestedConfigurationFile|method|net.minecraftforge.fml.common.event.FMLPreInitializationEvent|getSuggestedConfigurationFile|()Ljava/io/File;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1607|1623|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1624|1632|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1635|1638|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1641|1649|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1654|1674|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1688|1704|ConfigWindowName|class|com.miningmark48.miscconfigs.config.ConfigWindowName
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1705|1718|setWindowName|method|com.miningmark48.miscconfigs.config.ConfigWindowName|setWindowName|()V
    Method End: preInit(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V
    Method Start: init(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1821|1826|event|param|com.miningmark48.miscconfigs.MiscConfigs|init|(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1760|1776|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1793|1797|init|method|com.miningmark48.miscconfigs.MiscConfigs|init|(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1798|1820|FMLInitializationEvent|class|net.minecraftforge.fml.common.event.FMLInitializationEvent
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1837|1851|MinecraftForge|class|net.minecraftforge.common.MinecraftForge
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1852|1861|EVENT_BUS|field|net.minecraftforge.common.MinecraftForge|EVENT_BUS
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1862|1870|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1875|1895|EventDisableFeatures|class|com.miningmark48.miscconfigs.event.EventDisableFeatures
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1908|1924|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1925|1933|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1936|1939|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1942|1950|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1955|1968|EventJoinGame|class|com.miningmark48.miscconfigs.event.EventJoinGame
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1981|1997|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|1998|2006|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2009|2012|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2015|2023|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2028|2039|EventNoRain|class|com.miningmark48.miscconfigs.event.EventNoRain
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1870|1875|event|param|com.miningmark48.miscconfigs.MiscConfigs|init|(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1809|1825|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1842|1846|init|method|com.miningmark48.miscconfigs.MiscConfigs|init|(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1847|1869|FMLInitializationEvent|class|net.minecraftforge.fml.common.event.FMLInitializationEvent
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1886|1900|MinecraftForge|class|net.minecraftforge.common.MinecraftForge
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1901|1910|EVENT_BUS|field|net.minecraftforge.common.MinecraftForge|EVENT_BUS
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1911|1919|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1924|1944|EventDisableFeatures|class|com.miningmark48.miscconfigs.event.EventDisableFeatures
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1957|1973|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1974|1982|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1985|1988|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|1991|1999|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2004|2017|EventJoinGame|class|com.miningmark48.miscconfigs.event.EventJoinGame
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2030|2046|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2047|2055|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2058|2061|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2064|2072|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2077|2088|EventNoRain|class|com.miningmark48.miscconfigs.event.EventNoRain
    Method End: init(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V
    Method Start: postInit(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2198|2203|event|param|com.miningmark48.miscconfigs.MiscConfigs|postInit|(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2129|2145|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2162|2170|postInit|method|com.miningmark48.miscconfigs.MiscConfigs|postInit|(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2171|2197|FMLPostInitializationEvent|class|net.minecraftforge.fml.common.event.FMLPostInitializationEvent
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2214|2230|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2231|2239|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2242|2245|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2248|2256|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2261|2289|EventSaplingGrowthMultiplier|class|com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2302|2316|MinecraftForge|class|net.minecraftforge.common.MinecraftForge
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2317|2326|EVENT_BUS|field|net.minecraftforge.common.MinecraftForge|EVENT_BUS
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2327|2335|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2340|2368|EventSaplingGrowthMultiplier|class|com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2247|2252|event|param|com.miningmark48.miscconfigs.MiscConfigs|postInit|(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2178|2194|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2211|2219|postInit|method|com.miningmark48.miscconfigs.MiscConfigs|postInit|(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2220|2246|FMLPostInitializationEvent|class|net.minecraftforge.fml.common.event.FMLPostInitializationEvent
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2263|2279|FMLCommonHandler|class|net.minecraftforge.fml.common.FMLCommonHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2280|2288|instance|method|net.minecraftforge.fml.common.FMLCommonHandler|instance|()Lnet/minecraftforge/fml/common/FMLCommonHandler;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2291|2294|bus|method|net.minecraftforge.fml.common.FMLCommonHandler|bus|()Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2297|2305|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2310|2338|EventSaplingGrowthMultiplier|class|com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2351|2365|MinecraftForge|class|net.minecraftforge.common.MinecraftForge
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2366|2375|EVENT_BUS|field|net.minecraftforge.common.MinecraftForge|EVENT_BUS
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2376|2384|register|method|net.minecraftforge.fml.common.eventhandler.EventBus|register|(Ljava/lang/Object;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2389|2417|EventSaplingGrowthMultiplier|class|com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
    Method End: postInit(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V
    Method Start: serverLoad(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2527|2532|event|param|com.miningmark48.miscconfigs.MiscConfigs|serverLoad|(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2460|2476|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2493|2503|serverLoad|method|com.miningmark48.miscconfigs.MiscConfigs|serverLoad|(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V
-      @|com\miningmark48\miscconfigs\MiscConfigs.java|2504|2526|FMLServerStartingEvent|class|net.minecraftforge.fml.common.event.FMLServerStartingEvent
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2576|2581|event|param|com.miningmark48.miscconfigs.MiscConfigs|serverLoad|(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2509|2525|Mod.EventHandler|class|net.minecraftforge.fml.common.Mod.EventHandler
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2542|2552|serverLoad|method|com.miningmark48.miscconfigs.MiscConfigs|serverLoad|(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V
+      @|com\miningmark48\miscconfigs\MiscConfigs.java|2553|2575|FMLServerStartingEvent|class|net.minecraftforge.fml.common.event.FMLServerStartingEvent
    Method End: serverLoad(Lnet/minecraftforge/fml/common/event/FMLServerStartingEvent;)V
 Class End  : com.miningmark48.miscconfigs.MiscConfigs
 endProcessing "com\miningmark48\miscconfigs\MiscConfigs.java"
 
+startProcessing "com\miningmark48\miscconfigs\config\ConfigWindowName.java" md5: cb0a92eb8c38212d65bd75af715c2b9b
+@|com\miningmark48\miscconfigs\config\ConfigWindowName.java|8|43|com.miningmark48.miscconfigs.config|package|com.miningmark48.miscconfigs.config|(file)
+Class Start: com.miningmark48.miscconfigs.config.ConfigWindowName
+   @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|159|175|ConfigWindowName|class|com.miningmark48.miscconfigs.config.ConfigWindowName
+   Method Start: setWindowName()V
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|202|215|setWindowName|method|com.miningmark48.miscconfigs.config.ConfigWindowName|setWindowName|()V
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|230|250|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|251|264|setWindowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|setWindowName
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|279|286|Display|class|org.lwjgl.opengl.Display
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|287|295|setTitle|method|org.lwjgl.opengl.Display|setTitle|(Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|296|316|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\config\ConfigWindowName.java|317|327|windowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|windowName
+   Method End: setWindowName()V
+Class End  : com.miningmark48.miscconfigs.config.ConfigWindowName
+endProcessing "com\miningmark48\miscconfigs\config\ConfigWindowName.java"
+
 startProcessing "com\miningmark48\miscconfigs\event\EventDisableFeatures.java" md5: 9555a5deaa26b6c785e14e78c279c5f9
+Cache Hit!
 @|com\miningmark48\miscconfigs\event\EventDisableFeatures.java|8|42|com.miningmark48.miscconfigs.event|package|com.miningmark48.miscconfigs.event|(file)
 Class Start: com.miningmark48.miscconfigs.event.EventDisableFeatures
    @|com\miningmark48\miscconfigs\event\EventDisableFeatures.java|446|466|EventDisableFeatures|class|com.miningmark48.miscconfigs.event.EventDisableFeatures
@@ -157,6 +176,7 @@ Class End  : com.miningmark48.miscconfigs.event.EventDisableFeatures
 endProcessing "com\miningmark48\miscconfigs\event\EventDisableFeatures.java"
 
 startProcessing "com\miningmark48\miscconfigs\event\EventJoinGame.java" md5: fbb415c9d260aae045dfddabf51bcbb9
+Cache Hit!
 @|com\miningmark48\miscconfigs\event\EventJoinGame.java|8|42|com.miningmark48.miscconfigs.event|package|com.miningmark48.miscconfigs.event|(file)
 Class Start: com.miningmark48.miscconfigs.event.EventJoinGame
    @|com\miningmark48\miscconfigs\event\EventJoinGame.java|578|591|EventJoinGame|class|com.miningmark48.miscconfigs.event.EventJoinGame
@@ -255,6 +275,7 @@ Class End  : com.miningmark48.miscconfigs.event.EventJoinGame
 endProcessing "com\miningmark48\miscconfigs\event\EventJoinGame.java"
 
 startProcessing "com\miningmark48\miscconfigs\event\EventNoRain.java" md5: a67e977c9eceb95872b76a8a229795ba
+Cache Hit!
 @|com\miningmark48\miscconfigs\event\EventNoRain.java|8|42|com.miningmark48.miscconfigs.event|package|com.miningmark48.miscconfigs.event|(file)
 Class Start: com.miningmark48.miscconfigs.event.EventNoRain
    @|com\miningmark48\miscconfigs\event\EventNoRain.java|332|343|EventNoRain|class|com.miningmark48.miscconfigs.event.EventNoRain
@@ -280,6 +301,7 @@ Class End  : com.miningmark48.miscconfigs.event.EventNoRain
 endProcessing "com\miningmark48\miscconfigs\event\EventNoRain.java"
 
 startProcessing "com\miningmark48\miscconfigs\event\EventSaplingGrowthMultiplier.java" md5: 8e718a3b9bdb6b2cd05b164853090564
+Cache Hit!
 @|com\miningmark48\miscconfigs\event\EventSaplingGrowthMultiplier.java|8|42|com.miningmark48.miscconfigs.event|package|com.miningmark48.miscconfigs.event|(file)
 Class Start: com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
    @|com\miningmark48\miscconfigs\event\EventSaplingGrowthMultiplier.java|239|267|EventSaplingGrowthMultiplier|class|com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
@@ -293,6 +315,7 @@ Class End  : com.miningmark48.miscconfigs.event.EventSaplingGrowthMultiplier
 endProcessing "com\miningmark48\miscconfigs\event\EventSaplingGrowthMultiplier.java"
 
 startProcessing "com\miningmark48\miscconfigs\gui\GuiFactory.java" md5: 438dc83de27b476450f6e02e9466bf23
+Cache Hit!
 @|com\miningmark48\miscconfigs\gui\GuiFactory.java|8|40|com.miningmark48.miscconfigs.gui|package|com.miningmark48.miscconfigs.gui|(file)
 Class Start: com.miningmark48.miscconfigs.gui.GuiFactory
    @|com\miningmark48\miscconfigs\gui\GuiFactory.java|215|225|GuiFactory|class|com.miningmark48.miscconfigs.gui.GuiFactory
@@ -326,7 +349,7 @@ Class Start: com.miningmark48.miscconfigs.gui.GuiFactory
 Class End  : com.miningmark48.miscconfigs.gui.GuiFactory
 endProcessing "com\miningmark48\miscconfigs\gui\GuiFactory.java"
 
-startProcessing "com\miningmark48\miscconfigs\gui\ModGuiConfig.java" md5: ef3dcb0b38a47b8c3f8bc733a1702208
+startProcessing "com\miningmark48\miscconfigs\gui\ModGuiConfig.java" md5: e06700b4e268185cae54dcfde3089ee1
 @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|8|40|com.miningmark48.miscconfigs.gui|package|com.miningmark48.miscconfigs.gui|(file)
 Class Start: com.miningmark48.miscconfigs.gui.ModGuiConfig
    @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|614|626|ModGuiConfig|class|com.miningmark48.miscconfigs.gui.ModGuiConfig
@@ -359,18 +382,25 @@ Class Start: com.miningmark48.miscconfigs.gui.ModGuiConfig
       @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1141|1150|Translate|class|com.miningmark48.miscconfigs.utility.Translate
       @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1151|1167|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
       @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1209|1220|toLowerCase|method|java.lang.String|toLowerCase|()Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1261|1270|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1271|1277|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1341|1350|GuiConfig|class|net.minecraftforge.fml.client.config.GuiConfig
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1351|1372|getAbridgedConfigPath|method|net.minecraftforge.fml.client.config.GuiConfig|getAbridgedConfigPath|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1373|1393|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1394|1407|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1408|1416|toString|method|java.lang.Object|toString|()Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1250|1263|ConfigElement|class|net.minecraftforge.common.config.ConfigElement
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1264|1284|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1285|1298|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1299|1310|getCategory|method|net.minecraftforge.common.config.Configuration|getCategory|(Ljava/lang/String;)Lnet/minecraftforge/common/config/ConfigCategory;
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1311|1320|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1321|1337|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1374|1385|toLowerCase|method|java.lang.String|toLowerCase|()Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1426|1435|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1436|1442|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1506|1515|GuiConfig|class|net.minecraftforge.fml.client.config.GuiConfig
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1516|1537|getAbridgedConfigPath|method|net.minecraftforge.fml.client.config.GuiConfig|getAbridgedConfigPath|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1538|1558|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1559|1572|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\gui\ModGuiConfig.java|1573|1581|toString|method|java.lang.Object|toString|()Ljava/lang/String;
    Method End: ModGuiConfig(Lnet/minecraft/client/gui/GuiScreen;)V
 Class End  : com.miningmark48.miscconfigs.gui.ModGuiConfig
 endProcessing "com\miningmark48\miscconfigs\gui\ModGuiConfig.java"
 
-startProcessing "com\miningmark48\miscconfigs\handler\ConfigurationHandler.java" md5: ae839cf416327909ce18a826567196dd
+startProcessing "com\miningmark48\miscconfigs\handler\ConfigurationHandler.java" md5: 392203eff8a831747a006cef6dfd554b
 @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|8|44|com.miningmark48.miscconfigs.handler|package|com.miningmark48.miscconfigs.handler|(file)
 Class Start: com.miningmark48.miscconfigs.handler.ConfigurationHandler
    @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|379|399|ConfigurationHandler|class|com.miningmark48.miscconfigs.handler.ConfigurationHandler
@@ -384,151 +414,199 @@ Class Start: com.miningmark48.miscconfigs.handler.ConfigurationHandler
    @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|645|651|noRain|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|noRain|
    @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|679|694|doRandomMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomMessage|
    @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|722|735|doRandomColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomColor|
-   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|755|761|String|class|java.lang.String
-   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|755|761|String|class|java.lang.String
-   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|764|775|chatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessage|
-   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|799|815|chatMessageColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessageColor|
-   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|839|862|saplingGrowthMultiplier|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|saplingGrowthMultiplier|
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|763|776|setWindowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|setWindowName|
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|796|802|String|class|java.lang.String
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|796|802|String|class|java.lang.String
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|805|816|chatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessage|
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|836|842|String|class|java.lang.String
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|836|842|String|class|java.lang.String
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|843|853|windowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|windowName|
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|877|893|chatMessageColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessageColor|
+   @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|917|940|saplingGrowthMultiplier|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|saplingGrowthMultiplier|
    Method Start: init(Ljava/io/File;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|898|908|configFile|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V|configFile|0
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|888|892|init|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|893|897|File|class|java.io.File
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1000|1013|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1036|1049|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1056|1069|Configuration|class|net.minecraftforge.common.config.Configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1070|1080|configFile|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V|configFile|0
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1095|1112|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|976|986|configFile|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V|configFile|0
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|966|970|init|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|971|975|File|class|java.io.File
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1078|1091|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1114|1127|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1134|1147|Configuration|class|net.minecraftforge.common.config.Configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1148|1158|configFile|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|init|(Ljava/io/File;)V|configFile|0
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1173|1190|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
    Method End: init(Ljava/io/File;)V
    Method Start: onConfigurationChangedEvent(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1238|1243|event|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1139|1153|SubscribeEvent|class|net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1170|1197|onConfigurationChangedEvent|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1198|1237|ConfigChangedEvent.OnConfigChangedEvent|class|net.minecraftforge.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1259|1264|event|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V|event|0
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1265|1273|getModID|method|net.minecraftforge.fml.client.event.ConfigChangedEvent|getModID|()Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1276|1292|equalsIgnoreCase|method|java.lang.String|equalsIgnoreCase|(Ljava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1293|1302|Reference|class|com.miningmark48.miscconfigs.reference.Reference
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1303|1309|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1325|1342|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1316|1321|event|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1217|1231|SubscribeEvent|class|net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1248|1275|onConfigurationChangedEvent|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1276|1315|ConfigChangedEvent.OnConfigChangedEvent|class|net.minecraftforge.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1337|1342|event|param|com.miningmark48.miscconfigs.handler.ConfigurationHandler|onConfigurationChangedEvent|(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V|event|0
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1343|1351|getModID|method|net.minecraftforge.fml.client.event.ConfigChangedEvent|getModID|()Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1354|1370|equalsIgnoreCase|method|java.lang.String|equalsIgnoreCase|(Ljava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1371|1380|Reference|class|com.miningmark48.miscconfigs.reference.Reference
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1381|1387|MOD_ID|field|com.miningmark48.miscconfigs.reference.Reference|MOD_ID
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1403|1420|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
    Method End: onConfigurationChangedEvent(Lnet/minecraftforge/fml/client/event/ConfigChangedEvent$OnConfigChangedEvent;)V
    Method Start: loadConfiguration()V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1388|1405|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1418|1431|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1432|1456|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1457|1466|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1467|1483|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1522|1531|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1532|1548|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1595|1608|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1609|1633|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1634|1643|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1644|1660|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1703|1712|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1713|1729|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1781|1787|noRain|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|noRain
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1790|1803|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1804|1814|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1815|1824|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1825|1841|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1866|1879|Configuration|class|net.minecraftforge.common.config.Configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1880|1896|CATEGORY_GENERAL|field|net.minecraftforge.common.config.Configuration|CATEGORY_GENERAL
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1905|1914|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1915|1931|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1964|1987|saplingGrowthMultiplier|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|saplingGrowthMultiplier
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1990|2003|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2004|2010|getInt|method|net.minecraftforge.common.config.Configuration|getInt|(Ljava/lang/String;Ljava/lang/String;IIILjava/lang/String;)I
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2011|2020|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2021|2037|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2079|2092|Configuration|class|net.minecraftforge.common.config.Configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2093|2109|CATEGORY_GENERAL|field|net.minecraftforge.common.config.Configuration|CATEGORY_GENERAL
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2117|2124|Integer|class|java.lang.Integer
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2125|2134|MAX_VALUE|field|java.lang.Integer|MAX_VALUE
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2136|2145|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2146|2162|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2236|2249|doChatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doChatMessage
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2252|2265|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2266|2276|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2277|2286|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2287|2303|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2335|2344|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2345|2361|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2406|2415|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2416|2432|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2472|2491|sendChatMessageOnce|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|sendChatMessageOnce
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2494|2507|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2508|2518|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2519|2528|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2529|2545|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2583|2592|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2593|2609|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2655|2664|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2665|2681|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2727|2742|doRandomMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomMessage
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2745|2758|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2759|2769|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2770|2779|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2780|2796|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2830|2839|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2840|2856|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2902|2911|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2912|2928|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2970|2983|doRandomColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomColor
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2986|2999|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3000|3010|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3011|3020|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3021|3037|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3069|3078|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3079|3095|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3140|3149|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3150|3166|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3206|3217|chatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessage
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3220|3233|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3234|3247|getStringList|method|net.minecraftforge.common.config.Configuration|getStringList|(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3248|3257|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3258|3274|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3304|3313|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3314|3330|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3373|3379|String|class|java.lang.String
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3382|3391|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3392|3408|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3441|3450|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3451|3467|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3505|3521|chatMessageColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessageColor
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3524|3537|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3538|3544|getInt|method|net.minecraftforge.common.config.Configuration|getInt|(Ljava/lang/String;Ljava/lang/String;IIILjava/lang/String;)I
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3545|3554|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3555|3571|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3606|3615|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3616|3632|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3680|3689|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3690|3706|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3777|3791|craftingTables|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|craftingTables
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3794|3807|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3808|3818|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3819|3828|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3829|3845|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3878|3887|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3888|3904|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3954|3963|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3964|3980|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4021|4031|enchanting|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|enchanting
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4034|4047|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4048|4058|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4059|4068|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4069|4085|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4114|4123|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4124|4140|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4190|4199|Translate|class|com.miningmark48.miscconfigs.utility.Translate
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4200|4216|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4258|4271|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4272|4282|hasChanged|method|net.minecraftforge.common.config.Configuration|hasChanged|()Z
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4299|4312|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
-      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4313|4317|save|method|net.minecraftforge.common.config.Configuration|save|()V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1466|1483|loadConfiguration|method|com.miningmark48.miscconfigs.handler.ConfigurationHandler|loadConfiguration|()V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1496|1509|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1510|1534|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1535|1544|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1545|1561|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1600|1609|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1610|1626|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1673|1686|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1687|1711|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1712|1721|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1722|1738|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1781|1790|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1791|1807|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1858|1871|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1872|1896|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1897|1906|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1907|1923|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1961|1970|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|1971|1987|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2033|2046|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2047|2071|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2072|2081|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2082|2098|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2138|2147|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2148|2164|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2212|2225|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2226|2250|addCustomCategoryComment|method|net.minecraftforge.common.config.Configuration|addCustomCategoryComment|(Ljava/lang/String;Ljava/lang/String;)V
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2251|2260|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2261|2277|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2315|2324|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2325|2341|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2388|2401|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2402|2430|setCategoryRequiresMcRestart|method|net.minecraftforge.common.config.Configuration|setCategoryRequiresMcRestart|(Ljava/lang/String;Z)Lnet/minecraftforge/common/config/Configuration;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2431|2440|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2441|2457|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2511|2517|noRain|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|noRain
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2520|2533|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2534|2544|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2545|2554|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2555|2571|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2596|2609|Configuration|class|net.minecraftforge.common.config.Configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2610|2626|CATEGORY_GENERAL|field|net.minecraftforge.common.config.Configuration|CATEGORY_GENERAL
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2635|2644|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2645|2661|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2694|2717|saplingGrowthMultiplier|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|saplingGrowthMultiplier
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2720|2733|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2734|2740|getInt|method|net.minecraftforge.common.config.Configuration|getInt|(Ljava/lang/String;Ljava/lang/String;IIILjava/lang/String;)I
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2741|2750|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2751|2767|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2809|2822|Configuration|class|net.minecraftforge.common.config.Configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2823|2839|CATEGORY_GENERAL|field|net.minecraftforge.common.config.Configuration|CATEGORY_GENERAL
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2847|2854|Integer|class|java.lang.Integer
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2855|2864|MAX_VALUE|field|java.lang.Integer|MAX_VALUE
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2866|2875|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2876|2892|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2966|2979|doChatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doChatMessage
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2982|2995|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|2996|3006|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3007|3016|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3017|3033|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3065|3074|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3075|3091|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3136|3145|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3146|3162|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3202|3221|sendChatMessageOnce|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|sendChatMessageOnce
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3224|3237|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3238|3248|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3249|3258|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3259|3275|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3313|3322|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3323|3339|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3385|3394|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3395|3411|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3457|3472|doRandomMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomMessage
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3475|3488|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3489|3499|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3500|3509|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3510|3526|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3560|3569|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3570|3586|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3632|3641|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3642|3658|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3700|3713|doRandomColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|doRandomColor
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3716|3729|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3730|3740|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3741|3750|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3751|3767|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3799|3808|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3809|3825|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3870|3879|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3880|3896|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3936|3947|chatMessage|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessage
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3950|3963|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3964|3977|getStringList|method|net.minecraftforge.common.config.Configuration|getStringList|(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3978|3987|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|3988|4004|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4034|4043|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4044|4060|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4103|4109|String|class|java.lang.String
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4112|4121|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4122|4138|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4171|4180|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4181|4197|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4235|4251|chatMessageColor|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|chatMessageColor
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4254|4267|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4268|4274|getInt|method|net.minecraftforge.common.config.Configuration|getInt|(Ljava/lang/String;Ljava/lang/String;IIILjava/lang/String;)I
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4275|4284|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4285|4301|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4336|4345|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4346|4362|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4410|4419|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4420|4436|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4507|4521|craftingTables|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|craftingTables
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4524|4537|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4538|4548|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4549|4558|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4559|4575|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4608|4617|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4618|4634|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4684|4693|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4694|4710|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4751|4761|enchanting|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|enchanting
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4764|4777|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4778|4788|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4789|4798|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4799|4815|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4844|4853|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4854|4870|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4920|4929|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|4930|4946|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5006|5019|setWindowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|setWindowName
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5022|5035|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5036|5046|getBoolean|method|net.minecraftforge.common.config.Configuration|getBoolean|(Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;)Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5047|5056|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5057|5073|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5105|5114|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5115|5131|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5176|5185|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5186|5202|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5242|5252|windowName|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|windowName
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5255|5268|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5269|5278|getString|method|net.minecraftforge.common.config.Configuration|getString|(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5279|5288|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5289|5305|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5334|5343|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5344|5360|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5402|5408|String|class|java.lang.String
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5409|5418|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5419|5435|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5467|5476|Translate|class|com.miningmark48.miscconfigs.utility.Translate
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5477|5493|translateToLocal|method|com.miningmark48.miscconfigs.utility.Translate|translateToLocal|(Ljava/lang/String;)Ljava/lang/String;
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5536|5549|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5550|5560|hasChanged|method|net.minecraftforge.common.config.Configuration|hasChanged|()Z
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5577|5590|configuration|field|com.miningmark48.miscconfigs.handler.ConfigurationHandler|configuration
+      @|com\miningmark48\miscconfigs\handler\ConfigurationHandler.java|5591|5595|save|method|net.minecraftforge.common.config.Configuration|save|()V
    Method End: loadConfiguration()V
 Class End  : com.miningmark48.miscconfigs.handler.ConfigurationHandler
 endProcessing "com\miningmark48\miscconfigs\handler\ConfigurationHandler.java"
 
 startProcessing "com\miningmark48\miscconfigs\proxy\ClientProxy.java" md5: 144ec146c317e5d2077ed063c92ee535
+Cache Hit!
 @|com\miningmark48\miscconfigs\proxy\ClientProxy.java|8|42|com.miningmark48.miscconfigs.proxy|package|com.miningmark48.miscconfigs.proxy|(file)
 Class Start: com.miningmark48.miscconfigs.proxy.ClientProxy
    @|com\miningmark48\miscconfigs\proxy\ClientProxy.java|58|69|ClientProxy|class|com.miningmark48.miscconfigs.proxy.ClientProxy
@@ -537,6 +615,7 @@ Class End  : com.miningmark48.miscconfigs.proxy.ClientProxy
 endProcessing "com\miningmark48\miscconfigs\proxy\ClientProxy.java"
 
 startProcessing "com\miningmark48\miscconfigs\proxy\CommonProxy.java" md5: 33f0873e0c147da39c1be504d49a95c9
+Cache Hit!
 @|com\miningmark48\miscconfigs\proxy\CommonProxy.java|8|42|com.miningmark48.miscconfigs.proxy|package|com.miningmark48.miscconfigs.proxy|(file)
 Class Start: com.miningmark48.miscconfigs.proxy.CommonProxy
    @|com\miningmark48\miscconfigs\proxy\CommonProxy.java|58|69|CommonProxy|class|com.miningmark48.miscconfigs.proxy.CommonProxy
@@ -545,6 +624,7 @@ Class End  : com.miningmark48.miscconfigs.proxy.CommonProxy
 endProcessing "com\miningmark48\miscconfigs\proxy\CommonProxy.java"
 
 startProcessing "com\miningmark48\miscconfigs\proxy\IProxy.java" md5: 49b0b8fa1bf9bcf3844f8dba795cb146
+Cache Hit!
 @|com\miningmark48\miscconfigs\proxy\IProxy.java|8|42|com.miningmark48.miscconfigs.proxy|package|com.miningmark48.miscconfigs.proxy|(file)
 Class Start: com.miningmark48.miscconfigs.proxy.IProxy
    @|com\miningmark48\miscconfigs\proxy\IProxy.java|62|68|IProxy|class|com.miningmark48.miscconfigs.proxy.IProxy
@@ -552,6 +632,7 @@ Class End  : com.miningmark48.miscconfigs.proxy.IProxy
 endProcessing "com\miningmark48\miscconfigs\proxy\IProxy.java"
 
 startProcessing "com\miningmark48\miscconfigs\proxy\ServerProxy.java" md5: 2a756ebc09999c947f5b8fe282491d8a
+Cache Hit!
 @|com\miningmark48\miscconfigs\proxy\ServerProxy.java|8|42|com.miningmark48.miscconfigs.proxy|package|com.miningmark48.miscconfigs.proxy|(file)
 Class Start: com.miningmark48.miscconfigs.proxy.ServerProxy
    @|com\miningmark48\miscconfigs\proxy\ServerProxy.java|58|69|ServerProxy|class|com.miningmark48.miscconfigs.proxy.ServerProxy
@@ -559,7 +640,7 @@ Class Start: com.miningmark48.miscconfigs.proxy.ServerProxy
 Class End  : com.miningmark48.miscconfigs.proxy.ServerProxy
 endProcessing "com\miningmark48\miscconfigs\proxy\ServerProxy.java"
 
-startProcessing "com\miningmark48\miscconfigs\reference\Reference.java" md5: 4926d950bca96718495765e4ec81606a
+startProcessing "com\miningmark48\miscconfigs\reference\Reference.java" md5: 2a0b9035eda49a3896dce13e5abf655d
 @|com\miningmark48\miscconfigs\reference\Reference.java|8|46|com.miningmark48.miscconfigs.reference|package|com.miningmark48.miscconfigs.reference|(file)
 Class Start: com.miningmark48.miscconfigs.reference.Reference
    @|com\miningmark48\miscconfigs\reference\Reference.java|62|71|Reference|class|com.miningmark48.miscconfigs.reference.Reference
@@ -585,6 +666,7 @@ Class End  : com.miningmark48.miscconfigs.reference.Reference
 endProcessing "com\miningmark48\miscconfigs\reference\Reference.java"
 
 startProcessing "com\miningmark48\miscconfigs\utility\LogHelper.java" md5: edd4db555a36684da52c578090c9cc7b
+Cache Hit!
 @|com\miningmark48\miscconfigs\utility\LogHelper.java|8|44|com.miningmark48.miscconfigs.utility|package|com.miningmark48.miscconfigs.utility|(file)
 Class Start: com.miningmark48.miscconfigs.utility.LogHelper
    @|com\miningmark48\miscconfigs\utility\LogHelper.java|204|213|LogHelper|class|com.miningmark48.miscconfigs.utility.LogHelper
@@ -679,6 +761,7 @@ Class End  : com.miningmark48.miscconfigs.utility.LogHelper
 endProcessing "com\miningmark48\miscconfigs\utility\LogHelper.java"
 
 startProcessing "com\miningmark48\miscconfigs\utility\Translate.java" md5: 0421eaf3680ab7809bf061764a6d5e42
+Cache Hit!
 @|com\miningmark48\miscconfigs\utility\Translate.java|8|44|com.miningmark48.miscconfigs.utility|package|com.miningmark48.miscconfigs.utility|(file)
 Class Start: com.miningmark48.miscconfigs.utility.Translate
    @|com\miningmark48\miscconfigs\utility\Translate.java|60|69|Translate|class|com.miningmark48.miscconfigs.utility.Translate
