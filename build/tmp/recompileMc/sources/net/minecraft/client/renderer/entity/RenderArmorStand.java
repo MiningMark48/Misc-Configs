@@ -5,6 +5,7 @@ import net.minecraft.client.model.ModelArmorStandArmor;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.layers.LayerBipedArmor;
 import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
+import net.minecraft.client.renderer.entity.layers.LayerElytra;
 import net.minecraft.client.renderer.entity.layers.LayerHeldItem;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.util.ResourceLocation;
@@ -31,6 +32,7 @@ public class RenderArmorStand extends RenderLivingBase<EntityArmorStand>
         };
         this.addLayer(layerbipedarmor);
         this.addLayer(new LayerHeldItem(this));
+        this.addLayer(new LayerElytra(this));
         this.addLayer(new LayerCustomHead(this.getMainModel().bipedHead));
     }
 
@@ -48,10 +50,10 @@ public class RenderArmorStand extends RenderLivingBase<EntityArmorStand>
         return (ModelArmorStand)super.getMainModel();
     }
 
-    protected void rotateCorpse(EntityArmorStand entityLiving, float p_77043_2_, float p_77043_3_, float partialTicks)
+    protected void applyRotations(EntityArmorStand entityLiving, float p_77043_2_, float rotationYaw, float partialTicks)
     {
-        GlStateManager.rotate(180.0F - p_77043_3_, 0.0F, 1.0F, 0.0F);
-        float f = (float)(entityLiving.worldObj.getTotalWorldTime() - entityLiving.punchCooldown) + partialTicks;
+        GlStateManager.rotate(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
+        float f = (float)(entityLiving.world.getTotalWorldTime() - entityLiving.punchCooldown) + partialTicks;
 
         if (f < 5.0F)
         {

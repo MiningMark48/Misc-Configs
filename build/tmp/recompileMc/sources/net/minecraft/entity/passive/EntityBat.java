@@ -4,6 +4,7 @@ import java.util.Calendar;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -14,6 +15,7 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -55,12 +57,12 @@ public class EntityBat extends EntityAmbientCreature
     }
 
     @Nullable
-    protected SoundEvent getAmbientSound()
+    public SoundEvent getAmbientSound()
     {
         return this.getIsBatHanging() && this.rand.nextInt(4) != 0 ? null : SoundEvents.ENTITY_BAT_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_BAT_HURT;
     }
@@ -120,8 +122,10 @@ public class EntityBat extends EntityAmbientCreature
 
         if (this.getIsBatHanging())
         {
-            this.motionX = this.motionY = this.motionZ = 0.0D;
-            this.posY = (double)MathHelper.floor_double(this.posY) + 1.0D - (double)this.height;
+            this.motionX = 0.0D;
+            this.motionY = 0.0D;
+            this.motionZ = 0.0D;
+            this.posY = (double)MathHelper.floor(this.posY) + 1.0D - (double)this.height;
         }
         else
         {
@@ -137,28 +141,28 @@ public class EntityBat extends EntityAmbientCreature
 
         if (this.getIsBatHanging())
         {
-            if (!this.worldObj.getBlockState(blockpos1).isNormalCube())
-            {
-                this.setIsBatHanging(false);
-                this.worldObj.playEvent((EntityPlayer)null, 1025, blockpos, 0);
-            }
-            else
+            if (this.world.getBlockState(blockpos1).isNormalCube())
             {
                 if (this.rand.nextInt(200) == 0)
                 {
                     this.rotationYawHead = (float)this.rand.nextInt(360);
                 }
 
-                if (this.worldObj.getNearestPlayerNotCreative(this, 4.0D) != null)
+                if (this.world.getNearestPlayerNotCreative(this, 4.0D) != null)
                 {
                     this.setIsBatHanging(false);
-                    this.worldObj.playEvent((EntityPlayer)null, 1025, blockpos, 0);
+                    this.world.playEvent((EntityPlayer)null, 1025, blockpos, 0);
                 }
+            }
+            else
+            {
+                this.setIsBatHanging(false);
+                this.world.playEvent((EntityPlayer)null, 1025, blockpos, 0);
             }
         }
         else
         {
-            if (this.spawnPosition != null && (!this.worldObj.isAirBlock(this.spawnPosition) || this.spawnPosition.getY() < 1))
+            if (this.spawnPosition != null && (!this.world.isAirBlock(this.spawnPosition) || this.spawnPosition.getY() < 1))
             {
                 this.spawnPosition = null;
             }
@@ -179,7 +183,7 @@ public class EntityBat extends EntityAmbientCreature
             this.moveForward = 0.5F;
             this.rotationYaw += f1;
 
-            if (this.rand.nextInt(100) == 0 && this.worldObj.getBlockState(blockpos1).isNormalCube())
+            if (this.rand.nextInt(100) == 0 && this.world.getBlockState(blockpos1).isNormalCube())
             {
                 this.setIsBatHanging(true);
             }
@@ -222,13 +226,18 @@ public class EntityBat extends EntityAmbientCreature
         }
         else
         {
-            if (!this.worldObj.isRemote && this.getIsBatHanging())
+            if (!this.world.isRemote && this.getIsBatHanging())
             {
                 this.setIsBatHanging(false);
             }
 
             return super.attackEntityFrom(source, amount);
         }
+    }
+
+    public static void registerFixesBat(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntityBat.class);
     }
 
     /**
@@ -256,16 +265,16 @@ public class EntityBat extends EntityAmbientCreature
     {
         BlockPos blockpos = new BlockPos(this.posX, this.getEntityBoundingBox().minY, this.posZ);
 
-        if (blockpos.getY() >= this.worldObj.getSeaLevel())
+        if (blockpos.getY() >= this.world.getSeaLevel())
         {
             return false;
         }
         else
         {
-            int i = this.worldObj.getLightFromNeighbors(blockpos);
+            int i = this.world.getLightFromNeighbors(blockpos);
             int j = 4;
 
-            if (this.isDateAroundHalloween(this.worldObj.getCurrentDate()))
+            if (this.isDateAroundHalloween(this.world.getCurrentDate()))
             {
                 j = 7;
             }

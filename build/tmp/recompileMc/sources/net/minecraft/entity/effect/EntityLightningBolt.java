@@ -66,8 +66,8 @@ public class EntityLightningBolt extends EntityWeatherEffect
 
         if (this.lightningState == 2)
         {
-            this.worldObj.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_LIGHTNING_THUNDER, SoundCategory.WEATHER, 10000.0F, 0.8F + this.rand.nextFloat() * 0.2F);
-            this.worldObj.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_LIGHTNING_IMPACT, SoundCategory.WEATHER, 2.0F, 0.5F + this.rand.nextFloat() * 0.2F);
+            this.world.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_LIGHTNING_THUNDER, SoundCategory.WEATHER, 10000.0F, 0.8F + this.rand.nextFloat() * 0.2F);
+            this.world.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_LIGHTNING_IMPACT, SoundCategory.WEATHER, 2.0F, 0.5F + this.rand.nextFloat() * 0.2F);
         }
 
         --this.lightningState;
@@ -83,14 +83,14 @@ public class EntityLightningBolt extends EntityWeatherEffect
                 --this.boltLivingTime;
                 this.lightningState = 1;
 
-                if (!this.effectOnly && !this.worldObj.isRemote)
+                if (!this.effectOnly && !this.world.isRemote)
                 {
                     this.boltVertex = this.rand.nextLong();
                     BlockPos blockpos = new BlockPos(this);
 
-                    if (this.worldObj.getGameRules().getBoolean("doFireTick") && this.worldObj.isAreaLoaded(blockpos, 10) && this.worldObj.getBlockState(blockpos).getMaterial() == Material.AIR && Blocks.FIRE.canPlaceBlockAt(this.worldObj, blockpos))
+                    if (this.world.getGameRules().getBoolean("doFireTick") && this.world.isAreaLoaded(blockpos, 10) && this.world.getBlockState(blockpos).getMaterial() == Material.AIR && Blocks.FIRE.canPlaceBlockAt(this.world, blockpos))
                     {
-                        this.worldObj.setBlockState(blockpos, Blocks.FIRE.getDefaultState());
+                        this.world.setBlockState(blockpos, Blocks.FIRE.getDefaultState());
                     }
                 }
             }
@@ -98,18 +98,18 @@ public class EntityLightningBolt extends EntityWeatherEffect
 
         if (this.lightningState >= 0)
         {
-            if (this.worldObj.isRemote)
+            if (this.world.isRemote)
             {
-                this.worldObj.setLastLightningBolt(2);
+                this.world.setLastLightningBolt(2);
             }
             else if (!this.effectOnly)
             {
                 double d0 = 3.0D;
-                List<Entity> list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, new AxisAlignedBB(this.posX - d0, this.posY - d0, this.posZ - d0, this.posX + d0, this.posY + 6.0D + d0, this.posZ + d0));
+                List<Entity> list = this.world.getEntitiesWithinAABBExcludingEntity(this, new AxisAlignedBB(this.posX - 3.0D, this.posY - 3.0D, this.posZ - 3.0D, this.posX + 3.0D, this.posY + 6.0D + 3.0D, this.posZ + 3.0D));
 
                 for (int i = 0; i < list.size(); ++i)
                 {
-                    Entity entity = (Entity)list.get(i);
+                    Entity entity = list.get(i);
                     if (!net.minecraftforge.event.ForgeEventFactory.onEntityStruckByLightning(entity, this))
                         entity.onStruckByLightning(this);
                 }

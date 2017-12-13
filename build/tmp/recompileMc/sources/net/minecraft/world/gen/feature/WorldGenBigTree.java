@@ -127,7 +127,7 @@ public class WorldGenBigTree extends WorldGenAbstractTree
         {
             float f = (float)this.heightLimit / 2.0F;
             float f1 = f - (float)y;
-            float f2 = MathHelper.sqrt_float(f * f - f1 * f1);
+            float f2 = MathHelper.sqrt(f * f - f1 * f1);
 
             if (f1 == 0.0F)
             {
@@ -144,7 +144,14 @@ public class WorldGenBigTree extends WorldGenAbstractTree
 
     float leafSize(int y)
     {
-        return y >= 0 && y < this.leafDistanceLimit ? (y != 0 && y != this.leafDistanceLimit - 1 ? 3.0F : 2.0F) : -1.0F;
+        if (y >= 0 && y < this.leafDistanceLimit)
+        {
+            return y != 0 && y != this.leafDistanceLimit - 1 ? 3.0F : 2.0F;
+        }
+        else
+        {
+            return -1.0F;
+        }
     }
 
     /**
@@ -179,10 +186,18 @@ public class WorldGenBigTree extends WorldGenAbstractTree
      */
     private int getGreatestDistance(BlockPos posIn)
     {
-        int i = MathHelper.abs_int(posIn.getX());
-        int j = MathHelper.abs_int(posIn.getY());
-        int k = MathHelper.abs_int(posIn.getZ());
-        return k > i && k > j ? k : (j > i ? j : i);
+        int i = MathHelper.abs(posIn.getX());
+        int j = MathHelper.abs(posIn.getY());
+        int k = MathHelper.abs(posIn.getZ());
+
+        if (k > i && k > j)
+        {
+            return k;
+        }
+        else
+        {
+            return j > i ? j : i;
+        }
     }
 
     private BlockLog.EnumAxis getLogAxis(BlockPos p_175938_1_, BlockPos p_175938_2_)

@@ -30,8 +30,8 @@ public class BiomeMesa extends Biome
     private NoiseGeneratorPerlin pillarNoise;
     private NoiseGeneratorPerlin pillarRoofNoise;
     private NoiseGeneratorPerlin clayBandsOffsetNoise;
-    private boolean brycePillars;
-    private boolean hasForest;
+    private final boolean brycePillars;
+    private final boolean hasForest;
 
     public BiomeMesa(boolean p_i46704_1_, boolean p_i46704_2_, Biome.BiomeProperties properties)
     {
@@ -41,28 +41,31 @@ public class BiomeMesa extends Biome
         this.spawnableCreatureList.clear();
         this.topBlock = RED_SAND;
         this.fillerBlock = STAINED_HARDENED_CLAY;
-        this.theBiomeDecorator.treesPerChunk = -999;
-        this.theBiomeDecorator.deadBushPerChunk = 20;
-        this.theBiomeDecorator.reedsPerChunk = 3;
-        this.theBiomeDecorator.cactiPerChunk = 5;
-        this.theBiomeDecorator.flowersPerChunk = 0;
+        this.decorator.treesPerChunk = -999;
+        this.decorator.deadBushPerChunk = 20;
+        this.decorator.reedsPerChunk = 3;
+        this.decorator.cactiPerChunk = 5;
+        this.decorator.flowersPerChunk = 0;
         this.spawnableCreatureList.clear();
 
         if (p_i46704_2_)
         {
-            this.theBiomeDecorator.treesPerChunk = 5;
+            this.decorator.treesPerChunk = 5;
         }
     }
 
-    public WorldGenAbstractTree genBigTreeChance(Random rand)
+    /**
+     * Allocate a new BiomeDecorator for this BiomeGenBase
+     */
+    public BiomeDecorator createBiomeDecorator()
+    {
+        return new BiomeMesa.Decorator();
+    }
+
+    public WorldGenAbstractTree getRandomTreeFeature(Random rand)
     {
         /** The tree generator. */
         return TREE_FEATURE;
-    }
-
-    public void decorate(World worldIn, Random rand, BlockPos pos)
-    {
-        super.decorate(worldIn, rand, pos);
     }
 
     public void genTerrainBlocks(World worldIn, Random rand, ChunkPrimer chunkPrimerIn, int x, int z, double noiseVal)
@@ -91,7 +94,7 @@ public class BiomeMesa extends Biome
             if (d0 > 0.0D)
             {
                 double d1 = 0.001953125D;
-                double d2 = Math.abs(this.pillarRoofNoise.getValue((double)i * d1, (double)j * d1));
+                double d2 = Math.abs(this.pillarRoofNoise.getValue((double)i * 0.001953125D, (double)j * 0.001953125D));
                 d4 = d0 * d0 * 2.5D;
                 double d3 = Math.ceil(d2 * 50.0D) + 14.0D;
 
@@ -104,30 +107,31 @@ public class BiomeMesa extends Biome
             }
         }
 
-        int j1 = x & 15;
-        int k1 = z & 15;
-        int l1 = worldIn.getSeaLevel();
+        int k1 = x & 15;
+        int l1 = z & 15;
+        int i2 = worldIn.getSeaLevel();
         IBlockState iblockstate = STAINED_HARDENED_CLAY;
         IBlockState iblockstate3 = this.fillerBlock;
         int k = (int)(noiseVal / 3.0D + 3.0D + rand.nextDouble() * 0.25D);
         boolean flag = Math.cos(noiseVal / 3.0D * Math.PI) > 0.0D;
         int l = -1;
         boolean flag1 = false;
+        int i1 = 0;
 
-        for (int i1 = 255; i1 >= 0; --i1)
+        for (int j1 = 255; j1 >= 0; --j1)
         {
-            if (chunkPrimerIn.getBlockState(k1, i1, j1).getMaterial() == Material.AIR && i1 < (int)d4)
+            if (chunkPrimerIn.getBlockState(l1, j1, k1).getMaterial() == Material.AIR && j1 < (int)d4)
             {
-                chunkPrimerIn.setBlockState(k1, i1, j1, STONE);
+                chunkPrimerIn.setBlockState(l1, j1, k1, STONE);
             }
 
-            if (i1 <= rand.nextInt(5))
+            if (j1 <= rand.nextInt(5))
             {
-                chunkPrimerIn.setBlockState(k1, i1, j1, BEDROCK);
+                chunkPrimerIn.setBlockState(l1, j1, k1, BEDROCK);
             }
-            else
+            else if (i1 < 15 || this.brycePillars)
             {
-                IBlockState iblockstate1 = chunkPrimerIn.getBlockState(k1, i1, j1);
+                IBlockState iblockstate1 = chunkPrimerIn.getBlockState(l1, j1, k1);
 
                 if (iblockstate1.getMaterial() == Material.AIR)
                 {
@@ -144,65 +148,68 @@ public class BiomeMesa extends Biome
                             iblockstate = AIR;
                             iblockstate3 = STONE;
                         }
-                        else if (i1 >= l1 - 4 && i1 <= l1 + 1)
+                        else if (j1 >= i2 - 4 && j1 <= i2 + 1)
                         {
                             iblockstate = STAINED_HARDENED_CLAY;
                             iblockstate3 = this.fillerBlock;
                         }
 
-                        if (i1 < l1 && (iblockstate == null || iblockstate.getMaterial() == Material.AIR))
+                        if (j1 < i2 && (iblockstate == null || iblockstate.getMaterial() == Material.AIR))
                         {
                             iblockstate = WATER;
                         }
 
-                        l = k + Math.max(0, i1 - l1);
+                        l = k + Math.max(0, j1 - i2);
 
-                        if (i1 < l1 - 1)
+                        if (j1 >= i2 - 1)
                         {
-                            chunkPrimerIn.setBlockState(k1, i1, j1, iblockstate3);
-
-                            if (iblockstate3.getBlock() == Blocks.STAINED_HARDENED_CLAY)
-                            {
-                                chunkPrimerIn.setBlockState(k1, i1, j1, ORANGE_STAINED_HARDENED_CLAY);
-                            }
-                        }
-                        else if (this.hasForest && i1 > 86 + k * 2)
-                        {
-                            if (flag)
-                            {
-                                chunkPrimerIn.setBlockState(k1, i1, j1, COARSE_DIRT);
-                            }
-                            else
-                            {
-                                chunkPrimerIn.setBlockState(k1, i1, j1, GRASS);
-                            }
-                        }
-                        else if (i1 <= l1 + 3 + k)
-                        {
-                            chunkPrimerIn.setBlockState(k1, i1, j1, this.topBlock);
-                            flag1 = true;
-                        }
-                        else
-                        {
-                            IBlockState iblockstate2;
-
-                            if (i1 >= 64 && i1 <= 127)
+                            if (this.hasForest && j1 > 86 + k * 2)
                             {
                                 if (flag)
                                 {
-                                    iblockstate2 = HARDENED_CLAY;
+                                    chunkPrimerIn.setBlockState(l1, j1, k1, COARSE_DIRT);
                                 }
                                 else
                                 {
-                                    iblockstate2 = this.getBand(x, i1, z);
+                                    chunkPrimerIn.setBlockState(l1, j1, k1, GRASS);
                                 }
+                            }
+                            else if (j1 > i2 + 3 + k)
+                            {
+                                IBlockState iblockstate2;
+
+                                if (j1 >= 64 && j1 <= 127)
+                                {
+                                    if (flag)
+                                    {
+                                        iblockstate2 = HARDENED_CLAY;
+                                    }
+                                    else
+                                    {
+                                        iblockstate2 = this.getBand(x, j1, z);
+                                    }
+                                }
+                                else
+                                {
+                                    iblockstate2 = ORANGE_STAINED_HARDENED_CLAY;
+                                }
+
+                                chunkPrimerIn.setBlockState(l1, j1, k1, iblockstate2);
                             }
                             else
                             {
-                                iblockstate2 = ORANGE_STAINED_HARDENED_CLAY;
+                                chunkPrimerIn.setBlockState(l1, j1, k1, this.topBlock);
+                                flag1 = true;
                             }
+                        }
+                        else
+                        {
+                            chunkPrimerIn.setBlockState(l1, j1, k1, iblockstate3);
 
-                            chunkPrimerIn.setBlockState(k1, i1, j1, iblockstate2);
+                            if (iblockstate3.getBlock() == Blocks.STAINED_HARDENED_CLAY)
+                            {
+                                chunkPrimerIn.setBlockState(l1, j1, k1, ORANGE_STAINED_HARDENED_CLAY);
+                            }
                         }
                     }
                     else if (l > 0)
@@ -211,13 +218,15 @@ public class BiomeMesa extends Biome
 
                         if (flag1)
                         {
-                            chunkPrimerIn.setBlockState(k1, i1, j1, ORANGE_STAINED_HARDENED_CLAY);
+                            chunkPrimerIn.setBlockState(l1, j1, k1, ORANGE_STAINED_HARDENED_CLAY);
                         }
                         else
                         {
-                            chunkPrimerIn.setBlockState(k1, i1, j1, this.getBand(x, i1, z));
+                            chunkPrimerIn.setBlockState(l1, j1, k1, this.getBand(x, j1, z));
                         }
                     }
+
+                    ++i1;
                 }
             }
         }
@@ -287,7 +296,7 @@ public class BiomeMesa extends Biome
             int i5 = 1;
             j4 += random.nextInt(16) + 4;
 
-            for (int k1 = 0; j4 + k1 < 64 && k1 < i5; ++k1)
+            for (int k1 = 0; j4 + k1 < 64 && k1 < 1; ++k1)
             {
                 this.clayBands[j4 + k1] = STAINED_HARDENED_CLAY.withProperty(BlockColored.COLOR, EnumDyeColor.WHITE);
 
@@ -320,5 +329,22 @@ public class BiomeMesa extends Biome
     public int getGrassColorAtPos(BlockPos pos)
     {
         return 9470285;
+    }
+
+    class Decorator extends BiomeDecorator
+    {
+        private Decorator()
+        {
+        }
+
+        /**
+         * Generates ores in the current chunk
+         */
+        protected void generateOres(World worldIn, Random random)
+        {
+            super.generateOres(worldIn, random);
+            if (net.minecraftforge.event.terraingen.TerrainGen.generateOre(worldIn, random, goldGen, chunkPos, net.minecraftforge.event.terraingen.OreGenEvent.GenerateMinable.EventType.GOLD))
+            this.genStandardOre1(worldIn, random, 20, this.goldGen, 32, 80);
+        }
     }
 }

@@ -1,10 +1,10 @@
 package net.minecraft.entity.item;
 
 import com.google.common.base.Predicate;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
+import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,8 +15,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -28,7 +26,11 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.walkers.ItemStackDataLists;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Rotations;
 import net.minecraft.util.math.Vec3d;
@@ -56,11 +58,11 @@ public class EntityArmorStand extends EntityLivingBase
     {
         public boolean apply(@Nullable Entity p_apply_1_)
         {
-            return p_apply_1_ instanceof EntityMinecart && ((EntityMinecart)p_apply_1_).getType() == EntityMinecart.Type.RIDEABLE;
+            return p_apply_1_ instanceof EntityMinecart && ((EntityMinecart)p_apply_1_).canBeRidden();
         }
     };
-    private final ItemStack[] handItems;
-    private final ItemStack[] armorItems;
+    private final NonNullList<ItemStack> handItems;
+    private final NonNullList<ItemStack> armorItems;
     private boolean canInteract;
     /** After punching the stand, the cooldown before you can punch it again without breaking it. */
     public long punchCooldown;
@@ -76,8 +78,8 @@ public class EntityArmorStand extends EntityLivingBase
     public EntityArmorStand(World worldIn)
     {
         super(worldIn);
-        this.handItems = new ItemStack[2];
-        this.armorItems = new ItemStack[4];
+        this.handItems = NonNullList.<ItemStack>withSize(2, ItemStack.EMPTY);
+        this.armorItems = NonNullList.<ItemStack>withSize(4, ItemStack.EMPTY);
         this.headRotation = DEFAULT_HEAD_ROTATION;
         this.bodyRotation = DEFAULT_BODY_ROTATION;
         this.leftArmRotation = DEFAULT_LEFTARM_ROTATION;
@@ -92,6 +94,19 @@ public class EntityArmorStand extends EntityLivingBase
     {
         this(worldIn);
         this.setPosition(posX, posY, posZ);
+    }
+
+    /**
+     * Sets the width and height of the entity.
+     */
+    protected final void setSize(float width, float height)
+    {
+        double d0 = this.posX;
+        double d1 = this.posY;
+        double d2 = this.posZ;
+        float f = this.hasMarker() ? 0.0F : (this.isChild() ? 0.5F : 1.0F);
+        super.setSize(width * f, height * f);
+        this.setPosition(d0, d1, d2);
     }
 
     /**
@@ -116,46 +131,42 @@ public class EntityArmorStand extends EntityLivingBase
 
     public Iterable<ItemStack> getHeldEquipment()
     {
-        return Arrays.<ItemStack>asList(this.handItems);
+        return this.handItems;
     }
 
     public Iterable<ItemStack> getArmorInventoryList()
     {
-        return Arrays.<ItemStack>asList(this.armorItems);
+        return this.armorItems;
     }
 
-    @Nullable
     public ItemStack getItemStackFromSlot(EntityEquipmentSlot slotIn)
     {
-        ItemStack itemstack = null;
-
         switch (slotIn.getSlotType())
         {
             case HAND:
-                itemstack = this.handItems[slotIn.getIndex()];
-                break;
+                return this.handItems.get(slotIn.getIndex());
             case ARMOR:
-                itemstack = this.armorItems[slotIn.getIndex()];
+                return this.armorItems.get(slotIn.getIndex());
+            default:
+                return ItemStack.EMPTY;
         }
-
-        return itemstack;
     }
 
-    public void setItemStackToSlot(EntityEquipmentSlot slotIn, @Nullable ItemStack stack)
+    public void setItemStackToSlot(EntityEquipmentSlot slotIn, ItemStack stack)
     {
         switch (slotIn.getSlotType())
         {
             case HAND:
                 this.playEquipSound(stack);
-                this.handItems[slotIn.getIndex()] = stack;
+                this.handItems.set(slotIn.getIndex(), stack);
                 break;
             case ARMOR:
                 this.playEquipSound(stack);
-                this.armorItems[slotIn.getIndex()] = stack;
+                this.armorItems.set(slotIn.getIndex(), stack);
         }
     }
 
-    public boolean replaceItemInInventory(int inventorySlot, @Nullable ItemStack itemStackIn)
+    public boolean replaceItemInInventory(int inventorySlot, ItemStack itemStackIn)
     {
         EntityEquipmentSlot entityequipmentslot;
 
@@ -189,7 +200,7 @@ public class EntityArmorStand extends EntityLivingBase
             entityequipmentslot = EntityEquipmentSlot.FEET;
         }
 
-        if (itemStackIn != null && !EntityLiving.isItemStackInSlot(entityequipmentslot, itemStackIn) && entityequipmentslot != EntityEquipmentSlot.HEAD)
+        if (!itemStackIn.isEmpty() && !EntityLiving.isItemStackInSlot(entityequipmentslot, itemStackIn) && entityequipmentslot != EntityEquipmentSlot.HEAD)
         {
             return false;
         }
@@ -200,6 +211,11 @@ public class EntityArmorStand extends EntityLivingBase
         }
     }
 
+    public static void registerFixesArmorStand(DataFixer fixer)
+    {
+        fixer.registerWalker(FixTypes.ENTITY, new ItemStackDataLists(EntityArmorStand.class, new String[] {"ArmorItems", "HandItems"}));
+    }
+
     /**
      * (abstract) Protected helper method to write subclass entity data to NBT.
      */
@@ -208,13 +224,13 @@ public class EntityArmorStand extends EntityLivingBase
         super.writeEntityToNBT(compound);
         NBTTagList nbttaglist = new NBTTagList();
 
-        for (int i = 0; i < this.armorItems.length; ++i)
+        for (ItemStack itemstack : this.armorItems)
         {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
 
-            if (this.armorItems[i] != null)
+            if (!itemstack.isEmpty())
             {
-                this.armorItems[i].writeToNBT(nbttagcompound);
+                itemstack.writeToNBT(nbttagcompound);
             }
 
             nbttaglist.appendTag(nbttagcompound);
@@ -223,30 +239,23 @@ public class EntityArmorStand extends EntityLivingBase
         compound.setTag("ArmorItems", nbttaglist);
         NBTTagList nbttaglist1 = new NBTTagList();
 
-        for (int j = 0; j < this.handItems.length; ++j)
+        for (ItemStack itemstack1 : this.handItems)
         {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
 
-            if (this.handItems[j] != null)
+            if (!itemstack1.isEmpty())
             {
-                this.handItems[j].writeToNBT(nbttagcompound1);
+                itemstack1.writeToNBT(nbttagcompound1);
             }
 
             nbttaglist1.appendTag(nbttagcompound1);
         }
 
         compound.setTag("HandItems", nbttaglist1);
-
-        if (this.getAlwaysRenderNameTag() && (this.getCustomNameTag() == null || this.getCustomNameTag().isEmpty()))
-        {
-            compound.setBoolean("CustomNameVisible", this.getAlwaysRenderNameTag());
-        }
-
         compound.setBoolean("Invisible", this.isInvisible());
         compound.setBoolean("Small", this.isSmall());
         compound.setBoolean("ShowArms", this.getShowArms());
         compound.setInteger("DisabledSlots", this.disabledSlots);
-        compound.setBoolean("NoGravity", this.hasNoGravity());
         compound.setBoolean("NoBasePlate", this.hasNoBasePlate());
 
         if (this.hasMarker())
@@ -268,9 +277,9 @@ public class EntityArmorStand extends EntityLivingBase
         {
             NBTTagList nbttaglist = compound.getTagList("ArmorItems", 10);
 
-            for (int i = 0; i < this.armorItems.length; ++i)
+            for (int i = 0; i < this.armorItems.size(); ++i)
             {
-                this.armorItems[i] = ItemStack.loadItemStackFromNBT(nbttaglist.getCompoundTagAt(i));
+                this.armorItems.set(i, new ItemStack(nbttaglist.getCompoundTagAt(i)));
             }
         }
 
@@ -278,9 +287,9 @@ public class EntityArmorStand extends EntityLivingBase
         {
             NBTTagList nbttaglist1 = compound.getTagList("HandItems", 10);
 
-            for (int j = 0; j < this.handItems.length; ++j)
+            for (int j = 0; j < this.handItems.size(); ++j)
             {
-                this.handItems[j] = ItemStack.loadItemStackFromNBT(nbttaglist1.getCompoundTagAt(j));
+                this.handItems.set(j, new ItemStack(nbttaglist1.getCompoundTagAt(j)));
             }
         }
 
@@ -288,7 +297,6 @@ public class EntityArmorStand extends EntityLivingBase
         this.setSmall(compound.getBoolean("Small"));
         this.setShowArms(compound.getBoolean("ShowArms"));
         this.disabledSlots = compound.getInteger("DisabledSlots");
-        this.setNoGravity(compound.getBoolean("NoGravity"));
         this.setNoBasePlate(compound.getBoolean("NoBasePlate"));
         this.setMarker(compound.getBoolean("Marker"));
         this.wasMarker = !this.hasMarker();
@@ -367,13 +375,13 @@ public class EntityArmorStand extends EntityLivingBase
 
     protected void collideWithNearbyEntities()
     {
-        List<Entity> list = this.worldObj.getEntitiesInAABBexcluding(this, this.getEntityBoundingBox(), IS_RIDEABLE_MINECART);
+        List<Entity> list = this.world.getEntitiesInAABBexcluding(this, this.getEntityBoundingBox(), IS_RIDEABLE_MINECART);
 
         for (int i = 0; i < list.size(); ++i)
         {
-            Entity entity = (Entity)list.get(i);
+            Entity entity = list.get(i);
 
-            if (this.getDistanceSqToEntity(entity) <= 0.2D)
+            if (this.getDistanceSq(entity) <= 0.2D)
             {
                 entity.applyEntityCollision(this);
             }
@@ -383,87 +391,79 @@ public class EntityArmorStand extends EntityLivingBase
     /**
      * Applies the given player interaction to this Entity.
      */
-    public EnumActionResult applyPlayerInteraction(EntityPlayer player, Vec3d vec, @Nullable ItemStack stack, EnumHand hand)
+    public EnumActionResult applyPlayerInteraction(EntityPlayer player, Vec3d vec, EnumHand hand)
     {
-        if (this.hasMarker())
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (!this.hasMarker() && itemstack.getItem() != Items.NAME_TAG)
         {
-            return EnumActionResult.PASS;
-        }
-        else if (!this.worldObj.isRemote && !player.isSpectator())
-        {
-            EntityEquipmentSlot entityequipmentslot = EntityEquipmentSlot.MAINHAND;
-            boolean flag = stack != null;
-            Item item = flag ? stack.getItem() : null;
-
-            if (flag && item instanceof ItemArmor)
+            if (!this.world.isRemote && !player.isSpectator())
             {
-                entityequipmentslot = ((ItemArmor)item).armorType;
-            }
+                EntityEquipmentSlot entityequipmentslot = EntityLiving.getSlotForItemStack(itemstack);
 
-            if (flag && (item == Items.SKULL || item == Item.getItemFromBlock(Blocks.PUMPKIN)))
-            {
-                entityequipmentslot = EntityEquipmentSlot.HEAD;
-            }
-
-            double d0 = 0.1D;
-            double d1 = 0.9D;
-            double d2 = 0.4D;
-            double d3 = 1.6D;
-            EntityEquipmentSlot entityequipmentslot1 = EntityEquipmentSlot.MAINHAND;
-            boolean flag1 = this.isSmall();
-            double d4 = flag1 ? vec.yCoord * 2.0D : vec.yCoord;
-
-            if (d4 >= 0.1D && d4 < 0.1D + (flag1 ? 0.8D : 0.45D) && this.getItemStackFromSlot(EntityEquipmentSlot.FEET) != null)
-            {
-                entityequipmentslot1 = EntityEquipmentSlot.FEET;
-            }
-            else if (d4 >= 0.9D + (flag1 ? 0.3D : 0.0D) && d4 < 0.9D + (flag1 ? 1.0D : 0.7D) && this.getItemStackFromSlot(EntityEquipmentSlot.CHEST) != null)
-            {
-                entityequipmentslot1 = EntityEquipmentSlot.CHEST;
-            }
-            else if (d4 >= 0.4D && d4 < 0.4D + (flag1 ? 1.0D : 0.8D) && this.getItemStackFromSlot(EntityEquipmentSlot.LEGS) != null)
-            {
-                entityequipmentslot1 = EntityEquipmentSlot.LEGS;
-            }
-            else if (d4 >= 1.6D && this.getItemStackFromSlot(EntityEquipmentSlot.HEAD) != null)
-            {
-                entityequipmentslot1 = EntityEquipmentSlot.HEAD;
-            }
-
-            boolean flag2 = this.getItemStackFromSlot(entityequipmentslot1) != null;
-
-            if (this.isDisabled(entityequipmentslot1) || this.isDisabled(entityequipmentslot))
-            {
-                entityequipmentslot1 = entityequipmentslot;
-
-                if (this.isDisabled(entityequipmentslot))
+                if (itemstack.isEmpty())
                 {
-                    return EnumActionResult.FAIL;
-                }
-            }
+                    EntityEquipmentSlot entityequipmentslot1 = this.getClickedSlot(vec);
+                    EntityEquipmentSlot entityequipmentslot2 = this.isDisabled(entityequipmentslot1) ? entityequipmentslot : entityequipmentslot1;
 
-            if (flag && entityequipmentslot == EntityEquipmentSlot.MAINHAND && !this.getShowArms())
-            {
-                return EnumActionResult.FAIL;
+                    if (this.hasItemInSlot(entityequipmentslot2))
+                    {
+                        this.swapItem(player, entityequipmentslot2, itemstack, hand);
+                    }
+                }
+                else
+                {
+                    if (this.isDisabled(entityequipmentslot))
+                    {
+                        return EnumActionResult.FAIL;
+                    }
+
+                    if (entityequipmentslot.getSlotType() == EntityEquipmentSlot.Type.HAND && !this.getShowArms())
+                    {
+                        return EnumActionResult.FAIL;
+                    }
+
+                    this.swapItem(player, entityequipmentslot, itemstack, hand);
+                }
+
+                return EnumActionResult.SUCCESS;
             }
             else
             {
-                if (flag)
-                {
-                    this.swapItem(player, entityequipmentslot, stack, hand);
-                }
-                else if (flag2)
-                {
-                    this.swapItem(player, entityequipmentslot1, stack, hand);
-                }
-
                 return EnumActionResult.SUCCESS;
             }
         }
         else
         {
-            return EnumActionResult.SUCCESS;
+            return EnumActionResult.PASS;
         }
+    }
+
+    protected EntityEquipmentSlot getClickedSlot(Vec3d p_190772_1_)
+    {
+        EntityEquipmentSlot entityequipmentslot = EntityEquipmentSlot.MAINHAND;
+        boolean flag = this.isSmall();
+        double d0 = flag ? p_190772_1_.y * 2.0D : p_190772_1_.y;
+        EntityEquipmentSlot entityequipmentslot1 = EntityEquipmentSlot.FEET;
+
+        if (d0 >= 0.1D && d0 < 0.1D + (flag ? 0.8D : 0.45D) && this.hasItemInSlot(entityequipmentslot1))
+        {
+            entityequipmentslot = EntityEquipmentSlot.FEET;
+        }
+        else if (d0 >= 0.9D + (flag ? 0.3D : 0.0D) && d0 < 0.9D + (flag ? 1.0D : 0.7D) && this.hasItemInSlot(EntityEquipmentSlot.CHEST))
+        {
+            entityequipmentslot = EntityEquipmentSlot.CHEST;
+        }
+        else if (d0 >= 0.4D && d0 < 0.4D + (flag ? 1.0D : 0.8D) && this.hasItemInSlot(EntityEquipmentSlot.LEGS))
+        {
+            entityequipmentslot = EntityEquipmentSlot.LEGS;
+        }
+        else if (d0 >= 1.6D && this.hasItemInSlot(EntityEquipmentSlot.HEAD))
+        {
+            entityequipmentslot = EntityEquipmentSlot.HEAD;
+        }
+
+        return entityequipmentslot;
     }
 
     private boolean isDisabled(EntityEquipmentSlot slotIn)
@@ -471,28 +471,28 @@ public class EntityArmorStand extends EntityLivingBase
         return (this.disabledSlots & 1 << slotIn.getSlotIndex()) != 0;
     }
 
-    private void swapItem(EntityPlayer player, EntityEquipmentSlot p_184795_2_, @Nullable ItemStack p_184795_3_, EnumHand hand)
+    private void swapItem(EntityPlayer player, EntityEquipmentSlot p_184795_2_, ItemStack p_184795_3_, EnumHand hand)
     {
         ItemStack itemstack = this.getItemStackFromSlot(p_184795_2_);
 
-        if (itemstack == null || (this.disabledSlots & 1 << p_184795_2_.getSlotIndex() + 8) == 0)
+        if (itemstack.isEmpty() || (this.disabledSlots & 1 << p_184795_2_.getSlotIndex() + 8) == 0)
         {
-            if (itemstack != null || (this.disabledSlots & 1 << p_184795_2_.getSlotIndex() + 16) == 0)
+            if (!itemstack.isEmpty() || (this.disabledSlots & 1 << p_184795_2_.getSlotIndex() + 16) == 0)
             {
-                if (player.capabilities.isCreativeMode && (itemstack == null || itemstack.getItem() == Item.getItemFromBlock(Blocks.AIR)) && p_184795_3_ != null)
+                if (player.capabilities.isCreativeMode && itemstack.isEmpty() && !p_184795_3_.isEmpty())
                 {
                     ItemStack itemstack2 = p_184795_3_.copy();
-                    itemstack2.stackSize = 1;
+                    itemstack2.setCount(1);
                     this.setItemStackToSlot(p_184795_2_, itemstack2);
                 }
-                else if (p_184795_3_ != null && p_184795_3_.stackSize > 1)
+                else if (!p_184795_3_.isEmpty() && p_184795_3_.getCount() > 1)
                 {
-                    if (itemstack == null)
+                    if (itemstack.isEmpty())
                     {
                         ItemStack itemstack1 = p_184795_3_.copy();
-                        itemstack1.stackSize = 1;
+                        itemstack1.setCount(1);
                         this.setItemStackToSlot(p_184795_2_, itemstack1);
-                        --p_184795_3_.stackSize;
+                        p_184795_3_.shrink(1);
                     }
                 }
                 else
@@ -509,9 +509,9 @@ public class EntityArmorStand extends EntityLivingBase
      */
     public boolean attackEntityFrom(DamageSource source, float amount)
     {
-        if (!this.worldObj.isRemote && !this.isDead)
+        if (!this.world.isRemote && !this.isDead)
         {
-            if (DamageSource.outOfWorld.equals(source))
+            if (DamageSource.OUT_OF_WORLD.equals(source))
             {
                 this.setDead();
                 return false;
@@ -524,7 +524,7 @@ public class EntityArmorStand extends EntityLivingBase
                     this.setDead();
                     return false;
                 }
-                else if (DamageSource.inFire.equals(source))
+                else if (DamageSource.IN_FIRE.equals(source))
                 {
                     if (this.isBurning())
                     {
@@ -537,7 +537,7 @@ public class EntityArmorStand extends EntityLivingBase
 
                     return false;
                 }
-                else if (DamageSource.onFire.equals(source) && this.getHealth() > 0.5F)
+                else if (DamageSource.ON_FIRE.equals(source) && this.getHealth() > 0.5F)
                 {
                     this.damageArmorStand(4.0F);
                     return false;
@@ -553,28 +553,29 @@ public class EntityArmorStand extends EntityLivingBase
                     }
                     else
                     {
-                        if (source.getSourceOfDamage() instanceof EntityArrow)
+                        if (source.getImmediateSource() instanceof EntityArrow)
                         {
-                            source.getSourceOfDamage().setDead();
+                            source.getImmediateSource().setDead();
                         }
 
-                        if (source.getEntity() instanceof EntityPlayer && !((EntityPlayer)source.getEntity()).capabilities.allowEdit)
+                        if (source.getTrueSource() instanceof EntityPlayer && !((EntityPlayer)source.getTrueSource()).capabilities.allowEdit)
                         {
                             return false;
                         }
                         else if (source.isCreativePlayer())
                         {
+                            this.playBrokenSound();
                             this.playParticles();
                             this.setDead();
                             return false;
                         }
                         else
                         {
-                            long i = this.worldObj.getTotalWorldTime();
+                            long i = this.world.getTotalWorldTime();
 
                             if (i - this.punchCooldown > 5L && !flag)
                             {
-                                this.worldObj.setEntityState(this, (byte)32);
+                                this.world.setEntityState(this, (byte)32);
                                 this.punchCooldown = i;
                             }
                             else
@@ -600,15 +601,18 @@ public class EntityArmorStand extends EntityLivingBase
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @SideOnly(Side.CLIENT)
     public void handleStatusUpdate(byte id)
     {
         if (id == 32)
         {
-            if (this.worldObj.isRemote)
+            if (this.world.isRemote)
             {
-                this.worldObj.playSound(this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ARMORSTAND_HIT, this.getSoundCategory(), 0.3F, 1.0F, false);
-                this.punchCooldown = this.worldObj.getTotalWorldTime();
+                this.world.playSound(this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ARMORSTAND_HIT, this.getSoundCategory(), 0.3F, 1.0F, false);
+                this.punchCooldown = this.world.getTotalWorldTime();
             }
         }
         else
@@ -636,9 +640,9 @@ public class EntityArmorStand extends EntityLivingBase
 
     private void playParticles()
     {
-        if (this.worldObj instanceof WorldServer)
+        if (this.world instanceof WorldServer)
         {
-            ((WorldServer)this.worldObj).spawnParticle(EnumParticleTypes.BLOCK_DUST, this.posX, this.posY + (double)this.height / 1.5D, this.posZ, 10, (double)(this.width / 4.0F), (double)(this.height / 4.0F), (double)(this.width / 4.0F), 0.05D, new int[] {Block.getStateId(Blocks.PLANKS.getDefaultState())});
+            ((WorldServer)this.world).spawnParticle(EnumParticleTypes.BLOCK_DUST, this.posX, this.posY + (double)this.height / 1.5D, this.posZ, 10, (double)(this.width / 4.0F), (double)(this.height / 4.0F), (double)(this.width / 4.0F), 0.05D, Block.getStateId(Blocks.PLANKS.getDefaultState()));
         }
     }
 
@@ -660,39 +664,40 @@ public class EntityArmorStand extends EntityLivingBase
 
     private void dropBlock()
     {
-        Block.spawnAsEntity(this.worldObj, new BlockPos(this), new ItemStack(Items.ARMOR_STAND));
+        Block.spawnAsEntity(this.world, new BlockPos(this), new ItemStack(Items.ARMOR_STAND));
         this.dropContents();
     }
 
     private void dropContents()
     {
-        this.worldObj.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ARMORSTAND_BREAK, this.getSoundCategory(), 1.0F, 1.0F);
+        this.playBrokenSound();
 
-        for (int i = 0; i < this.handItems.length; ++i)
+        for (int i = 0; i < this.handItems.size(); ++i)
         {
-            if (this.handItems[i] != null && this.handItems[i].stackSize > 0)
-            {
-                if (this.handItems[i] != null)
-                {
-                    Block.spawnAsEntity(this.worldObj, (new BlockPos(this)).up(), this.handItems[i]);
-                }
+            ItemStack itemstack = this.handItems.get(i);
 
-                this.handItems[i] = null;
+            if (!itemstack.isEmpty())
+            {
+                Block.spawnAsEntity(this.world, (new BlockPos(this)).up(), itemstack);
+                this.handItems.set(i, ItemStack.EMPTY);
             }
         }
 
-        for (int j = 0; j < this.armorItems.length; ++j)
+        for (int j = 0; j < this.armorItems.size(); ++j)
         {
-            if (this.armorItems[j] != null && this.armorItems[j].stackSize > 0)
-            {
-                if (this.armorItems[j] != null)
-                {
-                    Block.spawnAsEntity(this.worldObj, (new BlockPos(this)).up(), this.armorItems[j]);
-                }
+            ItemStack itemstack1 = this.armorItems.get(j);
 
-                this.armorItems[j] = null;
+            if (!itemstack1.isEmpty())
+            {
+                Block.spawnAsEntity(this.world, (new BlockPos(this)).up(), itemstack1);
+                this.armorItems.set(j, ItemStack.EMPTY);
             }
         }
+    }
+
+    private void playBrokenSound()
+    {
+        this.world.playSound((EntityPlayer)null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ARMORSTAND_BREAK, this.getSoundCategory(), 1.0F, 1.0F);
     }
 
     protected float updateDistance(float p_110146_1_, float p_110146_2_)
@@ -715,15 +720,30 @@ public class EntityArmorStand extends EntityLivingBase
         return this.hasMarker() ? 0.0D : 0.10000000149011612D;
     }
 
-    /**
-     * Moves the entity based on the specified heading.
-     */
-    public void moveEntityWithHeading(float strafe, float forward)
+    public void travel(float strafe, float vertical, float forward)
     {
         if (!this.hasNoGravity())
         {
-            super.moveEntityWithHeading(strafe, forward);
+            super.travel(strafe, vertical, forward);
         }
+    }
+
+    /**
+     * Set the render yaw offset
+     */
+    public void setRenderYawOffset(float offset)
+    {
+        this.prevRenderYawOffset = this.prevRotationYaw = offset;
+        this.prevRotationYawHead = this.rotationYawHead = offset;
+    }
+
+    /**
+     * Sets the head's yaw rotation of the entity.
+     */
+    public void setRotationYawHead(float rotation)
+    {
+        this.prevRenderYawOffset = this.prevRotationYaw = rotation;
+        this.prevRotationYawHead = this.rotationYawHead = rotation;
     }
 
     /**
@@ -776,41 +796,24 @@ public class EntityArmorStand extends EntityLivingBase
 
         boolean flag = this.hasMarker();
 
-        if (!this.wasMarker && flag)
+        if (this.wasMarker != flag)
         {
-            this.updateBoundingBox(false);
-            this.preventEntitySpawning = false;
+            this.updateBoundingBox(flag);
+            this.preventEntitySpawning = !flag;
+            this.wasMarker = flag;
         }
-        else
-        {
-            if (!this.wasMarker || flag)
-            {
-                return;
-            }
-
-            this.updateBoundingBox(true);
-            this.preventEntitySpawning = true;
-        }
-
-        this.wasMarker = flag;
     }
 
     private void updateBoundingBox(boolean p_181550_1_)
     {
-        double d0 = this.posX;
-        double d1 = this.posY;
-        double d2 = this.posZ;
-
         if (p_181550_1_)
-        {
-            this.setSize(0.5F, 1.975F);
-        }
-        else
         {
             this.setSize(0.0F, 0.0F);
         }
-
-        this.setPosition(d0, d1, d2);
+        else
+        {
+            this.setSize(0.5F, 1.975F);
+        }
     }
 
     /**
@@ -849,24 +852,20 @@ public class EntityArmorStand extends EntityLivingBase
         return this.isInvisible();
     }
 
+    public EnumPushReaction getPushReaction()
+    {
+        return this.hasMarker() ? EnumPushReaction.IGNORE : super.getPushReaction();
+    }
+
     private void setSmall(boolean small)
     {
         this.dataManager.set(STATUS, Byte.valueOf(this.setBit(((Byte)this.dataManager.get(STATUS)).byteValue(), 1, small)));
+        this.setSize(0.5F, 1.975F);
     }
 
     public boolean isSmall()
     {
         return (((Byte)this.dataManager.get(STATUS)).byteValue() & 1) != 0;
-    }
-
-    private void setNoGravity(boolean noGravity)
-    {
-        this.dataManager.set(STATUS, Byte.valueOf(this.setBit(((Byte)this.dataManager.get(STATUS)).byteValue(), 2, noGravity)));
-    }
-
-    public boolean hasNoGravity()
-    {
-        return (((Byte)this.dataManager.get(STATUS)).byteValue() & 2) != 0;
     }
 
     private void setShowArms(boolean showArms)
@@ -895,6 +894,7 @@ public class EntityArmorStand extends EntityLivingBase
     private void setMarker(boolean marker)
     {
         this.dataManager.set(STATUS, Byte.valueOf(this.setBit(((Byte)this.dataManager.get(STATUS)).byteValue(), 16, marker)));
+        this.setSize(0.5F, 1.975F);
     }
 
     /**
@@ -1009,7 +1009,7 @@ public class EntityArmorStand extends EntityLivingBase
     }
 
     @Nullable
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_ARMORSTAND_HIT;
     }
@@ -1031,6 +1031,21 @@ public class EntityArmorStand extends EntityLivingBase
      * Returns false if the entity is an armor stand. Returns true for all other entity living bases.
      */
     public boolean canBeHitWithPotion()
+    {
+        return false;
+    }
+
+    public void notifyDataManagerChange(DataParameter<?> key)
+    {
+        if (STATUS.equals(key))
+        {
+            this.setSize(0.5F, 1.975F);
+        }
+
+        super.notifyDataManagerChange(key);
+    }
+
+    public boolean attackable()
     {
         return false;
     }

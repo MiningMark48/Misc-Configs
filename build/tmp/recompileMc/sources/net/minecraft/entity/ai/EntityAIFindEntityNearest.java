@@ -16,11 +16,11 @@ import org.apache.logging.log4j.Logger;
 public class EntityAIFindEntityNearest extends EntityAIBase
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private EntityLiving mob;
+    private final EntityLiving mob;
     private final Predicate<EntityLivingBase> predicate;
     private final EntityAINearestAttackableTarget.Sorter sorter;
     private EntityLivingBase target;
-    private Class <? extends EntityLivingBase > classToCheck;
+    private final Class <? extends EntityLivingBase > classToCheck;
 
     public EntityAIFindEntityNearest(EntityLiving mobIn, Class <? extends EntityLivingBase > p_i45884_2_)
     {
@@ -43,7 +43,14 @@ public class EntityAIFindEntityNearest extends EntityAIBase
                     d0 *= 0.800000011920929D;
                 }
 
-                return p_apply_1_.isInvisible() ? false : ((double)p_apply_1_.getDistanceToEntity(EntityAIFindEntityNearest.this.mob) > d0 ? false : EntityAITarget.isSuitableTarget(EntityAIFindEntityNearest.this.mob, p_apply_1_, false, true));
+                if (p_apply_1_.isInvisible())
+                {
+                    return false;
+                }
+                else
+                {
+                    return (double)p_apply_1_.getDistance(EntityAIFindEntityNearest.this.mob) > d0 ? false : EntityAITarget.isSuitableTarget(EntityAIFindEntityNearest.this.mob, p_apply_1_, false, true);
+                }
             }
         };
         this.sorter = new EntityAINearestAttackableTarget.Sorter(mobIn);
@@ -55,7 +62,7 @@ public class EntityAIFindEntityNearest extends EntityAIBase
     public boolean shouldExecute()
     {
         double d0 = this.getFollowRange();
-        List<EntityLivingBase> list = this.mob.worldObj.<EntityLivingBase>getEntitiesWithinAABB(this.classToCheck, this.mob.getEntityBoundingBox().expand(d0, 4.0D, d0), this.predicate);
+        List<EntityLivingBase> list = this.mob.world.<EntityLivingBase>getEntitiesWithinAABB(this.classToCheck, this.mob.getEntityBoundingBox().grow(d0, 4.0D, d0), this.predicate);
         Collections.sort(list, this.sorter);
 
         if (list.isEmpty())
@@ -64,7 +71,7 @@ public class EntityAIFindEntityNearest extends EntityAIBase
         }
         else
         {
-            this.target = (EntityLivingBase)list.get(0);
+            this.target = list.get(0);
             return true;
         }
     }
@@ -72,7 +79,7 @@ public class EntityAIFindEntityNearest extends EntityAIBase
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
         EntityLivingBase entitylivingbase = this.mob.getAttackTarget();
 
@@ -87,7 +94,15 @@ public class EntityAIFindEntityNearest extends EntityAIBase
         else
         {
             double d0 = this.getFollowRange();
-            return this.mob.getDistanceSqToEntity(entitylivingbase) > d0 * d0 ? false : !(entitylivingbase instanceof EntityPlayerMP) || !((EntityPlayerMP)entitylivingbase).interactionManager.isCreative();
+
+            if (this.mob.getDistanceSq(entitylivingbase) > d0 * d0)
+            {
+                return false;
+            }
+            else
+            {
+                return !(entitylivingbase instanceof EntityPlayerMP) || !((EntityPlayerMP)entitylivingbase).interactionManager.isCreative();
+            }
         }
     }
 
@@ -101,7 +116,7 @@ public class EntityAIFindEntityNearest extends EntityAIBase
     }
 
     /**
-     * Resets the task
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     public void resetTask()
     {

@@ -1,5 +1,6 @@
 package net.minecraft.pathfinding;
 
+import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.Vec3d;
@@ -44,6 +45,7 @@ public class Path
     /**
      * returns the last PathPoint of the Array
      */
+    @Nullable
     public PathPoint getFinalPathPoint()
     {
         return this.pathLength > 0 ? this.points[this.pathLength - 1] : null;
@@ -87,9 +89,9 @@ public class Path
      */
     public Vec3d getVectorFromIndex(Entity entityIn, int index)
     {
-        double d0 = (double)this.points[index].xCoord + (double)((int)(entityIn.width + 1.0F)) * 0.5D;
-        double d1 = (double)this.points[index].yCoord;
-        double d2 = (double)this.points[index].zCoord + (double)((int)(entityIn.width + 1.0F)) * 0.5D;
+        double d0 = (double)this.points[index].x + (double)((int)(entityIn.width + 1.0F)) * 0.5D;
+        double d1 = (double)this.points[index].y;
+        double d2 = (double)this.points[index].z + (double)((int)(entityIn.width + 1.0F)) * 0.5D;
         return new Vec3d(d0, d1, d2);
     }
 
@@ -104,7 +106,7 @@ public class Path
     public Vec3d getCurrentPos()
     {
         PathPoint pathpoint = this.points[this.currentPathIndex];
-        return new Vec3d((double)pathpoint.xCoord, (double)pathpoint.yCoord, (double)pathpoint.zCoord);
+        return new Vec3d((double)pathpoint.x, (double)pathpoint.y, (double)pathpoint.z);
     }
 
     /**
@@ -124,7 +126,7 @@ public class Path
         {
             for (int i = 0; i < this.points.length; ++i)
             {
-                if (this.points[i].xCoord != pathentityIn.points[i].xCoord || this.points[i].yCoord != pathentityIn.points[i].yCoord || this.points[i].zCoord != pathentityIn.points[i].zCoord)
+                if (this.points[i].x != pathentityIn.points[i].x || this.points[i].y != pathentityIn.points[i].y || this.points[i].z != pathentityIn.points[i].z)
                 {
                     return false;
                 }
@@ -134,13 +136,22 @@ public class Path
         }
     }
 
-    /**
-     * Returns true if the final PathPoint in the PathEntity is equal to Vec3D coords.
-     */
-    public boolean isDestinationSame(Vec3d vec)
+    @SideOnly(Side.CLIENT)
+    public PathPoint[] getOpenSet()
     {
-        PathPoint pathpoint = this.getFinalPathPoint();
-        return pathpoint == null ? false : pathpoint.xCoord == (int)vec.xCoord && pathpoint.zCoord == (int)vec.zCoord;
+        return this.openSet;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public PathPoint[] getClosedSet()
+    {
+        return this.closedSet;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public PathPoint getTarget()
+    {
+        return this.target;
     }
 
     @SideOnly(Side.CLIENT)

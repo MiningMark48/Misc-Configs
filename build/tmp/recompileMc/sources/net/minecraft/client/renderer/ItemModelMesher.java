@@ -45,7 +45,7 @@ public class ItemModelMesher
 
         if (ibakedmodel == null)
         {
-            ItemMeshDefinition itemmeshdefinition = (ItemMeshDefinition)this.shapers.get(item);
+            ItemMeshDefinition itemmeshdefinition = this.shapers.get(item);
 
             if (itemmeshdefinition != null)
             {
@@ -69,7 +69,7 @@ public class ItemModelMesher
     @Nullable
     protected IBakedModel getItemModel(Item item, int meta)
     {
-        return (IBakedModel)this.simpleShapesCache.get(Integer.valueOf(this.getIndex(item, meta)));
+        return this.simpleShapesCache.get(Integer.valueOf(this.getIndex(item, meta)));
     }
 
     private int getIndex(Item item, int meta)
@@ -99,7 +99,7 @@ public class ItemModelMesher
 
         for (Entry<Integer, ModelResourceLocation> entry : this.simpleShapes.entrySet())
         {
-            this.simpleShapesCache.put(entry.getKey(), this.modelManager.getModel((ModelResourceLocation)entry.getValue()));
+            this.simpleShapesCache.put(entry.getKey(), this.modelManager.getModel(entry.getValue()));
         }
     }
 }

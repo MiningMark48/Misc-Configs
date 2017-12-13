@@ -1,8 +1,9 @@
 package net.minecraft.client.multiplayer;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import javax.annotation.Nullable;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -23,6 +24,7 @@ public class ChunkProviderClient implements IChunkProvider
      * coordinates.
      */
     private final Chunk blankChunk;
+    /** The mapping between ChunkCoordinates and Chunks that ChunkProviderClient maintains. */
     private final Long2ObjectMap<Chunk> chunkMapping = new Long2ObjectOpenHashMap<Chunk>(8192)
     {
         protected void rehash(int p_rehash_1_)
@@ -34,12 +36,12 @@ public class ChunkProviderClient implements IChunkProvider
         }
     };
     /** Reference to the World object. */
-    private final World worldObj;
+    private final World world;
 
     public ChunkProviderClient(World worldIn)
     {
         this.blankChunk = new EmptyChunk(worldIn, 0, 0);
-        this.worldObj = worldIn;
+        this.world = worldIn;
     }
 
     /**
@@ -52,16 +54,16 @@ public class ChunkProviderClient implements IChunkProvider
 
         if (!chunk.isEmpty())
         {
-            chunk.onChunkUnload();
+            chunk.onUnload();
         }
 
-        this.chunkMapping.remove(ChunkPos.chunkXZ2Int(x, z));
+        this.chunkMapping.remove(ChunkPos.asLong(x, z));
     }
 
     @Nullable
     public Chunk getLoadedChunk(int x, int z)
     {
-        return (Chunk)this.chunkMapping.get(ChunkPos.chunkXZ2Int(x, z));
+        return (Chunk)this.chunkMapping.get(ChunkPos.asLong(x, z));
     }
 
     /**
@@ -69,33 +71,35 @@ public class ChunkProviderClient implements IChunkProvider
      */
     public Chunk loadChunk(int chunkX, int chunkZ)
     {
-        Chunk chunk = new Chunk(this.worldObj, chunkX, chunkZ);
-        this.chunkMapping.put(ChunkPos.chunkXZ2Int(chunkX, chunkZ), chunk);
+        Chunk chunk = new Chunk(this.world, chunkX, chunkZ);
+        this.chunkMapping.put(ChunkPos.asLong(chunkX, chunkZ), chunk);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(chunk));
-        chunk.setChunkLoaded(true);
+        chunk.markLoaded(true);
         return chunk;
     }
 
     public Chunk provideChunk(int x, int z)
     {
-        return (Chunk)Objects.firstNonNull(this.getLoadedChunk(x, z), this.blankChunk);
+        return (Chunk)MoreObjects.firstNonNull(this.getLoadedChunk(x, z), this.blankChunk);
     }
 
     /**
      * Unloads chunks that are marked to be unloaded. This is not guaranteed to unload every such chunk.
      */
-    public boolean unloadQueuedChunks()
+    public boolean tick()
     {
         long i = System.currentTimeMillis();
+        ObjectIterator objectiterator = this.chunkMapping.values().iterator();
 
-        for (Chunk chunk : this.chunkMapping.values())
+        while (objectiterator.hasNext())
         {
+            Chunk chunk = (Chunk)objectiterator.next();
             chunk.onTick(System.currentTimeMillis() - i > 5L);
         }
 
         if (System.currentTimeMillis() - i > 100L)
         {
-            LOGGER.info("Warning: Clientside chunk ticking took {} ms", new Object[] {Long.valueOf(System.currentTimeMillis() - i)});
+            LOGGER.info("Warning: Clientside chunk ticking took {} ms", (long)(System.currentTimeMillis() - i));
         }
 
         return false;
@@ -107,5 +111,10 @@ public class ChunkProviderClient implements IChunkProvider
     public String makeString()
     {
         return "MultiplayerChunkCache: " + this.chunkMapping.size() + ", " + this.chunkMapping.size();
+    }
+
+    public boolean isChunkGeneratedAt(int x, int z)
+    {
+        return this.chunkMapping.containsKey(ChunkPos.asLong(x, z));
     }
 }

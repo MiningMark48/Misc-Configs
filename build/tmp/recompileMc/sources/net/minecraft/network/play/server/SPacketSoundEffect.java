@@ -6,7 +6,6 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.Validate;
@@ -19,7 +18,7 @@ public class SPacketSoundEffect implements Packet<INetHandlerPlayClient>
     private int posY;
     private int posZ;
     private float soundVolume;
-    private int soundPitch;
+    private float soundPitch;
 
     public SPacketSoundEffect()
     {
@@ -27,15 +26,14 @@ public class SPacketSoundEffect implements Packet<INetHandlerPlayClient>
 
     public SPacketSoundEffect(SoundEvent soundIn, SoundCategory categoryIn, double xIn, double yIn, double zIn, float volumeIn, float pitchIn)
     {
-        Validate.notNull(soundIn, "sound", new Object[0]);
+        Validate.notNull(soundIn, "sound");
         this.sound = soundIn;
         this.category = categoryIn;
         this.posX = (int)(xIn * 8.0D);
         this.posY = (int)(yIn * 8.0D);
         this.posZ = (int)(zIn * 8.0D);
         this.soundVolume = volumeIn;
-        this.soundPitch = (int)(pitchIn * 63.0F);
-        pitchIn = MathHelper.clamp_float(pitchIn, 0.0F, 255.0F);
+        this.soundPitch = pitchIn;
     }
 
     /**
@@ -43,13 +41,13 @@ public class SPacketSoundEffect implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.sound = (SoundEvent)SoundEvent.REGISTRY.getObjectById(buf.readVarIntFromBuffer());
+        this.sound = SoundEvent.REGISTRY.getObjectById(buf.readVarInt());
         this.category = (SoundCategory)buf.readEnumValue(SoundCategory.class);
         this.posX = buf.readInt();
         this.posY = buf.readInt();
         this.posZ = buf.readInt();
         this.soundVolume = buf.readFloat();
-        this.soundPitch = buf.readUnsignedByte();
+        this.soundPitch = buf.readFloat();
     }
 
     /**
@@ -57,13 +55,13 @@ public class SPacketSoundEffect implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(SoundEvent.REGISTRY.getIDForObject(this.sound));
+        buf.writeVarInt(SoundEvent.REGISTRY.getIDForObject(this.sound));
         buf.writeEnumValue(this.category);
         buf.writeInt(this.posX);
         buf.writeInt(this.posY);
         buf.writeInt(this.posZ);
         buf.writeFloat(this.soundVolume);
-        buf.writeByte(this.soundPitch);
+        buf.writeFloat(this.soundPitch);
     }
 
     @SideOnly(Side.CLIENT)
@@ -113,6 +111,6 @@ public class SPacketSoundEffect implements Packet<INetHandlerPlayClient>
     @SideOnly(Side.CLIENT)
     public float getPitch()
     {
-        return (float)this.soundPitch / 63.0F;
+        return this.soundPitch;
     }
 }

@@ -13,6 +13,6 @@ public class WorldProviderSurface extends WorldProvider
      */
     public boolean canDropChunk(int x, int z)
     {
-        return !this.worldObj.isSpawnChunk(x, z) || !this.worldObj.provider.getDimensionType().shouldLoadSpawn();
+        return !this.world.isSpawnChunk(x, z) || !this.world.provider.getDimensionType().shouldLoadSpawn();
     }
 }

@@ -55,9 +55,9 @@ public class StateMap extends StateMapperBase
         return new ModelResourceLocation(s, this.getPropertyString(map));
     }
 
-    private <T extends Comparable<T>> String removeName(IProperty<T> p_187490_1_, Map < IProperty<?>, Comparable<? >> p_187490_2_)
+    private <T extends Comparable<T>> String removeName(IProperty<T> property, Map < IProperty<?>, Comparable<? >> values)
     {
-        return p_187490_1_.getName((T)p_187490_2_.remove(this.name));
+        return property.getName((T)values.remove(this.name));
     }
 
     @SideOnly(Side.CLIENT)
@@ -80,15 +80,27 @@ public class StateMap extends StateMapperBase
             }
 
             /**
-             * Add properties that will not be used to compute all possible states of a block, used for block rendering
-             * to ignore some property that does not alter block's appearance
+             * Ignore the listed {@code IProperty}s when building the variant string for the final {@code
+             * ModelResourceLocation}. It is valid to pass a {@code Block} that does not have one of these {@code
+             * IProperty}s to the built {@code StateMap}.
+             * @return {@code this}, for convenience in chaining
+             *  
+             * @param ignores the {@code IProperty}s to ignore when building a variant string
              */
-            public StateMap.Builder ignore(IProperty<?>... p_178442_1_)
+            public StateMap.Builder ignore(IProperty<?>... ignores)
             {
-                Collections.addAll(this.ignored, p_178442_1_);
+                Collections.addAll(this.ignored, ignores);
                 return this;
             }
 
+            /**
+             * Build a new {@code StateMap} with the settings contained in this {@code StateMap.Builder}. The {@code
+             * StateMap} will work with any {@code Block} that has the required {@code IProperty}s.
+             * @return a new {@code StateMap} with the settings contained in this {@code StateMap.Builder}
+             * @see #ignore(IProperty...)
+             * @see #withName(IProperty)
+             * @see #withSuffix(String)
+             */
             public StateMap build()
             {
                 return new StateMap(this.name, this.suffix, this.ignored);

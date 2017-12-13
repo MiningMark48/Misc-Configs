@@ -2,13 +2,11 @@ package net.minecraft.item;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.MapData;
 
 public class ItemEmptyMap extends ItemMapBase
 {
@@ -17,22 +15,18 @@ public class ItemEmptyMap extends ItemMapBase
         this.setCreativeTab(CreativeTabs.MISC);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        ItemStack itemstack = new ItemStack(Items.FILLED_MAP, 1, worldIn.getUniqueDataId("map"));
-        String s = "map_" + itemstack.getMetadata();
-        MapData mapdata = new MapData(s);
-        worldIn.setItemData(s, mapdata);
-        mapdata.scale = 0;
-        mapdata.calculateMapCenter(playerIn.posX, playerIn.posZ, mapdata.scale);
-        mapdata.dimension = worldIn.provider.getDimension();
-        mapdata.trackingPosition = true;
-        mapdata.markDirty();
-        --itemStackIn.stackSize;
+        ItemStack itemstack = ItemMap.setupNewMap(worldIn, playerIn.posX, playerIn.posZ, (byte)0, true, false);
+        ItemStack itemstack1 = playerIn.getHeldItem(handIn);
+        itemstack1.shrink(1);
 
-        if (itemStackIn.stackSize <= 0)
+        if (itemstack1.isEmpty())
         {
-            return new ActionResult(EnumActionResult.SUCCESS, itemstack);
+            return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
         }
         else
         {
@@ -42,7 +36,7 @@ public class ItemEmptyMap extends ItemMapBase
             }
 
             playerIn.addStat(StatList.getObjectUseStats(this));
-            return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+            return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack1);
         }
     }
 }

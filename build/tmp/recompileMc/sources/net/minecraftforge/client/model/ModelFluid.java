@@ -1,17 +1,35 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 
+import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector4f;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.block.model.ModelRotation;
@@ -22,7 +40,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
-import net.minecraftforge.common.model.IModelPart;
+import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.common.property.IExtendedBlockState;
@@ -33,8 +51,8 @@ import net.minecraftforge.fml.common.FMLLog;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
+import java.util.function.Function;
+import java.util.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -45,7 +63,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-public final class ModelFluid implements IModelCustomData
+public final class ModelFluid implements IModel
 {
     public static final ModelFluid WATER = new ModelFluid(FluidRegistry.WATER);
     public static final ModelFluid LAVA = new ModelFluid(FluidRegistry.LAVA);
@@ -56,22 +74,19 @@ public final class ModelFluid implements IModelCustomData
         this.fluid = fluid;
     }
 
-    public Collection<ResourceLocation> getDependencies()
-    {
-        return Collections.emptySet();
-    }
-
     public Collection<ResourceLocation> getTextures()
     {
         return ImmutableSet.of(fluid.getStill(), fluid.getFlowing());
     }
 
+    @Override
     public IBakedModel bake(IModelState state, VertexFormat format, Function<ResourceLocation, TextureAtlasSprite> bakedTextureGetter)
     {
-        ImmutableMap<TransformType, TRSRTransformation> map = IPerspectiveAwareModel.MapWrapper.getTransforms(state);
-        return new BakedFluid(state.apply(Optional.<IModelPart>absent()), map, format, fluid.getColor(), bakedTextureGetter.apply(fluid.getStill()), bakedTextureGetter.apply(fluid.getFlowing()), fluid.isGaseous(), Optional.<IExtendedBlockState>absent());
+        ImmutableMap<TransformType, TRSRTransformation> map = PerspectiveMapWrapper.getTransforms(state);
+        return new BakedFluid(state.apply(Optional.empty()), map, format, fluid.getColor(), bakedTextureGetter.apply(fluid.getStill()), bakedTextureGetter.apply(fluid.getFlowing()), fluid.isGaseous(), Optional.empty());
     }
 
+    @Override
     public IModelState getDefaultState()
     {
         return ModelRotation.X0_Y0;
@@ -81,23 +96,26 @@ public final class ModelFluid implements IModelCustomData
     {
         INSTANCE;
 
+        @Override
         public void onResourceManagerReload(IResourceManager resourceManager) {}
 
+        @Override
         public boolean accepts(ResourceLocation modelLocation)
         {
-            return modelLocation.getResourceDomain().equals("forge") && (
+            return modelLocation.getResourceDomain().equals(ForgeVersion.MOD_ID) && (
                 modelLocation.getResourcePath().equals("fluid") ||
                 modelLocation.getResourcePath().equals("models/block/fluid") ||
                 modelLocation.getResourcePath().equals("models/item/fluid"));
         }
 
+        @Override
         public IModel loadModel(ResourceLocation modelLocation)
         {
             return WATER;
         }
     }
 
-    private static final class BakedFluid implements IPerspectiveAwareModel
+    private static final class BakedFluid implements IBakedModel
     {
         private static final int x[] = { 0, 0, 1, 1 };
         private static final int z[] = { 0, 1, 1, 0 };
@@ -105,6 +123,7 @@ public final class ModelFluid implements IModelCustomData
 
         private final LoadingCache<Long, BakedFluid> modelCache = CacheBuilder.newBuilder().maximumSize(200).build(new CacheLoader<Long, BakedFluid>()
         {
+            @Override
             public BakedFluid load(Long key) throws Exception
             {
                 boolean statePresent = (key & 1) != 0;
@@ -157,7 +176,7 @@ public final class ModelFluid implements IModelCustomData
                 if(flow == null) flow = -1000f;
             }
             int flowRound = (int)Math.round(Math.toDegrees(flow));
-            flowRound = MathHelper.clamp_int(flowRound, -1000, 1000);
+            flowRound = MathHelper.clamp(flowRound, -1000, 1000);
             return flowRound;
         }
 
@@ -174,7 +193,7 @@ public final class ModelFluid implements IModelCustomData
             faceQuads = Maps.newEnumMap(EnumFacing.class);
             for(EnumFacing side : EnumFacing.values())
             {
-                faceQuads.put(side, ImmutableList.<BakedQuad>of());
+                faceQuads.put(side, ImmutableList.of());
             }
 
             if(statePresent)
@@ -216,6 +235,7 @@ public final class ModelFluid implements IModelCustomData
                     builder = new UnpackedBakedQuad.Builder(format);
                     builder.setQuadOrientation(side);
                     builder.setTexture(topSprite);
+                    builder.setQuadTint(0);
                     for (int i = gas ? 3 : 0; i != (gas ? -1 : 4); i += (gas ? -1 : 1))
                     {
                         int l = (k * 3) + (1 - 2 * k) * i;
@@ -235,6 +255,7 @@ public final class ModelFluid implements IModelCustomData
                 builder = new UnpackedBakedQuad.Builder(format);
                 builder.setQuadOrientation(side);
                 builder.setTexture(still);
+                builder.setQuadTint(0);
                 for(int i = gas ? 3 : 0; i != (gas ? -1 : 4); i+= (gas ? -1 : 1))
                 {
                     putVertex(
@@ -243,7 +264,7 @@ public final class ModelFluid implements IModelCustomData
                         still.getInterpolatedU(z[i] * 16),
                         still.getInterpolatedV(x[i] * 16));
                 }
-                faceQuads.put(side, ImmutableList.<BakedQuad>of(builder.build()));
+                faceQuads.put(side, ImmutableList.of(builder.build()));
 
                 // sides
 
@@ -257,6 +278,7 @@ public final class ModelFluid implements IModelCustomData
                         builder = new UnpackedBakedQuad.Builder(format);
                         builder.setQuadOrientation(side);
                         builder.setTexture(flowing);
+                        builder.setQuadTint(0);
                         for(int j = 0; j < 4; j++)
                         {
                             int l = (k * 3) + (1 - 2 * k) * j;
@@ -279,6 +301,7 @@ public final class ModelFluid implements IModelCustomData
                 UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(format);
                 builder.setQuadOrientation(EnumFacing.UP);
                 builder.setTexture(still);
+                builder.setQuadTint(0); //I dont know if we also need this in inventory, but now it should be possible to color it here as well
                 for(int i = 0; i < 4; i++)
                 {
                     putVertex(
@@ -287,7 +310,7 @@ public final class ModelFluid implements IModelCustomData
                         still.getInterpolatedU(z[i] * 16),
                         still.getInterpolatedV(x[i] * 16));
                 }
-                faceQuads.put(EnumFacing.SOUTH, ImmutableList.<BakedQuad>of(builder.build()));
+                faceQuads.put(EnumFacing.SOUTH, ImmutableList.of(builder.build()));
             }
         }
 
@@ -329,32 +352,32 @@ public final class ModelFluid implements IModelCustomData
             }
         }
 
+        @Override
         public boolean isAmbientOcclusion()
         {
             return true;
         }
 
+        @Override
         public boolean isGui3d()
         {
             return false;
         }
 
+        @Override
         public boolean isBuiltInRenderer()
         {
             return false;
         }
 
+        @Override
         public TextureAtlasSprite getParticleTexture()
         {
             return still;
         }
 
-        public ItemCameraTransforms getItemCameraTransforms()
-        {
-            return ItemCameraTransforms.DEFAULT;
-        }
-
-        public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand)
+        @Override
+        public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand)
         {
             BakedFluid model = this;
             if(state instanceof IExtendedBlockState)
@@ -376,6 +399,7 @@ public final class ModelFluid implements IModelCustomData
             return model.faceQuads.get(side);
         }
 
+        @Override
         public ItemOverrideList getOverrides()
         {
             return ItemOverrideList.NONE;
@@ -384,7 +408,7 @@ public final class ModelFluid implements IModelCustomData
         @Override
         public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType type)
         {
-            return IPerspectiveAwareModel.MapWrapper.handlePerspective(this, transforms, type);
+            return PerspectiveMapWrapper.handlePerspective(this, transforms, type);
         }
     }
 
@@ -398,7 +422,7 @@ public final class ModelFluid implements IModelCustomData
         String fluid = e.getAsString();
         if(!FluidRegistry.isFluidRegistered(fluid))
         {
-            FMLLog.severe("fluid '%s' not found", fluid);
+            FMLLog.log.fatal("fluid '{}' not found", fluid);
             return WATER;
         }
         return new ModelFluid(FluidRegistry.getFluid(fluid));

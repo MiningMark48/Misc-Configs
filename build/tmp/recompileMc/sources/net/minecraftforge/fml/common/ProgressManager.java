@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common;
 
 import java.util.Iterator;
@@ -13,7 +32,6 @@ import com.google.common.base.Joiner;
 public class ProgressManager
 {
     private static final List<ProgressBar> bars = new CopyOnWriteArrayList<ProgressBar>();
-
     /**
      * Not a fully fleshed out API, may change in future MC versions.
      * However feel free to use and suggest additions.
@@ -38,7 +56,9 @@ public class ProgressManager
         return bar;
     }
 
-
+    public static boolean isDisplayVSyncForced() {
+        return FMLCommonHandler.instance().isDisplayVSyncForced();
+    }
     /**
      * Not a fully fleshed out API, may change in future MC versions.
      * However feel free to use and suggest additions.
@@ -51,11 +71,15 @@ public class ProgressManager
         {
             long newTime = System.nanoTime();
             if (bar.timeEachStep)
-                FMLLog.fine("Bar Step: %s - %s took %.3fs", bar.getTitle(), bar.getMessage(), ((float)(newTime - bar.lastTime) / 1000000 / 1000));
+            {
+                String timeString = String.format("%.3f", ((float) (newTime - bar.lastTime) / 1000000 / 1000));
+                FMLLog.log.debug("Bar Step: {} - {} took {}s", bar.getTitle(), bar.getMessage(), timeString);
+            }
+            String timeString = String.format("%.3f", ((float) (newTime - bar.startTime) / 1000000 / 1000));
             if (bar.getSteps() == 1)
-                FMLLog.fine("Bar Finished: %s - %s took %.3fs", bar.getTitle(), bar.getMessage(), ((float)(newTime - bar.startTime) / 1000000 / 1000));
+                FMLLog.log.debug("Bar Finished: {} - {} took {}s", bar.getTitle(), bar.getMessage(), timeString);
             else
-                FMLLog.fine("Bar Finished: %s took %.3fs", bar.getTitle(), ((float)(newTime - bar.startTime) / 1000000 / 1000));
+                FMLLog.log.debug("Bar Finished: {} took {}s", bar.getTitle(), timeString);
         }
         FMLCommonHandler.instance().processWindowMessages();
     }
@@ -100,7 +124,7 @@ public class ProgressManager
             if (timeEachStep && step != 0)
             {
                 long newTime = System.nanoTime();
-                FMLLog.fine("Bar Step: %s - %s took %.3fs", getTitle(), getMessage(), ((float)(newTime - lastTime) / 1000000 / 1000));
+                FMLLog.log.debug(String.format("Bar Step: %s - %s took %.3fs", getTitle(), getMessage(), ((float)(newTime - lastTime) / 1000000 / 1000)));
                 lastTime = newTime;
             }
             step++;

@@ -7,9 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
@@ -20,6 +20,7 @@ import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -78,12 +79,12 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
 
                         for (Entry<String, SoundList> entry : map.entrySet())
                         {
-                            this.loadSoundResource(new ResourceLocation(s, (String)entry.getKey()), (SoundList)entry.getValue());
+                            this.loadSoundResource(new ResourceLocation(s, entry.getKey()), entry.getValue());
                         }
                     }
                     catch (RuntimeException runtimeexception)
                     {
-                        LOGGER.warn((String)"Invalid sounds.json", (Throwable)runtimeexception);
+                        LOGGER.warn("Invalid sounds.json", (Throwable)runtimeexception);
                     }
                 }
             }
@@ -103,7 +104,7 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
 
                 if (!I18n.hasKey(s1))
                 {
-                    LOGGER.debug("Missing subtitle {} for event: {}", new Object[] {s1, resourcelocation});
+                    LOGGER.debug("Missing subtitle {} for event: {}", s1, resourcelocation);
                 }
             }
         }
@@ -112,20 +113,21 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
         {
             if (SoundEvent.REGISTRY.getObject(resourcelocation1) == null)
             {
-                LOGGER.debug("Not having sound event for: {}", new Object[] {resourcelocation1});
+                LOGGER.debug("Not having sound event for: {}", (Object)resourcelocation1);
             }
         }
 
         this.sndManager.reloadSoundSystem();
     }
 
+    @Nullable
     protected Map<String, SoundList> getSoundMap(InputStream stream)
     {
         Map map;
 
         try
         {
-            map = (Map)GSON.fromJson((Reader)(new InputStreamReader(stream)), TYPE);
+            map = (Map)JsonUtils.fromJson(GSON, new InputStreamReader(stream, StandardCharsets.UTF_8), TYPE);
         }
         finally
         {
@@ -144,14 +146,14 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
         {
             if (!flag)
             {
-                LOGGER.debug("Replaced sound event location {}", new Object[] {location});
+                LOGGER.debug("Replaced sound event location {}", (Object)location);
             }
 
             soundeventaccessor = new SoundEventAccessor(location, sounds.getSubtitle());
             this.soundRegistry.add(soundeventaccessor);
         }
 
-        for (Sound sound : sounds.getSounds())
+        for (final Sound sound : sounds.getSounds())
         {
             final ResourceLocation resourcelocation = sound.getSoundLocation();
             ISoundEventAccessor<Sound> isoundeventaccessor;
@@ -178,7 +180,16 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
                         public Sound cloneEntry()
                         {
                             SoundEventAccessor soundeventaccessor1 = (SoundEventAccessor)SoundHandler.this.soundRegistry.getObject(resourcelocation);
-                            return soundeventaccessor1 == null ? SoundHandler.MISSING_SOUND : soundeventaccessor1.cloneEntry();
+
+                            if (soundeventaccessor1 == null)
+                            {
+                                return SoundHandler.MISSING_SOUND;
+                            }
+                            else
+                            {
+                                Sound sound1 = soundeventaccessor1.cloneEntry();
+                                return new Sound(sound1.getSoundLocation().toString(), sound1.getVolume() * sound.getVolume(), sound1.getPitch() * sound.getPitch(), sound.getWeight(), Sound.Type.FILE, sound1.isStreaming() || sound.isStreaming());
+                            }
                         }
                     };
                     break;
@@ -204,12 +215,12 @@ public class SoundHandler implements IResourceManagerReloadListener, ITickable
         }
         catch (FileNotFoundException var11)
         {
-            LOGGER.warn("File {} does not exist, cannot add it to event {}", new Object[] {resourcelocation, p_184401_2_});
+            LOGGER.warn("File {} does not exist, cannot add it to event {}", resourcelocation, p_184401_2_);
             flag = false;
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)("Could not load sound file " + resourcelocation + ", cannot add it to event " + p_184401_2_), (Throwable)ioexception);
+            LOGGER.warn("Could not load sound file {}, cannot add it to event {}", resourcelocation, p_184401_2_, ioexception);
             flag = false;
             return flag;
         }

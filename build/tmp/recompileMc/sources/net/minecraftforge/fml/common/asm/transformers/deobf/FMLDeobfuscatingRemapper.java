@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.asm.transformers.deobf;
@@ -16,23 +23,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.launchwrapper.LaunchClassLoader;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.patcher.ClassPatchManager;
-import net.minecraftforge.fml.relauncher.FMLRelaunchLog;
 
-import org.apache.logging.log4j.Level;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
@@ -46,6 +52,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharSource;
 import com.google.common.io.Files;
+
+import javax.annotation.Nullable;
 
 public class FMLDeobfuscatingRemapper extends Remapper {
     public static final FMLDeobfuscatingRemapper INSTANCE = new FMLDeobfuscatingRemapper();
@@ -76,7 +84,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         {
             File mapData = new File(deobfFileName);
             LZMAInputSupplier zis = new LZMAInputSupplier(new FileInputStream(mapData));
-            CharSource srgSource = zis.asCharSource(Charsets.UTF_8);
+            CharSource srgSource = zis.asCharSource(StandardCharsets.UTF_8);
             List<String> srgList = srgSource.readLines();
             rawMethodMaps = Maps.newHashMap();
             rawFieldMaps = Maps.newHashMap();
@@ -103,7 +111,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         }
         catch (IOException ioe)
         {
-            FMLRelaunchLog.log(Level.ERROR, "An error occurred loading the deobfuscation map data", ioe);
+            FMLLog.log.error("An error occurred loading the deobfuscation map data", ioe);
         }
         methodNameMaps = Maps.newHashMapWithExpectedSize(rawMethodMaps.size());
         fieldNameMaps = Maps.newHashMapWithExpectedSize(rawFieldMaps.size());
@@ -122,14 +130,14 @@ public class FMLDeobfuscatingRemapper extends Remapper {
                 // get as a resource
                 InputStream classData = getClass().getResourceAsStream(deobfFileName);
                 LZMAInputSupplier zis = new LZMAInputSupplier(classData);
-                CharSource srgSource = zis.asCharSource(Charsets.UTF_8);
+                CharSource srgSource = zis.asCharSource(StandardCharsets.UTF_8);
                 srgList = srgSource.readLines();
-                FMLRelaunchLog.fine("Loading deobfuscation resource %s with %d records", deobfFileName, srgList.size());
+                FMLLog.log.debug("Loading deobfuscation resource {} with {} records", deobfFileName, srgList.size());
             }
             else
             {
-                srgList = Files.readLines(new File(gradleStartProp), Charsets.UTF_8);
-                FMLRelaunchLog.fine("Loading deobfuscation resource %s with %d records", gradleStartProp, srgList.size());
+                srgList = Files.readLines(new File(gradleStartProp), StandardCharsets.UTF_8);
+                FMLLog.log.debug("Loading deobfuscation resource {} with {} records", gradleStartProp, srgList.size());
             }
 
             rawMethodMaps = Maps.newHashMap();
@@ -157,7 +165,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         }
         catch (IOException ioe)
         {
-            FMLRelaunchLog.log(Level.ERROR, ioe, "An error occurred loading the deobfuscation map data");
+            FMLLog.log.error("An error occurred loading the deobfuscation map data", ioe);
         }
         methodNameMaps = Maps.newHashMapWithExpectedSize(rawMethodMaps.size());
         fieldNameMaps = Maps.newHashMapWithExpectedSize(rawFieldMaps.size());
@@ -191,12 +199,13 @@ public class FMLDeobfuscatingRemapper extends Remapper {
     /*
      * Cache the field descriptions for classes so we don't repeatedly reload the same data again and again
      */
-    private Map<String,Map<String,String>> fieldDescriptions = Maps.newHashMap();
+    private final Map<String,Map<String,String>> fieldDescriptions = Maps.newHashMap();
 
     // Cache null values so we don't waste time trying to recompute classes with no field or method maps
     private Set<String> negativeCacheMethods = Sets.newHashSet();
     private Set<String> negativeCacheFields = Sets.newHashSet();
 
+    @Nullable
     private String getFieldType(String owner, String name)
     {
         if (fieldDescriptions.containsKey(owner))
@@ -224,7 +233,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
             }
             catch (IOException e)
             {
-                FMLRelaunchLog.log(Level.ERROR,e, "A critical exception occurred reading a class file %s", owner);
+                FMLLog.log.error("A critical exception occurred reading a class file {}", owner, e);
             }
             return null;
         }
@@ -252,15 +261,43 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         rawMethodMaps.get(cl).put(oldName+sig, newName);
     }
 
+    String mapMemberFieldName(String owner, String name, String desc)
+    {
+        String remappedName = mapFieldName(owner, name, desc, true);
+        storeMemberFieldMapping(owner, name, desc, remappedName);
+        return remappedName;
+    }
+
+    private void storeMemberFieldMapping(String owner, String name, String desc, String remappedName) {
+        Map<String, String> fieldMap = getRawFieldMap(owner);
+
+        String key = name + ":" + desc;
+        String altKey = name + ":null";
+
+        if (!fieldMap.containsKey(key)) {
+            fieldMap.put(key, remappedName);
+            fieldMap.put(altKey, remappedName);
+
+            // Alternatively, maps could be made mutable and we could just set the relevant entry, saving
+            // the need to regenerate the super map each time
+            fieldNameMaps.remove(owner);
+        }
+    }
+
     @Override
-    public String mapFieldName(String owner, String name, String desc)
+    public String mapFieldName(String owner, String name, @Nullable String desc)
+    {
+        return mapFieldName(owner, name, desc, false);
+    }
+
+    String mapFieldName(String owner, String name, @Nullable String desc, boolean raw)
     {
         if (classNameBiMap == null || classNameBiMap.isEmpty())
         {
             return name;
         }
-        Map<String, String> fieldMap = getFieldMap(owner);
-        return fieldMap!=null && fieldMap.containsKey(name+":"+desc) ? fieldMap.get(name+":"+desc) : name;
+        Map<String, String> fieldMap = getFieldMap(owner, raw);
+        return fieldMap!=null && fieldMap.containsKey(name+":"+desc) ? fieldMap.get(name+":"+desc) : fieldMap!=null && fieldMap.containsKey(name+":null") ? fieldMap.get(name+":null") :name;
     }
 
     @Override
@@ -315,6 +352,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
     }
     
     @Override
+    @Nullable
     public String mapSignature(String signature, boolean typeSignature)
     {
         // JDT decorates some lambdas with this and SignatureReader chokes on it
@@ -325,8 +363,22 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         return super.mapSignature(signature, typeSignature);
     }
 
-    private Map<String,String> getFieldMap(String className)
+    private Map<String,String> getRawFieldMap(String className)
     {
+        if (!rawFieldMaps.containsKey(className))
+        {
+            rawFieldMaps.put(className, Maps.<String,String>newHashMap());
+        }
+        return rawFieldMaps.get(className);
+    }
+
+    private Map<String,String> getFieldMap(String className, boolean raw)
+    {
+        if (raw)
+        {
+            return getRawFieldMap(className);
+        }
+
         if (!fieldNameMaps.containsKey(className) && !negativeCacheFields.contains(className))
         {
             findAndMergeSuperMaps(className);
@@ -337,7 +389,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
 
             if (DUMP_FIELD_MAPS)
             {
-                FMLRelaunchLog.finer("Field map for %s : %s", className, fieldNameMaps.get(className));
+                FMLLog.log.trace("Field map for {} : {}", className, fieldNameMaps.get(className));
             }
         }
         return fieldNameMaps.get(className);
@@ -354,7 +406,7 @@ public class FMLDeobfuscatingRemapper extends Remapper {
             }
             if (DUMP_METHOD_MAPS)
             {
-                FMLRelaunchLog.finer("Method map for %s : %s", className, methodNameMaps.get(className));
+                FMLLog.log.trace("Method map for {} : {}", className, methodNameMaps.get(className));
             }
 
         }
@@ -378,10 +430,10 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error getting patched resource:", e);
         }
     }
-    public void mergeSuperMaps(String name, String superName, String[] interfaces)
+    public void mergeSuperMaps(String name, @Nullable String superName, String[] interfaces)
     {
 //        System.out.printf("Computing super maps for %s: %s %s\n", name, superName, Arrays.asList(interfaces));
         if (classNameBiMap == null || classNameBiMap.isEmpty())
@@ -434,19 +486,15 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         return ImmutableSet.copyOf(classNameBiMap.keySet());
     }
 
+    @Nullable
     public String getStaticFieldType(String oldType, String oldName, String newType, String newName)
     {
-        String fType = getFieldType(oldType, oldName);
+        String fType = getFieldType(newType, newName);
         if (oldType.equals(newType))
         {
             return fType;
         }
-        Map<String,String> newClassMap = fieldDescriptions.get(newType);
-        if (newClassMap == null)
-        {
-            newClassMap = Maps.newHashMap();
-            fieldDescriptions.put(newType, newClassMap);
-        }
+        Map<String, String> newClassMap = fieldDescriptions.computeIfAbsent(newType, k -> Maps.newHashMap());
         newClassMap.put(newName, fType);
         return fType;
     }

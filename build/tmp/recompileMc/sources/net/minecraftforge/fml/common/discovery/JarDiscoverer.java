@@ -1,17 +1,25 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.discovery;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
@@ -23,6 +31,7 @@ import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.ModContainerFactory;
 import net.minecraftforge.fml.common.discovery.asm.ASMModParser;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 
 import java.util.regex.Matcher;
@@ -36,22 +45,22 @@ public class JarDiscoverer implements ITypeDiscoverer
     public List<ModContainer> discover(ModCandidate candidate, ASMDataTable table)
     {
         List<ModContainer> foundMods = Lists.newArrayList();
-        FMLLog.fine("Examining file %s for potential mods", candidate.getModContainer().getName());
-        JarFile jar = null;
-        try
+        FMLLog.log.debug("Examining file {} for potential mods", candidate.getModContainer().getName());
+        try (JarFile jar = new JarFile(candidate.getModContainer()))
         {
-            jar = new JarFile(candidate.getModContainer());
-
             ZipEntry modInfo = jar.getEntry("mcmod.info");
             MetadataCollection mc = null;
             if (modInfo != null)
             {
-                FMLLog.finer("Located mcmod.info file in file %s", candidate.getModContainer().getName());
-                mc = MetadataCollection.from(jar.getInputStream(modInfo), candidate.getModContainer().getName());
+                FMLLog.log.trace("Located mcmod.info file in file {}", candidate.getModContainer().getName());
+                try (InputStream inputStream = jar.getInputStream(modInfo))
+                {
+                    mc = MetadataCollection.from(inputStream, candidate.getModContainer().getName());
+                }
             }
             else
             {
-                FMLLog.fine("The mod container %s appears to be missing an mcmod.info file", candidate.getModContainer().getName());
+                FMLLog.log.debug("The mod container {} appears to be missing an mcmod.info file", candidate.getModContainer().getName());
                 mc = MetadataCollection.from(null, "");
             }
             for (ZipEntry ze : Collections.list(jar.entries()))
@@ -66,12 +75,15 @@ public class JarDiscoverer implements ITypeDiscoverer
                     ASMModParser modParser;
                     try
                     {
-                        modParser = new ASMModParser(jar.getInputStream(ze));
+                        try (InputStream inputStream = jar.getInputStream(ze))
+                        {
+                            modParser = new ASMModParser(inputStream);
+                        }
                         candidate.addClassEntry(ze.getName());
                     }
                     catch (LoaderException e)
                     {
-                        FMLLog.log(Level.ERROR, e, "There was a problem reading the entry %s in the jar %s - probably a corrupt zip", ze.getName(), candidate.getModContainer().getPath());
+                        FMLLog.log.error("There was a problem reading the entry {} in the jar {} - probably a corrupt zip", candidate.getModContainer().getPath(), e);
                         jar.close();
                         throw e;
                     }
@@ -90,20 +102,7 @@ public class JarDiscoverer implements ITypeDiscoverer
         }
         catch (Exception e)
         {
-            FMLLog.log(Level.WARN, e, "Zip file %s failed to read properly, it will be ignored", candidate.getModContainer().getName());
-        }
-        finally
-        {
-            if (jar != null)
-            {
-                try
-                {
-                    jar.close();
-                }
-                catch (Exception e)
-                {
-                }
-            }
+            FMLLog.log.warn("Zip file {} failed to read properly, it will be ignored", candidate.getModContainer().getName(), e);
         }
         return foundMods;
     }

@@ -68,14 +68,14 @@ public class VisGraph
         return this.floodFill(getIndex(pos));
     }
 
-    private Set<EnumFacing> floodFill(int p_178604_1_)
+    private Set<EnumFacing> floodFill(int pos)
     {
         Set<EnumFacing> set = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
         Queue<Integer> queue = Queues.<Integer>newArrayDeque();
-        queue.add(IntegerCache.getInteger(p_178604_1_));
-        this.bitSet.set(p_178604_1_, true);
+        queue.add(IntegerCache.getInteger(pos));
+        this.bitSet.set(pos, true);
 
-        while (!((Queue)queue).isEmpty())
+        while (!queue.isEmpty())
         {
             int i = ((Integer)queue.poll()).intValue();
             this.addEdges(i, set);
@@ -95,9 +95,9 @@ public class VisGraph
         return set;
     }
 
-    private void addEdges(int p_178610_1_, Set<EnumFacing> p_178610_2_)
+    private void addEdges(int pos, Set<EnumFacing> p_178610_2_)
     {
-        int i = p_178610_1_ >> 0 & 15;
+        int i = pos >> 0 & 15;
 
         if (i == 0)
         {
@@ -108,7 +108,7 @@ public class VisGraph
             p_178610_2_.add(EnumFacing.EAST);
         }
 
-        int j = p_178610_1_ >> 8 & 15;
+        int j = pos >> 8 & 15;
 
         if (j == 0)
         {
@@ -119,7 +119,7 @@ public class VisGraph
             p_178610_2_.add(EnumFacing.UP);
         }
 
-        int k = p_178610_1_ >> 4 & 15;
+        int k = pos >> 4 & 15;
 
         if (k == 0)
         {
@@ -131,58 +131,58 @@ public class VisGraph
         }
     }
 
-    private int getNeighborIndexAtFace(int p_178603_1_, EnumFacing p_178603_2_)
+    private int getNeighborIndexAtFace(int pos, EnumFacing facing)
     {
-        switch (p_178603_2_)
+        switch (facing)
         {
             case DOWN:
 
-                if ((p_178603_1_ >> 8 & 15) == 0)
+                if ((pos >> 8 & 15) == 0)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ - DY;
+                return pos - DY;
             case UP:
 
-                if ((p_178603_1_ >> 8 & 15) == 15)
+                if ((pos >> 8 & 15) == 15)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ + DY;
+                return pos + DY;
             case NORTH:
 
-                if ((p_178603_1_ >> 4 & 15) == 0)
+                if ((pos >> 4 & 15) == 0)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ - DZ;
+                return pos - DZ;
             case SOUTH:
 
-                if ((p_178603_1_ >> 4 & 15) == 15)
+                if ((pos >> 4 & 15) == 15)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ + DZ;
+                return pos + DZ;
             case WEST:
 
-                if ((p_178603_1_ >> 0 & 15) == 0)
+                if ((pos >> 0 & 15) == 0)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ - DX;
+                return pos - DX;
             case EAST:
 
-                if ((p_178603_1_ >> 0 & 15) == 15)
+                if ((pos >> 0 & 15) == 15)
                 {
                     return -1;
                 }
 
-                return p_178603_1_ + DX;
+                return pos + DX;
             default:
                 return -1;
         }

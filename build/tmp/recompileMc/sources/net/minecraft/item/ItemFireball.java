@@ -22,7 +22,7 @@ public class ItemFireball extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (worldIn.isRemote)
         {
@@ -31,8 +31,9 @@ public class ItemFireball extends Item
         else
         {
             pos = pos.offset(facing);
+            ItemStack itemstack = player.getHeldItem(hand);
 
-            if (!playerIn.canPlayerEdit(pos, facing, stack))
+            if (!player.canPlayerEdit(pos, facing, itemstack))
             {
                 return EnumActionResult.FAIL;
             }
@@ -44,9 +45,9 @@ public class ItemFireball extends Item
                     worldIn.setBlockState(pos, Blocks.FIRE.getDefaultState());
                 }
 
-                if (!playerIn.capabilities.isCreativeMode)
+                if (!player.capabilities.isCreativeMode)
                 {
-                    --stack.stackSize;
+                    itemstack.shrink(1);
                 }
 
                 return EnumActionResult.SUCCESS;

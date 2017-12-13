@@ -3,6 +3,7 @@ package net.minecraft.block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -62,21 +63,43 @@ public class BlockLadder extends Block
         return false;
     }
 
-    public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
+    /**
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
+     */
+    public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
-        return worldIn.getBlockState(pos.west()).isSideSolid(worldIn, pos.west(), EnumFacing.EAST) ||
-               worldIn.getBlockState(pos.east()).isSideSolid(worldIn, pos.east(), EnumFacing.WEST) ||
-               worldIn.getBlockState(pos.north()).isSideSolid(worldIn, pos.north(), EnumFacing.SOUTH) ||
-               worldIn.getBlockState(pos.south()).isSideSolid(worldIn, pos.south(), EnumFacing.NORTH);
+        if (this.canAttachTo(worldIn, pos.west(), side))
+        {
+            return true;
+        }
+        else if (this.canAttachTo(worldIn, pos.east(), side))
+        {
+            return true;
+        }
+        else if (this.canAttachTo(worldIn, pos.north(), side))
+        {
+            return true;
+        }
+        else
+        {
+            return this.canAttachTo(worldIn, pos.south(), side);
+        }
+    }
+
+    private boolean canAttachTo(World p_193392_1_, BlockPos p_193392_2_, EnumFacing p_193392_3_)
+    {
+        IBlockState iblockstate = p_193392_1_.getBlockState(p_193392_2_);
+        boolean flag = isExceptBlockForAttachWithPiston(iblockstate.getBlock());
+        return !flag && iblockstate.getBlockFaceShape(p_193392_1_, p_193392_2_, p_193392_3_) == BlockFaceShape.SOLID && !iblockstate.canProvidePower();
     }
 
     /**
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        if (facing.getAxis().isHorizontal() && this.canBlockStay(worldIn, pos, facing))
+        if (facing.getAxis().isHorizontal() && this.canAttachTo(worldIn, pos.offset(facing.getOpposite()), facing))
         {
             return this.getDefaultState().withProperty(FACING, facing);
         }
@@ -84,7 +107,7 @@ public class BlockLadder extends Block
         {
             for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
             {
-                if (this.canBlockStay(worldIn, pos, enumfacing))
+                if (this.canAttachTo(worldIn, pos.offset(enumfacing.getOpposite()), enumfacing))
                 {
                     return this.getDefaultState().withProperty(FACING, enumfacing);
                 }
@@ -99,22 +122,17 @@ public class BlockLadder extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
 
-        if (!this.canBlockStay(worldIn, pos, enumfacing))
+        if (!this.canAttachTo(worldIn, pos.offset(enumfacing.getOpposite()), enumfacing))
         {
             this.dropBlockAsItem(worldIn, pos, state, 0);
             worldIn.setBlockToAir(pos);
         }
 
-        super.neighborChanged(state, worldIn, pos, blockIn);
-    }
-
-    protected boolean canBlockStay(World worldIn, BlockPos pos, EnumFacing facing)
-    {
-        return worldIn.getBlockState(pos.offset(facing.getOpposite())).isSideSolid(worldIn, pos.offset(facing.getOpposite()), facing);
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
     }
 
     /**
@@ -170,4 +188,18 @@ public class BlockLadder extends Block
     }
 
     @Override public boolean isLadder(IBlockState state, IBlockAccess world, BlockPos pos, EntityLivingBase entity) { return true; }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
+    }
 }

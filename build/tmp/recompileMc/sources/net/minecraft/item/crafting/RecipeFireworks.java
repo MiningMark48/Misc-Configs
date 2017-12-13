@@ -2,25 +2,25 @@ package net.minecraft.item.crafting;
 
 import com.google.common.collect.Lists;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class RecipeFireworks implements IRecipe
+public class RecipeFireworks extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
 {
-    private ItemStack resultItem;
+    private ItemStack resultItem = ItemStack.EMPTY;
 
     /**
      * Used to check if a recipe matches current crafting inventory
      */
     public boolean matches(InventoryCrafting inv, World worldIn)
     {
-        this.resultItem = null;
+        this.resultItem = ItemStack.EMPTY;
         int i = 0;
         int j = 0;
         int k = 0;
@@ -32,7 +32,7 @@ public class RecipeFireworks implements IRecipe
         {
             ItemStack itemstack = inv.getStackInSlot(k1);
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 if (itemstack.getItem() == Items.GUNPOWDER)
                 {
@@ -42,7 +42,7 @@ public class RecipeFireworks implements IRecipe
                 {
                     ++l;
                 }
-                else if (itemstack.getItem() == Items.DYE)
+                else if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack))
                 {
                     ++k;
                 }
@@ -88,30 +88,30 @@ public class RecipeFireworks implements IRecipe
         {
             if (j >= 1 && i == 1 && i1 == 0)
             {
-                this.resultItem = new ItemStack(Items.FIREWORKS);
-
+                this.resultItem = new ItemStack(Items.FIREWORKS, 3);
                 NBTTagCompound nbttagcompound1 = new NBTTagCompound();
+
                 if (l > 0)
                 {
-                    NBTTagCompound nbttagcompound3 = new NBTTagCompound();
                     NBTTagList nbttaglist = new NBTTagList();
 
                     for (int k2 = 0; k2 < inv.getSizeInventory(); ++k2)
                     {
                         ItemStack itemstack3 = inv.getStackInSlot(k2);
 
-                        if (itemstack3 != null && itemstack3.getItem() == Items.FIREWORK_CHARGE && itemstack3.hasTagCompound() && itemstack3.getTagCompound().hasKey("Explosion", 10))
+                        if (itemstack3.getItem() == Items.FIREWORK_CHARGE && itemstack3.hasTagCompound() && itemstack3.getTagCompound().hasKey("Explosion", 10))
                         {
                             nbttaglist.appendTag(itemstack3.getTagCompound().getCompoundTag("Explosion"));
                         }
                     }
 
-                    nbttagcompound3.setTag("Explosions", nbttaglist);
-                    nbttagcompound3.setByte("Flight", (byte)j);
-                    nbttagcompound1.setTag("Fireworks", nbttagcompound3);
+                    nbttagcompound1.setTag("Explosions", nbttaglist);
                 }
 
-                this.resultItem.setTagCompound(nbttagcompound1); //Forge BugFix: NPE Protection
+                nbttagcompound1.setByte("Flight", (byte)j);
+                NBTTagCompound nbttagcompound3 = new NBTTagCompound();
+                nbttagcompound3.setTag("Fireworks", nbttagcompound1);
+                this.resultItem.setTagCompound(nbttagcompound3);
                 return true;
             }
             else if (j == 1 && i == 0 && l == 0 && k > 0 && j1 <= 1)
@@ -126,11 +126,11 @@ public class RecipeFireworks implements IRecipe
                 {
                     ItemStack itemstack2 = inv.getStackInSlot(l1);
 
-                    if (itemstack2 != null)
+                    if (!itemstack2.isEmpty())
                     {
-                        if (itemstack2.getItem() == Items.DYE)
+                        if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack2))
                         {
-                            list.add(Integer.valueOf(ItemDye.DYE_COLORS[itemstack2.getMetadata() & 15]));
+                            list.add(Integer.valueOf(ItemDye.DYE_COLORS[net.minecraftforge.oredict.DyeUtils.rawDyeDamageFromStack(itemstack2) & 15]));
                         }
                         else if (itemstack2.getItem() == Items.GLOWSTONE_DUST)
                         {
@@ -180,16 +180,16 @@ public class RecipeFireworks implements IRecipe
                 {
                     ItemStack itemstack1 = inv.getStackInSlot(i2);
 
-                    if (itemstack1 != null)
+                    if (!itemstack1.isEmpty())
                     {
-                        if (itemstack1.getItem() == Items.DYE)
+                        if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack1))
                         {
-                            list1.add(Integer.valueOf(ItemDye.DYE_COLORS[itemstack1.getMetadata() & 15]));
+                            list1.add(Integer.valueOf(ItemDye.DYE_COLORS[net.minecraftforge.oredict.DyeUtils.rawDyeDamageFromStack(itemstack1) & 15]));
                         }
                         else if (itemstack1.getItem() == Items.FIREWORK_CHARGE)
                         {
                             this.resultItem = itemstack1.copy();
-                            this.resultItem.stackSize = 1;
+                            this.resultItem.setCount(1);
                         }
                     }
                 }
@@ -201,7 +201,7 @@ public class RecipeFireworks implements IRecipe
                     aint[j2] = ((Integer)list1.get(j2)).intValue();
                 }
 
-                if (this.resultItem != null && this.resultItem.hasTagCompound())
+                if (!this.resultItem.isEmpty() && this.resultItem.hasTagCompound())
                 {
                     NBTTagCompound nbttagcompound4 = this.resultItem.getTagCompound().getCompoundTag("Explosion");
 
@@ -234,36 +234,40 @@ public class RecipeFireworks implements IRecipe
     /**
      * Returns an Item that is the result of this recipe
      */
-    @Nullable
     public ItemStack getCraftingResult(InventoryCrafting inv)
     {
         return this.resultItem.copy();
     }
 
-    /**
-     * Returns the size of the recipe area
-     */
-    public int getRecipeSize()
-    {
-        return 10;
-    }
-
-    @Nullable
     public ItemStack getRecipeOutput()
     {
         return this.resultItem;
     }
 
-    public ItemStack[] getRemainingItems(InventoryCrafting inv)
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv)
     {
-        ItemStack[] aitemstack = new ItemStack[inv.getSizeInventory()];
+        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
 
-        for (int i = 0; i < aitemstack.length; ++i)
+        for (int i = 0; i < nonnulllist.size(); ++i)
         {
             ItemStack itemstack = inv.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
+
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
         }
 
-        return aitemstack;
+        return nonnulllist;
+    }
+
+    public boolean isDynamic()
+    {
+        return true;
+    }
+
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
+    public boolean canFit(int width, int height)
+    {
+        return width * height >= 1;
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
@@ -22,8 +23,11 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -33,7 +37,7 @@ public class EntityFallingBlock extends Entity
     private IBlockState fallTile;
     public int fallTime;
     public boolean shouldDropItem = true;
-    private boolean canSetAsBlock;
+    private boolean dontSetBlock;
     private boolean hurtEntities;
     private int fallHurtMax = 40;
     private float fallHurtAmount = 2.0F;
@@ -59,6 +63,14 @@ public class EntityFallingBlock extends Entity
         this.prevPosY = y;
         this.prevPosZ = z;
         this.setOrigin(new BlockPos(this));
+    }
+
+    /**
+     * Returns true if it's possible to attack this entity with an item.
+     */
+    public boolean canBeAttackedWithItem()
+    {
+        return false;
     }
 
     public void setOrigin(BlockPos p_184530_1_)
@@ -115,33 +127,60 @@ public class EntityFallingBlock extends Entity
             {
                 BlockPos blockpos = new BlockPos(this);
 
-                if (this.worldObj.getBlockState(blockpos).getBlock() == block)
+                if (this.world.getBlockState(blockpos).getBlock() == block)
                 {
-                    this.worldObj.setBlockToAir(blockpos);
+                    this.world.setBlockToAir(blockpos);
                 }
-                else if (!this.worldObj.isRemote)
+                else if (!this.world.isRemote)
                 {
                     this.setDead();
                     return;
                 }
             }
 
-            this.motionY -= 0.03999999910593033D;
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= 0.9800000190734863D;
-            this.motionY *= 0.9800000190734863D;
-            this.motionZ *= 0.9800000190734863D;
+            if (!this.hasNoGravity())
+            {
+                this.motionY -= 0.03999999910593033D;
+            }
 
-            if (!this.worldObj.isRemote)
+            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+
+            if (!this.world.isRemote)
             {
                 BlockPos blockpos1 = new BlockPos(this);
+                boolean flag = this.fallTile.getBlock() == Blocks.CONCRETE_POWDER;
+                boolean flag1 = flag && this.world.getBlockState(blockpos1).getMaterial() == Material.WATER;
+                double d0 = this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ;
 
-                if (this.onGround)
+                if (flag && d0 > 1.0D)
                 {
-                    IBlockState iblockstate = this.worldObj.getBlockState(blockpos1);
+                    RayTraceResult raytraceresult = this.world.rayTraceBlocks(new Vec3d(this.prevPosX, this.prevPosY, this.prevPosZ), new Vec3d(this.posX, this.posY, this.posZ), true);
 
-                    if (this.worldObj.isAirBlock(new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ))) //Forge: Don't indent below.
-                    if (BlockFalling.canFallThrough(this.worldObj.getBlockState(new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ))))
+                    if (raytraceresult != null && this.world.getBlockState(raytraceresult.getBlockPos()).getMaterial() == Material.WATER)
+                    {
+                        blockpos1 = raytraceresult.getBlockPos();
+                        flag1 = true;
+                    }
+                }
+
+                if (!this.onGround && !flag1)
+                {
+                    if (this.fallTime > 100 && !this.world.isRemote && (blockpos1.getY() < 1 || blockpos1.getY() > 256) || this.fallTime > 600)
+                    {
+                        if (this.shouldDropItem && this.world.getGameRules().getBoolean("doEntityDrops"))
+                        {
+                            this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.fallTile)), 0.0F);
+                        }
+
+                        this.setDead();
+                    }
+                }
+                else
+                {
+                    IBlockState iblockstate = this.world.getBlockState(blockpos1);
+
+                    if (this.world.isAirBlock(new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ))) //Forge: Don't indent below.
+                    if (!flag1 && BlockFalling.canFallThrough(this.world.getBlockState(new BlockPos(this.posX, this.posY - 0.009999999776482582D, this.posZ))))
                     {
                         this.onGround = false;
                         return;
@@ -155,18 +194,18 @@ public class EntityFallingBlock extends Entity
                     {
                         this.setDead();
 
-                        if (!this.canSetAsBlock)
+                        if (!this.dontSetBlock)
                         {
-                            if (this.worldObj.canBlockBePlaced(block, blockpos1, true, EnumFacing.UP, (Entity)null, (ItemStack)null) && !BlockFalling.canFallThrough(this.worldObj.getBlockState(blockpos1.down())) && this.worldObj.setBlockState(blockpos1, this.fallTile, 3))
+                            if (this.world.mayPlace(block, blockpos1, true, EnumFacing.UP, (Entity)null) && (flag1 || !BlockFalling.canFallThrough(this.world.getBlockState(blockpos1.down()))) && this.world.setBlockState(blockpos1, this.fallTile, 3))
                             {
                                 if (block instanceof BlockFalling)
                                 {
-                                    ((BlockFalling)block).onEndFalling(this.worldObj, blockpos1);
+                                    ((BlockFalling)block).onEndFalling(this.world, blockpos1, this.fallTile, iblockstate);
                                 }
 
-                                if (this.tileEntityData != null && block instanceof ITileEntityProvider)
+                                if (this.tileEntityData != null && block.hasTileEntity(this.fallTile))
                                 {
-                                    TileEntity tileentity = this.worldObj.getTileEntity(blockpos1);
+                                    TileEntity tileentity = this.world.getTileEntity(blockpos1);
 
                                     if (tileentity != null)
                                     {
@@ -176,7 +215,7 @@ public class EntityFallingBlock extends Entity
                                         {
                                             NBTBase nbtbase = this.tileEntityData.getTag(s);
 
-                                            if (!s.equals("x") && !s.equals("y") && !s.equals("z"))
+                                            if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s))
                                             {
                                                 nbttagcompound.setTag(s, nbtbase.copy());
                                             }
@@ -187,23 +226,22 @@ public class EntityFallingBlock extends Entity
                                     }
                                 }
                             }
-                            else if (this.shouldDropItem && this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+                            else if (this.shouldDropItem && this.world.getGameRules().getBoolean("doEntityDrops"))
                             {
                                 this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.fallTile)), 0.0F);
                             }
                         }
+                        else if (block instanceof BlockFalling)
+                        {
+                            ((BlockFalling)block).onBroken(this.world, blockpos1);
+                        }
                     }
-                }
-                else if (this.fallTime > 100 && !this.worldObj.isRemote && (blockpos1.getY() < 1 || blockpos1.getY() > 256) || this.fallTime > 600)
-                {
-                    if (this.shouldDropItem && this.worldObj.getGameRules().getBoolean("doEntityDrops"))
-                    {
-                        this.entityDropItem(new ItemStack(block, 1, block.damageDropped(this.fallTile)), 0.0F);
-                    }
-
-                    this.setDead();
                 }
             }
+
+            this.motionX *= 0.9800000190734863D;
+            this.motionY *= 0.9800000190734863D;
+            this.motionZ *= 0.9800000190734863D;
         }
     }
 
@@ -213,17 +251,17 @@ public class EntityFallingBlock extends Entity
 
         if (this.hurtEntities)
         {
-            int i = MathHelper.ceiling_float_int(distance - 1.0F);
+            int i = MathHelper.ceil(distance - 1.0F);
 
             if (i > 0)
             {
-                List<Entity> list = Lists.newArrayList(this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox()));
+                List<Entity> list = Lists.newArrayList(this.world.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox()));
                 boolean flag = block == Blocks.ANVIL;
-                DamageSource damagesource = flag ? DamageSource.anvil : DamageSource.fallingBlock;
+                DamageSource damagesource = flag ? DamageSource.ANVIL : DamageSource.FALLING_BLOCK;
 
                 for (Entity entity : list)
                 {
-                    entity.attackEntityFrom(damagesource, (float)Math.min(MathHelper.floor_float((float)i * this.fallHurtAmount), this.fallHurtMax));
+                    entity.attackEntityFrom(damagesource, (float)Math.min(MathHelper.floor((float)i * this.fallHurtAmount), this.fallHurtMax));
                 }
 
                 if (flag && (double)this.rand.nextFloat() < 0.05000000074505806D + (double)i * 0.05D)
@@ -233,7 +271,7 @@ public class EntityFallingBlock extends Entity
 
                     if (j > 2)
                     {
-                        this.canSetAsBlock = true;
+                        this.dontSetBlock = true;
                     }
                     else
                     {
@@ -244,13 +282,17 @@ public class EntityFallingBlock extends Entity
         }
     }
 
+    public static void registerFixesFallingBlock(DataFixer fixer)
+    {
+    }
+
     /**
      * (abstract) Protected helper method to write subclass entity data to NBT.
      */
     protected void writeEntityToNBT(NBTTagCompound compound)
     {
         Block block = this.fallTile != null ? this.fallTile.getBlock() : Blocks.AIR;
-        ResourceLocation resourcelocation = (ResourceLocation)Block.REGISTRY.getNameForObject(block);
+        ResourceLocation resourcelocation = Block.REGISTRY.getNameForObject(block);
         compound.setString("Block", resourcelocation == null ? "" : resourcelocation.toString());
         compound.setByte("Data", (byte)block.getMetaFromState(this.fallTile));
         compound.setInteger("Time", this.fallTime);
@@ -335,7 +377,7 @@ public class EntityFallingBlock extends Entity
     @SideOnly(Side.CLIENT)
     public World getWorldObj()
     {
-        return this.worldObj;
+        return this.world;
     }
 
     /**

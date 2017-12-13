@@ -1,5 +1,6 @@
 package net.minecraft.client.renderer.entity.layers;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.entity.RenderEnderman;
@@ -28,13 +29,15 @@ public class LayerEndermanEyes implements LayerRenderer<EntityEnderman>
         GlStateManager.disableLighting();
         GlStateManager.depthMask(!entitylivingbaseIn.isInvisible());
         int i = 61680;
-        int j = i % 65536;
-        int k = i / 65536;
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)j, (float)k);
+        int j = 61680;
+        int k = 0;
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 61680.0F, 0.0F);
         GlStateManager.enableLighting();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        Minecraft.getMinecraft().entityRenderer.setupFogColor(true);
         this.endermanRenderer.getMainModel().render(entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-        this.endermanRenderer.setLightmap(entitylivingbaseIn, partialTicks);
+        Minecraft.getMinecraft().entityRenderer.setupFogColor(false);
+        this.endermanRenderer.setLightmap(entitylivingbaseIn);
         GlStateManager.depthMask(true);
         GlStateManager.disableBlend();
         GlStateManager.enableAlpha();

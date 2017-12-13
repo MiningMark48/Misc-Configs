@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 
 public interface ICommandSender
@@ -15,32 +16,29 @@ public interface ICommandSender
      */
     String getName();
 
-    /**
-     * Get the formatted ChatComponent that will be used for the sender's username in chat
-     */
-    ITextComponent getDisplayName();
+default ITextComponent getDisplayName()
+    {
+        return new TextComponentString(this.getName());
+    }
 
-    /**
-     * Send a chat message to the CommandSender
-     */
-    void addChatMessage(ITextComponent component);
+default void sendMessage(ITextComponent component)
+    {
+    }
 
     /**
      * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
      */
-    boolean canCommandSenderUseCommand(int permLevel, String commandName);
+    boolean canUseCommand(int permLevel, String commandName);
 
-    /**
-     * Get the position in the world. <b>{@code null} is not allowed!</b> If you are not an entity in the world, return
-     * the coordinates 0, 0, 0
-     */
-    BlockPos getPosition();
+default BlockPos getPosition()
+    {
+        return BlockPos.ORIGIN;
+    }
 
-    /**
-     * Get the position vector. <b>{@code null} is not allowed!</b> If you are not an entity in the world, return 0.0D,
-     * 0.0D, 0.0D
-     */
-    Vec3d getPositionVector();
+default Vec3d getPositionVector()
+    {
+        return Vec3d.ZERO;
+    }
 
     /**
      * Get the world, if available. <b>{@code null} is not allowed!</b> If you are not an entity in the world, return
@@ -48,18 +46,20 @@ public interface ICommandSender
      */
     World getEntityWorld();
 
-    /**
-     * Returns the entity associated with the command sender. MAY BE NULL!
-     */
     @Nullable
-    Entity getCommandSenderEntity();
+default Entity getCommandSenderEntity()
+    {
+        return null;
+    }
 
-    /**
-     * Returns true if the command sender should be sent feedback about executed commands
-     */
-    boolean sendCommandFeedback();
+default boolean sendCommandFeedback()
+    {
+        return false;
+    }
 
-    void setCommandStat(CommandResultStats.Type type, int amount);
+default void setCommandStat(CommandResultStats.Type type, int amount)
+    {
+    }
 
     /**
      * Get the Minecraft server instance

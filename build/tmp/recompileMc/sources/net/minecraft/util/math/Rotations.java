@@ -14,16 +14,14 @@ public class Rotations
 
     public Rotations(float x, float y, float z)
     {
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.x = !Float.isInfinite(x) && !Float.isNaN(x) ? x % 360.0F : 0.0F;
+        this.y = !Float.isInfinite(y) && !Float.isNaN(y) ? y % 360.0F : 0.0F;
+        this.z = !Float.isInfinite(z) && !Float.isNaN(z) ? z % 360.0F : 0.0F;
     }
 
     public Rotations(NBTTagList nbt)
     {
-        this.x = nbt.getFloatAt(0);
-        this.y = nbt.getFloatAt(1);
-        this.z = nbt.getFloatAt(2);
+        this(nbt.getFloatAt(0), nbt.getFloatAt(1), nbt.getFloatAt(2));
     }
 
     public NBTTagList writeToNBT()

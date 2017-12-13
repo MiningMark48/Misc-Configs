@@ -26,13 +26,7 @@ public interface IBlockAccess
     boolean isAirBlock(BlockPos pos);
 
     @SideOnly(Side.CLIENT)
-    Biome getBiomeGenForCoords(BlockPos pos);
-
-    /**
-     * set by !chunk.getAreLevelsEmpty
-     */
-    @SideOnly(Side.CLIENT)
-    boolean extendedLevelsInChunkCache();
+    Biome getBiome(BlockPos pos);
 
     int getStrongPower(BlockPos pos, EnumFacing direction);
 

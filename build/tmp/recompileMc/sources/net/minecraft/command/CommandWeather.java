@@ -14,7 +14,7 @@ public class CommandWeather extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "weather";
     }
@@ -30,7 +30,7 @@ public class CommandWeather extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.weather.usage";
     }
@@ -49,7 +49,7 @@ public class CommandWeather extends CommandBase
                 i = parseInt(args[1], 1, 1000000) * 20;
             }
 
-            World world = server.worldServers[0];
+            World world = server.worlds[0];
             WorldInfo worldinfo = world.getWorldInfo();
 
             if ("clear".equalsIgnoreCase(args[0]))
@@ -91,8 +91,11 @@ public class CommandWeather extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"clear", "rain", "thunder"}): Collections.<String>emptyList();
+        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"clear", "rain", "thunder"}) : Collections.emptyList();
     }
 }

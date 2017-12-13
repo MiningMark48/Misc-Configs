@@ -17,13 +17,13 @@ public class EntityAIAttackRanged extends EntityAIBase
      * maxRangedAttackTime.
      */
     private int rangedAttackTime;
-    private double entityMoveSpeed;
+    private final double entityMoveSpeed;
     private int seeTime;
-    private int attackIntervalMin;
+    private final int attackIntervalMin;
     /** The maximum time the AI has to wait before peforming another ranged attack. */
-    private int maxRangedAttackTime;
-    private float attackRadius;
-    private float maxAttackDistance;
+    private final int maxRangedAttackTime;
+    private final float attackRadius;
+    private final float maxAttackDistance;
 
     public EntityAIAttackRanged(IRangedAttackMob attacker, double movespeed, int maxAttackTime, float maxAttackDistanceIn)
     {
@@ -72,13 +72,13 @@ public class EntityAIAttackRanged extends EntityAIBase
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
         return this.shouldExecute() || !this.entityHost.getNavigator().noPath();
     }
 
     /**
-     * Resets the task
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     public void resetTask()
     {
@@ -88,7 +88,7 @@ public class EntityAIAttackRanged extends EntityAIBase
     }
 
     /**
-     * Updates the task
+     * Keep ticking a continuous task that has already been started
      */
     public void updateTask()
     {
@@ -106,7 +106,7 @@ public class EntityAIAttackRanged extends EntityAIBase
 
         if (d0 <= (double)this.maxAttackDistance && this.seeTime >= 20)
         {
-            this.entityHost.getNavigator().clearPathEntity();
+            this.entityHost.getNavigator().clearPath();
         }
         else
         {
@@ -117,20 +117,20 @@ public class EntityAIAttackRanged extends EntityAIBase
 
         if (--this.rangedAttackTime == 0)
         {
-            if (d0 > (double)this.maxAttackDistance || !flag)
+            if (!flag)
             {
                 return;
             }
 
-            float f = MathHelper.sqrt_double(d0) / this.attackRadius;
-            float lvt_5_1_ = MathHelper.clamp_float(f, 0.1F, 1.0F);
+            float f = MathHelper.sqrt(d0) / this.attackRadius;
+            float lvt_5_1_ = MathHelper.clamp(f, 0.1F, 1.0F);
             this.rangedAttackEntityHost.attackEntityWithRangedAttack(this.attackTarget, lvt_5_1_);
-            this.rangedAttackTime = MathHelper.floor_float(f * (float)(this.maxRangedAttackTime - this.attackIntervalMin) + (float)this.attackIntervalMin);
+            this.rangedAttackTime = MathHelper.floor(f * (float)(this.maxRangedAttackTime - this.attackIntervalMin) + (float)this.attackIntervalMin);
         }
         else if (this.rangedAttackTime < 0)
         {
-            float f2 = MathHelper.sqrt_double(d0) / this.attackRadius;
-            this.rangedAttackTime = MathHelper.floor_float(f2 * (float)(this.maxRangedAttackTime - this.attackIntervalMin) + (float)this.attackIntervalMin);
+            float f2 = MathHelper.sqrt(d0) / this.attackRadius;
+            this.rangedAttackTime = MathHelper.floor(f2 * (float)(this.maxRangedAttackTime - this.attackIntervalMin) + (float)this.attackIntervalMin);
         }
     }
 }

@@ -4,28 +4,18 @@ import java.io.IOException;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayServer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class CPacketResourcePackStatus implements Packet<INetHandlerPlayServer>
 {
-    private String hash;
     private CPacketResourcePackStatus.Action action;
 
     public CPacketResourcePackStatus()
     {
     }
 
-    @SideOnly(Side.CLIENT)
-    public CPacketResourcePackStatus(String hashIn, CPacketResourcePackStatus.Action actionIn)
+    public CPacketResourcePackStatus(CPacketResourcePackStatus.Action p_i47156_1_)
     {
-        if (hashIn.length() > 40)
-        {
-            hashIn = hashIn.substring(0, 40);
-        }
-
-        this.hash = hashIn;
-        this.action = actionIn;
+        this.action = p_i47156_1_;
     }
 
     /**
@@ -33,7 +23,6 @@ public class CPacketResourcePackStatus implements Packet<INetHandlerPlayServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.hash = buf.readStringFromBuffer(40);
         this.action = (CPacketResourcePackStatus.Action)buf.readEnumValue(CPacketResourcePackStatus.Action.class);
     }
 
@@ -42,7 +31,6 @@ public class CPacketResourcePackStatus implements Packet<INetHandlerPlayServer>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeString(this.hash);
         buf.writeEnumValue(this.action);
     }
 

@@ -21,13 +21,13 @@ public class CooldownTracker
 
     public float getCooldown(Item itemIn, float partialTicks)
     {
-        CooldownTracker.Cooldown cooldowntracker$cooldown = (CooldownTracker.Cooldown)this.cooldowns.get(itemIn);
+        CooldownTracker.Cooldown cooldowntracker$cooldown = this.cooldowns.get(itemIn);
 
         if (cooldowntracker$cooldown != null)
         {
             float f = (float)(cooldowntracker$cooldown.expireTicks - cooldowntracker$cooldown.createTicks);
             float f1 = (float)cooldowntracker$cooldown.expireTicks - ((float)this.ticks + partialTicks);
-            return MathHelper.clamp_float(f1 / f, 0.0F, 1.0F);
+            return MathHelper.clamp(f1 / f, 0.0F, 1.0F);
         }
         else
         {
@@ -47,10 +47,10 @@ public class CooldownTracker
             {
                 Entry<Item, CooldownTracker.Cooldown> entry = (Entry)iterator.next();
 
-                if (((CooldownTracker.Cooldown)entry.getValue()).expireTicks <= this.ticks)
+                if ((entry.getValue()).expireTicks <= this.ticks)
                 {
                     iterator.remove();
-                    this.notifyOnRemove((Item)entry.getKey());
+                    this.notifyOnRemove(entry.getKey());
                 }
             }
         }

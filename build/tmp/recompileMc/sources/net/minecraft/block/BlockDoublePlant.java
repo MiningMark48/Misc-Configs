@@ -1,6 +1,5 @@
 package net.minecraft.block;
 
-import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
@@ -19,12 +18,11 @@ import net.minecraft.stats.StatList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecraftforge.common.IShearable
 {
@@ -123,17 +121,28 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         if (state.getValue(HALF) == BlockDoublePlant.EnumBlockHalf.UPPER)
         {
-            return null;
+            return Items.AIR;
         }
         else
         {
             BlockDoublePlant.EnumPlantType blockdoubleplant$enumplanttype = (BlockDoublePlant.EnumPlantType)state.getValue(VARIANT);
-            return blockdoubleplant$enumplanttype == BlockDoublePlant.EnumPlantType.FERN ? null : (blockdoubleplant$enumplanttype == BlockDoublePlant.EnumPlantType.GRASS ? (rand.nextInt(8) == 0 ? Items.WHEAT_SEEDS : null) : Item.getItemFromBlock(this));
+
+            if (blockdoubleplant$enumplanttype == BlockDoublePlant.EnumPlantType.FERN)
+            {
+                return Items.AIR;
+            }
+            else if (blockdoubleplant$enumplanttype == BlockDoublePlant.EnumPlantType.GRASS)
+            {
+                return rand.nextInt(8) == 0 ? Items.WHEAT_SEEDS : Items.AIR;
+            }
+            else
+            {
+                return super.getItemDropped(state, rand, fortune);
+            }
         }
     }
 
@@ -160,20 +169,32 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
         worldIn.setBlockState(pos.up(), this.getDefaultState().withProperty(HALF, BlockDoublePlant.EnumBlockHalf.UPPER), 2);
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
         {
             super.harvestBlock(worldIn, player, pos, state, te, stack);
         }
     }
 
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
     public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player)
     {
         if (state.getValue(HALF) == BlockDoublePlant.EnumBlockHalf.UPPER)
         {
             if (worldIn.getBlockState(pos.down()).getBlock() == this)
             {
-                if (!player.capabilities.isCreativeMode)
+                if (player.capabilities.isCreativeMode)
+                {
+                    worldIn.setBlockToAir(pos.down());
+                }
+                else
                 {
                     IBlockState iblockstate = worldIn.getBlockState(pos.down());
                     BlockDoublePlant.EnumPlantType blockdoubleplant$enumplanttype = (BlockDoublePlant.EnumPlantType)iblockstate.getValue(VARIANT);
@@ -182,26 +203,19 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
                     {
                         worldIn.destroyBlock(pos.down(), true);
                     }
-                    else if (!worldIn.isRemote)
-                    {
-                        if (player.getHeldItemMainhand() != null && player.getHeldItemMainhand().getItem() == Items.SHEARS)
-                        {
-                            this.onHarvest(worldIn, pos, iblockstate, player);
-                            worldIn.setBlockToAir(pos.down());
-                        }
-                        else
-                        {
-                            worldIn.destroyBlock(pos.down(), true);
-                        }
-                    }
-                    else
+                    else if (worldIn.isRemote)
                     {
                         worldIn.setBlockToAir(pos.down());
                     }
-                }
-                else
-                {
-                    worldIn.setBlockToAir(pos.down());
+                    else if (!player.getHeldItemMainhand().isEmpty() && player.getHeldItemMainhand().getItem() == Items.SHEARS)
+                    {
+                        this.onHarvest(worldIn, pos, iblockstate, player);
+                        worldIn.setBlockToAir(pos.down());
+                    }
+                    else
+                    {
+                        worldIn.destroyBlock(pos.down(), true);
+                    }
                 }
             }
         }
@@ -231,12 +245,11 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (BlockDoublePlant.EnumPlantType blockdoubleplant$enumplanttype : BlockDoublePlant.EnumPlantType.values())
         {
-            list.add(new ItemStack(itemIn, 1, blockdoubleplant$enumplanttype.getMeta()));
+            items.add(new ItemStack(this, 1, blockdoubleplant$enumplanttype.getMeta()));
         }
     }
 
@@ -307,7 +320,6 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
     /**
      * Get the OffsetType for this Block. Determines if the model is rendered slightly offset.
      */
-    @SideOnly(Side.CLIENT)
     public Block.EnumOffsetType getOffsetType()
     {
         return Block.EnumOffsetType.XZ;
@@ -329,15 +341,6 @@ public class BlockDoublePlant extends BlockBush implements IGrowable, net.minecr
         if (type == EnumPlantType.FERN) ret.add(new ItemStack(Blocks.TALLGRASS, 2, BlockTallGrass.EnumType.FERN.getMeta()));
         if (type == EnumPlantType.GRASS) ret.add(new ItemStack(Blocks.TALLGRASS, 2, BlockTallGrass.EnumType.GRASS.getMeta()));
         return ret;
-    }
-
-    @Override
-    public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest)
-    {
-        //Forge: Break both parts on the client to prevent the top part flickering as default type for a few frames.
-        if (state.getBlock() ==  this && state.getValue(HALF) == EnumBlockHalf.LOWER && world.getBlockState(pos.up()).getBlock() == this)
-            world.setBlockToAir(pos.up());
-        return world.setBlockToAir(pos);
     }
 
     public static enum EnumBlockHalf implements IStringSerializable

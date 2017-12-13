@@ -3,7 +3,8 @@ package net.minecraft.client.renderer.entity.layers;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelElytra;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.RenderPlayer;
+import net.minecraft.client.renderer.entity.RenderLivingBase;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -13,36 +14,46 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class LayerElytra implements LayerRenderer<AbstractClientPlayer>
+public class LayerElytra implements LayerRenderer<EntityLivingBase>
 {
     /** The basic Elytra texture. */
     private static final ResourceLocation TEXTURE_ELYTRA = new ResourceLocation("textures/entity/elytra.png");
     /** Instance of the player renderer. */
-    private final RenderPlayer renderPlayer;
+    protected final RenderLivingBase<?> renderPlayer;
     /** The model used by the Elytra. */
     private final ModelElytra modelElytra = new ModelElytra();
 
-    public LayerElytra(RenderPlayer renderPlayerIn)
+    public LayerElytra(RenderLivingBase<?> p_i47185_1_)
     {
-        this.renderPlayer = renderPlayerIn;
+        this.renderPlayer = p_i47185_1_;
     }
 
-    public void doRenderLayer(AbstractClientPlayer entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale)
+    public void doRenderLayer(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale)
     {
         ItemStack itemstack = entitylivingbaseIn.getItemStackFromSlot(EntityEquipmentSlot.CHEST);
 
-        if (itemstack != null && itemstack.getItem() == Items.ELYTRA)
+        if (itemstack.getItem() == Items.ELYTRA)
         {
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.enableBlend();
+            GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 
-            if (entitylivingbaseIn.isPlayerInfoSet() && entitylivingbaseIn.getLocationElytra() != null)
+            if (entitylivingbaseIn instanceof AbstractClientPlayer)
             {
-                this.renderPlayer.bindTexture(entitylivingbaseIn.getLocationElytra());
-            }
-            else if (entitylivingbaseIn.hasPlayerInfo() && entitylivingbaseIn.getLocationCape() != null && entitylivingbaseIn.isWearing(EnumPlayerModelParts.CAPE))
-            {
-                this.renderPlayer.bindTexture(entitylivingbaseIn.getLocationCape());
+                AbstractClientPlayer abstractclientplayer = (AbstractClientPlayer)entitylivingbaseIn;
+
+                if (abstractclientplayer.isPlayerInfoSet() && abstractclientplayer.getLocationElytra() != null)
+                {
+                    this.renderPlayer.bindTexture(abstractclientplayer.getLocationElytra());
+                }
+                else if (abstractclientplayer.hasPlayerInfo() && abstractclientplayer.getLocationCape() != null && abstractclientplayer.isWearing(EnumPlayerModelParts.CAPE))
+                {
+                    this.renderPlayer.bindTexture(abstractclientplayer.getLocationCape());
+                }
+                else
+                {
+                    this.renderPlayer.bindTexture(TEXTURE_ELYTRA);
+                }
             }
             else
             {
@@ -59,6 +70,7 @@ public class LayerElytra implements LayerRenderer<AbstractClientPlayer>
                 LayerArmorBase.renderEnchantedGlint(this.renderPlayer, entitylivingbaseIn, this.modelElytra, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch, scale);
             }
 
+            GlStateManager.disableBlend();
             GlStateManager.popMatrix();
         }
     }

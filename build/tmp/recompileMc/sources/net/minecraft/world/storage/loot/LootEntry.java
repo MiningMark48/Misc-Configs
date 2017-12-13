@@ -36,7 +36,7 @@ public abstract class LootEntry
      */
     public int getEffectiveWeight(float luck)
     {
-        return Math.max(MathHelper.floor_float((float)this.weight + (float)this.quality * luck), 0);
+        return Math.max(MathHelper.floor((float)this.weight + (float)this.quality * luck), 0);
     }
 
     public String getEntryName(){ return this.entryName; }
@@ -67,21 +67,21 @@ public abstract class LootEntry
                 LootEntry ret = net.minecraftforge.common.ForgeHooks.deserializeJsonLootEntry(s, jsonobject, i, j, alootcondition);
                 if (ret != null) return ret;
 
-                if (s.equals("item"))
+                if ("item".equals(s))
                 {
                     return LootEntryItem.deserialize(jsonobject, p_deserialize_3_, i, j, alootcondition);
                 }
-                else if (s.equals("loot_table"))
+                else if ("loot_table".equals(s))
                 {
                     return LootEntryTable.deserialize(jsonobject, p_deserialize_3_, i, j, alootcondition);
                 }
-                else if (s.equals("empty"))
+                else if ("empty".equals(s))
                 {
                     return LootEntryEmpty.deserialize(jsonobject, p_deserialize_3_, i, j, alootcondition);
                 }
                 else
                 {
-                    throw new JsonSyntaxException("Unknown loot entry type \'" + s + "\'");
+                    throw new JsonSyntaxException("Unknown loot entry type '" + s + "'");
                 }
             }
 
@@ -90,8 +90,8 @@ public abstract class LootEntry
                 JsonObject jsonobject = new JsonObject();
                 if (p_serialize_1_.entryName != null && !p_serialize_1_.entryName.startsWith("custom#"))
                     jsonobject.addProperty("entryName", p_serialize_1_.entryName);
-                jsonobject.addProperty("weight", (Number)Integer.valueOf(p_serialize_1_.weight));
-                jsonobject.addProperty("quality", (Number)Integer.valueOf(p_serialize_1_.quality));
+                jsonobject.addProperty("weight", Integer.valueOf(p_serialize_1_.weight));
+                jsonobject.addProperty("quality", Integer.valueOf(p_serialize_1_.quality));
 
                 if (p_serialize_1_.conditions.length > 0)
                 {
@@ -107,13 +107,13 @@ public abstract class LootEntry
                 }
                 else if (p_serialize_1_ instanceof LootEntryTable)
                 {
-                    jsonobject.addProperty("type", "item");
+                    jsonobject.addProperty("type", "loot_table");
                 }
                 else
                 {
                     if (!(p_serialize_1_ instanceof LootEntryEmpty))
                     {
-                        throw new IllegalArgumentException("Don\'t know how to serialize " + p_serialize_1_);
+                        throw new IllegalArgumentException("Don't know how to serialize " + p_serialize_1_);
                     }
 
                     jsonobject.addProperty("type", "empty");

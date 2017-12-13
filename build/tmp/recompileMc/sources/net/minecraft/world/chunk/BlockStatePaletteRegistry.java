@@ -20,22 +20,22 @@ public class BlockStatePaletteRegistry implements IBlockStatePalette
      */
     public IBlockState getBlockState(int indexKey)
     {
-        IBlockState iblockstate = (IBlockState)Block.BLOCK_STATE_IDS.getByValue(indexKey);
+        IBlockState iblockstate = Block.BLOCK_STATE_IDS.getByValue(indexKey);
         return iblockstate == null ? Blocks.AIR.getDefaultState() : iblockstate;
     }
 
     @SideOnly(Side.CLIENT)
     public void read(PacketBuffer buf)
     {
-        buf.readVarIntFromBuffer();
+        buf.readVarInt();
     }
 
     public void write(PacketBuffer buf)
     {
-        buf.writeVarIntToBuffer(0);
+        buf.writeVarInt(0);
     }
 
-    public int getSerializedState()
+    public int getSerializedSize()
     {
         return PacketBuffer.getVarIntSize(0);
     }

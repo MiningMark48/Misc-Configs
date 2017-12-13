@@ -12,10 +12,10 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiSlot;
 import net.minecraft.client.gui.IProgressMeter;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.EntityList;
@@ -40,15 +40,15 @@ public class GuiStats extends GuiScreen implements IProgressMeter
     private GuiStats.StatsItem itemStats;
     private GuiStats.StatsBlock blockStats;
     private GuiStats.StatsMobsList mobStats;
-    private StatisticsManager stats;
+    private final StatisticsManager stats;
     private GuiSlot displaySlot;
     /** When true, the game will be paused when the gui is shown */
     private boolean doesGuiPauseGame = true;
 
-    public GuiStats(GuiScreen p_i1071_1_, StatisticsManager p_i1071_2_)
+    public GuiStats(GuiScreen parent, StatisticsManager manager)
     {
-        this.parentScreen = p_i1071_1_;
-        this.stats = p_i1071_2_;
+        this.parentScreen = parent;
+        this.stats = manager;
     }
 
     /**
@@ -57,7 +57,7 @@ public class GuiStats extends GuiScreen implements IProgressMeter
      */
     public void initGui()
     {
-        this.screenTitle = I18n.format("gui.stats", new Object[0]);
+        this.screenTitle = I18n.format("gui.stats");
         this.doesGuiPauseGame = true;
         this.mc.getConnection().sendPacket(new CPacketClientStatus(CPacketClientStatus.State.REQUEST_STATS));
     }
@@ -87,16 +87,13 @@ public class GuiStats extends GuiScreen implements IProgressMeter
         this.mobStats.registerScrollButtons(1, 1);
     }
 
-    public void createButtons()
+    public void initButtons()
     {
-        this.buttonList.add(new GuiButton(0, this.width / 2 + 4, this.height - 28, 150, 20, I18n.format("gui.done", new Object[0])));
-        this.buttonList.add(new GuiButton(1, this.width / 2 - 160, this.height - 52, 80, 20, I18n.format("stat.generalButton", new Object[0])));
-        GuiButton guibutton;
-        this.buttonList.add(guibutton = new GuiButton(2, this.width / 2 - 80, this.height - 52, 80, 20, I18n.format("stat.blocksButton", new Object[0])));
-        GuiButton guibutton1;
-        this.buttonList.add(guibutton1 = new GuiButton(3, this.width / 2, this.height - 52, 80, 20, I18n.format("stat.itemsButton", new Object[0])));
-        GuiButton guibutton2;
-        this.buttonList.add(guibutton2 = new GuiButton(4, this.width / 2 + 80, this.height - 52, 80, 20, I18n.format("stat.mobsButton", new Object[0])));
+        this.buttonList.add(new GuiButton(0, this.width / 2 + 4, this.height - 28, 150, 20, I18n.format("gui.done")));
+        this.buttonList.add(new GuiButton(1, this.width / 2 - 160, this.height - 52, 80, 20, I18n.format("stat.generalButton")));
+        GuiButton guibutton = this.addButton(new GuiButton(2, this.width / 2 - 80, this.height - 52, 80, 20, I18n.format("stat.blocksButton")));
+        GuiButton guibutton1 = this.addButton(new GuiButton(3, this.width / 2, this.height - 52, 80, 20, I18n.format("stat.itemsButton")));
+        GuiButton guibutton2 = this.addButton(new GuiButton(4, this.width / 2 + 80, this.height - 52, 80, 20, I18n.format("stat.mobsButton")));
 
         if (this.blockStats.getSize() == 0)
         {
@@ -156,23 +153,23 @@ public class GuiStats extends GuiScreen implements IProgressMeter
         if (this.doesGuiPauseGame)
         {
             this.drawDefaultBackground();
-            this.drawCenteredString(this.fontRendererObj, I18n.format("multiplayer.downloadingStats", new Object[0]), this.width / 2, this.height / 2, 16777215);
-            this.drawCenteredString(this.fontRendererObj, LOADING_STRINGS[(int)(Minecraft.getSystemTime() / 150L % (long)LOADING_STRINGS.length)], this.width / 2, this.height / 2 + this.fontRendererObj.FONT_HEIGHT * 2, 16777215);
+            this.drawCenteredString(this.fontRenderer, I18n.format("multiplayer.downloadingStats"), this.width / 2, this.height / 2, 16777215);
+            this.drawCenteredString(this.fontRenderer, LOADING_STRINGS[(int)(Minecraft.getSystemTime() / 150L % (long)LOADING_STRINGS.length)], this.width / 2, this.height / 2 + this.fontRenderer.FONT_HEIGHT * 2, 16777215);
         }
         else
         {
             this.displaySlot.drawScreen(mouseX, mouseY, partialTicks);
-            this.drawCenteredString(this.fontRendererObj, this.screenTitle, this.width / 2, 20, 16777215);
+            this.drawCenteredString(this.fontRenderer, this.screenTitle, this.width / 2, 20, 16777215);
             super.drawScreen(mouseX, mouseY, partialTicks);
         }
     }
 
-    public void doneLoading()
+    public void onStatsUpdated()
     {
         if (this.doesGuiPauseGame)
         {
             this.initLists();
-            this.createButtons();
+            this.initButtons();
             this.displaySlot = this.generalStats;
             this.doesGuiPauseGame = false;
         }
@@ -186,12 +183,12 @@ public class GuiStats extends GuiScreen implements IProgressMeter
         return !this.doesGuiPauseGame;
     }
 
-    private void drawStatsScreen(int p_146521_1_, int p_146521_2_, Item p_146521_3_)
+    private void drawStatsScreen(int x, int y, Item itemIn)
     {
-        this.drawButtonBackground(p_146521_1_ + 1, p_146521_2_ + 1);
+        this.drawButtonBackground(x + 1, y + 1);
         GlStateManager.enableRescaleNormal();
         RenderHelper.enableGUIStandardItemLighting();
-        this.itemRender.renderItemIntoGUI(new ItemStack(p_146521_3_), p_146521_1_ + 2, p_146521_2_ + 2);
+        this.itemRender.renderItemIntoGUI(itemIn.getDefaultInstance(), x + 2, y + 2);
         RenderHelper.disableStandardItemLighting();
         GlStateManager.disableRescaleNormal();
     }
@@ -199,15 +196,15 @@ public class GuiStats extends GuiScreen implements IProgressMeter
     /**
      * Draws a gray box that serves as a button background.
      */
-    private void drawButtonBackground(int p_146531_1_, int p_146531_2_)
+    private void drawButtonBackground(int x, int y)
     {
-        this.drawSprite(p_146531_1_, p_146531_2_, 0, 0);
+        this.drawSprite(x, y, 0, 0);
     }
 
     /**
      * Draws a sprite from assets/textures/gui/container/stats_icons.png
      */
-    private void drawSprite(int p_146527_1_, int p_146527_2_, int p_146527_3_, int p_146527_4_)
+    private void drawSprite(int x, int y, int u, int v)
     {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         this.mc.getTextureManager().bindTexture(STAT_ICONS);
@@ -216,12 +213,12 @@ public class GuiStats extends GuiScreen implements IProgressMeter
         int i = 18;
         int j = 18;
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(7, DefaultVertexFormats.POSITION_TEX);
-        vertexbuffer.pos((double)(p_146527_1_ + 0), (double)(p_146527_2_ + 18), (double)this.zLevel).tex((double)((float)(p_146527_3_ + 0) * 0.0078125F), (double)((float)(p_146527_4_ + 18) * 0.0078125F)).endVertex();
-        vertexbuffer.pos((double)(p_146527_1_ + 18), (double)(p_146527_2_ + 18), (double)this.zLevel).tex((double)((float)(p_146527_3_ + 18) * 0.0078125F), (double)((float)(p_146527_4_ + 18) * 0.0078125F)).endVertex();
-        vertexbuffer.pos((double)(p_146527_1_ + 18), (double)(p_146527_2_ + 0), (double)this.zLevel).tex((double)((float)(p_146527_3_ + 18) * 0.0078125F), (double)((float)(p_146527_4_ + 0) * 0.0078125F)).endVertex();
-        vertexbuffer.pos((double)(p_146527_1_ + 0), (double)(p_146527_2_ + 0), (double)this.zLevel).tex((double)((float)(p_146527_3_ + 0) * 0.0078125F), (double)((float)(p_146527_4_ + 0) * 0.0078125F)).endVertex();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.pos((double)(x + 0), (double)(y + 18), (double)this.zLevel).tex((double)((float)(u + 0) * 0.0078125F), (double)((float)(v + 18) * 0.0078125F)).endVertex();
+        bufferbuilder.pos((double)(x + 18), (double)(y + 18), (double)this.zLevel).tex((double)((float)(u + 18) * 0.0078125F), (double)((float)(v + 18) * 0.0078125F)).endVertex();
+        bufferbuilder.pos((double)(x + 18), (double)(y + 0), (double)this.zLevel).tex((double)((float)(u + 18) * 0.0078125F), (double)((float)(v + 0) * 0.0078125F)).endVertex();
+        bufferbuilder.pos((double)(x + 0), (double)(y + 0), (double)this.zLevel).tex((double)((float)(u + 0) * 0.0078125F), (double)((float)(v + 0) * 0.0078125F)).endVertex();
         tessellator.draw();
     }
 
@@ -234,9 +231,9 @@ public class GuiStats extends GuiScreen implements IProgressMeter
         protected int sortColumn = -1;
         protected int sortOrder;
 
-        protected Stats(Minecraft mcIn)
+        protected Stats(Minecraft p_i47550_2_)
         {
-            super(mcIn, GuiStats.this.width, GuiStats.this.height, 32, GuiStats.this.height - 64, 20);
+            super(p_i47550_2_, GuiStats.this.width, GuiStats.this.height, 32, GuiStats.this.height - 64, 20);
             this.setShowSelectionBox(false);
             this.setHasListHeader(true, 20);
         }
@@ -399,7 +396,7 @@ public class GuiStats extends GuiScreen implements IProgressMeter
 
         protected final StatCrafting getSlotStat(int p_148211_1_)
         {
-            return (StatCrafting)this.statsHolder.get(p_148211_1_);
+            return this.statsHolder.get(p_148211_1_);
         }
 
         protected abstract String getHeaderDescriptionId(int p_148210_1_);
@@ -409,12 +406,12 @@ public class GuiStats extends GuiScreen implements IProgressMeter
             if (p_148209_1_ != null)
             {
                 String s = p_148209_1_.format(GuiStats.this.stats.readStat(p_148209_1_));
-                GuiStats.this.drawString(GuiStats.this.fontRendererObj, s, p_148209_2_ - GuiStats.this.fontRendererObj.getStringWidth(s), p_148209_3_ + 5, p_148209_4_ ? 16777215 : 9474192);
+                GuiStats.this.drawString(GuiStats.this.fontRenderer, s, p_148209_2_ - GuiStats.this.fontRenderer.getStringWidth(s), p_148209_3_ + 5, p_148209_4_ ? 16777215 : 9474192);
             }
             else
             {
                 String s1 = "-";
-                GuiStats.this.drawString(GuiStats.this.fontRendererObj, s1, p_148209_2_ - GuiStats.this.fontRendererObj.getStringWidth(s1), p_148209_3_ + 5, p_148209_4_ ? 16777215 : 9474192);
+                GuiStats.this.drawString(GuiStats.this.fontRenderer, "-", p_148209_2_ - GuiStats.this.fontRenderer.getStringWidth("-"), p_148209_3_ + 5, p_148209_4_ ? 16777215 : 9474192);
             }
         }
 
@@ -437,7 +434,7 @@ public class GuiStats extends GuiScreen implements IProgressMeter
                 }
                 else
                 {
-                    String s = "";
+                    String s;
 
                     if (mouseXIn >= j + 115 - 18 && mouseXIn <= j + 115)
                     {
@@ -465,15 +462,15 @@ public class GuiStats extends GuiScreen implements IProgressMeter
                         s = this.getHeaderDescriptionId(4);
                     }
 
-                    s = ("" + I18n.format(s, new Object[0])).trim();
+                    s = ("" + I18n.format(s)).trim();
 
                     if (!s.isEmpty())
                     {
                         int k = mouseXIn + 12;
                         int l = mouseYIn - 12;
-                        int i1 = GuiStats.this.fontRendererObj.getStringWidth(s);
+                        int i1 = GuiStats.this.fontRenderer.getStringWidth(s);
                         GuiStats.this.drawGradientRect(k - 3, l - 3, k + i1 + 3, l + 8 + 3, -1073741824, -1073741824);
-                        GuiStats.this.fontRendererObj.drawStringWithShadow(s, (float)k, (float)l, -1);
+                        GuiStats.this.fontRenderer.drawStringWithShadow(s, (float)k, (float)l, -1);
                     }
                 }
             }
@@ -486,15 +483,15 @@ public class GuiStats extends GuiScreen implements IProgressMeter
                 Item item = p_148213_1_.getItem();
                 ItemStack itemstack = new ItemStack(item);
                 String s = itemstack.getUnlocalizedName();
-                String s1 = ("" + I18n.format(s + ".name", new Object[0])).trim();
+                String s1 = ("" + I18n.format(s + ".name")).trim();
 
                 if (!s1.isEmpty())
                 {
                     int i = p_148213_2_ + 12;
                     int j = p_148213_3_ - 12;
-                    int k = GuiStats.this.fontRendererObj.getStringWidth(s1);
+                    int k = GuiStats.this.fontRenderer.getStringWidth(s1);
                     GuiStats.this.drawGradientRect(i - 3, j - 3, i + k + 3, j + 8 + 3, -1073741824, -1073741824);
-                    GuiStats.this.fontRendererObj.drawStringWithShadow(s1, (float)i, (float)j, -1);
+                    GuiStats.this.fontRenderer.drawStringWithShadow(s1, (float)i, (float)j, -1);
                 }
             }
         }
@@ -523,9 +520,9 @@ public class GuiStats extends GuiScreen implements IProgressMeter
     @SideOnly(Side.CLIENT)
     class StatsBlock extends GuiStats.Stats
     {
-        public StatsBlock(Minecraft mcIn)
+        public StatsBlock(Minecraft p_i47554_2_)
         {
-            super(mcIn);
+            super(p_i47554_2_);
             this.statsHolder = Lists.<StatCrafting>newArrayList();
 
             for (StatCrafting statcrafting : StatList.MINE_BLOCK_STATS)
@@ -674,21 +671,36 @@ public class GuiStats extends GuiScreen implements IProgressMeter
             }
         }
 
-        protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+        protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
         {
-            StatCrafting statcrafting = this.getSlotStat(entryID);
+            StatCrafting statcrafting = this.getSlotStat(slotIndex);
             Item item = statcrafting.getItem();
-            GuiStats.this.drawStatsScreen(insideLeft + 40, yPos, item);
-            this.renderStat(StatList.getCraftStats(item), insideLeft + 115, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getObjectUseStats(item), insideLeft + 165, yPos, entryID % 2 == 0);
-            this.renderStat(statcrafting, insideLeft + 215, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getObjectsPickedUpStats(item), insideLeft + 265, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getDroppedObjectStats(item), insideLeft + 315, yPos, entryID % 2 == 0);
+            GuiStats.this.drawStatsScreen(xPos + 40, yPos, item);
+            this.renderStat(StatList.getCraftStats(item), xPos + 115, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getObjectUseStats(item), xPos + 165, yPos, slotIndex % 2 == 0);
+            this.renderStat(statcrafting, xPos + 215, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getObjectsPickedUpStats(item), xPos + 265, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getDroppedObjectStats(item), xPos + 315, yPos, slotIndex % 2 == 0);
         }
 
         protected String getHeaderDescriptionId(int p_148210_1_)
         {
-            return p_148210_1_ == 0 ? "stat.crafted" : (p_148210_1_ == 1 ? "stat.used" : (p_148210_1_ == 3 ? "stat.pickup" : (p_148210_1_ == 4 ? "stat.dropped" : "stat.mined")));
+            if (p_148210_1_ == 0)
+            {
+                return "stat.crafted";
+            }
+            else if (p_148210_1_ == 1)
+            {
+                return "stat.used";
+            }
+            else if (p_148210_1_ == 3)
+            {
+                return "stat.pickup";
+            }
+            else
+            {
+                return p_148210_1_ == 4 ? "stat.dropped" : "stat.mined";
+            }
         }
     }
 
@@ -734,12 +746,12 @@ public class GuiStats extends GuiScreen implements IProgressMeter
             GuiStats.this.drawDefaultBackground();
         }
 
-        protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+        protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
         {
-            StatBase statbase = (StatBase)StatList.BASIC_STATS.get(entryID);
-            GuiStats.this.drawString(GuiStats.this.fontRendererObj, statbase.getStatName().getUnformattedText(), insideLeft + 2, yPos + 1, entryID % 2 == 0 ? 16777215 : 9474192);
+            StatBase statbase = StatList.BASIC_STATS.get(slotIndex);
+            GuiStats.this.drawString(GuiStats.this.fontRenderer, statbase.getStatName().getUnformattedText(), xPos + 2, yPos + 1, slotIndex % 2 == 0 ? 16777215 : 9474192);
             String s = statbase.format(GuiStats.this.stats.readStat(statbase));
-            GuiStats.this.drawString(GuiStats.this.fontRendererObj, s, insideLeft + 2 + 213 - GuiStats.this.fontRendererObj.getStringWidth(s), yPos + 1, entryID % 2 == 0 ? 16777215 : 9474192);
+            GuiStats.this.drawString(GuiStats.this.fontRenderer, s, xPos + 2 + 213 - GuiStats.this.fontRenderer.getStringWidth(s), yPos + 1, slotIndex % 2 == 0 ? 16777215 : 9474192);
         }
     }
 
@@ -899,21 +911,36 @@ public class GuiStats extends GuiScreen implements IProgressMeter
             }
         }
 
-        protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+        protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
         {
-            StatCrafting statcrafting = this.getSlotStat(entryID);
+            StatCrafting statcrafting = this.getSlotStat(slotIndex);
             Item item = statcrafting.getItem();
-            GuiStats.this.drawStatsScreen(insideLeft + 40, yPos, item);
-            this.renderStat(StatList.getObjectBreakStats(item), insideLeft + 115, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getCraftStats(item), insideLeft + 165, yPos, entryID % 2 == 0);
-            this.renderStat(statcrafting, insideLeft + 215, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getObjectsPickedUpStats(item), insideLeft + 265, yPos, entryID % 2 == 0);
-            this.renderStat(StatList.getDroppedObjectStats(item), insideLeft + 315, yPos, entryID % 2 == 0);
+            GuiStats.this.drawStatsScreen(xPos + 40, yPos, item);
+            this.renderStat(StatList.getObjectBreakStats(item), xPos + 115, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getCraftStats(item), xPos + 165, yPos, slotIndex % 2 == 0);
+            this.renderStat(statcrafting, xPos + 215, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getObjectsPickedUpStats(item), xPos + 265, yPos, slotIndex % 2 == 0);
+            this.renderStat(StatList.getDroppedObjectStats(item), xPos + 315, yPos, slotIndex % 2 == 0);
         }
 
         protected String getHeaderDescriptionId(int p_148210_1_)
         {
-            return p_148210_1_ == 1 ? "stat.crafted" : (p_148210_1_ == 2 ? "stat.used" : (p_148210_1_ == 3 ? "stat.pickup" : (p_148210_1_ == 4 ? "stat.dropped" : "stat.depleted")));
+            if (p_148210_1_ == 1)
+            {
+                return "stat.crafted";
+            }
+            else if (p_148210_1_ == 2)
+            {
+                return "stat.used";
+            }
+            else if (p_148210_1_ == 3)
+            {
+                return "stat.pickup";
+            }
+            else
+            {
+                return p_148210_1_ == 4 ? "stat.dropped" : "stat.depleted";
+            }
         }
     }
 
@@ -924,7 +951,7 @@ public class GuiStats extends GuiScreen implements IProgressMeter
 
         public StatsMobsList(Minecraft mcIn)
         {
-            super(mcIn, GuiStats.this.width, GuiStats.this.height, 32, GuiStats.this.height - 64, GuiStats.this.fontRendererObj.FONT_HEIGHT * 4);
+            super(mcIn, GuiStats.this.width, GuiStats.this.height, 32, GuiStats.this.height - 64, GuiStats.this.fontRenderer.FONT_HEIGHT * 4);
             this.setShowSelectionBox(false);
 
             for (EntityList.EntityEggInfo entitylist$entityegginfo : EntityList.ENTITY_EGGS.values())
@@ -961,7 +988,7 @@ public class GuiStats extends GuiScreen implements IProgressMeter
          */
         protected int getContentHeight()
         {
-            return this.getSize() * GuiStats.this.fontRendererObj.FONT_HEIGHT * 4;
+            return this.getSize() * GuiStats.this.fontRenderer.FONT_HEIGHT * 4;
         }
 
         protected void drawBackground()
@@ -969,28 +996,28 @@ public class GuiStats extends GuiScreen implements IProgressMeter
             GuiStats.this.drawDefaultBackground();
         }
 
-        protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+        protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
         {
-            EntityList.EntityEggInfo entitylist$entityegginfo = (EntityList.EntityEggInfo)this.mobs.get(entryID);
-            String s = I18n.format("entity." + entitylist$entityegginfo.spawnedID + ".name", new Object[0]);
+            EntityList.EntityEggInfo entitylist$entityegginfo = this.mobs.get(slotIndex);
+            String s = I18n.format("entity." + EntityList.getTranslationName(entitylist$entityegginfo.spawnedID) + ".name");
             int i = GuiStats.this.stats.readStat(entitylist$entityegginfo.killEntityStat);
             int j = GuiStats.this.stats.readStat(entitylist$entityegginfo.entityKilledByStat);
-            String s1 = I18n.format("stat.entityKills", new Object[] {Integer.valueOf(i), s});
-            String s2 = I18n.format("stat.entityKilledBy", new Object[] {s, Integer.valueOf(j)});
+            String s1 = I18n.format("stat.entityKills", i, s);
+            String s2 = I18n.format("stat.entityKilledBy", s, j);
 
             if (i == 0)
             {
-                s1 = I18n.format("stat.entityKills.none", new Object[] {s});
+                s1 = I18n.format("stat.entityKills.none", s);
             }
 
             if (j == 0)
             {
-                s2 = I18n.format("stat.entityKilledBy.none", new Object[] {s});
+                s2 = I18n.format("stat.entityKilledBy.none", s);
             }
 
-            GuiStats.this.drawString(GuiStats.this.fontRendererObj, s, insideLeft + 2 - 10, yPos + 1, 16777215);
-            GuiStats.this.drawString(GuiStats.this.fontRendererObj, s1, insideLeft + 2, yPos + 1 + GuiStats.this.fontRendererObj.FONT_HEIGHT, i == 0 ? 6316128 : 9474192);
-            GuiStats.this.drawString(GuiStats.this.fontRendererObj, s2, insideLeft + 2, yPos + 1 + GuiStats.this.fontRendererObj.FONT_HEIGHT * 2, j == 0 ? 6316128 : 9474192);
+            GuiStats.this.drawString(GuiStats.this.fontRenderer, s, xPos + 2 - 10, yPos + 1, 16777215);
+            GuiStats.this.drawString(GuiStats.this.fontRenderer, s1, xPos + 2, yPos + 1 + GuiStats.this.fontRenderer.FONT_HEIGHT, i == 0 ? 6316128 : 9474192);
+            GuiStats.this.drawString(GuiStats.this.fontRenderer, s2, xPos + 2, yPos + 1 + GuiStats.this.fontRenderer.FONT_HEIGHT * 2, j == 0 ? 6316128 : 9474192);
         }
     }
 }

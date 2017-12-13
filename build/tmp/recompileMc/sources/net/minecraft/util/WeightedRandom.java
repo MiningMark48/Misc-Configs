@@ -15,13 +15,16 @@ public class WeightedRandom
 
         for (int k = collection.size(); j < k; ++j)
         {
-            WeightedRandom.Item weightedrandom$item = (WeightedRandom.Item)collection.get(j);
+            WeightedRandom.Item weightedrandom$item = collection.get(j);
             i += weightedrandom$item.itemWeight;
         }
 
         return i;
     }
 
+    /**
+     * Returns a random choice from the input items, with a total weight value.
+     */
     public static <T extends WeightedRandom.Item> T getRandomItem(Random random, List<T> collection, int totalWeight)
     {
         if (totalWeight <= 0)
@@ -31,7 +34,7 @@ public class WeightedRandom
         else
         {
             int i = random.nextInt(totalWeight);
-            return getRandomItem(collection, i);
+            return (T)getRandomItem(collection, i);
         }
     }
 
@@ -53,12 +56,12 @@ public class WeightedRandom
         return (T)null;
     }
 
+    /**
+     * Returns a random choice from the input items.
+     */
     public static <T extends WeightedRandom.Item> T getRandomItem(Random random, List<T> collection)
     {
-        /**
-         * Returns a random choice from the input items, with a total weight value.
-         */
-        return getRandomItem(random, collection, getTotalWeight(collection));
+        return (T)getRandomItem(random, collection, getTotalWeight(collection));
     }
 
     public static class Item

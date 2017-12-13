@@ -25,7 +25,7 @@ public class TileEntityEnchantmentTable extends TileEntity implements ITickable,
     public float bookRotation;
     public float bookRotationPrev;
     public float tRot;
-    private static Random rand = new Random();
+    private static final Random rand = new Random();
     private String customName;
 
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
@@ -57,7 +57,7 @@ public class TileEntityEnchantmentTable extends TileEntity implements ITickable,
     {
         this.bookSpreadPrev = this.bookSpread;
         this.bookRotationPrev = this.bookRotation;
-        EntityPlayer entityplayer = this.worldObj.getClosestPlayer((double)((float)this.pos.getX() + 0.5F), (double)((float)this.pos.getY() + 0.5F), (double)((float)this.pos.getZ() + 0.5F), 3.0D, false);
+        EntityPlayer entityplayer = this.world.getClosestPlayer((double)((float)this.pos.getX() + 0.5F), (double)((float)this.pos.getY() + 0.5F), (double)((float)this.pos.getZ() + 0.5F), 3.0D, false);
 
         if (entityplayer != null)
         {
@@ -120,12 +120,12 @@ public class TileEntityEnchantmentTable extends TileEntity implements ITickable,
         }
 
         this.bookRotation += f2 * 0.4F;
-        this.bookSpread = MathHelper.clamp_float(this.bookSpread, 0.0F, 1.0F);
+        this.bookSpread = MathHelper.clamp(this.bookSpread, 0.0F, 1.0F);
         ++this.tickCount;
         this.pageFlipPrev = this.pageFlip;
         float f = (this.flipT - this.pageFlip) * 0.4F;
         float f3 = 0.2F;
-        f = MathHelper.clamp_float(f, -f3, f3);
+        f = MathHelper.clamp(f, -0.2F, 0.2F);
         this.flipA += (f - this.flipA) * 0.9F;
         this.pageFlip += this.flipA;
     }
@@ -161,7 +161,7 @@ public class TileEntityEnchantmentTable extends TileEntity implements ITickable,
 
     public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn)
     {
-        return new ContainerEnchantment(playerInventory, this.worldObj, this.pos);
+        return new ContainerEnchantment(playerInventory, this.world, this.pos);
     }
 
     public String getGuiID()

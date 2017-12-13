@@ -31,6 +31,9 @@ public class LootTable
         this.pools = Lists.newArrayList(poolsIn);
     }
 
+    /**
+     * returns a list of loot generated from a bunch of pools
+     */
     public List<ItemStack> generateLootForPools(Random rand, LootContext context)
     {
         List<ItemStack> list = Lists.<ItemStack>newArrayList();
@@ -66,9 +69,9 @@ public class LootTable
                 return;
             }
 
-            if (itemstack == null)
+            if (itemstack.isEmpty())
             {
-                inventory.setInventorySlotContents(((Integer)list1.remove(list1.size() - 1)).intValue(), (ItemStack)null);
+                inventory.setInventorySlotContents(((Integer)list1.remove(list1.size() - 1)).intValue(), ItemStack.EMPTY);
             }
             else
             {
@@ -87,13 +90,13 @@ public class LootTable
 
         while (iterator.hasNext())
         {
-            ItemStack itemstack = (ItemStack)iterator.next();
+            ItemStack itemstack = iterator.next();
 
-            if (itemstack.stackSize <= 0)
+            if (itemstack.isEmpty())
             {
                 iterator.remove();
             }
-            else if (itemstack.stackSize > 1)
+            else if (itemstack.getCount() > 1)
             {
                 list.add(itemstack);
                 iterator.remove();
@@ -102,15 +105,13 @@ public class LootTable
 
         p_186463_2_ = p_186463_2_ - stacks.size();
 
-        while (p_186463_2_ > 0 && ((List)list).size() > 0)
+        while (p_186463_2_ > 0 && !list.isEmpty())
         {
-            ItemStack itemstack2 = (ItemStack)list.remove(MathHelper.getRandomIntegerInRange(rand, 0, list.size() - 1));
-            int i = MathHelper.getRandomIntegerInRange(rand, 1, itemstack2.stackSize / 2);
-            itemstack2.stackSize -= i;
-            ItemStack itemstack1 = itemstack2.copy();
-            itemstack1.stackSize = i;
+            ItemStack itemstack2 = list.remove(MathHelper.getInt(rand, 0, list.size() - 1));
+            int i = MathHelper.getInt(rand, 1, itemstack2.getCount() / 2);
+            ItemStack itemstack1 = itemstack2.splitStack(i);
 
-            if (itemstack2.stackSize > 1 && rand.nextBoolean())
+            if (itemstack2.getCount() > 1 && rand.nextBoolean())
             {
                 list.add(itemstack2);
             }
@@ -119,7 +120,7 @@ public class LootTable
                 stacks.add(itemstack2);
             }
 
-            if (itemstack1.stackSize > 1 && rand.nextBoolean())
+            if (itemstack1.getCount() > 1 && rand.nextBoolean())
             {
                 list.add(itemstack1);
             }
@@ -139,7 +140,7 @@ public class LootTable
 
         for (int i = 0; i < inventory.getSizeInventory(); ++i)
         {
-            if (inventory.getStackInSlot(i) == null)
+            if (inventory.getStackInSlot(i).isEmpty())
             {
                 list.add(Integer.valueOf(i));
             }

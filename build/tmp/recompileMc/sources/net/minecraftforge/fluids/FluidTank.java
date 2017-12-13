@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fluids;
 
 import javax.annotation.Nullable;
@@ -218,6 +237,7 @@ public class FluidTank implements IFluidTank, IFluidHandler
      * Use this method to bypass the restrictions from {@link #canDrainFluidType(FluidStack)}
      * Meant for use by the owner of the tank when they have {@link #canDrain()} set to false}.
      */
+    @Nullable
     public FluidStack drainInternal(FluidStack resource, boolean doDrain)
     {
         if (resource == null || !resource.isFluidEqual(getFluid()))
@@ -231,6 +251,7 @@ public class FluidTank implements IFluidTank, IFluidHandler
      * Use this method to bypass the restrictions from {@link #canDrainFluidType(FluidStack)}
      * Meant for use by the owner of the tank when they have {@link #canDrain()} set to false}.
      */
+    @Nullable
     public FluidStack drainInternal(int maxDrain, boolean doDrain)
     {
         if (fluid == null || maxDrain <= 0)
@@ -324,9 +345,9 @@ public class FluidTank implements IFluidTank, IFluidHandler
      *
      * @see IFluidTankProperties#canDrainFluidType(FluidStack)
      */
-    public boolean canDrainFluidType(FluidStack fluid)
+    public boolean canDrainFluidType(@Nullable FluidStack fluid)
     {
-        return canDrain();
+        return fluid != null && canDrain();
     }
 
     protected void onContentsChanged()

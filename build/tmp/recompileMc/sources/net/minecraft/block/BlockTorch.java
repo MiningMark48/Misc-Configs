@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -64,7 +65,7 @@ public class BlockTorch extends Block
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
@@ -85,14 +86,7 @@ public class BlockTorch extends Block
     private boolean canPlaceOn(World worldIn, BlockPos pos)
     {
         IBlockState state = worldIn.getBlockState(pos);
-        if (state.isSideSolid(worldIn, pos, EnumFacing.UP))
-        {
-            return true;
-        }
-        else
-        {
-            return state.getBlock().canPlaceTorchOnTop(state, worldIn, pos);
-        }
+        return state.getBlock().canPlaceTorchOnTop(state, worldIn, pos);
     }
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
@@ -111,15 +105,29 @@ public class BlockTorch extends Block
     private boolean canPlaceAt(World worldIn, BlockPos pos, EnumFacing facing)
     {
         BlockPos blockpos = pos.offset(facing.getOpposite());
-        boolean flag = facing.getAxis().isHorizontal();
-        return flag && worldIn.isSideSolid(blockpos, facing, true) || facing.equals(EnumFacing.UP) && this.canPlaceOn(worldIn, blockpos);
+        IBlockState iblockstate = worldIn.getBlockState(blockpos);
+        Block block = iblockstate.getBlock();
+        BlockFaceShape blockfaceshape = iblockstate.getBlockFaceShape(worldIn, blockpos, facing);
+
+        if (facing.equals(EnumFacing.UP) && this.canPlaceOn(worldIn, blockpos))
+        {
+            return true;
+        }
+        else if (facing != EnumFacing.UP && facing != EnumFacing.DOWN)
+        {
+            return !isExceptBlockForAttachWithPiston(block) && blockfaceshape == BlockFaceShape.SOLID;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         if (this.canPlaceAt(worldIn, pos, facing))
         {
@@ -129,7 +137,7 @@ public class BlockTorch extends Block
         {
             for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
             {
-                if (worldIn.isSideSolid(pos.offset(enumfacing.getOpposite()), enumfacing, true))
+                if (this.canPlaceAt(worldIn, pos, enumfacing))
                 {
                     return this.getDefaultState().withProperty(FACING, enumfacing);
                 }
@@ -139,6 +147,9 @@ public class BlockTorch extends Block
         }
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         this.checkForDrop(worldIn, pos, state);
@@ -149,7 +160,7 @@ public class BlockTorch extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         this.onNeighborChangeInternal(worldIn, pos, state);
     }
@@ -165,13 +176,14 @@ public class BlockTorch extends Block
             EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
             EnumFacing.Axis enumfacing$axis = enumfacing.getAxis();
             EnumFacing enumfacing1 = enumfacing.getOpposite();
+            BlockPos blockpos = pos.offset(enumfacing1);
             boolean flag = false;
 
-            if (enumfacing$axis.isHorizontal() && !worldIn.isSideSolid(pos.offset(enumfacing1), enumfacing, true))
+            if (enumfacing$axis.isHorizontal() && worldIn.getBlockState(blockpos).getBlockFaceShape(worldIn, blockpos, enumfacing) != BlockFaceShape.SOLID)
             {
                 flag = true;
             }
-            else if (enumfacing$axis.isVertical() && !this.canPlaceOn(worldIn, pos.offset(enumfacing1)))
+            else if (enumfacing$axis.isVertical() && !this.canPlaceOn(worldIn, blockpos))
             {
                 flag = true;
             }
@@ -220,13 +232,13 @@ public class BlockTorch extends Block
         if (enumfacing.getAxis().isHorizontal())
         {
             EnumFacing enumfacing1 = enumfacing.getOpposite();
-            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0 + d4 * (double)enumfacing1.getFrontOffsetX(), d1 + d3, d2 + d4 * (double)enumfacing1.getFrontOffsetZ(), 0.0D, 0.0D, 0.0D, new int[0]);
-            worldIn.spawnParticle(EnumParticleTypes.FLAME, d0 + d4 * (double)enumfacing1.getFrontOffsetX(), d1 + d3, d2 + d4 * (double)enumfacing1.getFrontOffsetZ(), 0.0D, 0.0D, 0.0D, new int[0]);
+            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0 + 0.27D * (double)enumfacing1.getFrontOffsetX(), d1 + 0.22D, d2 + 0.27D * (double)enumfacing1.getFrontOffsetZ(), 0.0D, 0.0D, 0.0D);
+            worldIn.spawnParticle(EnumParticleTypes.FLAME, d0 + 0.27D * (double)enumfacing1.getFrontOffsetX(), d1 + 0.22D, d2 + 0.27D * (double)enumfacing1.getFrontOffsetZ(), 0.0D, 0.0D, 0.0D);
         }
         else
         {
-            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D, new int[0]);
-            worldIn.spawnParticle(EnumParticleTypes.FLAME, d0, d1, d2, 0.0D, 0.0D, 0.0D, new int[0]);
+            worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D);
+            worldIn.spawnParticle(EnumParticleTypes.FLAME, d0, d1, d2, 0.0D, 0.0D, 0.0D);
         }
     }
 
@@ -316,5 +328,19 @@ public class BlockTorch extends Block
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {FACING});
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 }

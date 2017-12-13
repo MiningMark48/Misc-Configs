@@ -1,7 +1,7 @@
 package net.minecraft.entity.boss.dragon.phase;
 
+import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.util.DamageSource;
 
@@ -21,11 +21,11 @@ public abstract class PhaseSittingBase extends PhaseBase
      * Normally, just returns damage. If dragon is sitting and src is an arrow, arrow is enflamed and zero damage
      * returned.
      */
-    public float getAdjustedDamage(EntityDragonPart pt, DamageSource src, float damage)
+    public float getAdjustedDamage(MultiPartEntityPart pt, DamageSource src, float damage)
     {
-        if (src.getSourceOfDamage() instanceof EntityArrow)
+        if (src.getImmediateSource() instanceof EntityArrow)
         {
-            src.getSourceOfDamage().setFire(1);
+            src.getImmediateSource().setFire(1);
             return 0.0F;
         }
         else

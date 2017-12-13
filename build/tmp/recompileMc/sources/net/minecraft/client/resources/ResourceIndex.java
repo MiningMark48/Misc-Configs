@@ -1,6 +1,5 @@
 package net.minecraft.client.resources;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.gson.JsonElement;
@@ -11,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
@@ -40,8 +40,8 @@ public class ResourceIndex
 
         try
         {
-            bufferedreader = Files.newReader(file2, Charsets.UTF_8);
-            JsonObject jsonobject = (new JsonParser()).parse((Reader)bufferedreader).getAsJsonObject();
+            bufferedreader = Files.newReader(file2, StandardCharsets.UTF_8);
+            JsonObject jsonobject = (new JsonParser()).parse(bufferedreader).getAsJsonObject();
             JsonObject jsonobject1 = JsonUtils.getJsonObject(jsonobject, "objects", (JsonObject)null);
 
             if (jsonobject1 != null)
@@ -49,7 +49,7 @@ public class ResourceIndex
                 for (Entry<String, JsonElement> entry : jsonobject1.entrySet())
                 {
                     JsonObject jsonobject2 = (JsonObject)entry.getValue();
-                    String s = (String)entry.getKey();
+                    String s = entry.getKey();
                     String[] astring = s.split("/", 2);
                     String s1 = astring.length == 1 ? astring[0] : astring[0] + ":" + astring[1];
                     String s2 = JsonUtils.getString(jsonobject2, "hash");
@@ -60,11 +60,11 @@ public class ResourceIndex
         }
         catch (JsonParseException var20)
         {
-            LOGGER.error("Unable to parse resource index file: " + file2);
+            LOGGER.error("Unable to parse resource index file: {}", (Object)file2);
         }
         catch (FileNotFoundException var21)
         {
-            LOGGER.error("Can\'t find the resource index file: " + file2);
+            LOGGER.error("Can't find the resource index file: {}", (Object)file2);
         }
         finally
         {
@@ -76,7 +76,7 @@ public class ResourceIndex
     public File getFile(ResourceLocation location)
     {
         String s = location.toString();
-        return (File)this.resourceMap.get(s);
+        return this.resourceMap.get(s);
     }
 
     public boolean isFileExisting(ResourceLocation location)
@@ -87,6 +87,6 @@ public class ResourceIndex
 
     public File getPackMcmeta()
     {
-        return (File)this.resourceMap.get("pack.mcmeta");
+        return this.resourceMap.get("pack.mcmeta");
     }
 }

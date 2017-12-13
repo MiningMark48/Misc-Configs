@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.annotation.Nullable;
 import net.minecraft.command.CommandResultStats;
-import net.minecraft.command.ICommandManager;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
@@ -24,11 +23,13 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
 {
     /** The formatting for the timestamp on commands run. */
     private static final SimpleDateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("HH:mm:ss");
+    private long lastExecution = -1L;
+    private boolean updateLastExecution = true;
     /** The number of successful commands run. (used for redstone output) */
     private int successCount;
     private boolean trackOutput = true;
     /** The previously run command. */
-    private ITextComponent lastOutput = null;
+    private ITextComponent lastOutput;
     /** The command stored in the command block. */
     private String commandStored = "";
     /** The custom name of the command block. (defaults to "@") */
@@ -66,6 +67,13 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
         if (this.lastOutput != null && this.trackOutput)
         {
             p_189510_1_.setString("LastOutput", ITextComponent.Serializer.componentToJson(this.lastOutput));
+        }
+
+        p_189510_1_.setBoolean("UpdateLastExecution", this.updateLastExecution);
+
+        if (this.updateLastExecution && this.lastExecution > 0L)
+        {
+            p_189510_1_.setLong("LastExecution", this.lastExecution);
         }
 
         this.resultStats.writeStatsToNBT(p_189510_1_);
@@ -106,13 +114,27 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
             this.lastOutput = null;
         }
 
+        if (nbt.hasKey("UpdateLastExecution"))
+        {
+            this.updateLastExecution = nbt.getBoolean("UpdateLastExecution");
+        }
+
+        if (this.updateLastExecution && nbt.hasKey("LastExecution"))
+        {
+            this.lastExecution = nbt.getLong("LastExecution");
+        }
+        else
+        {
+            this.lastExecution = -1L;
+        }
+
         this.resultStats.readStatsFromNBT(nbt);
     }
 
     /**
      * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
      */
-    public boolean canCommandSenderUseCommand(int permLevel, String commandName)
+    public boolean canUseCommand(int permLevel, String commandName)
     {
         return permLevel <= 2;
     }
@@ -134,55 +156,68 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
         return this.commandStored;
     }
 
-    public void trigger(World worldIn)
+    public boolean trigger(World worldIn)
     {
-        if (worldIn.isRemote)
+        if (!worldIn.isRemote && worldIn.getTotalWorldTime() != this.lastExecution)
         {
-            this.successCount = 0;
-        }
-        else if ("Searge".equalsIgnoreCase(this.commandStored))
-        {
-            this.lastOutput = new TextComponentString("#itzlipofutzli");
-            this.successCount = 1;
-        }
-        else
-        {
-            MinecraftServer minecraftserver = this.getServer();
-
-            if (minecraftserver != null && minecraftserver.isAnvilFileSet() && minecraftserver.isCommandBlockEnabled())
+            if ("Searge".equalsIgnoreCase(this.commandStored))
             {
-                ICommandManager icommandmanager = minecraftserver.getCommandManager();
-
-                try
-                {
-                    this.lastOutput = null;
-                    this.successCount = icommandmanager.executeCommand(this, this.commandStored);
-                }
-                catch (Throwable throwable)
-                {
-                    CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Executing command block");
-                    CrashReportCategory crashreportcategory = crashreport.makeCategory("Command to be executed");
-                    crashreportcategory.setDetail("Command", new ICrashReportDetail<String>()
-                    {
-                        public String call() throws Exception
-                        {
-                            return CommandBlockBaseLogic.this.getCommand();
-                        }
-                    });
-                    crashreportcategory.setDetail("Name", new ICrashReportDetail<String>()
-                    {
-                        public String call() throws Exception
-                        {
-                            return CommandBlockBaseLogic.this.getName();
-                        }
-                    });
-                    throw new ReportedException(crashreport);
-                }
+                this.lastOutput = new TextComponentString("#itzlipofutzli");
+                this.successCount = 1;
+                return true;
             }
             else
             {
-                this.successCount = 0;
+                MinecraftServer minecraftserver = this.getServer();
+
+                if (minecraftserver != null && minecraftserver.isAnvilFileSet() && minecraftserver.isCommandBlockEnabled())
+                {
+                    try
+                    {
+                        this.lastOutput = null;
+                        this.successCount = minecraftserver.getCommandManager().executeCommand(this, this.commandStored);
+                    }
+                    catch (Throwable throwable)
+                    {
+                        CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Executing command block");
+                        CrashReportCategory crashreportcategory = crashreport.makeCategory("Command to be executed");
+                        crashreportcategory.addDetail("Command", new ICrashReportDetail<String>()
+                        {
+                            public String call() throws Exception
+                            {
+                                return CommandBlockBaseLogic.this.getCommand();
+                            }
+                        });
+                        crashreportcategory.addDetail("Name", new ICrashReportDetail<String>()
+                        {
+                            public String call() throws Exception
+                            {
+                                return CommandBlockBaseLogic.this.getName();
+                            }
+                        });
+                        throw new ReportedException(crashreport);
+                    }
+                }
+                else
+                {
+                    this.successCount = 0;
+                }
+
+                if (this.updateLastExecution)
+                {
+                    this.lastExecution = worldIn.getTotalWorldTime();
+                }
+                else
+                {
+                    this.lastExecution = -1L;
+                }
+
+                return true;
             }
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -194,14 +229,6 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
         return this.customName;
     }
 
-    /**
-     * Get the formatted ChatComponent that will be used for the sender's username in chat
-     */
-    public ITextComponent getDisplayName()
-    {
-        return new TextComponentString(this.getName());
-    }
-
     public void setName(String name)
     {
         this.customName = name;
@@ -210,7 +237,7 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
     /**
      * Send a chat message to the CommandSender
      */
-    public void addChatMessage(ITextComponent component)
+    public void sendMessage(ITextComponent component)
     {
         if (this.trackOutput && this.getEntityWorld() != null && !this.getEntityWorld().isRemote)
         {
@@ -225,7 +252,7 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
     public boolean sendCommandFeedback()
     {
         MinecraftServer minecraftserver = this.getServer();
-        return minecraftserver == null || !minecraftserver.isAnvilFileSet() || minecraftserver.worldServers[0].getGameRules().getBoolean("commandBlockOutput");
+        return minecraftserver == null || !minecraftserver.isAnvilFileSet() || minecraftserver.worlds[0].getGameRules().getBoolean("commandBlockOutput");
     }
 
     public void setCommandStat(CommandResultStats.Type type, int amount)
@@ -242,7 +269,7 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
     public abstract int getCommandBlockType();
 
     /**
-     * Fills in information about the command block for the packet. X/Y/Z for the minecart version, and entityId for the
+     * Fills in information about the command block for the packet. entityId for the minecart version, and X/Y/Z for the
      * traditional version
      */
     @SideOnly(Side.CLIENT)
@@ -265,7 +292,7 @@ public abstract class CommandBlockBaseLogic implements ICommandSender
 
     public boolean tryOpenEditCommandBlock(EntityPlayer playerIn)
     {
-        if (!playerIn.capabilities.isCreativeMode)
+        if (!playerIn.canUseCommandBlock())
         {
             return false;
         }

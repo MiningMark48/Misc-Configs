@@ -13,7 +13,7 @@ public class CommandEntityData extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "entitydata";
     }
@@ -29,7 +29,7 @@ public class CommandEntityData extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.entitydata.usage";
     }
@@ -54,12 +54,12 @@ public class CommandEntityData extends CommandBase
             else
             {
                 NBTTagCompound nbttagcompound = entityToNBT(entity);
-                NBTTagCompound nbttagcompound1 = (NBTTagCompound)nbttagcompound.copy();
+                NBTTagCompound nbttagcompound1 = nbttagcompound.copy();
                 NBTTagCompound nbttagcompound2;
 
                 try
                 {
-                    nbttagcompound2 = JsonToNBT.getTagFromJson(getChatComponentFromNthArg(sender, args, 1).getUnformattedText());
+                    nbttagcompound2 = JsonToNBT.getTagFromJson(buildString(args, 1));
                 }
                 catch (NBTException nbtexception)
                 {

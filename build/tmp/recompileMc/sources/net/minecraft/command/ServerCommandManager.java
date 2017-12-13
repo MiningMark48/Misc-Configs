@@ -1,6 +1,5 @@
 package net.minecraft.command;
 
-import net.minecraft.command.server.CommandAchievement;
 import net.minecraft.command.server.CommandBanIp;
 import net.minecraft.command.server.CommandBanPlayer;
 import net.minecraft.command.server.CommandBroadcast;
@@ -49,6 +48,7 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
         this.registerCommand(new CommandToggleDownfall());
         this.registerCommand(new CommandWeather());
         this.registerCommand(new CommandXP());
+        this.registerCommand(new CommandTP());
         this.registerCommand(new CommandTeleport());
         this.registerCommand(new CommandGive());
         this.registerCommand(new CommandReplaceItem());
@@ -72,7 +72,8 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
         this.registerCommand(new CommandScoreboard());
         this.registerCommand(new CommandExecuteAt());
         this.registerCommand(new CommandTrigger());
-        this.registerCommand(new CommandAchievement());
+        this.registerCommand(new AdvancementCommand());
+        this.registerCommand(new RecipeCommand());
         this.registerCommand(new CommandSummon());
         this.registerCommand(new CommandSetBlock());
         this.registerCommand(new CommandFill());
@@ -85,6 +86,9 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
         this.registerCommand(new CommandTitle());
         this.registerCommand(new CommandEntityData());
         this.registerCommand(new CommandStopSound());
+        this.registerCommand(new CommandLocate());
+        this.registerCommand(new CommandReload());
+        this.registerCommand(new CommandFunction());
 
         if (serverIn.isDedicatedServer())
         {
@@ -131,7 +135,7 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
 
         if (flag)
         {
-            for (EntityPlayer entityplayer : minecraftserver.getPlayerList().getPlayerList())
+            for (EntityPlayer entityplayer : minecraftserver.getPlayerList().getPlayers())
             {
                 if (entityplayer != sender && minecraftserver.getPlayerList().canSendCommands(entityplayer.getGameProfile()) && command.checkPermission(this.server, sender))
                 {
@@ -140,18 +144,18 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
 
                     if (flag1 || flag2 || !(sender instanceof RConConsoleSource) && !(sender instanceof MinecraftServer))
                     {
-                        entityplayer.addChatMessage(itextcomponent);
+                        entityplayer.sendMessage(itextcomponent);
                     }
                 }
             }
         }
 
-        if (sender != minecraftserver && minecraftserver.worldServers[0].getGameRules().getBoolean("logAdminCommands"))
+        if (sender != minecraftserver && minecraftserver.worlds[0].getGameRules().getBoolean("logAdminCommands"))
         {
-            minecraftserver.addChatMessage(itextcomponent);
+            minecraftserver.sendMessage(itextcomponent);
         }
 
-        boolean flag3 = minecraftserver.worldServers[0].getGameRules().getBoolean("sendCommandFeedback");
+        boolean flag3 = minecraftserver.worlds[0].getGameRules().getBoolean("sendCommandFeedback");
 
         if (sender instanceof CommandBlockBaseLogic)
         {
@@ -160,7 +164,7 @@ public class ServerCommandManager extends CommandHandler implements ICommandList
 
         if ((flags & 1) != 1 && flag3 || sender instanceof MinecraftServer)
         {
-            sender.addChatMessage(new TextComponentTranslation(translationKey, translationArgs));
+            sender.sendMessage(new TextComponentTranslation(translationKey, translationArgs));
         }
     }
 

@@ -28,6 +28,21 @@ public class Matrix4f extends org.lwjgl.util.vector.Matrix4f
 
     public Matrix4f()
     {
-        this.m00 = this.m01 = this.m02 = this.m03 = this.m10 = this.m11 = this.m12 = this.m13 = this.m20 = this.m21 = this.m22 = this.m23 = this.m30 = this.m31 = this.m32 = this.m33 = 0.0F;
+        this.m00 = 0.0F;
+        this.m01 = 0.0F;
+        this.m02 = 0.0F;
+        this.m03 = 0.0F;
+        this.m10 = 0.0F;
+        this.m11 = 0.0F;
+        this.m12 = 0.0F;
+        this.m13 = 0.0F;
+        this.m20 = 0.0F;
+        this.m21 = 0.0F;
+        this.m22 = 0.0F;
+        this.m23 = 0.0F;
+        this.m30 = 0.0F;
+        this.m31 = 0.0F;
+        this.m32 = 0.0F;
+        this.m33 = 0.0F;
     }
 }

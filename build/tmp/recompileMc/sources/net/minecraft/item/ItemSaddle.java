@@ -28,8 +28,8 @@ public class ItemSaddle extends Item
             if (!entitypig.getSaddled() && !entitypig.isChild())
             {
                 entitypig.setSaddled(true);
-                entitypig.worldObj.playSound(playerIn, entitypig.posX, entitypig.posY, entitypig.posZ, SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5F, 1.0F);
-                --stack.stackSize;
+                entitypig.world.playSound(playerIn, entitypig.posX, entitypig.posY, entitypig.posZ, SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5F, 1.0F);
+                stack.shrink(1);
             }
 
             return true;
@@ -38,15 +38,5 @@ public class ItemSaddle extends Item
         {
             return false;
         }
-    }
-
-    /**
-     * Current implementations of this method in child classes do not use the entry argument beside ev. They just raise
-     * the damage on the stack.
-     */
-    public boolean hitEntity(ItemStack stack, EntityLivingBase target, EntityLivingBase attacker)
-    {
-        this.itemInteractionForEntity(stack, (EntityPlayer)null, target, EnumHand.MAIN_HAND);
-        return true;
     }
 }

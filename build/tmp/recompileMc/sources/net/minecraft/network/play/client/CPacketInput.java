@@ -11,7 +11,6 @@ public class CPacketInput implements Packet<INetHandlerPlayServer>
 {
     /** Positive for left strafe, negative for right */
     private float strafeSpeed;
-    /** Positive for forward, negative for backward */
     private float forwardSpeed;
     private boolean jumping;
     private boolean sneaking;

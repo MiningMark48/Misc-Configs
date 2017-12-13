@@ -1,27 +1,32 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
- * 
- * Contributors:
- *     cpw - implementation
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.event;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.LoaderState.ModState;
 
-import org.apache.logging.log4j.Level;
-
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 
 /**
@@ -59,25 +64,19 @@ public class FMLPostInitializationEvent extends FMLStateEvent
     {
         if (Loader.isModLoaded(modId))
         {
-            Class<?>[] args = Lists.transform(Lists.newArrayList(arguments),new Function<Object, Class<?>>() {
-                @Nullable
-                @Override
-                public Class<?> apply(@Nullable Object input) {
-                    return input.getClass();
-                }
-            }).toArray(new Class[0]);
+            Class<?>[] args = Arrays.stream(arguments).filter(Objects::nonNull).map(Object::getClass).toArray(Class<?>[]::new);
             try
             {
                 Class<?> clz = Class.forName(className,true,Loader.instance().getModClassLoader());
                 Constructor<?> ct = clz.getConstructor(args);
-                return Optional.fromNullable(ct.newInstance(arguments));
+                return Optional.of(ct.newInstance(arguments));
             }
             catch (Exception e)
             {
-                FMLLog.getLogger().log(Level.INFO, "An error occurred trying to build a soft depend proxy",e);
-                return Optional.absent();
+                FMLLog.log.info("An error occurred trying to build a soft depend proxy", e);
+                return Optional.empty();
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 }

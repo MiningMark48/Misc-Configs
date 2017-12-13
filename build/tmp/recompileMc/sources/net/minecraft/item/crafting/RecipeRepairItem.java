@@ -2,13 +2,13 @@ package net.minecraft.item.crafting;
 
 import com.google.common.collect.Lists;
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class RecipeRepairItem implements IRecipe
+public class RecipeRepairItem extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
 {
     /**
      * Used to check if a recipe matches current crafting inventory
@@ -21,15 +21,15 @@ public class RecipeRepairItem implements IRecipe
         {
             ItemStack itemstack = inv.getStackInSlot(i);
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 list.add(itemstack);
 
                 if (list.size() > 1)
                 {
-                    ItemStack itemstack1 = (ItemStack)list.get(0);
+                    ItemStack itemstack1 = list.get(0);
 
-                    if (itemstack.getItem() != itemstack1.getItem() || itemstack1.stackSize != 1 || itemstack.stackSize != 1 || !itemstack1.getItem().isRepairable())
+                    if (itemstack.getItem() != itemstack1.getItem() || itemstack1.getCount() != 1 || itemstack.getCount() != 1 || !itemstack1.getItem().isRepairable())
                     {
                         return false;
                     }
@@ -43,7 +43,6 @@ public class RecipeRepairItem implements IRecipe
     /**
      * Returns an Item that is the result of this recipe
      */
-    @Nullable
     public ItemStack getCraftingResult(InventoryCrafting inv)
     {
         List<ItemStack> list = Lists.<ItemStack>newArrayList();
@@ -52,17 +51,17 @@ public class RecipeRepairItem implements IRecipe
         {
             ItemStack itemstack = inv.getStackInSlot(i);
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 list.add(itemstack);
 
                 if (list.size() > 1)
                 {
-                    ItemStack itemstack1 = (ItemStack)list.get(0);
+                    ItemStack itemstack1 = list.get(0);
 
-                    if (itemstack.getItem() != itemstack1.getItem() || itemstack1.stackSize != 1 || itemstack.stackSize != 1 || !itemstack1.getItem().isRepairable())
+                    if (itemstack.getItem() != itemstack1.getItem() || itemstack1.getCount() != 1 || itemstack.getCount() != 1 || !itemstack1.getItem().isRepairable())
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
             }
@@ -70,16 +69,16 @@ public class RecipeRepairItem implements IRecipe
 
         if (list.size() == 2)
         {
-            ItemStack itemstack2 = (ItemStack)list.get(0);
-            ItemStack itemstack3 = (ItemStack)list.get(1);
+            ItemStack itemstack2 = list.get(0);
+            ItemStack itemstack3 = list.get(1);
 
-            if (itemstack2.getItem() == itemstack3.getItem() && itemstack2.stackSize == 1 && itemstack3.stackSize == 1 && itemstack2.getItem().isRepairable())
+            if (itemstack2.getItem() == itemstack3.getItem() && itemstack2.getCount() == 1 && itemstack3.getCount() == 1 && itemstack2.getItem().isRepairable())
             {
-                Item item = itemstack2.getItem();
-                int j = item.getMaxDamage() - itemstack2.getItemDamage();
-                int k = item.getMaxDamage() - itemstack3.getItemDamage();
-                int l = j + k + item.getMaxDamage() * 5 / 100;
-                int i1 = item.getMaxDamage() - l;
+                // FORGE: Make itemstack sensitive // Item item = itemstack2.getItem();
+                int j = itemstack2.getMaxDamage() - itemstack2.getItemDamage();
+                int k = itemstack2.getMaxDamage() - itemstack3.getItemDamage();
+                int l = j + k + itemstack2.getMaxDamage() * 5 / 100;
+                int i1 = itemstack2.getMaxDamage() - l;
 
                 if (i1 < 0)
                 {
@@ -90,33 +89,37 @@ public class RecipeRepairItem implements IRecipe
             }
         }
 
-        return null;
+        return ItemStack.EMPTY;
+    }
+
+    public ItemStack getRecipeOutput()
+    {
+        return ItemStack.EMPTY;
+    }
+
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv)
+    {
+        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+
+        for (int i = 0; i < nonnulllist.size(); ++i)
+        {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+        }
+
+        return nonnulllist;
+    }
+
+    public boolean isDynamic()
+    {
+        return true;
     }
 
     /**
-     * Returns the size of the recipe area
+     * Used to determine if this recipe can fit in a grid of the given width/height
      */
-    public int getRecipeSize()
+    public boolean canFit(int width, int height)
     {
-        return 4;
-    }
-
-    @Nullable
-    public ItemStack getRecipeOutput()
-    {
-        return null;
-    }
-
-    public ItemStack[] getRemainingItems(InventoryCrafting inv)
-    {
-        ItemStack[] aitemstack = new ItemStack[inv.getSizeInventory()];
-
-        for (int i = 0; i < aitemstack.length; ++i)
-        {
-            ItemStack itemstack = inv.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
-        }
-
-        return aitemstack;
+        return width * height >= 2;
     }
 }

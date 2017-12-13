@@ -3,14 +3,14 @@ package net.minecraft.command;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.WorldSettings;
+import net.minecraft.world.GameType;
 
 public class CommandDefaultGameMode extends CommandGameMode
 {
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "defaultgamemode";
     }
@@ -18,7 +18,7 @@ public class CommandDefaultGameMode extends CommandGameMode
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.defaultgamemode.usage";
     }
@@ -34,9 +34,9 @@ public class CommandDefaultGameMode extends CommandGameMode
         }
         else
         {
-            WorldSettings.GameType worldsettings$gametype = this.getGameModeFromCommand(sender, args[0]);
-            this.setDefaultGameType(worldsettings$gametype, server);
-            notifyCommandListener(sender, this, "commands.defaultgamemode.success", new Object[] {new TextComponentTranslation("gameMode." + worldsettings$gametype.getName(), new Object[0])});
+            GameType gametype = this.getGameModeFromCommand(sender, args[0]);
+            this.setDefaultGameType(gametype, server);
+            notifyCommandListener(sender, this, "commands.defaultgamemode.success", new Object[] {new TextComponentTranslation("gameMode." + gametype.getName(), new Object[0])});
         }
     }
 
@@ -44,13 +44,13 @@ public class CommandDefaultGameMode extends CommandGameMode
      * Set the default game type for the server. Also propogate the changes to all players if the server is set to force
      * game mode
      */
-    protected void setDefaultGameType(WorldSettings.GameType gameType, MinecraftServer server)
+    protected void setDefaultGameType(GameType gameType, MinecraftServer server)
     {
         server.setGameType(gameType);
 
         if (server.getForceGamemode())
         {
-            for (EntityPlayerMP entityplayermp : server.getPlayerList().getPlayerList())
+            for (EntityPlayerMP entityplayermp : server.getPlayerList().getPlayers())
             {
                 entityplayermp.setGameType(gameType);
             }

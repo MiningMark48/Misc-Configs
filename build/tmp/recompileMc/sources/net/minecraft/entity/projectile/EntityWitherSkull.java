@@ -10,6 +10,7 @@ import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.EnumDifficulty;
@@ -32,6 +33,11 @@ public class EntityWitherSkull extends EntityFireball
     {
         super(worldIn, shooter, accelX, accelY, accelZ);
         this.setSize(0.3125F, 0.3125F);
+    }
+
+    public static void registerFixesWitherSkull(DataFixer fixer)
+    {
+        EntityFireball.registerFixesFireball(fixer, "WitherSkull");
     }
 
     /**
@@ -65,7 +71,7 @@ public class EntityWitherSkull extends EntityFireball
         float f = super.getExplosionResistance(explosionIn, worldIn, pos, blockStateIn);
         Block block = blockStateIn.getBlock();
 
-        if (this.isInvulnerable() && EntityWither.canDestroyBlock(block))
+        if (this.isInvulnerable() && block.canEntityDestroy(blockStateIn, worldIn, pos, this) && net.minecraftforge.event.ForgeEventFactory.onEntityDestroyBlock(this.shootingEntity, pos, blockStateIn))
         {
             f = Math.min(0.8F, f);
         }
@@ -78,7 +84,7 @@ public class EntityWitherSkull extends EntityFireball
      */
     protected void onImpact(RayTraceResult result)
     {
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
             if (result.entityHit != null)
             {
@@ -86,30 +92,30 @@ public class EntityWitherSkull extends EntityFireball
                 {
                     if (result.entityHit.attackEntityFrom(DamageSource.causeMobDamage(this.shootingEntity), 8.0F))
                     {
-                        if (!result.entityHit.isEntityAlive())
+                        if (result.entityHit.isEntityAlive())
                         {
-                            this.shootingEntity.heal(5.0F);
+                            this.applyEnchantments(this.shootingEntity, result.entityHit);
                         }
                         else
                         {
-                            this.applyEnchantments(this.shootingEntity, result.entityHit);
+                            this.shootingEntity.heal(5.0F);
                         }
                     }
                 }
                 else
                 {
-                    result.entityHit.attackEntityFrom(DamageSource.magic, 5.0F);
+                    result.entityHit.attackEntityFrom(DamageSource.MAGIC, 5.0F);
                 }
 
                 if (result.entityHit instanceof EntityLivingBase)
                 {
                     int i = 0;
 
-                    if (this.worldObj.getDifficulty() == EnumDifficulty.NORMAL)
+                    if (this.world.getDifficulty() == EnumDifficulty.NORMAL)
                     {
                         i = 10;
                     }
-                    else if (this.worldObj.getDifficulty() == EnumDifficulty.HARD)
+                    else if (this.world.getDifficulty() == EnumDifficulty.HARD)
                     {
                         i = 40;
                     }
@@ -121,7 +127,7 @@ public class EntityWitherSkull extends EntityFireball
                 }
             }
 
-            this.worldObj.newExplosion(this, this.posX, this.posY, this.posZ, 1.0F, false, this.worldObj.getGameRules().getBoolean("mobGriefing"));
+            this.world.newExplosion(this, this.posX, this.posY, this.posZ, 1.0F, false, this.world.getGameRules().getBoolean("mobGriefing"));
             this.setDead();
         }
     }

@@ -8,8 +8,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class DisconnectedRealmsScreen extends RealmsScreen
 {
-    private String title;
-    private ITextComponent reason;
+    private final String title;
+    private final ITextComponent reason;
     private List<String> lines;
     private final RealmsScreen parent;
     private int textHeight;

@@ -147,6 +147,6 @@ public class Variant implements net.minecraftforge.client.model.ISmartVariant
 
     public net.minecraftforge.client.model.IModel process(net.minecraftforge.client.model.IModel base)
     {
-        return net.minecraftforge.client.model.ModelProcessingHelper.uvlock(base, isUvLock());
+        return base.uvlock(isUvLock());
     }
 }

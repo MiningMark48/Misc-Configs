@@ -53,11 +53,11 @@ public class RenderShulkerBullet extends Render<EntityShulkerBullet>
         GlStateManager.enableRescaleNormal();
         GlStateManager.scale(-1.0F, -1.0F, 1.0F);
         this.bindEntityTexture(entity);
-        this.model.render(entity, 0.0F, 0.0F, 0.0F, f, f1, f3);
+        this.model.render(entity, 0.0F, 0.0F, 0.0F, f, f1, 0.03125F);
         GlStateManager.enableBlend();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
         GlStateManager.scale(1.5F, 1.5F, 1.5F);
-        this.model.render(entity, 0.0F, 0.0F, 0.0F, f, f1, f3);
+        this.model.render(entity, 0.0F, 0.0F, 0.0F, f, f1, 0.03125F);
         GlStateManager.disableBlend();
         GlStateManager.popMatrix();
         super.doRender(entity, x, y, z, entityYaw, partialTicks);

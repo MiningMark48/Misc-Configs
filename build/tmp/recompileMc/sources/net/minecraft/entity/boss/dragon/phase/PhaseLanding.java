@@ -33,7 +33,7 @@ public class PhaseLanding extends PhaseBase
             double d3 = d0 + this.dragon.getRNG().nextGaussian() / 2.0D;
             double d4 = d1 + this.dragon.getRNG().nextGaussian() / 2.0D;
             double d5 = d2 + this.dragon.getRNG().nextGaussian() / 2.0D;
-            this.dragon.worldObj.spawnParticle(EnumParticleTypes.DRAGON_BREATH, d3, d4, d5, -vec3d.xCoord * 0.07999999821186066D + this.dragon.motionX, -vec3d.yCoord * 0.30000001192092896D + this.dragon.motionY, -vec3d.zCoord * 0.07999999821186066D + this.dragon.motionZ, new int[0]);
+            this.dragon.world.spawnParticle(EnumParticleTypes.DRAGON_BREATH, d3, d4, d5, -vec3d.x * 0.07999999821186066D + this.dragon.motionX, -vec3d.y * 0.30000001192092896D + this.dragon.motionY, -vec3d.z * 0.07999999821186066D + this.dragon.motionZ);
             vec3d.rotateYaw(0.19634955F);
         }
     }
@@ -46,7 +46,7 @@ public class PhaseLanding extends PhaseBase
     {
         if (this.targetLocation == null)
         {
-            this.targetLocation = new Vec3d(this.dragon.worldObj.getTopSolidOrLiquidBlock(WorldGenEndPodium.END_PODIUM_LOCATION));
+            this.targetLocation = new Vec3d(this.dragon.world.getTopSolidOrLiquidBlock(WorldGenEndPodium.END_PODIUM_LOCATION));
         }
 
         if (this.targetLocation.squareDistanceTo(this.dragon.posX, this.dragon.posY, this.dragon.posZ) < 1.0D)
@@ -66,7 +66,7 @@ public class PhaseLanding extends PhaseBase
 
     public float getYawFactor()
     {
-        float f = MathHelper.sqrt_double(this.dragon.motionX * this.dragon.motionX + this.dragon.motionZ * this.dragon.motionZ) + 1.0F;
+        float f = MathHelper.sqrt(this.dragon.motionX * this.dragon.motionX + this.dragon.motionZ * this.dragon.motionZ) + 1.0F;
         float f1 = Math.min(f, 40.0F);
         return f1 / f;
     }
@@ -88,7 +88,7 @@ public class PhaseLanding extends PhaseBase
         return this.targetLocation;
     }
 
-    public PhaseList<PhaseLanding> getPhaseList()
+    public PhaseList<PhaseLanding> getType()
     {
         return PhaseList.LANDING;
     }

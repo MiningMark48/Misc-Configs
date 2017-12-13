@@ -19,12 +19,10 @@ public class WorldGenTallGrass extends WorldGenerator
 
     public boolean generate(World worldIn, Random rand, BlockPos position)
     {
-        do
+        for (IBlockState iblockstate = worldIn.getBlockState(position); (iblockstate.getBlock().isAir(iblockstate, worldIn, position) || iblockstate.getBlock().isLeaves(iblockstate, worldIn, position)) && position.getY() > 0; iblockstate = worldIn.getBlockState(position))
         {
-            IBlockState state = worldIn.getBlockState(position);
-            if (!state.getBlock().isAir(state, worldIn, position) && !state.getBlock().isLeaves(state, worldIn, position)) break;
             position = position.down();
-        } while (position.getY() > 0);
+        }
 
         for (int i = 0; i < 128; ++i)
         {

@@ -7,7 +7,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class RealmsLevelSummary implements Comparable<RealmsLevelSummary>
 {
-    private WorldSummary levelSummary;
+    private final WorldSummary levelSummary;
 
     public RealmsLevelSummary(WorldSummary levelSummaryIn)
     {
@@ -61,6 +61,13 @@ public class RealmsLevelSummary implements Comparable<RealmsLevelSummary>
 
     public int compareTo(RealmsLevelSummary p_compareTo_1_)
     {
-        return this.levelSummary.getLastTimePlayed() < p_compareTo_1_.getLastPlayed() ? 1 : (this.levelSummary.getLastTimePlayed() > p_compareTo_1_.getLastPlayed() ? -1 : this.levelSummary.getFileName().compareTo(p_compareTo_1_.getLevelId()));
+        if (this.levelSummary.getLastTimePlayed() < p_compareTo_1_.getLastPlayed())
+        {
+            return 1;
+        }
+        else
+        {
+            return this.levelSummary.getLastTimePlayed() > p_compareTo_1_.getLastPlayed() ? -1 : this.levelSummary.getFileName().compareTo(p_compareTo_1_.getLevelId());
+        }
     }
 }

@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 
 public class IntHashMap<V>
 {
+    /** An array of HashEntries representing the heads of hash slot lists */
     private transient IntHashMap.Entry<V>[] slots = new IntHashMap.Entry[16];
     /** The number of items stored in this map */
     private transient int count;
@@ -56,6 +57,9 @@ public class IntHashMap<V>
         return this.lookupEntry(hashEntry) != null;
     }
 
+    /**
+     * Returns the internal entry for a key
+     */
     @Nullable
     final IntHashMap.Entry<V> lookupEntry(int hashEntry)
     {
@@ -150,12 +154,15 @@ public class IntHashMap<V>
      * Removes the specified object from the map and returns it
      */
     @Nullable
-    public V removeObject(int p_76049_1_)
+    public V removeObject(int o)
     {
-        IntHashMap.Entry<V> entry = this.removeEntry(p_76049_1_);
+        IntHashMap.Entry<V> entry = this.removeEntry(o);
         return (V)(entry == null ? null : entry.valueEntry);
     }
 
+    /**
+     * Removes the specified entry from the map and returns it
+     */
     @Nullable
     final IntHashMap.Entry<V> removeEntry(int p_76036_1_)
     {
@@ -226,6 +233,7 @@ public class IntHashMap<V>
             final int hashEntry;
             /** The object stored in this entry */
             V valueEntry;
+            /** The next entry in this slot */
             IntHashMap.Entry<V> nextEntry;
             /** The id of the hash slot computed from the hash */
             final int slotHash;

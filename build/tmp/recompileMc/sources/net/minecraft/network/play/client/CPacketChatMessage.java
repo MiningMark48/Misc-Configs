@@ -15,9 +15,9 @@ public class CPacketChatMessage implements Packet<INetHandlerPlayServer>
 
     public CPacketChatMessage(String messageIn)
     {
-        if (messageIn.length() > 100)
+        if (messageIn.length() > 256)
         {
-            messageIn = messageIn.substring(0, 100);
+            messageIn = messageIn.substring(0, 256);
         }
 
         this.message = messageIn;
@@ -28,7 +28,7 @@ public class CPacketChatMessage implements Packet<INetHandlerPlayServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.message = buf.readStringFromBuffer(100);
+        this.message = buf.readString(256);
     }
 
     /**

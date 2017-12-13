@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class TileEntityMobSpawnerRenderer extends TileEntitySpecialRenderer<TileEntityMobSpawner>
 {
-    public void renderTileEntityAt(TileEntityMobSpawner te, double x, double y, double z, float partialTicks, int destroyStage)
+    public void render(TileEntityMobSpawner te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
     {
         GlStateManager.pushMatrix();
         GlStateManager.translate((float)x + 0.5F, (float)y, (float)z + 0.5F);
@@ -42,7 +42,7 @@ public class TileEntityMobSpawnerRenderer extends TileEntitySpecialRenderer<Tile
             GlStateManager.rotate(-30.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.scale(f, f, f);
             entity.setLocationAndAngles(posX, posY, posZ, 0.0F, 0.0F);
-            Minecraft.getMinecraft().getRenderManager().doRenderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks, false);
+            Minecraft.getMinecraft().getRenderManager().renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks, false);
         }
     }
 }

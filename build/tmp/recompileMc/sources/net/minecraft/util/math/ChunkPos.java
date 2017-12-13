@@ -5,34 +5,34 @@ import net.minecraft.entity.Entity;
 public class ChunkPos
 {
     /** The X position of this Chunk Coordinate Pair */
-    public final int chunkXPos;
+    public final int x;
     /** The Z position of this Chunk Coordinate Pair */
-    public final int chunkZPos;
+    public final int z;
 
     public ChunkPos(int x, int z)
     {
-        this.chunkXPos = x;
-        this.chunkZPos = z;
+        this.x = x;
+        this.z = z;
     }
 
     public ChunkPos(BlockPos pos)
     {
-        this.chunkXPos = pos.getX() >> 4;
-        this.chunkZPos = pos.getZ() >> 4;
+        this.x = pos.getX() >> 4;
+        this.z = pos.getZ() >> 4;
     }
 
     /**
-     * converts a chunk coordinate pair to an integer (suitable for hashing)
+     * Converts the chunk coordinate pair to a long
      */
-    public static long chunkXZ2Int(int x, int z)
+    public static long asLong(int x, int z)
     {
         return (long)x & 4294967295L | ((long)z & 4294967295L) << 32;
     }
 
     public int hashCode()
     {
-        int i = 1664525 * this.chunkXPos + 1013904223;
-        int j = 1664525 * (this.chunkZPos ^ -559038737) + 1013904223;
+        int i = 1664525 * this.x + 1013904223;
+        int j = 1664525 * (this.z ^ -559038737) + 1013904223;
         return i ^ j;
     }
 
@@ -49,27 +49,17 @@ public class ChunkPos
         else
         {
             ChunkPos chunkpos = (ChunkPos)p_equals_1_;
-            return this.chunkXPos == chunkpos.chunkXPos && this.chunkZPos == chunkpos.chunkZPos;
+            return this.x == chunkpos.x && this.z == chunkpos.z;
         }
     }
 
-    public double getDistanceSq(Entity p_185327_1_)
+    public double getDistanceSq(Entity entityIn)
     {
-        double d0 = (double)(this.chunkXPos * 16 + 8);
-        double d1 = (double)(this.chunkZPos * 16 + 8);
-        double d2 = d0 - p_185327_1_.posX;
-        double d3 = d1 - p_185327_1_.posZ;
+        double d0 = (double)(this.x * 16 + 8);
+        double d1 = (double)(this.z * 16 + 8);
+        double d2 = d0 - entityIn.posX;
+        double d3 = d1 - entityIn.posZ;
         return d2 * d2 + d3 * d3;
-    }
-
-    public int getCenterXPos()
-    {
-        return (this.chunkXPos << 4) + 8;
-    }
-
-    public int getCenterZPosition()
-    {
-        return (this.chunkZPos << 4) + 8;
     }
 
     /**
@@ -77,7 +67,7 @@ public class ChunkPos
      */
     public int getXStart()
     {
-        return this.chunkXPos << 4;
+        return this.x << 4;
     }
 
     /**
@@ -85,7 +75,7 @@ public class ChunkPos
      */
     public int getZStart()
     {
-        return this.chunkZPos << 4;
+        return this.z << 4;
     }
 
     /**
@@ -93,7 +83,7 @@ public class ChunkPos
      */
     public int getXEnd()
     {
-        return (this.chunkXPos << 4) + 15;
+        return (this.x << 4) + 15;
     }
 
     /**
@@ -101,7 +91,7 @@ public class ChunkPos
      */
     public int getZEnd()
     {
-        return (this.chunkZPos << 4) + 15;
+        return (this.z << 4) + 15;
     }
 
     /**
@@ -109,19 +99,11 @@ public class ChunkPos
      */
     public BlockPos getBlock(int x, int y, int z)
     {
-        return new BlockPos((this.chunkXPos << 4) + x, y, (this.chunkZPos << 4) + z);
-    }
-
-    /**
-     * Get the coordinates of the Block in the center of this chunk with the given Y coordinate
-     */
-    public BlockPos getCenterBlock(int y)
-    {
-        return new BlockPos(this.getCenterXPos(), y, this.getCenterZPosition());
+        return new BlockPos((this.x << 4) + x, y, (this.z << 4) + z);
     }
 
     public String toString()
     {
-        return "[" + this.chunkXPos + ", " + this.chunkZPos + "]";
+        return "[" + this.x + ", " + this.z + "]";
     }
 }

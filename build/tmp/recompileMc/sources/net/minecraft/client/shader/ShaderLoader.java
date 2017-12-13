@@ -4,7 +4,6 @@ import com.google.common.collect.Maps;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -23,8 +22,8 @@ public class ShaderLoader
 {
     private final ShaderLoader.ShaderType shaderType;
     private final String shaderFilename;
-    private int shader;
-    private int shaderAttachCount = 0;
+    private final int shader;
+    private int shaderAttachCount;
 
     private ShaderLoader(ShaderLoader.ShaderType type, int shaderId, String filename)
     {
@@ -61,12 +60,13 @@ public class ShaderLoader
 
         if (shaderloader == null)
         {
-            ResourceLocation resourcelocation = new ResourceLocation("shaders/program/" + filename + type.getShaderExtension());
+            String[] rl = ResourceLocation.splitObjectName(filename);
+            ResourceLocation resourcelocation = new ResourceLocation(rl[0], "shaders/program/" + rl[1] + type.getShaderExtension());
             IResource iresource = resourceManager.getResource(resourcelocation);
 
             try
             {
-                byte[] abyte = IOUtils.toByteArray((InputStream)(new BufferedInputStream(iresource.getInputStream())));
+                byte[] abyte = IOUtils.toByteArray(new BufferedInputStream(iresource.getInputStream()));
                 ByteBuffer bytebuffer = BufferUtils.createByteBuffer(abyte.length);
                 bytebuffer.put(abyte);
                 bytebuffer.position(0);
@@ -77,7 +77,7 @@ public class ShaderLoader
                 if (OpenGlHelper.glGetShaderi(i, OpenGlHelper.GL_COMPILE_STATUS) == 0)
                 {
                     String s = StringUtils.trim(OpenGlHelper.glGetShaderInfoLog(i, 32768));
-                    JsonException jsonexception = new JsonException("Couldn\'t compile " + type.getShaderName() + " program: " + s);
+                    JsonException jsonexception = new JsonException("Couldn't compile " + type.getShaderName() + " program: " + s);
                     jsonexception.setFilenameAndFlush(resourcelocation.getResourcePath());
                     throw jsonexception;
                 }
@@ -117,17 +117,20 @@ public class ShaderLoader
             return this.shaderName;
         }
 
-        protected String getShaderExtension()
+        private String getShaderExtension()
         {
             return this.shaderExtension;
         }
 
-        protected int getShaderMode()
+        private int getShaderMode()
         {
             return this.shaderMode;
         }
 
-        protected Map<String, ShaderLoader> getLoadedShaders()
+        /**
+         * gets a map of loaded shaders for the ShaderType.
+         */
+        private Map<String, ShaderLoader> getLoadedShaders()
         {
             return this.loadedShaders;
         }

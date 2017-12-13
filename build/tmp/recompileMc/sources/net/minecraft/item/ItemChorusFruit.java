@@ -1,6 +1,5 @@
 package net.minecraft.item;
 
-import javax.annotation.Nullable;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -19,7 +18,6 @@ public class ItemChorusFruit extends ItemFood
      * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
      * the Item before the action is complete.
      */
-    @Nullable
     public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving)
     {
         ItemStack itemstack = super.onItemUseFinish(stack, worldIn, entityLiving);
@@ -33,8 +31,13 @@ public class ItemChorusFruit extends ItemFood
             for (int i = 0; i < 16; ++i)
             {
                 double d3 = entityLiving.posX + (entityLiving.getRNG().nextDouble() - 0.5D) * 16.0D;
-                double d4 = MathHelper.clamp_double(entityLiving.posY + (double)(entityLiving.getRNG().nextInt(16) - 8), 0.0D, (double)(worldIn.getActualHeight() - 1));
+                double d4 = MathHelper.clamp(entityLiving.posY + (double)(entityLiving.getRNG().nextInt(16) - 8), 0.0D, (double)(worldIn.getActualHeight() - 1));
                 double d5 = entityLiving.posZ + (entityLiving.getRNG().nextDouble() - 0.5D) * 16.0D;
+
+                if (entityLiving.isRiding())
+                {
+                    entityLiving.dismountRidingEntity();
+                }
 
                 if (entityLiving.attemptTeleport(d3, d4, d5))
                 {

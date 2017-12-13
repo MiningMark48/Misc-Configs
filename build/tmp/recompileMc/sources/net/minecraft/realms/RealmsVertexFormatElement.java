@@ -7,7 +7,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class RealmsVertexFormatElement
 {
-    private VertexFormatElement v;
+    private final VertexFormatElement v;
 
     public RealmsVertexFormatElement(VertexFormatElement vIn)
     {

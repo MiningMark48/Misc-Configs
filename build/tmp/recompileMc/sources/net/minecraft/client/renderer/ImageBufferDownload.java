@@ -5,6 +5,7 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.ImageObserver;
+import javax.annotation.Nullable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -15,6 +16,7 @@ public class ImageBufferDownload implements IImageBuffer
     private int imageWidth;
     private int imageHeight;
 
+    @Nullable
     public BufferedImage parseUserSkin(BufferedImage image)
     {
         if (image == null)
@@ -54,7 +56,7 @@ public class ImageBufferDownload implements IImageBuffer
 
             if (flag)
             {
-                this.doTransparencyHack(32, 0, 64, 32);
+                this.setAreaTransparent(32, 0, 64, 32);
             }
 
             this.setAreaOpaque(0, 16, 64, 32);
@@ -67,11 +69,11 @@ public class ImageBufferDownload implements IImageBuffer
     {
     }
 
-    private void doTransparencyHack(int p_189559_1_, int p_189559_2_, int p_189559_3_, int p_189559_4_)
+    private void setAreaTransparent(int x, int y, int width, int height)
     {
-        for (int i = p_189559_1_; i < p_189559_3_; ++i)
+        for (int i = x; i < width; ++i)
         {
-            for (int j = p_189559_2_; j < p_189559_4_; ++j)
+            for (int j = y; j < height; ++j)
             {
                 int k = this.imageData[i + j * this.imageWidth];
 
@@ -82,9 +84,9 @@ public class ImageBufferDownload implements IImageBuffer
             }
         }
 
-        for (int l = p_189559_1_; l < p_189559_3_; ++l)
+        for (int l = x; l < width; ++l)
         {
-            for (int i1 = p_189559_2_; i1 < p_189559_4_; ++i1)
+            for (int i1 = y; i1 < height; ++i1)
             {
                 this.imageData[l + i1 * this.imageWidth] &= 16777215;
             }

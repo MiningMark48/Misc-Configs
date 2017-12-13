@@ -1,40 +1,27 @@
 package net.minecraft.potion;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.UnmodifiableIterator;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.init.MobEffects;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.RegistryNamespacedDefaultedByKey;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class PotionType extends net.minecraftforge.fml.common.registry.IForgeRegistryEntry.Impl<PotionType>
+public class PotionType extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<PotionType>
 {
     @Deprecated // unused
-    private static final ResourceLocation WATER = new ResourceLocation("water");
-    public static final RegistryNamespacedDefaultedByKey<ResourceLocation, PotionType> REGISTRY = net.minecraftforge.fml.common.registry.GameData.getPotionTypesRegistry();
+    private static final ResourceLocation EMPTY = new ResourceLocation("empty");
+    public static final RegistryNamespacedDefaultedByKey<ResourceLocation, PotionType> REGISTRY = net.minecraftforge.registries.GameData.getWrapperDefaulted(PotionType.class);
     private static int nextPotionTypeId;
-    /** The PotionType that this PotionType is a derivative of */
+    /** The unlocalized name of this PotionType. If null, the registry name is used. */
     private final String baseName;
     private final ImmutableList<PotionEffect> effects;
 
     @Nullable
-    @SideOnly(Side.CLIENT)
-    public static PotionType getPotionTypeForID(int p_185169_0_)
-    {
-        return (PotionType)REGISTRY.getObjectById(p_185169_0_);
-    }
-
-    public static int getID(PotionType p_185171_0_)
-    {
-        return REGISTRY.getIDForObject(p_185171_0_);
-    }
-
-    @Nullable
     public static PotionType getPotionTypeForName(String p_185168_0_)
     {
-        return (PotionType)REGISTRY.getObject(new ResourceLocation(p_185168_0_));
+        return REGISTRY.getObject(new ResourceLocation(p_185168_0_));
     }
 
     public PotionType(PotionEffect... p_i46739_1_)
@@ -48,6 +35,9 @@ public class PotionType extends net.minecraftforge.fml.common.registry.IForgeReg
         this.effects = ImmutableList.copyOf(p_i46740_2_);
     }
 
+    /**
+     * Gets the name of this PotionType with a prefix (such as "Splash" or "Lingering") prepended
+     */
     public String getNamePrefixed(String p_185174_1_)
     {
         return this.baseName == null ? p_185174_1_ + ((ResourceLocation)REGISTRY.getNameForObject(this)).getResourcePath() : p_185174_1_ + this.baseName;
@@ -105,13 +95,16 @@ public class PotionType extends net.minecraftforge.fml.common.registry.IForgeReg
         REGISTRY.register(nextPotionTypeId++, new ResourceLocation(p_185173_0_), p_185173_1_);
     }
 
-    @SideOnly(Side.CLIENT)
     public boolean hasInstantEffect()
     {
         if (!this.effects.isEmpty())
         {
-            for (PotionEffect potioneffect : this.effects)
+            UnmodifiableIterator unmodifiableiterator = this.effects.iterator();
+
+            while (unmodifiableiterator.hasNext())
             {
+                PotionEffect potioneffect = (PotionEffect)unmodifiableiterator.next();
+
                 if (potioneffect.getPotion().isInstant())
                 {
                     return true;

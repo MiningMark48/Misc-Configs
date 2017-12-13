@@ -12,7 +12,7 @@ public class GuiOptionSlider extends GuiButton
 {
     private float sliderValue;
     public boolean dragging;
-    private GameSettings.Options options;
+    private final GameSettings.Options options;
     private final float minValue;
     private final float maxValue;
 
@@ -51,8 +51,8 @@ public class GuiOptionSlider extends GuiButton
         {
             if (this.dragging)
             {
-                this.sliderValue = (float)(mouseX - (this.xPosition + 4)) / (float)(this.width - 8);
-                this.sliderValue = MathHelper.clamp_float(this.sliderValue, 0.0F, 1.0F);
+                this.sliderValue = (float)(mouseX - (this.x + 4)) / (float)(this.width - 8);
+                this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0F, 1.0F);
                 float f = this.options.denormalizeValue(this.sliderValue);
                 mc.gameSettings.setOptionFloatValue(this.options, f);
                 this.sliderValue = this.options.normalizeValue(f);
@@ -61,8 +61,8 @@ public class GuiOptionSlider extends GuiButton
 
             mc.getTextureManager().bindTexture(BUTTON_TEXTURES);
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)), this.yPosition, 0, 66, 4, 20);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.yPosition, 196, 66, 4, 20);
+            this.drawTexturedModalRect(this.x + (int)(this.sliderValue * (float)(this.width - 8)), this.y, 0, 66, 4, 20);
+            this.drawTexturedModalRect(this.x + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.y, 196, 66, 4, 20);
         }
     }
 
@@ -74,8 +74,8 @@ public class GuiOptionSlider extends GuiButton
     {
         if (super.mousePressed(mc, mouseX, mouseY))
         {
-            this.sliderValue = (float)(mouseX - (this.xPosition + 4)) / (float)(this.width - 8);
-            this.sliderValue = MathHelper.clamp_float(this.sliderValue, 0.0F, 1.0F);
+            this.sliderValue = (float)(mouseX - (this.x + 4)) / (float)(this.width - 8);
+            this.sliderValue = MathHelper.clamp(this.sliderValue, 0.0F, 1.0F);
             mc.gameSettings.setOptionFloatValue(this.options, this.options.denormalizeValue(this.sliderValue));
             this.displayString = mc.gameSettings.getKeyBinding(this.options);
             this.dragging = true;

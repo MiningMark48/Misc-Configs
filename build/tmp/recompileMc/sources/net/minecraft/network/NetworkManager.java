@@ -7,7 +7,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -37,7 +36,6 @@ import net.minecraft.util.CryptManager;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.LazyLoadBase;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -76,6 +74,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
         }
     };
     private final EnumPacketDirection direction;
+    /** The queue for packets that require transmission */
     private final Queue<NetworkManager.InboundHandlerTuplePacketListener> outboundPacketsQueue = Queues.<NetworkManager.InboundHandlerTuplePacketListener>newConcurrentLinkedQueue();
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     /** The active channel */
@@ -111,7 +110,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
         }
         catch (Throwable throwable)
         {
-            LOGGER.fatal((Object)throwable);
+            LOGGER.fatal(throwable);
         }
     }
 
@@ -143,7 +142,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
             textcomponenttranslation = new TextComponentTranslation("disconnect.genericReason", new Object[] {"Internal Exception: " + p_exceptionCaught_2_});
         }
 
-        LOGGER.debug((Object)p_exceptionCaught_2_);
+        LOGGER.debug(textcomponenttranslation.getUnformattedText(), p_exceptionCaught_2_);
         this.closeChannel(textcomponenttranslation);
     }
 
@@ -168,8 +167,8 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
      */
     public void setNetHandler(INetHandler handler)
     {
-        Validate.notNull(handler, "packetListener", new Object[0]);
-        LOGGER.debug("Set listener of {} to {}", new Object[] {this, handler});
+        Validate.notNull(handler, "packetListener");
+        LOGGER.debug("Set listener of {} to {}", this, handler);
         this.packetListener = handler;
     }
 
@@ -178,7 +177,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
         if (this.isChannelOpen())
         {
             this.flushOutboundQueue();
-            this.dispatchPacket(packetIn, (GenericFutureListener <? extends Future <? super Void >> [])null);
+            this.dispatchPacket(packetIn, (GenericFutureListener[])null);
         }
         else
         {
@@ -186,7 +185,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
 
             try
             {
-                this.outboundPacketsQueue.add(new NetworkManager.InboundHandlerTuplePacketListener(packetIn, (GenericFutureListener[])null));
+                this.outboundPacketsQueue.add(new NetworkManager.InboundHandlerTuplePacketListener(packetIn, new GenericFutureListener[0]));
             }
             finally
             {
@@ -285,7 +284,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
             {
                 while (!this.outboundPacketsQueue.isEmpty())
                 {
-                    NetworkManager.InboundHandlerTuplePacketListener networkmanager$inboundhandlertuplepacketlistener = (NetworkManager.InboundHandlerTuplePacketListener)this.outboundPacketsQueue.poll();
+                    NetworkManager.InboundHandlerTuplePacketListener networkmanager$inboundhandlertuplepacketlistener = this.outboundPacketsQueue.poll();
                     this.dispatchPacket(networkmanager$inboundhandlertuplepacketlistener.packet, networkmanager$inboundhandlertuplepacketlistener.futureListeners);
                 }
             }
@@ -308,7 +307,10 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
             ((ITickable)this.packetListener).update();
         }
 
-        this.channel.flush();
+        if (this.channel != null)
+        {
+            this.channel.flush();
+        }
     }
 
     /**
@@ -361,7 +363,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
             lazyloadbase = CLIENT_NIO_EVENTLOOP;
         }
 
-        ((Bootstrap)((Bootstrap)((Bootstrap)(new Bootstrap()).group((EventLoopGroup)lazyloadbase.getValue())).handler(new ChannelInitializer<Channel>()
+        ((Bootstrap)((Bootstrap)((Bootstrap)(new Bootstrap()).group(lazyloadbase.getValue())).handler(new ChannelInitializer<Channel>()
         {
             protected void initChannel(Channel p_initChannel_1_) throws Exception
             {
@@ -374,7 +376,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
                     ;
                 }
 
-                p_initChannel_1_.pipeline().addLast((String)"timeout", (ChannelHandler)(new ReadTimeoutHandler(30))).addLast((String)"splitter", (ChannelHandler)(new NettyVarint21FrameDecoder())).addLast((String)"decoder", (ChannelHandler)(new NettyPacketDecoder(EnumPacketDirection.CLIENTBOUND))).addLast((String)"prepender", (ChannelHandler)(new NettyVarint21FrameEncoder())).addLast((String)"encoder", (ChannelHandler)(new NettyPacketEncoder(EnumPacketDirection.SERVERBOUND))).addLast((String)"packet_handler", (ChannelHandler)networkmanager);
+                p_initChannel_1_.pipeline().addLast("timeout", new ReadTimeoutHandler(30)).addLast("splitter", new NettyVarint21FrameDecoder()).addLast("decoder", new NettyPacketDecoder(EnumPacketDirection.CLIENTBOUND)).addLast("prepender", new NettyVarint21FrameEncoder()).addLast("encoder", new NettyPacketEncoder(EnumPacketDirection.SERVERBOUND)).addLast("packet_handler", networkmanager);
             }
         })).channel(oclass)).connect(address, serverPort).syncUninterruptibly();
         return networkmanager;
@@ -388,11 +390,11 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
     public static NetworkManager provideLocalClient(SocketAddress address)
     {
         final NetworkManager networkmanager = new NetworkManager(EnumPacketDirection.CLIENTBOUND);
-        ((Bootstrap)((Bootstrap)((Bootstrap)(new Bootstrap()).group((EventLoopGroup)CLIENT_LOCAL_EVENTLOOP.getValue())).handler(new ChannelInitializer<Channel>()
+        ((Bootstrap)((Bootstrap)((Bootstrap)(new Bootstrap()).group(CLIENT_LOCAL_EVENTLOOP.getValue())).handler(new ChannelInitializer<Channel>()
         {
             protected void initChannel(Channel p_initChannel_1_) throws Exception
             {
-                p_initChannel_1_.pipeline().addLast((String)"packet_handler", (ChannelHandler)networkmanager);
+                p_initChannel_1_.pipeline().addLast("packet_handler", networkmanager);
             }
         })).channel(LocalChannel.class)).connect(address).syncUninterruptibly();
         return networkmanager;
@@ -505,7 +507,7 @@ public class NetworkManager extends SimpleChannelInboundHandler < Packet<? >>
                 }
                 else if (this.getNetHandler() != null)
                 {
-                    this.getNetHandler().onDisconnect(new TextComponentString("Disconnected"));
+                    this.getNetHandler().onDisconnect(new TextComponentTranslation("multiplayer.disconnect.generic", new Object[0]));
                 }
             }
         }

@@ -30,7 +30,7 @@ public class SetNBT extends LootFunction
 
         if (nbttagcompound == null)
         {
-            nbttagcompound = (NBTTagCompound)this.tag.copy();
+            nbttagcompound = this.tag.copy();
         }
         else
         {

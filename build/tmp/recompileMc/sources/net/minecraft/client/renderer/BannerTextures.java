@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.LayeredColorMaskTexture;
 import net.minecraft.item.EnumDyeColor;
-import net.minecraft.tileentity.TileEntityBanner;
+import net.minecraft.tileentity.BannerPattern;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -30,26 +30,26 @@ public class BannerTextures
             private final Map<String, BannerTextures.CacheEntry> cacheMap = Maps.<String, BannerTextures.CacheEntry>newLinkedHashMap();
             private final ResourceLocation cacheResourceLocation;
             private final String cacheResourceBase;
-            private String cacheId;
+            private final String cacheId;
 
-            public Cache(String p_i46998_1_, ResourceLocation p_i46998_2_, String p_i46998_3_)
+            public Cache(String id, ResourceLocation baseResource, String resourcePath)
             {
-                this.cacheId = p_i46998_1_;
-                this.cacheResourceLocation = p_i46998_2_;
-                this.cacheResourceBase = p_i46998_3_;
+                this.cacheId = id;
+                this.cacheResourceLocation = baseResource;
+                this.cacheResourceBase = resourcePath;
             }
 
             @Nullable
-            public ResourceLocation getResourceLocation(String p_187478_1_, List<TileEntityBanner.EnumBannerPattern> p_187478_2_, List<EnumDyeColor> p_187478_3_)
+            public ResourceLocation getResourceLocation(String id, List<BannerPattern> patternList, List<EnumDyeColor> colorList)
             {
-                if (p_187478_1_.isEmpty())
+                if (id.isEmpty())
                 {
                     return null;
                 }
                 else
                 {
-                    p_187478_1_ = this.cacheId + p_187478_1_;
-                    BannerTextures.CacheEntry bannertextures$cacheentry = (BannerTextures.CacheEntry)this.cacheMap.get(p_187478_1_);
+                    id = this.cacheId + id;
+                    BannerTextures.CacheEntry bannertextures$cacheentry = this.cacheMap.get(id);
 
                     if (bannertextures$cacheentry == null)
                     {
@@ -60,15 +60,15 @@ public class BannerTextures
 
                         List<String> list = Lists.<String>newArrayList();
 
-                        for (TileEntityBanner.EnumBannerPattern tileentitybanner$enumbannerpattern : p_187478_2_)
+                        for (BannerPattern bannerpattern : patternList)
                         {
-                            list.add(this.cacheResourceBase + tileentitybanner$enumbannerpattern.getPatternName() + ".png");
+                            list.add(this.cacheResourceBase + bannerpattern.getFileName() + ".png");
                         }
 
                         bannertextures$cacheentry = new BannerTextures.CacheEntry();
-                        bannertextures$cacheentry.textureLocation = new ResourceLocation(p_187478_1_);
-                        Minecraft.getMinecraft().getTextureManager().loadTexture(bannertextures$cacheentry.textureLocation, new LayeredColorMaskTexture(this.cacheResourceLocation, list, p_187478_3_));
-                        this.cacheMap.put(p_187478_1_, bannertextures$cacheentry);
+                        bannertextures$cacheentry.textureLocation = new ResourceLocation(id);
+                        Minecraft.getMinecraft().getTextureManager().loadTexture(bannertextures$cacheentry.textureLocation, new LayeredColorMaskTexture(this.cacheResourceLocation, list, colorList));
+                        this.cacheMap.put(id, bannertextures$cacheentry);
                     }
 
                     bannertextures$cacheentry.lastUseMillis = System.currentTimeMillis();
@@ -83,8 +83,8 @@ public class BannerTextures
 
                 while (iterator.hasNext())
                 {
-                    String s = (String)iterator.next();
-                    BannerTextures.CacheEntry bannertextures$cacheentry = (BannerTextures.CacheEntry)this.cacheMap.get(s);
+                    String s = iterator.next();
+                    BannerTextures.CacheEntry bannertextures$cacheentry = this.cacheMap.get(s);
 
                     if (i - bannertextures$cacheentry.lastUseMillis > 5000L)
                     {

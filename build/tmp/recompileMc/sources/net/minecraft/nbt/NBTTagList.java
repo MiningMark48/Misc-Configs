@@ -5,12 +5,14 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class NBTTagList extends NBTBase
+public class NBTTagList extends NBTBase implements java.lang.Iterable<NBTBase>
 {
     private static final Logger LOGGER = LogManager.getLogger();
+    /** The array list containing the tags encapsulated in this list. */
     private List<NBTBase> tagList = Lists.<NBTBase>newArrayList();
     /** The type byte for the tags in the list - they must all be of the same type. */
     private byte tagType = 0;
@@ -20,13 +22,13 @@ public class NBTTagList extends NBTBase
      */
     void write(DataOutput output) throws IOException
     {
-        if (!this.tagList.isEmpty())
+        if (this.tagList.isEmpty())
         {
-            this.tagType = ((NBTBase)this.tagList.get(0)).getId();
+            this.tagType = 0;
         }
         else
         {
-            this.tagType = 0;
+            this.tagType = ((NBTBase)this.tagList.get(0)).getId();
         }
 
         output.writeByte(this.tagType);
@@ -75,7 +77,7 @@ public class NBTTagList extends NBTBase
      */
     public byte getId()
     {
-        return (byte)9;
+        return 9;
     }
 
     public String toString()
@@ -89,7 +91,7 @@ public class NBTTagList extends NBTBase
                 stringbuilder.append(',');
             }
 
-            stringbuilder.append(i).append(':').append(this.tagList.get(i));
+            stringbuilder.append(this.tagList.get(i));
         }
 
         return stringbuilder.append(']').toString();
@@ -155,7 +157,7 @@ public class NBTTagList extends NBTBase
      */
     public NBTBase removeTag(int i)
     {
-        return (NBTBase)this.tagList.remove(i);
+        return this.tagList.remove(i);
     }
 
     /**
@@ -173,7 +175,7 @@ public class NBTTagList extends NBTBase
     {
         if (i >= 0 && i < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(i);
+            NBTBase nbtbase = this.tagList.get(i);
 
             if (nbtbase.getId() == 10)
             {
@@ -188,7 +190,7 @@ public class NBTTagList extends NBTBase
     {
         if (p_186858_1_ >= 0 && p_186858_1_ < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(p_186858_1_);
+            NBTBase nbtbase = this.tagList.get(p_186858_1_);
 
             if (nbtbase.getId() == 3)
             {
@@ -203,7 +205,7 @@ public class NBTTagList extends NBTBase
     {
         if (i >= 0 && i < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(i);
+            NBTBase nbtbase = this.tagList.get(i);
 
             if (nbtbase.getId() == 11)
             {
@@ -218,7 +220,7 @@ public class NBTTagList extends NBTBase
     {
         if (i >= 0 && i < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(i);
+            NBTBase nbtbase = this.tagList.get(i);
 
             if (nbtbase.getId() == 6)
             {
@@ -233,7 +235,7 @@ public class NBTTagList extends NBTBase
     {
         if (i >= 0 && i < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(i);
+            NBTBase nbtbase = this.tagList.get(i);
 
             if (nbtbase.getId() == 5)
             {
@@ -251,7 +253,7 @@ public class NBTTagList extends NBTBase
     {
         if (i >= 0 && i < this.tagList.size())
         {
-            NBTBase nbtbase = (NBTBase)this.tagList.get(i);
+            NBTBase nbtbase = this.tagList.get(i);
             return nbtbase.getId() == 8 ? nbtbase.getString() : nbtbase.toString();
         }
         else
@@ -279,7 +281,7 @@ public class NBTTagList extends NBTBase
     /**
      * Creates a clone of the tag.
      */
-    public NBTBase copy()
+    public NBTTagList copy()
     {
         NBTTagList nbttaglist = new NBTTagList();
         nbttaglist.tagType = this.tagType;
@@ -295,17 +297,15 @@ public class NBTTagList extends NBTBase
 
     public boolean equals(Object p_equals_1_)
     {
-        if (super.equals(p_equals_1_))
+        if (!super.equals(p_equals_1_))
+        {
+            return false;
+        }
+        else
         {
             NBTTagList nbttaglist = (NBTTagList)p_equals_1_;
-
-            if (this.tagType == nbttaglist.tagType)
-            {
-                return this.tagList.equals(nbttaglist.tagList);
-            }
+            return this.tagType == nbttaglist.tagType && Objects.equals(this.tagList, nbttaglist.tagList);
         }
-
-        return false;
     }
 
     public int hashCode()
@@ -317,4 +317,5 @@ public class NBTTagList extends NBTBase
     {
         return this.tagType;
     }
+    @Override public java.util.Iterator<NBTBase> iterator() {return tagList.iterator();}
 }

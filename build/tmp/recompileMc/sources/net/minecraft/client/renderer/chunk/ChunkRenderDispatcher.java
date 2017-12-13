@@ -13,12 +13,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.VertexBufferUploader;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -49,8 +50,8 @@ public class ChunkRenderDispatcher
     public ChunkRenderDispatcher(int countRenderBuilders)
     {
         int i = Math.max(1, (int)((double)Runtime.getRuntime().maxMemory() * 0.3D) / 10485760);
-        int j = Math.max(1, MathHelper.clamp_int(Runtime.getRuntime().availableProcessors(), 1, i / 5));
-        if(countRenderBuilders < 0) countRenderBuilders = MathHelper.clamp_int(j * 10, 1, i);
+        int j = Math.max(1, MathHelper.clamp(Runtime.getRuntime().availableProcessors(), 1, i / 5));
+        if(countRenderBuilders < 0) countRenderBuilders = MathHelper.clamp(j * 10, 1, i);
         this.countRenderBuilders = countRenderBuilders;
 
         if (j > 1)
@@ -77,10 +78,10 @@ public class ChunkRenderDispatcher
 
     public String getDebugInfo()
     {
-        return this.listWorkerThreads.isEmpty() ? String.format("pC: %03d, single-threaded", new Object[] {Integer.valueOf(this.queueChunkUpdates.size())}): String.format("pC: %03d, pU: %1d, aB: %1d", new Object[] {Integer.valueOf(this.queueChunkUpdates.size()), Integer.valueOf(this.queueChunkUploads.size()), Integer.valueOf(this.queueFreeRenderBuilders.size())});
+        return this.listWorkerThreads.isEmpty() ? String.format("pC: %03d, single-threaded", this.queueChunkUpdates.size()) : String.format("pC: %03d, pU: %1d, aB: %1d", this.queueChunkUpdates.size(), this.queueChunkUploads.size(), this.queueFreeRenderBuilders.size());
     }
 
-    public boolean runChunkUploads(long p_178516_1_)
+    public boolean runChunkUploads(long finishTimeNano)
     {
         boolean flag = false;
 
@@ -90,7 +91,7 @@ public class ChunkRenderDispatcher
 
             if (this.listWorkerThreads.isEmpty())
             {
-                ChunkCompileTaskGenerator chunkcompiletaskgenerator = (ChunkCompileTaskGenerator)this.queueChunkUpdates.poll();
+                ChunkCompileTaskGenerator chunkcompiletaskgenerator = this.queueChunkUpdates.poll();
 
                 if (chunkcompiletaskgenerator != null)
                 {
@@ -110,13 +111,13 @@ public class ChunkRenderDispatcher
             {
                 if (!this.queueChunkUploads.isEmpty())
                 {
-                    ((ChunkRenderDispatcher.PendingUpload)this.queueChunkUploads.poll()).uploadTask.run();
+                    (this.queueChunkUploads.poll()).uploadTask.run();
                     flag1 = true;
                     flag = true;
                 }
             }
 
-            if (p_178516_1_ == 0L || !flag1 || p_178516_1_ < System.nanoTime())
+            if (finishTimeNano == 0L || !flag1 || finishTimeNano < System.nanoTime())
             {
                 break;
             }
@@ -190,7 +191,7 @@ public class ChunkRenderDispatcher
         this.clearChunkUpdates();
         List<RegionRenderCacheBuilder> list = Lists.<RegionRenderCacheBuilder>newArrayList();
 
-        while (((List)list).size() != this.countRenderBuilders)
+        while (list.size() != this.countRenderBuilders)
         {
             this.runChunkUploads(Long.MAX_VALUE);
 
@@ -214,12 +215,12 @@ public class ChunkRenderDispatcher
 
     public RegionRenderCacheBuilder allocateRenderBuilder() throws InterruptedException
     {
-        return (RegionRenderCacheBuilder)this.queueFreeRenderBuilders.take();
+        return this.queueFreeRenderBuilders.take();
     }
 
     public ChunkCompileTaskGenerator getNextChunkUpdate() throws InterruptedException
     {
-        return (ChunkCompileTaskGenerator)this.queueChunkUpdates.take();
+        return this.queueChunkUpdates.take();
     }
 
     public boolean updateTransparencyLater(RenderChunk chunkRenderer)
@@ -254,7 +255,7 @@ public class ChunkRenderDispatcher
         return flag;
     }
 
-    public ListenableFuture<Object> uploadChunk(final BlockRenderLayer p_188245_1_, final VertexBuffer p_188245_2_, final RenderChunk p_188245_3_, final CompiledChunk p_188245_4_, final double p_188245_5_)
+    public ListenableFuture<Object> uploadChunk(final BlockRenderLayer p_188245_1_, final BufferBuilder p_188245_2_, final RenderChunk p_188245_3_, final CompiledChunk p_188245_4_, final double p_188245_5_)
     {
         if (Minecraft.getMinecraft().isCallingFromMinecraftThread())
         {
@@ -288,17 +289,17 @@ public class ChunkRenderDispatcher
         }
     }
 
-    private void uploadDisplayList(VertexBuffer p_178510_1_, int p_178510_2_, RenderChunk chunkRenderer)
+    private void uploadDisplayList(BufferBuilder bufferBuilderIn, int list, RenderChunk chunkRenderer)
     {
-        GlStateManager.glNewList(p_178510_2_, 4864);
+        GlStateManager.glNewList(list, 4864);
         GlStateManager.pushMatrix();
         chunkRenderer.multModelviewMatrix();
-        this.worldVertexUploader.draw(p_178510_1_);
+        this.worldVertexUploader.draw(bufferBuilderIn);
         GlStateManager.popMatrix();
         GlStateManager.glEndList();
     }
 
-    private void uploadVertexBuffer(VertexBuffer p_178506_1_, net.minecraft.client.renderer.vertex.VertexBuffer vertexBufferIn)
+    private void uploadVertexBuffer(BufferBuilder p_178506_1_, VertexBuffer vertexBufferIn)
     {
         this.vertexUploader.setVertexBuffer(vertexBufferIn);
         this.vertexUploader.draw(p_178506_1_);
@@ -308,7 +309,7 @@ public class ChunkRenderDispatcher
     {
         while (!this.queueChunkUpdates.isEmpty())
         {
-            ChunkCompileTaskGenerator chunkcompiletaskgenerator = (ChunkCompileTaskGenerator)this.queueChunkUpdates.poll();
+            ChunkCompileTaskGenerator chunkcompiletaskgenerator = this.queueChunkUpdates.poll();
 
             if (chunkcompiletaskgenerator != null)
             {
@@ -340,7 +341,7 @@ public class ChunkRenderDispatcher
             }
             catch (InterruptedException interruptedexception)
             {
-                LOGGER.warn((String)"Interrupted whilst waiting for worker to die", (Throwable)interruptedexception);
+                LOGGER.warn("Interrupted whilst waiting for worker to die", (Throwable)interruptedexception);
             }
         }
 
@@ -349,7 +350,7 @@ public class ChunkRenderDispatcher
 
     public boolean hasNoFreeRenderBuilders()
     {
-        return this.queueFreeRenderBuilders.size() == 0;
+        return this.queueFreeRenderBuilders.isEmpty();
     }
 
     @SideOnly(Side.CLIENT)
@@ -358,10 +359,10 @@ public class ChunkRenderDispatcher
         private final ListenableFutureTask<Object> uploadTask;
         private final double distanceSq;
 
-        public PendingUpload(ListenableFutureTask<Object> p_i46994_2_, double p_i46994_3_)
+        public PendingUpload(ListenableFutureTask<Object> uploadTaskIn, double distanceSqIn)
         {
-            this.uploadTask = p_i46994_2_;
-            this.distanceSq = p_i46994_3_;
+            this.uploadTask = uploadTaskIn;
+            this.distanceSq = distanceSqIn;
         }
 
         public int compareTo(ChunkRenderDispatcher.PendingUpload p_compareTo_1_)

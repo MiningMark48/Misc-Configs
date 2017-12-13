@@ -34,13 +34,13 @@ public class WorldGenTrees extends WorldGenAbstractTree
         this(p_i2027_1_, 4, DEFAULT_TRUNK, DEFAULT_LEAF, false);
     }
 
-    public WorldGenTrees(boolean p_i46446_1_, int p_i46446_2_, IBlockState p_i46446_3_, IBlockState p_i46446_4_, boolean p_i46446_5_)
+    public WorldGenTrees(boolean notify, int minTreeHeightIn, IBlockState woodMeta, IBlockState p_i46446_4_, boolean growVines)
     {
-        super(p_i46446_1_);
-        this.minTreeHeight = p_i46446_2_;
-        this.metaWood = p_i46446_3_;
+        super(notify);
+        this.minTreeHeight = minTreeHeightIn;
+        this.metaWood = woodMeta;
         this.metaLeaves = p_i46446_4_;
-        this.vinesGrow = p_i46446_5_;
+        this.vinesGrow = growVines;
     }
 
     public boolean generate(World worldIn, Random rand, BlockPos position)
@@ -95,14 +95,14 @@ public class WorldGenTrees extends WorldGenAbstractTree
 
                 if (state.getBlock().canSustainPlant(state, worldIn, position.down(), net.minecraft.util.EnumFacing.UP, (net.minecraft.block.BlockSapling)Blocks.SAPLING) && position.getY() < worldIn.getHeight() - i - 1)
                 {
-                    this.setDirtAt(worldIn, position.down());
+                    state.getBlock().onPlantGrow(state, worldIn, position.down(), position);
                     int k2 = 3;
                     int l2 = 0;
 
-                    for (int i3 = position.getY() - k2 + i; i3 <= position.getY() + i; ++i3)
+                    for (int i3 = position.getY() - 3 + i; i3 <= position.getY() + i; ++i3)
                     {
                         int i4 = i3 - (position.getY() + i);
-                        int j1 = l2 + 1 - i4 / 2;
+                        int j1 = 1 - i4 / 2;
 
                         for (int k1 = position.getX() - j1; k1 <= position.getX() + j1; ++k1)
                         {
@@ -251,10 +251,10 @@ public class WorldGenTrees extends WorldGenAbstractTree
         this.addVine(worldIn, pos, prop);
         int i = 4;
 
-        for (pos = pos.down(); worldIn.isAirBlock(pos) && i > 0; --i)
+        for (BlockPos blockpos = pos.down(); worldIn.isAirBlock(blockpos) && i > 0; --i)
         {
-            this.addVine(worldIn, pos, prop);
-            pos = pos.down();
+            this.addVine(worldIn, blockpos, prop);
+            blockpos = blockpos.down();
         }
     }
 }

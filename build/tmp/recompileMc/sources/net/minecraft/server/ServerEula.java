@@ -34,12 +34,12 @@ public class ServerEula
         {
             Properties properties = new Properties();
             fileinputstream = new FileInputStream(inFile);
-            properties.load((InputStream)fileinputstream);
+            properties.load(fileinputstream);
             flag = Boolean.parseBoolean(properties.getProperty("eula", "false"));
         }
         catch (Exception var8)
         {
-            LOG.warn("Failed to load " + inFile);
+            LOG.warn("Failed to load {}", (Object)inFile);
             this.createEULAFile();
         }
         finally
@@ -64,11 +64,11 @@ public class ServerEula
             Properties properties = new Properties();
             fileoutputstream = new FileOutputStream(this.eulaFile);
             properties.setProperty("eula", "false");
-            properties.store((OutputStream)fileoutputstream, "By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
+            properties.store(fileoutputstream, "By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
         }
         catch (Exception exception)
         {
-            LOG.warn((String)("Failed to save " + this.eulaFile), (Throwable)exception);
+            LOG.warn("Failed to save {}", this.eulaFile, exception);
         }
         finally
         {

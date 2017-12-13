@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.common.property;
 
 import net.minecraft.block.properties.IProperty;
@@ -16,9 +35,13 @@ public class Properties
      */
     public static final IUnlistedProperty<IModelState> AnimationProperty = new IUnlistedProperty<IModelState>()
     {
+        @Override
         public String getName() { return "forge_animation"; }
+        @Override
         public boolean isValid(IModelState state) { return true; }
+        @Override
         public Class<IModelState> getType() { return IModelState.class; }
+        @Override
         public String valueToString(IModelState state) { return state.toString(); }
     };
 
@@ -36,21 +59,25 @@ public class Properties
             this.parent = parent;
         }
 
+        @Override
         public String getName()
         {
             return parent.getName();
         }
 
+        @Override
         public boolean isValid(V value)
         {
             return parent.getAllowedValues().contains(value);
         }
 
+        @Override
         public Class<V> getType()
         {
             return parent.getValueClass();
         }
 
+        @Override
         public String valueToString(V value)
         {
             return parent.getName(value);

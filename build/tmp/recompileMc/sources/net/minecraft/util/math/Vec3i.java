@@ -1,12 +1,12 @@
 package net.minecraft.util.math;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class Vec3i implements Comparable<Vec3i>
 {
-    /** The Null vector constant (0, 0, 0) */
+    /** An immutable vector with zero as all coordinates. */
     public static final Vec3i NULL_VECTOR = new Vec3i(0, 0, 0);
     /** X coordinate */
     private final int x;
@@ -24,7 +24,7 @@ public class Vec3i implements Comparable<Vec3i>
 
     public Vec3i(double xIn, double yIn, double zIn)
     {
-        this(MathHelper.floor_double(xIn), MathHelper.floor_double(yIn), MathHelper.floor_double(zIn));
+        this(MathHelper.floor(xIn), MathHelper.floor(yIn), MathHelper.floor(zIn));
     }
 
     public boolean equals(Object p_equals_1_)
@@ -40,7 +40,19 @@ public class Vec3i implements Comparable<Vec3i>
         else
         {
             Vec3i vec3i = (Vec3i)p_equals_1_;
-            return this.getX() != vec3i.getX() ? false : (this.getY() != vec3i.getY() ? false : this.getZ() == vec3i.getZ());
+
+            if (this.getX() != vec3i.getX())
+            {
+                return false;
+            }
+            else if (this.getY() != vec3i.getY())
+            {
+                return false;
+            }
+            else
+            {
+                return this.getZ() == vec3i.getZ();
+            }
         }
     }
 
@@ -51,7 +63,14 @@ public class Vec3i implements Comparable<Vec3i>
 
     public int compareTo(Vec3i p_compareTo_1_)
     {
-        return this.getY() == p_compareTo_1_.getY() ? (this.getZ() == p_compareTo_1_.getZ() ? this.getX() - p_compareTo_1_.getX() : this.getZ() - p_compareTo_1_.getZ()) : this.getY() - p_compareTo_1_.getY();
+        if (this.getY() == p_compareTo_1_.getY())
+        {
+            return this.getZ() == p_compareTo_1_.getZ() ? this.getX() - p_compareTo_1_.getX() : this.getZ() - p_compareTo_1_.getZ();
+        }
+        else
+        {
+            return this.getY() - p_compareTo_1_.getY();
+        }
     }
 
     /**
@@ -86,11 +105,11 @@ public class Vec3i implements Comparable<Vec3i>
         return new Vec3i(this.getY() * vec.getZ() - this.getZ() * vec.getY(), this.getZ() * vec.getX() - this.getX() * vec.getZ(), this.getX() * vec.getY() - this.getY() * vec.getX());
     }
 
-    public double getDistance(int p_185332_1_, int p_185332_2_, int p_185332_3_)
+    public double getDistance(int xIn, int yIn, int zIn)
     {
-        double d0 = (double)(this.getX() - p_185332_1_);
-        double d1 = (double)(this.getY() - p_185332_2_);
-        double d2 = (double)(this.getZ() - p_185332_3_);
+        double d0 = (double)(this.getX() - xIn);
+        double d1 = (double)(this.getY() - yIn);
+        double d2 = (double)(this.getZ() - zIn);
         return Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
     }
 
@@ -126,6 +145,6 @@ public class Vec3i implements Comparable<Vec3i>
 
     public String toString()
     {
-        return Objects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).toString();
+        return MoreObjects.toStringHelper(this).add("x", this.getX()).add("y", this.getY()).add("z", this.getZ()).toString();
     }
 }

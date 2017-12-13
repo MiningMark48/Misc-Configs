@@ -8,10 +8,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Type;
 import javax.annotation.Nullable;
 import net.minecraft.item.Item;
 import net.minecraftforge.fml.relauncher.Side;
@@ -69,7 +71,14 @@ public class JsonUtils
      */
     public static boolean hasField(JsonObject json, String memberName)
     {
-        return json == null ? false : json.get(memberName) != null;
+        if (json == null)
+        {
+            return false;
+        }
+        else
+        {
+            return json.get(memberName) != null;
+        }
     }
 
     /**
@@ -95,10 +104,6 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the string value of the given JsonElement.  Expects the second parameter to be the name of the
-             * element's field if an error message needs to be thrown.
-             */
             return getString(json.get(memberName), memberName);
         }
         else
@@ -111,7 +116,6 @@ public class JsonUtils
      * Gets the string value of the field on the JsonObject with the given name, or the given default value if the field
      * is missing.
      */
-    @SideOnly(Side.CLIENT)
     public static String getString(JsonObject json, String memberName, String fallback)
     {
         return json.has(memberName) ? getString(json.get(memberName), memberName) : fallback;
@@ -126,7 +130,7 @@ public class JsonUtils
 
             if (item == null)
             {
-                throw new JsonSyntaxException("Expected " + memberName + " to be an item, was unknown string \'" + s + "\'");
+                throw new JsonSyntaxException("Expected " + memberName + " to be an item, was unknown string '" + s + "'");
             }
             else
             {
@@ -170,15 +174,10 @@ public class JsonUtils
     /**
      * Gets the boolean value of the field on the JsonObject with the given name.
      */
-    @SideOnly(Side.CLIENT)
     public static boolean getBoolean(JsonObject json, String memberName)
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the boolean value of the given JsonElement.  Expects the second parameter to be the name of the
-             * element's field if an error message needs to be thrown.
-             */
             return getBoolean(json.get(memberName), memberName);
         }
         else
@@ -219,10 +218,6 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the float value of the given JsonElement.  Expects the second parameter to be the name of the
-             * element's field if an error message needs to be thrown.
-             */
             return getFloat(json.get(memberName), memberName);
         }
         else
@@ -263,10 +258,6 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the integer value of the given JsonElement.  Expects the second parameter to be the name of the
-             * element's field if an error message needs to be thrown.
-             */
             return getInt(json.get(memberName), memberName);
         }
         else
@@ -304,10 +295,6 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the given JsonElement as a JsonObject.  Expects the second parameter to be the name of the element's
-             * field if an error message needs to be thrown.
-             */
             return getJsonObject(json.get(memberName), memberName);
         }
         else
@@ -320,7 +307,6 @@ public class JsonUtils
      * Gets the JsonObject field on the JsonObject with the given name, or the given default value if the field is
      * missing.
      */
-    @SideOnly(Side.CLIENT)
     public static JsonObject getJsonObject(JsonObject json, String memberName, JsonObject fallback)
     {
         return json.has(memberName) ? getJsonObject(json.get(memberName), memberName) : fallback;
@@ -349,10 +335,6 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            /**
-             * Gets the given JsonElement as a JsonArray.  Expects the second parameter to be the name of the element's
-             * field if an error message needs to be thrown.
-             */
             return getJsonArray(json.get(memberName), memberName);
         }
         else
@@ -365,7 +347,6 @@ public class JsonUtils
      * Gets the JsonArray field on the JsonObject with the given name, or the given default value if the field is
      * missing.
      */
-    @SideOnly(Side.CLIENT)
     public static JsonArray getJsonArray(JsonObject json, String memberName, @Nullable JsonArray fallback)
     {
         return json.has(memberName) ? getJsonArray(json.get(memberName), memberName) : fallback;
@@ -375,7 +356,7 @@ public class JsonUtils
     {
         if (json != null)
         {
-            return context.deserialize(json, adapter);
+            return (T)context.deserialize(json, adapter);
         }
         else
         {
@@ -387,7 +368,7 @@ public class JsonUtils
     {
         if (json.has(memberName))
         {
-            return deserializeClass(json.get(memberName), memberName, context, adapter);
+            return (T)deserializeClass(json.get(memberName), memberName, context, adapter);
         }
         else
         {
@@ -444,13 +425,14 @@ public class JsonUtils
         }
     }
 
+    @Nullable
     public static <T> T gsonDeserialize(Gson gsonIn, Reader readerIn, Class<T> adapter, boolean lenient)
     {
         try
         {
             JsonReader jsonreader = new JsonReader(readerIn);
             jsonreader.setLenient(lenient);
-            return gsonIn.getAdapter(adapter).read(jsonreader);
+            return (T)gsonIn.getAdapter(adapter).read(jsonreader);
         }
         catch (IOException ioexception)
         {
@@ -458,13 +440,54 @@ public class JsonUtils
         }
     }
 
-    public static <T> T gsonDeserialize(Gson gsonIn, String json, Class<T> adapter)
+    @Nullable
+    public static <T> T fromJson(Gson p_193838_0_, Reader p_193838_1_, Type p_193838_2_, boolean p_193838_3_)
     {
-        return gsonDeserialize(gsonIn, json, adapter, false);
+        try
+        {
+            JsonReader jsonreader = new JsonReader(p_193838_1_);
+            jsonreader.setLenient(p_193838_3_);
+            return (T)p_193838_0_.getAdapter(TypeToken.get(p_193838_2_)).read(jsonreader);
+        }
+        catch (IOException ioexception)
+        {
+            throw new JsonParseException(ioexception);
+        }
     }
 
+    @Nullable
+    public static <T> T fromJson(Gson p_193837_0_, String p_193837_1_, Type p_193837_2_, boolean p_193837_3_)
+    {
+        return (T)fromJson(p_193837_0_, new StringReader(p_193837_1_), p_193837_2_, p_193837_3_);
+    }
+
+    @Nullable
     public static <T> T gsonDeserialize(Gson gsonIn, String json, Class<T> adapter, boolean lenient)
     {
-        return gsonDeserialize(gsonIn, new StringReader(json), adapter, lenient);
+        return (T)gsonDeserialize(gsonIn, new StringReader(json), adapter, lenient);
+    }
+
+    @Nullable
+    public static <T> T fromJson(Gson p_193841_0_, Reader p_193841_1_, Type p_193841_2_)
+    {
+        return (T)fromJson(p_193841_0_, p_193841_1_, p_193841_2_, false);
+    }
+
+    @Nullable
+    public static <T> T gsonDeserialize(Gson p_193840_0_, String p_193840_1_, Type p_193840_2_)
+    {
+        return (T)fromJson(p_193840_0_, p_193840_1_, p_193840_2_, false);
+    }
+
+    @Nullable
+    public static <T> T fromJson(Gson p_193839_0_, Reader p_193839_1_, Class<T> p_193839_2_)
+    {
+        return (T)gsonDeserialize(p_193839_0_, p_193839_1_, p_193839_2_, false);
+    }
+
+    @Nullable
+    public static <T> T gsonDeserialize(Gson gsonIn, String json, Class<T> adapter)
+    {
+        return (T)gsonDeserialize(gsonIn, json, adapter, false);
     }
 }

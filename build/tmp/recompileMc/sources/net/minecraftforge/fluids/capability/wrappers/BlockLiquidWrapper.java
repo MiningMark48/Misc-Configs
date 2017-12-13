@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fluids.capability.wrappers;
 
 import javax.annotation.Nullable;
@@ -7,7 +26,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemBucket;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -20,7 +39,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 /**
  * Wrapper to handle vanilla Water or Lava as an IFluidHandler.
- * Methods are modeled after {@link net.minecraft.item.ItemBucket#onItemRightClick(ItemStack, World, EntityPlayer, EnumHand)}
+ * Methods are modeled after {@link ItemBucket#onItemRightClick(World, EntityPlayer, EnumHand)}
  */
 public class BlockLiquidWrapper implements IFluidHandler
 {
@@ -50,7 +69,20 @@ public class BlockLiquidWrapper implements IFluidHandler
     @Override
     public int fill(FluidStack resource, boolean doFill)
     {
-        return 0;
+        // NOTE: "Filling" means placement in this context!
+        if (resource.amount < Fluid.BUCKET_VOLUME)
+        {
+            return 0;
+        }
+
+        if (doFill)
+        {
+            Material material = blockLiquid.getDefaultState().getMaterial();
+            BlockLiquid block = BlockLiquid.getFlowingBlock(material);
+            world.setBlockState(blockPos, block.getDefaultState().withProperty(BlockLiquid.LEVEL, 0), 11);
+        }
+
+        return Fluid.BUCKET_VOLUME;
     }
 
     @Nullable

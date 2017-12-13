@@ -1,44 +1,49 @@
 package net.minecraft.world.gen.structure.template;
 
+import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 
 public class PlacementSettings
 {
-    private Mirror mirror;
-    private Rotation rotation;
+    private Mirror mirror = Mirror.NONE;
+    private Rotation rotation = Rotation.NONE;
     private boolean ignoreEntities;
     /** the type of block in the world that will get replaced by the structure */
+    @Nullable
     private Block replacedBlock;
     /** the chunk the structure is within */
+    @Nullable
     private ChunkPos chunk;
     /** the bounds the structure is contained within */
+    @Nullable
     private StructureBoundingBox boundingBox;
-    private boolean ignoreStructureBlock;
-
-    public PlacementSettings()
-    {
-        this(Mirror.NONE, Rotation.NONE, false, (Block)null, (StructureBoundingBox)null);
-    }
-
-    public PlacementSettings(Mirror mirrorIn, Rotation rotationIn, boolean ignoreEntitiesIn, @Nullable Block replacedBlockIn, @Nullable StructureBoundingBox boundingBoxIn)
-    {
-        this.rotation = rotationIn;
-        this.mirror = mirrorIn;
-        this.ignoreEntities = ignoreEntitiesIn;
-        this.replacedBlock = replacedBlockIn;
-        this.chunk = null;
-        this.boundingBox = boundingBoxIn;
-        this.ignoreStructureBlock = true;
-    }
+    private boolean ignoreStructureBlock = true;
+    private float integrity = 1.0F;
+    @Nullable
+    private Random random;
+    @Nullable
+    private Long setSeed;
 
     public PlacementSettings copy()
     {
-        return (new PlacementSettings(this.mirror, this.rotation, this.ignoreEntities, this.replacedBlock, this.boundingBox)).setChunk(this.chunk).setIgnoreStructureBlock(this.ignoreStructureBlock);
+        PlacementSettings placementsettings = new PlacementSettings();
+        placementsettings.mirror = this.mirror;
+        placementsettings.rotation = this.rotation;
+        placementsettings.ignoreEntities = this.ignoreEntities;
+        placementsettings.replacedBlock = this.replacedBlock;
+        placementsettings.chunk = this.chunk;
+        placementsettings.boundingBox = this.boundingBox;
+        placementsettings.ignoreStructureBlock = this.ignoreStructureBlock;
+        placementsettings.integrity = this.integrity;
+        placementsettings.random = this.random;
+        placementsettings.setSeed = this.setSeed;
+        return placementsettings;
     }
 
     public PlacementSettings setMirror(Mirror mirrorIn)
@@ -77,6 +82,24 @@ public class PlacementSettings
         return this;
     }
 
+    public PlacementSettings setSeed(@Nullable Long seedIn)
+    {
+        this.setSeed = seedIn;
+        return this;
+    }
+
+    public PlacementSettings setRandom(@Nullable Random randomIn)
+    {
+        this.random = randomIn;
+        return this;
+    }
+
+    public PlacementSettings setIntegrity(float integrityIn)
+    {
+        this.integrity = integrityIn;
+        return this;
+    }
+
     public Mirror getMirror()
     {
         return this.mirror;
@@ -93,11 +116,39 @@ public class PlacementSettings
         return this.rotation;
     }
 
+    public Random getRandom(@Nullable BlockPos seed)
+    {
+        if (this.random != null)
+        {
+            return this.random;
+        }
+        else if (this.setSeed != null)
+        {
+            return this.setSeed.longValue() == 0L ? new Random(System.currentTimeMillis()) : new Random(this.setSeed.longValue());
+        }
+        else if (seed == null)
+        {
+            return new Random(System.currentTimeMillis());
+        }
+        else
+        {
+            int i = seed.getX();
+            int j = seed.getZ();
+            return new Random((long)(i * i * 4987142 + i * 5947611) + (long)(j * j) * 4392871L + (long)(j * 389711) ^ 987234911L);
+        }
+    }
+
+    public float getIntegrity()
+    {
+        return this.integrity;
+    }
+
     public boolean getIgnoreEntities()
     {
         return this.ignoreEntities;
     }
 
+    @Nullable
     public Block getReplacedBlock()
     {
         return this.replacedBlock;
@@ -133,8 +184,8 @@ public class PlacementSettings
         }
         else
         {
-            int i = pos.chunkXPos * 16;
-            int j = pos.chunkZPos * 16;
+            int i = pos.x * 16;
+            int j = pos.z * 16;
             return new StructureBoundingBox(i, 0, j, i + 16 - 1, 255, j + 16 - 1);
         }
     }

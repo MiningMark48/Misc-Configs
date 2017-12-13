@@ -8,7 +8,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class GuiButtonRealmsProxy extends GuiButton
 {
-    private RealmsButton realmsButton;
+    private final RealmsButton realmsButton;
 
     public GuiButtonRealmsProxy(RealmsButton realmsButtonIn, int buttonId, int x, int y, String text)
     {
@@ -24,17 +24,17 @@ public class GuiButtonRealmsProxy extends GuiButton
 
     public int getId()
     {
-        return super.id;
+        return this.id;
     }
 
     public boolean getEnabled()
     {
-        return super.enabled;
+        return this.enabled;
     }
 
     public void setEnabled(boolean isEnabled)
     {
-        super.enabled = isEnabled;
+        this.enabled = isEnabled;
     }
 
     public void setText(String text)
@@ -49,7 +49,7 @@ public class GuiButtonRealmsProxy extends GuiButton
 
     public int getPositionY()
     {
-        return super.yPosition;
+        return this.y;
     }
 
     /**

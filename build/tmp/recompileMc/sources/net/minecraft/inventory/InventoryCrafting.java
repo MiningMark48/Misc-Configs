@@ -1,8 +1,9 @@
 package net.minecraft.inventory;
 
-import javax.annotation.Nullable;
+import net.minecraft.client.util.RecipeItemHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -10,7 +11,7 @@ import net.minecraft.util.text.TextComponentTranslation;
 public class InventoryCrafting implements IInventory
 {
     /** List of the stacks in the crafting matrix. */
-    private final ItemStack[] stackList;
+    private final NonNullList<ItemStack> stackList;
     /** the width of the crafting inventory */
     private final int inventoryWidth;
     private final int inventoryHeight;
@@ -19,8 +20,7 @@ public class InventoryCrafting implements IInventory
 
     public InventoryCrafting(Container eventHandlerIn, int width, int height)
     {
-        int i = width * height;
-        this.stackList = new ItemStack[i];
+        this.stackList = NonNullList.<ItemStack>withSize(width * height, ItemStack.EMPTY);
         this.eventHandler = eventHandlerIn;
         this.inventoryWidth = width;
         this.inventoryHeight = height;
@@ -31,25 +31,36 @@ public class InventoryCrafting implements IInventory
      */
     public int getSizeInventory()
     {
-        return this.stackList.length;
+        return this.stackList.size();
+    }
+
+    public boolean isEmpty()
+    {
+        for (ItemStack itemstack : this.stackList)
+        {
+            if (!itemstack.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * Returns the stack in the given slot.
      */
-    @Nullable
     public ItemStack getStackInSlot(int index)
     {
-        return index >= this.getSizeInventory() ? null : this.stackList[index];
+        return index >= this.getSizeInventory() ? ItemStack.EMPTY : (ItemStack)this.stackList.get(index);
     }
 
     /**
      * Gets the ItemStack in the slot specified.
      */
-    @Nullable
     public ItemStack getStackInRowAndColumn(int row, int column)
     {
-        return row >= 0 && row < this.inventoryWidth && column >= 0 && column <= this.inventoryHeight ? this.getStackInSlot(row + column * this.inventoryWidth) : null;
+        return row >= 0 && row < this.inventoryWidth && column >= 0 && column <= this.inventoryHeight ? this.getStackInSlot(row + column * this.inventoryWidth) : ItemStack.EMPTY;
     }
 
     /**
@@ -79,7 +90,6 @@ public class InventoryCrafting implements IInventory
     /**
      * Removes a stack from the given slot and returns it.
      */
-    @Nullable
     public ItemStack removeStackFromSlot(int index)
     {
         return ItemStackHelper.getAndRemove(this.stackList, index);
@@ -88,12 +98,11 @@ public class InventoryCrafting implements IInventory
     /**
      * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
      */
-    @Nullable
     public ItemStack decrStackSize(int index, int count)
     {
         ItemStack itemstack = ItemStackHelper.getAndSplit(this.stackList, index, count);
 
-        if (itemstack != null)
+        if (!itemstack.isEmpty())
         {
             this.eventHandler.onCraftMatrixChanged(this);
         }
@@ -104,9 +113,9 @@ public class InventoryCrafting implements IInventory
     /**
      * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
      */
-    public void setInventorySlotContents(int index, @Nullable ItemStack stack)
+    public void setInventorySlotContents(int index, ItemStack stack)
     {
-        this.stackList[index] = stack;
+        this.stackList.set(index, stack);
         this.eventHandler.onCraftMatrixChanged(this);
     }
 
@@ -127,9 +136,9 @@ public class InventoryCrafting implements IInventory
     }
 
     /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
+     * Don't rename this method to canInteractWith due to conflicts with Container
      */
-    public boolean isUseableByPlayer(EntityPlayer player)
+    public boolean isUsableByPlayer(EntityPlayer player)
     {
         return true;
     }
@@ -143,7 +152,8 @@ public class InventoryCrafting implements IInventory
     }
 
     /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
@@ -166,10 +176,7 @@ public class InventoryCrafting implements IInventory
 
     public void clear()
     {
-        for (int i = 0; i < this.stackList.length; ++i)
-        {
-            this.stackList[i] = null;
-        }
+        this.stackList.clear();
     }
 
     public int getHeight()
@@ -180,5 +187,13 @@ public class InventoryCrafting implements IInventory
     public int getWidth()
     {
         return this.inventoryWidth;
+    }
+
+    public void fillStackedContents(RecipeItemHelper helper)
+    {
+        for (ItemStack itemstack : this.stackList)
+        {
+            helper.accountStack(itemstack);
+        }
     }
 }

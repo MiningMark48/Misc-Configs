@@ -32,9 +32,14 @@ public class ModelBlockDefinition
     private final Map<String, VariantList> mapVariants = Maps.<String, VariantList>newHashMap();
     private Multipart multipart;
 
-    public static ModelBlockDefinition parseFromReader(Reader p_178331_0_)
+    @Deprecated
+    public static ModelBlockDefinition parseFromReader(Reader reader)
     {
-        return net.minecraftforge.client.model.BlockStateLoader.load(p_178331_0_, GSON);
+        return parseFromReader(reader, null);
+    }
+
+    public static ModelBlockDefinition parseFromReader(Reader reader, net.minecraft.util.ResourceLocation location) {
+        return net.minecraftforge.client.model.BlockStateLoader.load(reader, location, GSON);
     }
 
     public ModelBlockDefinition(Map<String, VariantList> variants, Multipart multipartIn)
@@ -71,7 +76,7 @@ public class ModelBlockDefinition
 
     public VariantList getVariant(String p_188004_1_)
     {
-        VariantList variantlist = (VariantList)this.mapVariants.get(p_188004_1_);
+        VariantList variantlist = this.mapVariants.get(p_188004_1_);
 
         if (variantlist == null)
         {
@@ -147,7 +152,7 @@ public class ModelBlockDefinition
                 }
                 else
                 {
-                    throw new JsonParseException("Neither \'variants\' nor \'multipart\' found");
+                    throw new JsonParseException("Neither 'variants' nor 'multipart' found");
                 }
             }
 
@@ -161,7 +166,7 @@ public class ModelBlockDefinition
 
                     for (Entry<String, JsonElement> entry : jsonobject.entrySet())
                     {
-                        map.put(entry.getKey(), (VariantList)deserializationContext.deserialize((JsonElement)entry.getValue(), VariantList.class));
+                        map.put(entry.getKey(), (VariantList)deserializationContext.deserialize(entry.getValue(), VariantList.class));
                     }
                 }
 

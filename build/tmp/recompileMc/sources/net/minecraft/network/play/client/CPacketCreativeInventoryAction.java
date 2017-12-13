@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class CPacketCreativeInventoryAction implements Packet<INetHandlerPlayServer>
 {
     private int slotId;
-    private ItemStack stack;
+    private ItemStack stack = ItemStack.EMPTY;
 
     public CPacketCreativeInventoryAction()
     {
@@ -21,7 +21,7 @@ public class CPacketCreativeInventoryAction implements Packet<INetHandlerPlaySer
     public CPacketCreativeInventoryAction(int slotIdIn, ItemStack stackIn)
     {
         this.slotId = slotIdIn;
-        this.stack = stackIn != null ? stackIn.copy() : null;
+        this.stack = stackIn.copy();
     }
 
     /**
@@ -38,7 +38,7 @@ public class CPacketCreativeInventoryAction implements Packet<INetHandlerPlaySer
     public void readPacketData(PacketBuffer buf) throws IOException
     {
         this.slotId = buf.readShort();
-        this.stack = buf.readItemStackFromBuffer();
+        this.stack = buf.readItemStack();
     }
 
     /**
@@ -47,7 +47,7 @@ public class CPacketCreativeInventoryAction implements Packet<INetHandlerPlaySer
     public void writePacketData(PacketBuffer buf) throws IOException
     {
         buf.writeShort(this.slotId);
-        buf.writeItemStackToBuffer(this.stack);
+        net.minecraftforge.common.util.PacketUtil.writeItemStackFromClientToServer(buf, this.stack);
     }
 
     public int getSlotId()

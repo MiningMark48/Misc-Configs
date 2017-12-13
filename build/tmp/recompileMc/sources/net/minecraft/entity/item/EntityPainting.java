@@ -1,6 +1,7 @@
 package net.minecraft.entity.item;
 
 import com.google.common.collect.Lists;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
@@ -29,6 +30,7 @@ public class EntityPainting extends EntityHanging
     {
         super(worldIn, pos);
         List<EntityPainting.EnumArt> list = Lists.<EntityPainting.EnumArt>newArrayList();
+        int i = 0;
 
         for (EntityPainting.EnumArt entitypainting$enumart : EntityPainting.EnumArt.values())
         {
@@ -38,12 +40,30 @@ public class EntityPainting extends EntityHanging
             if (this.onValidSurface())
             {
                 list.add(entitypainting$enumart);
+                int j = entitypainting$enumart.sizeX * entitypainting$enumart.sizeY;
+
+                if (j > i)
+                {
+                    i = j;
+                }
             }
         }
 
         if (!list.isEmpty())
         {
-            this.art = (EntityPainting.EnumArt)list.get(this.rand.nextInt(list.size()));
+            Iterator<EntityPainting.EnumArt> iterator = list.iterator();
+
+            while (iterator.hasNext())
+            {
+                EntityPainting.EnumArt entitypainting$enumart1 = iterator.next();
+
+                if (entitypainting$enumart1.sizeX * entitypainting$enumart1.sizeY < i)
+                {
+                    iterator.remove();
+                }
+            }
+
+            this.art = list.get(this.rand.nextInt(list.size()));
         }
 
         this.updateFacingWithBoundingBox(facing);
@@ -113,7 +133,7 @@ public class EntityPainting extends EntityHanging
      */
     public void onBroken(@Nullable Entity brokenEntity)
     {
-        if (this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+        if (this.world.getGameRules().getBoolean("doEntityDrops"))
         {
             this.playSound(SoundEvents.ENTITY_PAINTING_BREAK, 1.0F, 1.0F);
 

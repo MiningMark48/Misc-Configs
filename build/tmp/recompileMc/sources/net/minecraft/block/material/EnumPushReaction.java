@@ -5,5 +5,6 @@ public enum EnumPushReaction
     NORMAL,
     DESTROY,
     BLOCK,
-    IGNORE;
+    IGNORE,
+    PUSH_ONLY;
 }

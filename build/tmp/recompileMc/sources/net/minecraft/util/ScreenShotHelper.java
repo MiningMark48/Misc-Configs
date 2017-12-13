@@ -6,6 +6,7 @@ import java.nio.IntBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -37,10 +38,6 @@ public class ScreenShotHelper
      */
     public static ITextComponent saveScreenshot(File gameDirectory, int width, int height, Framebuffer buffer)
     {
-        /**
-         * Saves a screenshot in the game directory with the given file name (or null to generate a time-stamped name).
-         * Returns an ITextComponent indicating the success/failure of the saving.
-         */
         return saveScreenshot(gameDirectory, (String)null, width, height, buffer);
     }
 
@@ -48,7 +45,7 @@ public class ScreenShotHelper
      * Saves a screenshot in the game directory with the given file name (or null to generate a time-stamped name).
      * Returns an ITextComponent indicating the success/failure of the saving.
      */
-    public static ITextComponent saveScreenshot(File gameDirectory, String screenshotName, int width, int height, Framebuffer buffer)
+    public static ITextComponent saveScreenshot(File gameDirectory, @Nullable String screenshotName, int width, int height, Framebuffer buffer)
     {
         try
         {
@@ -69,7 +66,7 @@ public class ScreenShotHelper
             file2 = file2.getCanonicalFile(); // FORGE: Fix errors on Windows with paths that include \.\
             net.minecraftforge.client.event.ScreenshotEvent event = net.minecraftforge.client.ForgeHooksClient.onScreenshot(bufferedimage, file2);
             if (event.isCanceled()) return event.getCancelMessage(); else file2 = event.getScreenshotFile();
-            ImageIO.write(bufferedimage, "png", (File)file2);
+            ImageIO.write(bufferedimage, "png", file2);
             ITextComponent itextcomponent = new TextComponentString(file2.getName());
             itextcomponent.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, file2.getAbsolutePath()));
             itextcomponent.getStyle().setUnderlined(Boolean.valueOf(true));
@@ -78,7 +75,7 @@ public class ScreenShotHelper
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)"Couldn\'t save screenshot", (Throwable)exception);
+            LOGGER.warn("Couldn't save screenshot", (Throwable)exception);
             return new TextComponentTranslation("screenshot.failure", new Object[] {exception.getMessage()});
         }
     }
@@ -115,27 +112,8 @@ public class ScreenShotHelper
 
         pixelBuffer.get(pixelValues);
         TextureUtil.processPixelValues(pixelValues, width, height);
-        BufferedImage bufferedimage = null;
-
-        if (OpenGlHelper.isFramebufferEnabled())
-        {
-            bufferedimage = new BufferedImage(framebufferIn.framebufferWidth, framebufferIn.framebufferHeight, 1);
-            int j = framebufferIn.framebufferTextureHeight - framebufferIn.framebufferHeight;
-
-            for (int k = j; k < framebufferIn.framebufferTextureHeight; ++k)
-            {
-                for (int l = 0; l < framebufferIn.framebufferWidth; ++l)
-                {
-                    bufferedimage.setRGB(l, k - j, pixelValues[k * framebufferIn.framebufferTextureWidth + l]);
-                }
-            }
-        }
-        else
-        {
-            bufferedimage = new BufferedImage(width, height, 1);
-            bufferedimage.setRGB(0, 0, width, height, pixelValues, 0, width);
-        }
-
+        BufferedImage bufferedimage = new BufferedImage(width, height, 1);
+        bufferedimage.setRGB(0, 0, width, height, pixelValues, 0, width);
         return bufferedimage;
     }
 

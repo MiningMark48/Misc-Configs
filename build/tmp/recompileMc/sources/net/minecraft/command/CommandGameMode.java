@@ -8,6 +8,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 
 public class CommandGameMode extends CommandBase
@@ -15,7 +16,7 @@ public class CommandGameMode extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "gamemode";
     }
@@ -31,7 +32,7 @@ public class CommandGameMode extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.gamemode.usage";
     }
@@ -47,23 +48,23 @@ public class CommandGameMode extends CommandBase
         }
         else
         {
-            WorldSettings.GameType worldsettings$gametype = this.getGameModeFromCommand(sender, args[0]);
+            GameType gametype = this.getGameModeFromCommand(sender, args[0]);
             EntityPlayer entityplayer = args.length >= 2 ? getPlayer(server, sender, args[1]) : getCommandSenderAsPlayer(sender);
-            entityplayer.setGameType(worldsettings$gametype);
-            ITextComponent itextcomponent = new TextComponentTranslation("gameMode." + worldsettings$gametype.getName(), new Object[0]);
+            entityplayer.setGameType(gametype);
+            ITextComponent itextcomponent = new TextComponentTranslation("gameMode." + gametype.getName(), new Object[0]);
 
             if (sender.getEntityWorld().getGameRules().getBoolean("sendCommandFeedback"))
             {
-                entityplayer.addChatMessage(new TextComponentTranslation("gameMode.changed", new Object[] {itextcomponent}));
+                entityplayer.sendMessage(new TextComponentTranslation("gameMode.changed", new Object[] {itextcomponent}));
             }
 
-            if (entityplayer != sender)
+            if (entityplayer == sender)
             {
-                notifyCommandListener(sender, this, 1, "commands.gamemode.success.other", new Object[] {entityplayer.getName(), itextcomponent});
+                notifyCommandListener(sender, this, 1, "commands.gamemode.success.self", new Object[] {itextcomponent});
             }
             else
             {
-                notifyCommandListener(sender, this, 1, "commands.gamemode.success.self", new Object[] {itextcomponent});
+                notifyCommandListener(sender, this, 1, "commands.gamemode.success.other", new Object[] {entityplayer.getName(), itextcomponent});
             }
         }
     }
@@ -71,15 +72,25 @@ public class CommandGameMode extends CommandBase
     /**
      * Gets the Game Mode specified in the command.
      */
-    protected WorldSettings.GameType getGameModeFromCommand(ICommandSender sender, String gameModeString) throws CommandException, NumberInvalidException
+    protected GameType getGameModeFromCommand(ICommandSender sender, String gameModeString) throws CommandException, NumberInvalidException
     {
-        WorldSettings.GameType worldsettings$gametype = WorldSettings.GameType.parseGameTypeWithDefault(gameModeString, WorldSettings.GameType.NOT_SET);
-        return worldsettings$gametype == WorldSettings.GameType.NOT_SET ? WorldSettings.getGameTypeById(parseInt(gameModeString, 0, WorldSettings.GameType.values().length - 2)) : worldsettings$gametype;
+        GameType gametype = GameType.parseGameTypeWithDefault(gameModeString, GameType.NOT_SET);
+        return gametype == GameType.NOT_SET ? WorldSettings.getGameTypeById(parseInt(gameModeString, 0, GameType.values().length - 2)) : gametype;
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"survival", "creative", "adventure", "spectator"}): (args.length == 2 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : Collections.<String>emptyList());
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"survival", "creative", "adventure", "spectator"});
+        }
+        else
+        {
+            return args.length == 2 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
+        }
     }
 
     /**

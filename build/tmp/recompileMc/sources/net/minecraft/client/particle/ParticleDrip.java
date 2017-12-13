@@ -14,14 +14,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ParticleDrip extends Particle
 {
     /** the material type for dropped items/blocks */
-    private Material materialType;
+    private final Material materialType;
     /** The height of the current bob */
     private int bobTimer;
 
     protected ParticleDrip(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, Material p_i1203_8_)
     {
         super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.0D, 0.0D, 0.0D);
-        this.motionX = this.motionY = this.motionZ = 0.0D;
+        this.motionX = 0.0D;
+        this.motionY = 0.0D;
+        this.motionZ = 0.0D;
 
         if (p_i1203_8_ == Material.WATER)
         {
@@ -42,7 +44,9 @@ public class ParticleDrip extends Particle
         this.materialType = p_i1203_8_;
         this.bobTimer = 40;
         this.particleMaxAge = (int)(64.0D / (Math.random() * 0.8D + 0.2D));
-        this.motionX = this.motionY = this.motionZ = 0.0D;
+        this.motionX = 0.0D;
+        this.motionY = 0.0D;
+        this.motionZ = 0.0D;
     }
 
     public int getBrightnessForRender(float p_189214_1_)
@@ -83,7 +87,7 @@ public class ParticleDrip extends Particle
             this.setParticleTextureIndex(112);
         }
 
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.9800000190734863D;
         this.motionY *= 0.9800000190734863D;
         this.motionZ *= 0.9800000190734863D;
@@ -93,12 +97,12 @@ public class ParticleDrip extends Particle
             this.setExpired();
         }
 
-        if (this.isCollided)
+        if (this.onGround)
         {
             if (this.materialType == Material.WATER)
             {
                 this.setExpired();
-                this.worldObj.spawnParticle(EnumParticleTypes.WATER_SPLASH, this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+                this.world.spawnParticle(EnumParticleTypes.WATER_SPLASH, this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D);
             }
             else
             {
@@ -110,7 +114,7 @@ public class ParticleDrip extends Particle
         }
 
         BlockPos blockpos = new BlockPos(this.posX, this.posY, this.posZ);
-        IBlockState iblockstate = this.worldObj.getBlockState(blockpos);
+        IBlockState iblockstate = this.world.getBlockState(blockpos);
         Material material = iblockstate.getMaterial();
 
         if (material.isLiquid() || material.isSolid())
@@ -122,7 +126,7 @@ public class ParticleDrip extends Particle
                 d0 = (double)BlockLiquid.getLiquidHeightPercent(((Integer)iblockstate.getValue(BlockLiquid.LEVEL)).intValue());
             }
 
-            double d1 = (double)(MathHelper.floor_double(this.posY) + 1) - d0;
+            double d1 = (double)(MathHelper.floor(this.posY) + 1) - d0;
 
             if (this.posY < d1)
             {
@@ -134,7 +138,7 @@ public class ParticleDrip extends Particle
     @SideOnly(Side.CLIENT)
     public static class LavaFactory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 return new ParticleDrip(worldIn, xCoordIn, yCoordIn, zCoordIn, Material.LAVA);
             }
@@ -143,7 +147,7 @@ public class ParticleDrip extends Particle
     @SideOnly(Side.CLIENT)
     public static class WaterFactory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 return new ParticleDrip(worldIn, xCoordIn, yCoordIn, zCoordIn, Material.WATER);
             }

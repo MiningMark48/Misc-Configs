@@ -11,7 +11,7 @@ import net.minecraft.world.biome.Biome;
 
 public class WorldGenLakes extends WorldGenerator
 {
-    private Block block;
+    private final Block block;
 
     public WorldGenLakes(Block blockIn)
     {
@@ -116,7 +116,7 @@ public class WorldGenLakes extends WorldGenerator
 
                             if (worldIn.getBlockState(blockpos).getBlock() == Blocks.DIRT && worldIn.getLightFor(EnumSkyBlock.SKY, position.add(i2, j4, j3)) > 0)
                             {
-                                Biome biome = worldIn.getBiomeGenForCoords(blockpos);
+                                Biome biome = worldIn.getBiome(blockpos);
 
                                 if (biome.topBlock.getBlock() == Blocks.MYCELIUM)
                                 {
@@ -159,9 +159,10 @@ public class WorldGenLakes extends WorldGenerator
                     {
                         int l4 = 4;
 
-                        if (worldIn.canBlockFreezeWater(position.add(k2, l4, l3)))
+                        if (worldIn.canBlockFreezeWater(position.add(k2, 4, l3)))
                         {
-                            worldIn.setBlockState(position.add(k2, l4, l3), Blocks.ICE.getDefaultState(), 2);
+                            int flag = net.minecraftforge.common.ForgeModContainer.fixVanillaCascading ? 2| 16 : 2; //Forge: With bit 5 unset, it will notify neighbors and load adjacent chunks.
+                            worldIn.setBlockState(position.add(k2, 4, l3), Blocks.ICE.getDefaultState(), flag); //Forge
                         }
                     }
                 }

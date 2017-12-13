@@ -45,11 +45,10 @@ public class BlockPotato extends BlockCrops
     }
 
     @Override
-    public java.util.List<ItemStack> getDrops(net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        java.util.List<ItemStack> ret = super.getDrops(world, pos, state, fortune);
+        super.getDrops(drops, world, pos, state, fortune);
         if (this.isMaxAge(state) && RANDOM.nextInt(50) == 0)
-            ret.add(new ItemStack(Items.POISONOUS_POTATO));
-        return ret;
+            drops.add(new ItemStack(Items.POISONOUS_POTATO));
     }
 }

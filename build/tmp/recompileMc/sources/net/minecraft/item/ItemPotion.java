@@ -2,10 +2,14 @@ package net.minecraft.item;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
+import net.minecraft.init.PotionTypes;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.potion.PotionType;
 import net.minecraft.potion.PotionUtils;
@@ -13,6 +17,7 @@ import net.minecraft.stats.StatList;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -26,25 +31,42 @@ public class ItemPotion extends Item
         this.setCreativeTab(CreativeTabs.BREWING);
     }
 
+    @SideOnly(Side.CLIENT)
+    public ItemStack getDefaultInstance()
+    {
+        return PotionUtils.addPotionToItemStack(super.getDefaultInstance(), PotionTypes.WATER);
+    }
+
     /**
      * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
      * the Item before the action is complete.
      */
-    @Nullable
     public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving)
     {
         EntityPlayer entityplayer = entityLiving instanceof EntityPlayer ? (EntityPlayer)entityLiving : null;
 
         if (entityplayer == null || !entityplayer.capabilities.isCreativeMode)
         {
-            --stack.stackSize;
+            stack.shrink(1);
+        }
+
+        if (entityplayer instanceof EntityPlayerMP)
+        {
+            CriteriaTriggers.CONSUME_ITEM.trigger((EntityPlayerMP)entityplayer, stack);
         }
 
         if (!worldIn.isRemote)
         {
             for (PotionEffect potioneffect : PotionUtils.getEffectsFromStack(stack))
             {
-                entityLiving.addPotionEffect(new PotionEffect(potioneffect));
+                if (potioneffect.getPotion().isInstant())
+                {
+                    potioneffect.getPotion().affectEntity(entityplayer, entityplayer, entityLiving, potioneffect.getAmplifier(), 1.0D);
+                }
+                else
+                {
+                    entityLiving.addPotionEffect(new PotionEffect(potioneffect));
+                }
             }
         }
 
@@ -55,7 +77,7 @@ public class ItemPotion extends Item
 
         if (entityplayer == null || !entityplayer.capabilities.isCreativeMode)
         {
-            if (stack.stackSize <= 0)
+            if (stack.isEmpty())
             {
                 return new ItemStack(Items.GLASS_BOTTLE);
             }
@@ -85,10 +107,13 @@ public class ItemPotion extends Item
         return EnumAction.DRINK;
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        playerIn.setActiveHand(hand);
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+        playerIn.setActiveHand(handIn);
+        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
     }
 
     public String getItemStackDisplayName(ItemStack stack)
@@ -100,26 +125,39 @@ public class ItemPotion extends Item
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
         PotionUtils.addPotionTooltip(stack, tooltip, 1.0F);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public boolean hasEffect(ItemStack stack)
-    {
-        return !PotionUtils.getEffectsFromStack(stack).isEmpty();
     }
 
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (PotionType potiontype : PotionType.REGISTRY)
+        if (this.isInCreativeTab(tab))
         {
-            subItems.add(PotionUtils.addPotionToItemStack(new ItemStack(itemIn), potiontype));
+            for (PotionType potiontype : PotionType.REGISTRY)
+            {
+                if (potiontype != PotionTypes.EMPTY)
+                {
+                    items.add(PotionUtils.addPotionToItemStack(new ItemStack(this), potiontype));
+                }
+            }
         }
+    }
+
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
+    @SideOnly(Side.CLIENT)
+    public boolean hasEffect(ItemStack stack)
+    {
+        return super.hasEffect(stack) || !PotionUtils.getEffectsFromStack(stack).isEmpty();
     }
 }

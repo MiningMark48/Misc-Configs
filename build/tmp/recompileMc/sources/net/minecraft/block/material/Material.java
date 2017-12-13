@@ -48,6 +48,7 @@ public class Material
     /** Pistons' material. */
     public static final Material PISTON = (new Material(MapColor.STONE)).setImmovableMobility();
     public static final Material BARRIER = (new Material(MapColor.AIR)).setRequiresTool().setImmovableMobility();
+    public static final Material STRUCTURE_VOID = new MaterialTransparent(MapColor.AIR);
     /** Bool defining if the block can burn or not. */
     private boolean canBurn;
     /**

@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.pipeline;
 
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -52,6 +71,8 @@ public class UnpackedBakedQuad extends BakedQuad
         {
             consumer.setQuadTint(getTintIndex());
         }
+        consumer.setTexture(sprite);
+        consumer.setApplyDiffuseLighting(applyDiffuseLighting);
         consumer.setQuadOrientation(getFace());
         for(int v = 0; v < 4; v++)
         {
@@ -89,6 +110,7 @@ public class UnpackedBakedQuad extends BakedQuad
             unpackedData = new float[4][format.getElementCount()][4];
         }
 
+        @Override
         public VertexFormat getVertexFormat()
         {
             return format;
@@ -98,26 +120,32 @@ public class UnpackedBakedQuad extends BakedQuad
         {
             this.contractUVs = value;
         }
+        @Override
         public void setQuadTint(int tint)
         {
             this.tint = tint;
         }
 
+        @Override
         public void setQuadOrientation(EnumFacing orientation)
         {
             this.orientation = orientation;
         }
 
+        // FIXME: move (or at least add) into constructor
+        @Override
         public void setTexture(TextureAtlasSprite texture)
         {
             this.texture = texture;
         }
 
+        @Override
         public void setApplyDiffuseLighting(boolean diffuse)
         {
             this.applyDiffuseLighting = diffuse;
         }
 
+        @Override
         public void put(int element, float... data)
         {
             for(int i = 0; i < 4; i++)
@@ -150,6 +178,10 @@ public class UnpackedBakedQuad extends BakedQuad
             if(!full)
             {
                 throw new IllegalStateException("not enough data");
+            }
+            if(texture == null)
+            {
+                throw new IllegalStateException("texture not set");
             }
             if(contractUVs)
             {

@@ -1,13 +1,32 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.event;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -23,48 +42,49 @@ import net.minecraft.util.ResourceLocation;
  * @see net.minecraftforge.fml.common.Mod.EventHandler for how to subscribe to this event
  * @author cpw
  */
-public class FMLModIdMappingEvent extends FMLEvent {
-    public enum RemapTarget { BLOCK, ITEM }
+public class FMLModIdMappingEvent extends FMLEvent
+{
     public class ModRemapping
     {
+        public final ResourceLocation registry;
+        public final ResourceLocation key;
         public final int oldId;
         public final int newId;
-        public final String tag;
-        public final RemapTarget remapTarget;
-        public final ResourceLocation resourceLocation;
 
-        public ModRemapping(int oldId, int newId, ResourceLocation tag, RemapTarget type)
+        private ModRemapping(ResourceLocation registry, ResourceLocation key, int oldId, int newId)
         {
+            this.registry = registry;
+            this.key = key;
             this.oldId = oldId;
             this.newId = newId;
-            this.tag = tag.toString();
-            this.remapTarget = type;
-            this.resourceLocation = tag;
         }
-
     }
-    public final ImmutableList<ModRemapping> remappedIds;
+
+    private final Map<ResourceLocation, ImmutableList<ModRemapping>> remaps;
+    private final ImmutableSet<ResourceLocation> keys;
+
     public final boolean isFrozen;
-    public FMLModIdMappingEvent(Map<ResourceLocation, Integer[]> blocks, Map<ResourceLocation, Integer[]> items, boolean isFrozen)
+    public FMLModIdMappingEvent(Map<ResourceLocation, Map<ResourceLocation, Integer[]>> remaps, boolean isFrozen)
     {
         this.isFrozen = isFrozen;
-        List<ModRemapping> remappings = Lists.newArrayList();
-        for (Entry<ResourceLocation, Integer[]> mapping : blocks.entrySet())
+        this.remaps = Maps.newHashMap();
+        remaps.forEach((name, rm) ->
         {
-            remappings.add(new ModRemapping(mapping.getValue()[0], mapping.getValue()[1], mapping.getKey(), RemapTarget.BLOCK));
-        }
-        for (Entry<ResourceLocation, Integer[]> mapping : items.entrySet())
-        {
-            remappings.add(new ModRemapping(mapping.getValue()[0], mapping.getValue()[1], mapping.getKey(), RemapTarget.ITEM));
-        }
-
-        Collections.sort(remappings, new Comparator<ModRemapping>() {
-            @Override
-            public int compare(ModRemapping o1, ModRemapping o2)
-            {
-                return (o1.newId < o2.newId) ? -1 : ((o1.newId == o2.newId) ? 0 : 1);
-            }
+            List<ModRemapping> tmp = Lists.newArrayList();
+            rm.forEach((key, value) -> tmp.add(new ModRemapping(name, key, value[0], value[1])));
+            tmp.sort(Comparator.comparingInt(o -> o.newId));
+            this.remaps.put(name, ImmutableList.copyOf(tmp));
         });
-        remappedIds = ImmutableList.copyOf(remappings);
+        this.keys = ImmutableSet.copyOf(this.remaps.keySet());
+    }
+
+    public ImmutableSet<ResourceLocation> getRegistries()
+    {
+        return this.keys;
+    }
+
+    public ImmutableList<ModRemapping> getRemaps(ResourceLocation registry)
+    {
+        return this.remaps.get(registry);
     }
 }

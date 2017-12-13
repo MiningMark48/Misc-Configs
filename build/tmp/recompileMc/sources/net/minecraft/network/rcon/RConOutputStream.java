@@ -10,9 +10,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RConOutputStream
 {
     /** Output stream */
-    private ByteArrayOutputStream byteArrayOutput;
+    private final ByteArrayOutputStream byteArrayOutput;
     /** ByteArrayOutputStream wrapper */
-    private DataOutputStream output;
+    private final DataOutputStream output;
 
     public RConOutputStream(int size)
     {

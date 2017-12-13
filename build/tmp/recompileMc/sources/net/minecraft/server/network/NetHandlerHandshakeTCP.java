@@ -7,7 +7,7 @@ import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.server.SPacketDisconnect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 
 public class NetHandlerHandshakeTCP implements INetHandlerHandshakeServer
 {
@@ -34,17 +34,17 @@ public class NetHandlerHandshakeTCP implements INetHandlerHandshakeServer
             case LOGIN:
                 this.networkManager.setConnectionState(EnumConnectionState.LOGIN);
 
-                if (packetIn.getProtocolVersion() > 110)
+                if (packetIn.getProtocolVersion() > 340)
                 {
-                    TextComponentString textcomponentstring = new TextComponentString("Outdated server! I\'m still on 1.9.4");
-                    this.networkManager.sendPacket(new SPacketDisconnect(textcomponentstring));
-                    this.networkManager.closeChannel(textcomponentstring);
+                    ITextComponent itextcomponent = new TextComponentTranslation("multiplayer.disconnect.outdated_server", new Object[] {"1.12.2"});
+                    this.networkManager.sendPacket(new SPacketDisconnect(itextcomponent));
+                    this.networkManager.closeChannel(itextcomponent);
                 }
-                else if (packetIn.getProtocolVersion() < 110)
+                else if (packetIn.getProtocolVersion() < 340)
                 {
-                    TextComponentString textcomponentstring1 = new TextComponentString("Outdated client! Please use 1.9.4");
-                    this.networkManager.sendPacket(new SPacketDisconnect(textcomponentstring1));
-                    this.networkManager.closeChannel(textcomponentstring1);
+                    ITextComponent itextcomponent1 = new TextComponentTranslation("multiplayer.disconnect.outdated_client", new Object[] {"1.12.2"});
+                    this.networkManager.sendPacket(new SPacketDisconnect(itextcomponent1));
+                    this.networkManager.closeChannel(itextcomponent1);
                 }
                 else
                 {

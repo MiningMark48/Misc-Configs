@@ -4,9 +4,9 @@ import java.util.Random;
 
 public class NoiseGeneratorSimplex
 {
-    private static int[][] grad3 = new int[][] {{1, 1, 0}, { -1, 1, 0}, {1, -1, 0}, { -1, -1, 0}, {1, 0, 1}, { -1, 0, 1}, {1, 0, -1}, { -1, 0, -1}, {0, 1, 1}, {0, -1, 1}, {0, 1, -1}, {0, -1, -1}};
+    private static final int[][] grad3 = new int[][] {{1, 1, 0}, { -1, 1, 0}, {1, -1, 0}, { -1, -1, 0}, {1, 0, 1}, { -1, 0, 1}, {1, 0, -1}, { -1, 0, -1}, {0, 1, 1}, {0, -1, 1}, {0, 1, -1}, {0, -1, -1}};
     public static final double SQRT_3 = Math.sqrt(3.0D);
-    private int[] p;
+    private final int[] p;
     public double xo;
     public double yo;
     public double zo;
@@ -18,12 +18,12 @@ public class NoiseGeneratorSimplex
         this(new Random());
     }
 
-    public NoiseGeneratorSimplex(Random p_i45471_1_)
+    public NoiseGeneratorSimplex(Random seed)
     {
         this.p = new int[512];
-        this.xo = p_i45471_1_.nextDouble() * 256.0D;
-        this.yo = p_i45471_1_.nextDouble() * 256.0D;
-        this.zo = p_i45471_1_.nextDouble() * 256.0D;
+        this.xo = seed.nextDouble() * 256.0D;
+        this.yo = seed.nextDouble() * 256.0D;
+        this.zo = seed.nextDouble() * 256.0D;
 
         for (int i = 0; i < 256; this.p[i] = i++)
         {
@@ -32,7 +32,7 @@ public class NoiseGeneratorSimplex
 
         for (int l = 0; l < 256; ++l)
         {
-            int j = p_i45471_1_.nextInt(256 - l) + l;
+            int j = seed.nextInt(256 - l) + l;
             int k = this.p[l];
             this.p[l] = this.p[j];
             this.p[j] = k;

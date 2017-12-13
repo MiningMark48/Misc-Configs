@@ -42,9 +42,9 @@ public class CPacketPlayerTryUseItemOnBlock implements Packet<INetHandlerPlaySer
         this.position = buf.readBlockPos();
         this.placedBlockDirection = (EnumFacing)buf.readEnumValue(EnumFacing.class);
         this.hand = (EnumHand)buf.readEnumValue(EnumHand.class);
-        this.facingX = (float)buf.readUnsignedByte() / 16.0F;
-        this.facingY = (float)buf.readUnsignedByte() / 16.0F;
-        this.facingZ = (float)buf.readUnsignedByte() / 16.0F;
+        this.facingX = buf.readFloat();
+        this.facingY = buf.readFloat();
+        this.facingZ = buf.readFloat();
     }
 
     /**
@@ -55,9 +55,9 @@ public class CPacketPlayerTryUseItemOnBlock implements Packet<INetHandlerPlaySer
         buf.writeBlockPos(this.position);
         buf.writeEnumValue(this.placedBlockDirection);
         buf.writeEnumValue(this.hand);
-        buf.writeByte((int)(this.facingX * 16.0F));
-        buf.writeByte((int)(this.facingY * 16.0F));
-        buf.writeByte((int)(this.facingZ * 16.0F));
+        buf.writeFloat(this.facingX);
+        buf.writeFloat(this.facingY);
+        buf.writeFloat(this.facingZ);
     }
 
     /**
@@ -65,7 +65,7 @@ public class CPacketPlayerTryUseItemOnBlock implements Packet<INetHandlerPlaySer
      */
     public void processPacket(INetHandlerPlayServer handler)
     {
-        handler.processRightClickBlock(this);
+        handler.processTryUseItemOnBlock(this);
     }
 
     public BlockPos getPos()

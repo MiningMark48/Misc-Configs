@@ -12,7 +12,7 @@ public class RayTraceResult
     public Object hitInfo = null;
 
     private BlockPos blockPos;
-    /** What type of ray trace hit was this? 0 = block, 1 = entity */
+    /** The type of hit that occured, see {@link RayTraceResult#Type} for possibilities. */
     public RayTraceResult.Type typeOfHit;
     public EnumFacing sideHit;
     /** The vector position of the hit */
@@ -40,7 +40,7 @@ public class RayTraceResult
         this.typeOfHit = typeIn;
         this.blockPos = blockPosIn;
         this.sideHit = sideHitIn;
-        this.hitVec = new Vec3d(hitVecIn.xCoord, hitVecIn.yCoord, hitVecIn.zCoord);
+        this.hitVec = new Vec3d(hitVecIn.x, hitVecIn.y, hitVecIn.z);
     }
 
     public RayTraceResult(Entity entityHitIn, Vec3d hitVecIn)

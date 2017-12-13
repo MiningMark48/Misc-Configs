@@ -8,8 +8,8 @@ import net.minecraft.world.World;
 
 public class WorldGenIcePath extends WorldGenerator
 {
-    private Block block = Blocks.PACKED_ICE;
-    private int basePathWidth;
+    private final Block block = Blocks.PACKED_ICE;
+    private final int basePathWidth;
 
     public WorldGenIcePath(int basePathWidthIn)
     {
@@ -41,7 +41,7 @@ public class WorldGenIcePath extends WorldGenerator
 
                     if (i1 * i1 + j1 * j1 <= i * i)
                     {
-                        for (int k1 = position.getY() - j; k1 <= position.getY() + j; ++k1)
+                        for (int k1 = position.getY() - 1; k1 <= position.getY() + 1; ++k1)
                         {
                             BlockPos blockpos = new BlockPos(k, k1, l);
                             Block block = worldIn.getBlockState(blockpos).getBlock();

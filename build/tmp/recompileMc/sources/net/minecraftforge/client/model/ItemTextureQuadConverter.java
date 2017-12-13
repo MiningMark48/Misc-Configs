@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model;
 
 import com.google.common.collect.Lists;
@@ -73,7 +92,7 @@ public final class ItemTextureQuadConverter
                     // if they are, we can extend the quad downwards
                     int endY = y + 1;
                     boolean sameRow = true;
-                    while (sameRow)
+                    while (sameRow && endY < h)
                     {
                         for (int i = 0; i < w; i++)
                         {
@@ -147,7 +166,7 @@ public final class ItemTextureQuadConverter
                     // if they are, we can extend the quad downwards
                     int endX = x + 1;
                     boolean sameColumn = true;
-                    while (sameColumn)
+                    while (sameColumn && endX < w)
                     {
                         for (int i = 0; i < h; i++)
                         {
@@ -187,10 +206,9 @@ public final class ItemTextureQuadConverter
         return quads;
     }
 
-    // true if alpha != 0
     private static boolean isVisible(int color)
     {
-        return (color >> 24 & 255) > 0;
+        return (color >> 24 & 255) / 255f > 0.1f;
     }
 
     /**
@@ -220,13 +238,12 @@ public final class ItemTextureQuadConverter
                                              float x1, float y1, float x2, float y2, float z,
                                              float u1, float v1, float u2, float v2)
     {
-        side = side.getOpposite();
         UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(format);
         builder.setQuadTint(-1);
         builder.setQuadOrientation(side);
         builder.setTexture(sprite);
 
-        if (side == EnumFacing.NORTH)
+        if (side == EnumFacing.SOUTH)
         {
             putVertex(builder, format, transform, side, x1, y1, z, u1, v2, color);
             putVertex(builder, format, transform, side, x2, y1, z, u2, v2, color);

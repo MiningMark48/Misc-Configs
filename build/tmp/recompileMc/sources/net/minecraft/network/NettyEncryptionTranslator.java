@@ -25,7 +25,7 @@ public class NettyEncryptionTranslator
             this.inputBuffer = new byte[i];
         }
 
-        buf.readBytes((byte[])this.inputBuffer, 0, i);
+        buf.readBytes(this.inputBuffer, 0, i);
         return this.inputBuffer;
     }
 
@@ -49,6 +49,6 @@ public class NettyEncryptionTranslator
             this.outputBuffer = new byte[j];
         }
 
-        out.writeBytes((byte[])this.outputBuffer, 0, this.cipher.update(abyte, 0, i, this.outputBuffer));
+        out.writeBytes(this.outputBuffer, 0, this.cipher.update(abyte, 0, i, this.outputBuffer));
     }
 }

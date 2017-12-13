@@ -1,9 +1,8 @@
 package net.minecraft.client.particle;
 
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -11,7 +10,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ParticleLava extends Particle
 {
-    private float lavaParticleScale;
+    private final float lavaParticleScale;
 
     protected ParticleLava(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn)
     {
@@ -20,7 +19,9 @@ public class ParticleLava extends Particle
         this.motionY *= 0.800000011920929D;
         this.motionZ *= 0.800000011920929D;
         this.motionY = (double)(this.rand.nextFloat() * 0.4F + 0.05F);
-        this.particleRed = this.particleGreen = this.particleBlue = 1.0F;
+        this.particleRed = 1.0F;
+        this.particleGreen = 1.0F;
+        this.particleBlue = 1.0F;
         this.particleScale *= this.rand.nextFloat() * 2.0F + 0.2F;
         this.lavaParticleScale = this.particleScale;
         this.particleMaxAge = (int)(16.0D / (Math.random() * 0.8D + 0.2D));
@@ -29,22 +30,20 @@ public class ParticleLava extends Particle
 
     public int getBrightnessForRender(float p_189214_1_)
     {
-        float f = ((float)this.particleAge + p_189214_1_) / (float)this.particleMaxAge;
-        f = MathHelper.clamp_float(f, 0.0F, 1.0F);
         int i = super.getBrightnessForRender(p_189214_1_);
         int j = 240;
         int k = i >> 16 & 255;
-        return j | k << 16;
+        return 240 | k << 16;
     }
 
     /**
      * Renders the particle
      */
-    public void renderParticle(VertexBuffer worldRendererIn, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
+    public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
     {
         float f = ((float)this.particleAge + partialTicks) / (float)this.particleMaxAge;
         this.particleScale = this.lavaParticleScale * (1.0F - f * f);
-        super.renderParticle(worldRendererIn, entityIn, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);
+        super.renderParticle(buffer, entityIn, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);
     }
 
     public void onUpdate()
@@ -62,16 +61,16 @@ public class ParticleLava extends Particle
 
         if (this.rand.nextFloat() > f)
         {
-            this.worldObj.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY, this.posZ, this.motionX, this.motionY, this.motionZ, new int[0]);
+            this.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY, this.posZ, this.motionX, this.motionY, this.motionZ);
         }
 
         this.motionY -= 0.03D;
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.9990000128746033D;
         this.motionY *= 0.9990000128746033D;
         this.motionZ *= 0.9990000128746033D;
 
-        if (this.isCollided)
+        if (this.onGround)
         {
             this.motionX *= 0.699999988079071D;
             this.motionZ *= 0.699999988079071D;
@@ -81,7 +80,7 @@ public class ParticleLava extends Particle
     @SideOnly(Side.CLIENT)
     public static class Factory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 return new ParticleLava(worldIn, xCoordIn, yCoordIn, zCoordIn);
             }

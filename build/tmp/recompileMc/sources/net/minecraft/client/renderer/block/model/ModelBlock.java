@@ -36,7 +36,7 @@ public class ModelBlock
     private final List<BlockPart> elements;
     private final boolean gui3d;
     public final boolean ambientOcclusion;
-    private ItemCameraTransforms cameraTransforms;
+    private final ItemCameraTransforms cameraTransforms;
     private final List<ItemOverride> overrides;
     public String name = "";
     @VisibleForTesting
@@ -96,7 +96,7 @@ public class ModelBlock
     {
         if (this.parentLocation != null)
         {
-            this.parent = (ModelBlock)p_178299_1_.get(this.parentLocation);
+            this.parent = p_178299_1_.get(this.parentLocation);
         }
     }
 
@@ -143,12 +143,12 @@ public class ModelBlock
         {
             if (this == p_178302_2_.modelExt)
             {
-                LOGGER.warn("Unable to resolve texture due to upward reference: " + textureName + " in " + this.name);
+                LOGGER.warn("Unable to resolve texture due to upward reference: {} in {}", textureName, this.name);
                 return "missingno";
             }
             else
             {
-                String s = (String)this.textures.get(textureName.substring(1));
+                String s = this.textures.get(textureName.substring(1));
 
                 if (s == null && this.hasParent())
                 {
@@ -173,7 +173,7 @@ public class ModelBlock
 
     private boolean startsWithHash(String hash)
     {
-        return hash.charAt(0) == 35;
+        return hash.charAt(0) == '#';
     }
 
     @Nullable

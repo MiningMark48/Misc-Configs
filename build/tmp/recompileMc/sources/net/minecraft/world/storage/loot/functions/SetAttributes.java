@@ -147,7 +147,7 @@ public class SetAttributes extends LootFunction
                     }
                     catch (IllegalArgumentException var12)
                     {
-                        throw new JsonSyntaxException("Invalid attribute modifier id \'" + s2 + "\' (must be UUID format, with dashes)");
+                        throw new JsonSyntaxException("Invalid attribute modifier id '" + s2 + "' (must be UUID format, with dashes)");
                     }
                 }
 
@@ -171,15 +171,15 @@ public class SetAttributes extends LootFunction
 
             private static int getOperationFromInt(String operationIn)
             {
-                if (operationIn.equals("addition"))
+                if ("addition".equals(operationIn))
                 {
                     return 0;
                 }
-                else if (operationIn.equals("multiply_base"))
+                else if ("multiply_base".equals(operationIn))
                 {
                     return 1;
                 }
-                else if (operationIn.equals("multiply_total"))
+                else if ("multiply_total".equals(operationIn))
                 {
                     return 2;
                 }

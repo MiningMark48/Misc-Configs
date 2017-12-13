@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.network;
 
 import gnu.trove.map.hash.TByteObjectHashMap;
@@ -16,8 +35,6 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 
-import org.apache.logging.log4j.Level;
-
 @Sharable
 public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessageCodec<FMLProxyPacket, A> {
     private TByteObjectHashMap<Class<? extends A>> discriminators = new TByteObjectHashMap<Class<? extends A>>();
@@ -33,7 +50,7 @@ public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessag
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception
     {
         super.handlerAdded(ctx);
-        ctx.attr(INBOUNDPACKETTRACKER).set(new ThreadLocal<WeakReference<FMLProxyPacket>>());
+        ctx.channel().attr(INBOUNDPACKETTRACKER).set(new ThreadLocal<WeakReference<FMLProxyPacket>>());
     }
 
     public FMLIndexedMessageToMessageCodec<A> addDiscriminator(int discriminator, Class<? extends A> type)
@@ -53,7 +70,7 @@ public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessag
         buffer.writeByte(discriminator);
         encodeInto(ctx, msg, buffer);
         FMLProxyPacket proxy = new FMLProxyPacket(buffer/*.copy()*/, ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get());
-        WeakReference<FMLProxyPacket> ref = ctx.attr(INBOUNDPACKETTRACKER).get().get();
+        WeakReference<FMLProxyPacket> ref = ctx.channel().attr(INBOUNDPACKETTRACKER).get().get();
         FMLProxyPacket old = ref == null ? null : ref.get();
         if (old != null)
         {
@@ -71,7 +88,7 @@ public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessag
         ByteBuf payload = msg.payload().duplicate();
         if (payload.readableBytes() < 1)
         {
-            FMLLog.log(Level.ERROR, "The FMLIndexedCodec has received an empty buffer on channel %s, likely a result of a LAN server issue. Pipeline parts : %s", ctx.channel().attr(NetworkRegistry.FML_CHANNEL), ctx.pipeline().toString());
+            FMLLog.log.error("The FMLIndexedCodec has received an empty buffer on channel {}, likely a result of a LAN server issue. Pipeline parts : {}", ctx.channel().attr(NetworkRegistry.FML_CHANNEL), ctx.pipeline().toString());
         }
         byte discriminator = payload.readByte();
         Class<? extends A> clazz = discriminators.get(discriminator);
@@ -80,9 +97,10 @@ public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessag
             throw new NullPointerException("Undefined message for discriminator " + discriminator + " in channel " + msg.channel());
         }
         A newMsg = clazz.newInstance();
-        ctx.attr(INBOUNDPACKETTRACKER).get().set(new WeakReference<FMLProxyPacket>(msg));
+        ctx.channel().attr(INBOUNDPACKETTRACKER).get().set(new WeakReference<FMLProxyPacket>(msg));
         decodeInto(ctx, payload.slice(), newMsg);
         out.add(newMsg);
+        payload.release();
     }
 
     /**
@@ -97,7 +115,7 @@ public abstract class FMLIndexedMessageToMessageCodec<A> extends MessageToMessag
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "FMLIndexedMessageCodec exception caught");
+        FMLLog.log.error("FMLIndexedMessageCodec exception caught", cause);
         super.exceptionCaught(ctx, cause);
     }
 }

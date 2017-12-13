@@ -82,7 +82,7 @@ public class FileResourcePack extends AbstractResourcePack implements Closeable
 
         while (enumeration.hasMoreElements())
         {
-            ZipEntry zipentry = (ZipEntry)enumeration.nextElement();
+            ZipEntry zipentry = enumeration.nextElement();
             String s = zipentry.getName();
 
             if (s.startsWith("assets/"))
@@ -91,15 +91,15 @@ public class FileResourcePack extends AbstractResourcePack implements Closeable
 
                 if (list.size() > 1)
                 {
-                    String s1 = (String)list.get(1);
+                    String s1 = list.get(1);
 
-                    if (!s1.equals(s1.toLowerCase()))
+                    if (s1.equals(s1.toLowerCase(java.util.Locale.ROOT)))
                     {
-                        this.logNameNotLowercase(s1);
+                        set.add(s1);
                     }
                     else
                     {
-                        set.add(s1);
+                        this.logNameNotLowercase(s1);
                     }
                 }
             }

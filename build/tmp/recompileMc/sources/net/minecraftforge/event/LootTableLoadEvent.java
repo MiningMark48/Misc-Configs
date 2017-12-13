@@ -1,7 +1,27 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.event;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootTable;
+import net.minecraft.world.storage.loot.LootTableManager;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
@@ -19,11 +39,13 @@ public class LootTableLoadEvent extends Event
 {
     private final ResourceLocation name;
     private LootTable table;
+    private LootTableManager lootTableManager;
 
-    public LootTableLoadEvent(ResourceLocation name, LootTable table)
+    public LootTableLoadEvent(ResourceLocation name, LootTable table, LootTableManager lootTableManager)
     {
         this.name = name;
         this.table = table;
+        this.lootTableManager = lootTableManager;
     }
 
     public ResourceLocation getName()
@@ -34,6 +56,11 @@ public class LootTableLoadEvent extends Event
     public LootTable getTable()
     {
         return this.table;
+    }
+
+    public LootTableManager getLootTableManager()
+    {
+        return this.lootTableManager;
     }
 
     public void setTable(LootTable table)

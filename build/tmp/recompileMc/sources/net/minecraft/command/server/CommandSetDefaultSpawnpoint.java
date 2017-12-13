@@ -16,7 +16,7 @@ public class CommandSetDefaultSpawnpoint extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "setworldspawn";
     }
@@ -32,7 +32,7 @@ public class CommandSetDefaultSpawnpoint extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.setworldspawn.usage";
     }
@@ -60,11 +60,14 @@ public class CommandSetDefaultSpawnpoint extends CommandBase
 
         sender.getEntityWorld().setSpawnPoint(blockpos);
         server.getPlayerList().sendPacketToAllPlayers(new SPacketSpawnPosition(blockpos));
-        notifyCommandListener(sender, this, "commands.setworldspawn.success", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+        notifyCommandListener(sender, this, "commands.setworldspawn.success", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : Collections.<String>emptyList();
+        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, targetPos) : Collections.emptyList();
     }
 }

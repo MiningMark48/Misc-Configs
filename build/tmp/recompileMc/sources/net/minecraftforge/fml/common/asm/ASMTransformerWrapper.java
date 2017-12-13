@@ -1,5 +1,24 @@
 
 
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.asm;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +47,8 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 
+import javax.annotation.Nullable;
+
 public class ASMTransformerWrapper
 {
     private static final Map<String, String> wrapperModMap = Maps.newHashMap();
@@ -38,6 +59,7 @@ public class ASMTransformerWrapper
         .weakValues()
         .build(new CacheLoader<String, byte[]>()
         {
+            @Override
             public byte[] load(String file) throws Exception
             {
                 return makeWrapper(file);
@@ -61,6 +83,8 @@ public class ASMTransformerWrapper
 
     private static class ASMGenHandler extends URLStreamHandler
     {
+        @Override
+        @Nullable
         protected URLConnection openConnection(URL url) throws IOException
         {
             String file = url.getFile();
@@ -68,6 +92,7 @@ public class ASMTransformerWrapper
             {
                 return new URLConnection(url)
                 {
+                    @Override
                     public void connect() throws IOException
                     {
                         throw new UnsupportedOperationException();
@@ -94,6 +119,7 @@ public class ASMTransformerWrapper
             this.file = file;
         }
 
+        @Override
         public void connect() throws IOException
         {
             throw new UnsupportedOperationException();
@@ -106,6 +132,7 @@ public class ASMTransformerWrapper
         }
 
         @Override
+        @Nullable
         public Permission getPermission()
         {
             return null;
@@ -223,6 +250,7 @@ public class ASMTransformerWrapper
             }
         }
 
+        @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass)
         {
             try

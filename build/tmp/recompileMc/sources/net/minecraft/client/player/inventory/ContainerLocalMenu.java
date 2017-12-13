@@ -15,8 +15,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ContainerLocalMenu extends InventoryBasic implements ILockableContainer
 {
-    private String guiID;
-    private Map<Integer, Integer> dataValues = Maps.<Integer, Integer>newHashMap();
+    private final String guiID;
+    private final Map<Integer, Integer> dataValues = Maps.<Integer, Integer>newHashMap();
 
     public ContainerLocalMenu(String id, ITextComponent title, int slotCount)
     {

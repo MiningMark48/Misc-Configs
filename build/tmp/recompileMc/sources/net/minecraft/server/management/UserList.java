@@ -1,6 +1,5 @@
 package net.minecraft.server.management;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -22,9 +21,11 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.util.JsonUtils;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.IOUtils;
@@ -85,14 +86,14 @@ public class UserList<K, V extends UserListEntry<K>>
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Could not save the list after adding a user.", (Throwable)ioexception);
+            LOGGER.warn("Could not save the list after adding a user.", (Throwable)ioexception);
         }
     }
 
     public V getEntry(K obj)
     {
         this.removeExpired();
-        return (V)((UserListEntry)this.values.get(this.getObjectKey(obj)));
+        return (V)(this.values.get(this.getObjectKey(obj)));
     }
 
     public void removeEntry(K entry)
@@ -105,7 +106,7 @@ public class UserList<K, V extends UserListEntry<K>>
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Could not save the list after removing a user.", (Throwable)ioexception);
+            LOGGER.warn("Could not save the list after removing a user.", (Throwable)ioexception);
         }
     }
 
@@ -156,7 +157,7 @@ public class UserList<K, V extends UserListEntry<K>>
 
     protected UserListEntry<K> createEntry(JsonObject entryData)
     {
-        return new UserListEntry((Object)null, entryData);
+        return new UserListEntry<K>(null, entryData);
     }
 
     protected Map<String, V> getValues()
@@ -167,12 +168,12 @@ public class UserList<K, V extends UserListEntry<K>>
     public void writeChanges() throws IOException
     {
         Collection<V> collection = this.values.values();
-        String s = this.gson.toJson((Object)collection);
+        String s = this.gson.toJson(collection);
         BufferedWriter bufferedwriter = null;
 
         try
         {
-            bufferedwriter = Files.newWriter(this.saveFile, Charsets.UTF_8);
+            bufferedwriter = Files.newWriter(this.saveFile, StandardCharsets.UTF_8);
             bufferedwriter.write(s);
         }
         finally
@@ -190,28 +191,31 @@ public class UserList<K, V extends UserListEntry<K>>
     @SideOnly(Side.SERVER)
     public void readSavedFile() throws IOException, FileNotFoundException
     {
-        Collection<UserListEntry<K>> collection = null;
-        BufferedReader bufferedreader = null;
-
-        try
+        if (this.saveFile.exists())
         {
-            bufferedreader = Files.newReader(this.saveFile, Charsets.UTF_8);
-            collection = (Collection)this.gson.fromJson((Reader)bufferedreader, USER_LIST_ENTRY_TYPE);
-        }
-        finally
-        {
-            IOUtils.closeQuietly((Reader)bufferedreader);
-        }
+            Collection<UserListEntry<K>> collection = null;
+            BufferedReader bufferedreader = null;
 
-        if (collection != null)
-        {
-            this.values.clear();
-
-            for (UserListEntry<K> userlistentry : collection)
+            try
             {
-                if (userlistentry.getValue() != null)
+                bufferedreader = Files.newReader(this.saveFile, StandardCharsets.UTF_8);
+                collection = (Collection)JsonUtils.fromJson(this.gson, bufferedreader, USER_LIST_ENTRY_TYPE);
+            }
+            finally
+            {
+                IOUtils.closeQuietly((Reader)bufferedreader);
+            }
+
+            if (collection != null)
+            {
+                this.values.clear();
+
+                for (UserListEntry<K> userlistentry : collection)
                 {
-                    this.values.put(this.getObjectKey(userlistentry.getValue()), (V)userlistentry);
+                    if (userlistentry.getValue() != null)
+                    {
+                        this.values.put(this.getObjectKey(userlistentry.getValue()), (V)userlistentry);
+                    }
                 }
             }
         }

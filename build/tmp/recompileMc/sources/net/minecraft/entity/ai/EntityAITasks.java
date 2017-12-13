@@ -11,17 +11,19 @@ import org.apache.logging.log4j.Logger;
 public class EntityAITasks
 {
     private static final Logger LOGGER = LogManager.getLogger();
+    /** A list of EntityAITaskEntrys in EntityAITasks. */
     public final Set<EntityAITasks.EntityAITaskEntry> taskEntries = Sets.<EntityAITasks.EntityAITaskEntry>newLinkedHashSet();
+    /** A list of EntityAITaskEntrys that are currently being executed. */
     private final Set<EntityAITasks.EntityAITaskEntry> executingTaskEntries = Sets.<EntityAITasks.EntityAITaskEntry>newLinkedHashSet();
     /** Instance of Profiler. */
-    private final Profiler theProfiler;
+    private final Profiler profiler;
     private int tickCount;
     private int tickRate = 3;
-    private int disabledControlFlags = 0;
+    private int disabledControlFlags;
 
     public EntityAITasks(Profiler profilerIn)
     {
-        this.theProfiler = profilerIn;
+        this.profiler = profilerIn;
     }
 
     /**
@@ -41,7 +43,7 @@ public class EntityAITasks
 
         while (iterator.hasNext())
         {
-            EntityAITasks.EntityAITaskEntry entityaitasks$entityaitaskentry = (EntityAITasks.EntityAITaskEntry)iterator.next();
+            EntityAITasks.EntityAITaskEntry entityaitasks$entityaitaskentry = iterator.next();
             EntityAIBase entityaibase = entityaitasks$entityaitaskentry.action;
 
             if (entityaibase == task)
@@ -61,7 +63,7 @@ public class EntityAITasks
 
     public void onUpdateTasks()
     {
-        this.theProfiler.startSection("goalSetup");
+        this.profiler.startSection("goalSetup");
 
         if (this.tickCount++ % this.tickRate == 0)
         {
@@ -90,7 +92,7 @@ public class EntityAITasks
 
             while (iterator.hasNext())
             {
-                EntityAITasks.EntityAITaskEntry entityaitasks$entityaitaskentry1 = (EntityAITasks.EntityAITaskEntry)iterator.next();
+                EntityAITasks.EntityAITaskEntry entityaitasks$entityaitaskentry1 = iterator.next();
 
                 if (!this.canContinue(entityaitasks$entityaitaskentry1))
                 {
@@ -101,18 +103,18 @@ public class EntityAITasks
             }
         }
 
-        this.theProfiler.endSection();
+        this.profiler.endSection();
 
         if (!this.executingTaskEntries.isEmpty())
         {
-            this.theProfiler.startSection("goalTick");
+            this.profiler.startSection("goalTick");
 
             for (EntityAITasks.EntityAITaskEntry entityaitasks$entityaitaskentry2 : this.executingTaskEntries)
             {
                 entityaitasks$entityaitaskentry2.action.updateTask();
             }
 
-            this.theProfiler.endSection();
+            this.profiler.endSection();
         }
     }
 
@@ -121,7 +123,7 @@ public class EntityAITasks
      */
     private boolean canContinue(EntityAITasks.EntityAITaskEntry taskEntry)
     {
-        return taskEntry.action.continueExecuting();
+        return taskEntry.action.shouldContinueExecuting();
     }
 
     /**
@@ -213,7 +215,14 @@ public class EntityAITasks
 
         public boolean equals(@Nullable Object p_equals_1_)
         {
-            return this == p_equals_1_ ? true : (p_equals_1_ != null && this.getClass() == p_equals_1_.getClass() ? this.action.equals(((EntityAITasks.EntityAITaskEntry)p_equals_1_).action) : false);
+            if (this == p_equals_1_)
+            {
+                return true;
+            }
+            else
+            {
+                return p_equals_1_ != null && this.getClass() == p_equals_1_.getClass() ? this.action.equals(((EntityAITasks.EntityAITaskEntry)p_equals_1_).action) : false;
+            }
         }
 
         public int hashCode()

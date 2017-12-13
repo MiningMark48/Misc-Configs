@@ -26,12 +26,15 @@ public class ItemOverride
     private final ResourceLocation location;
     private final Map<ResourceLocation, Float> mapResourceValues;
 
-    public ItemOverride(ResourceLocation locationIn, Map<ResourceLocation, Float> p_i46571_2_)
+    public ItemOverride(ResourceLocation locationIn, Map<ResourceLocation, Float> propertyValues)
     {
         this.location = locationIn;
-        this.mapResourceValues = p_i46571_2_;
+        this.mapResourceValues = propertyValues;
     }
 
+    /**
+     * Get the location of the target model
+     */
     public ResourceLocation getLocation()
     {
         return this.location;
@@ -43,7 +46,7 @@ public class ItemOverride
 
         for (Entry<ResourceLocation, Float> entry : this.mapResourceValues.entrySet())
         {
-            IItemPropertyGetter iitempropertygetter = item.getPropertyGetter((ResourceLocation)entry.getKey());
+            IItemPropertyGetter iitempropertygetter = item.getPropertyGetter(entry.getKey());
 
             if (iitempropertygetter == null || iitempropertygetter.apply(stack, worldIn, livingEntity) < ((Float)entry.getValue()).floatValue())
             {
@@ -72,7 +75,7 @@ public class ItemOverride
 
                 for (Entry<String, JsonElement> entry : jsonobject.entrySet())
                 {
-                    map.put(new ResourceLocation((String)entry.getKey()), Float.valueOf(JsonUtils.getFloat((JsonElement)entry.getValue(), (String)entry.getKey())));
+                    map.put(new ResourceLocation(entry.getKey()), Float.valueOf(JsonUtils.getFloat(entry.getValue(), entry.getKey())));
                 }
 
                 return map;

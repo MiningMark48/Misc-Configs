@@ -1,8 +1,10 @@
 package net.minecraft.item;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.util.EnumActionResult;
@@ -24,11 +26,12 @@ public class ItemFlintAndSteel extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         pos = pos.offset(facing);
+        ItemStack itemstack = player.getHeldItem(hand);
 
-        if (!playerIn.canPlayerEdit(pos, facing, stack))
+        if (!player.canPlayerEdit(pos, facing, itemstack))
         {
             return EnumActionResult.FAIL;
         }
@@ -36,11 +39,16 @@ public class ItemFlintAndSteel extends Item
         {
             if (worldIn.isAirBlock(pos))
             {
-                worldIn.playSound(playerIn, pos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
+                worldIn.playSound(player, pos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
                 worldIn.setBlockState(pos, Blocks.FIRE.getDefaultState(), 11);
             }
 
-            stack.damageItem(1, playerIn);
+            if (player instanceof EntityPlayerMP)
+            {
+                CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+            }
+
+            itemstack.damageItem(1, player);
             return EnumActionResult.SUCCESS;
         }
     }

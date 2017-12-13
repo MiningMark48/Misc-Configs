@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.b3d;
 
 import net.minecraftforge.client.model.b3d.B3DLoader.NodeJoint;
@@ -17,6 +36,7 @@ public enum B3DClip implements IClip
 {
     INSTANCE;
 
+    @Override
     public IJointClip apply(final IJoint joint)
     {
         if(!(joint instanceof NodeJoint))
@@ -26,9 +46,10 @@ public enum B3DClip implements IClip
         return new NodeClip(((NodeJoint)joint).getNode());
     }
 
+    @Override
     public Iterable<Event> pastEvents(float lastPollTime, float time)
     {
-        return ImmutableSet.<Event>of();
+        return ImmutableSet.of();
     }
 
     protected static class NodeClip implements IJointClip
@@ -40,6 +61,7 @@ public enum B3DClip implements IClip
             this.node = node;
         }
 
+        @Override
         public TRSRTransformation apply(float time)
         {
             TRSRTransformation ret = TRSRTransformation.identity();

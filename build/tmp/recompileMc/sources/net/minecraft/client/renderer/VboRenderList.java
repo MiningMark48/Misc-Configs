@@ -1,6 +1,7 @@
 package net.minecraft.client.renderer;
 
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -14,7 +15,7 @@ public class VboRenderList extends ChunkRenderContainer
         {
             for (RenderChunk renderchunk : this.renderChunks)
             {
-                net.minecraft.client.renderer.vertex.VertexBuffer vertexbuffer = renderchunk.getVertexBufferByLayer(layer.ordinal());
+                VertexBuffer vertexbuffer = renderchunk.getVertexBufferByLayer(layer.ordinal());
                 GlStateManager.pushMatrix();
                 this.preRenderChunk(renderchunk);
                 renderchunk.multModelviewMatrix();

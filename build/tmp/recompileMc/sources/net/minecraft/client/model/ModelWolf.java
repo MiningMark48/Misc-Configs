@@ -33,32 +33,32 @@ public class ModelWolf extends ModelBase
         float f = 0.0F;
         float f1 = 13.5F;
         this.wolfHeadMain = new ModelRenderer(this, 0, 0);
-        this.wolfHeadMain.addBox(-2.0F, -3.0F, -2.0F, 6, 6, 4, f);
-        this.wolfHeadMain.setRotationPoint(-1.0F, f1, -7.0F);
+        this.wolfHeadMain.addBox(-2.0F, -3.0F, -2.0F, 6, 6, 4, 0.0F);
+        this.wolfHeadMain.setRotationPoint(-1.0F, 13.5F, -7.0F);
         this.wolfBody = new ModelRenderer(this, 18, 14);
-        this.wolfBody.addBox(-3.0F, -2.0F, -3.0F, 6, 9, 6, f);
+        this.wolfBody.addBox(-3.0F, -2.0F, -3.0F, 6, 9, 6, 0.0F);
         this.wolfBody.setRotationPoint(0.0F, 14.0F, 2.0F);
         this.wolfMane = new ModelRenderer(this, 21, 0);
-        this.wolfMane.addBox(-3.0F, -3.0F, -3.0F, 8, 6, 7, f);
+        this.wolfMane.addBox(-3.0F, -3.0F, -3.0F, 8, 6, 7, 0.0F);
         this.wolfMane.setRotationPoint(-1.0F, 14.0F, 2.0F);
         this.wolfLeg1 = new ModelRenderer(this, 0, 18);
-        this.wolfLeg1.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, f);
+        this.wolfLeg1.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
         this.wolfLeg1.setRotationPoint(-2.5F, 16.0F, 7.0F);
         this.wolfLeg2 = new ModelRenderer(this, 0, 18);
-        this.wolfLeg2.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, f);
+        this.wolfLeg2.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
         this.wolfLeg2.setRotationPoint(0.5F, 16.0F, 7.0F);
         this.wolfLeg3 = new ModelRenderer(this, 0, 18);
-        this.wolfLeg3.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, f);
+        this.wolfLeg3.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
         this.wolfLeg3.setRotationPoint(-2.5F, 16.0F, -4.0F);
         this.wolfLeg4 = new ModelRenderer(this, 0, 18);
-        this.wolfLeg4.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, f);
+        this.wolfLeg4.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
         this.wolfLeg4.setRotationPoint(0.5F, 16.0F, -4.0F);
         this.wolfTail = new ModelRenderer(this, 9, 18);
-        this.wolfTail.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, f);
+        this.wolfTail.addBox(0.0F, 0.0F, -1.0F, 2, 8, 2, 0.0F);
         this.wolfTail.setRotationPoint(-1.0F, 12.0F, 8.0F);
-        this.wolfHeadMain.setTextureOffset(16, 14).addBox(-2.0F, -5.0F, 0.0F, 2, 2, 1, f);
-        this.wolfHeadMain.setTextureOffset(16, 14).addBox(2.0F, -5.0F, 0.0F, 2, 2, 1, f);
-        this.wolfHeadMain.setTextureOffset(0, 10).addBox(-0.5F, 0.0F, -5.0F, 3, 3, 4, f);
+        this.wolfHeadMain.setTextureOffset(16, 14).addBox(-2.0F, -5.0F, 0.0F, 2, 2, 1, 0.0F);
+        this.wolfHeadMain.setTextureOffset(16, 14).addBox(2.0F, -5.0F, 0.0F, 2, 2, 1, 0.0F);
+        this.wolfHeadMain.setTextureOffset(0, 10).addBox(-0.5F, 0.0F, -5.0F, 3, 3, 4, 0.0F);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ModelWolf extends ModelBase
             this.wolfHeadMain.renderWithRotation(scale);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.scale(1.0F / f, 1.0F / f, 1.0F / f);
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
             GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
             this.wolfBody.render(scale);
             this.wolfLeg1.render(scale);
@@ -105,7 +105,7 @@ public class ModelWolf extends ModelBase
      * Used for easily adding entity-dependent animations. The second and third float params here are the same second
      * and third as in the setRotationAngles method.
      */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
+    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
     {
         EntityWolf entitywolf = (EntityWolf)entitylivingbaseIn;
 
@@ -115,7 +115,7 @@ public class ModelWolf extends ModelBase
         }
         else
         {
-            this.wolfTail.rotateAngleY = MathHelper.cos(p_78086_2_ * 0.6662F) * 1.4F * p_78086_3_;
+            this.wolfTail.rotateAngleY = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         }
 
         if (entitywolf.isSitting())
@@ -146,10 +146,10 @@ public class ModelWolf extends ModelBase
             this.wolfLeg2.setRotationPoint(0.5F, 16.0F, 7.0F);
             this.wolfLeg3.setRotationPoint(-2.5F, 16.0F, -4.0F);
             this.wolfLeg4.setRotationPoint(0.5F, 16.0F, -4.0F);
-            this.wolfLeg1.rotateAngleX = MathHelper.cos(p_78086_2_ * 0.6662F) * 1.4F * p_78086_3_;
-            this.wolfLeg2.rotateAngleX = MathHelper.cos(p_78086_2_ * 0.6662F + (float)Math.PI) * 1.4F * p_78086_3_;
-            this.wolfLeg3.rotateAngleX = MathHelper.cos(p_78086_2_ * 0.6662F + (float)Math.PI) * 1.4F * p_78086_3_;
-            this.wolfLeg4.rotateAngleX = MathHelper.cos(p_78086_2_ * 0.6662F) * 1.4F * p_78086_3_;
+            this.wolfLeg1.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+            this.wolfLeg2.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float)Math.PI) * 1.4F * limbSwingAmount;
+            this.wolfLeg3.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F + (float)Math.PI) * 1.4F * limbSwingAmount;
+            this.wolfLeg4.rotateAngleX = MathHelper.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         }
 
         this.wolfHeadMain.rotateAngleZ = entitywolf.getInterestedAngle(partialTickTime) + entitywolf.getShakeAngle(partialTickTime, 0.0F);

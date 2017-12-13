@@ -12,23 +12,23 @@ public class TextComponentUtils
 {
     public static ITextComponent processComponent(ICommandSender commandSender, ITextComponent component, Entity entityIn) throws CommandException
     {
-        ITextComponent itextcomponent = null;
+        ITextComponent itextcomponent;
 
         if (component instanceof TextComponentScore)
         {
             TextComponentScore textcomponentscore = (TextComponentScore)component;
             String s = textcomponentscore.getName();
 
-            if (EntitySelector.hasArguments(s))
+            if (EntitySelector.isSelector(s))
             {
                 List<Entity> list = EntitySelector.<Entity>matchEntities(commandSender, s, Entity.class);
 
                 if (list.size() != 1)
                 {
-                    throw new EntityNotFoundException();
+                    throw new EntityNotFoundException("commands.generic.selector.notFound", new Object[] {s});
                 }
 
-                Entity entity = (Entity)list.get(0);
+                Entity entity = list.get(0);
 
                 if (entity instanceof EntityPlayer)
                 {
@@ -40,7 +40,9 @@ public class TextComponentUtils
                 }
             }
 
-            itextcomponent = entityIn != null && s.equals("*") ? new TextComponentScore(entityIn.getName(), textcomponentscore.getObjective()) : new TextComponentScore(s, textcomponentscore.getObjective());
+            String s2 = entityIn != null && s.equals("*") ? entityIn.getName() : s;
+            itextcomponent = new TextComponentScore(s2, textcomponentscore.getObjective());
+            ((TextComponentScore)itextcomponent).setValue(textcomponentscore.getUnformattedComponentText());
             ((TextComponentScore)itextcomponent).resolve(commandSender);
         }
         else if (component instanceof TextComponentSelector)
@@ -56,6 +58,10 @@ public class TextComponentUtils
         else if (component instanceof TextComponentString)
         {
             itextcomponent = new TextComponentString(((TextComponentString)component).getText());
+        }
+        else if (component instanceof TextComponentKeybind)
+        {
+            itextcomponent = new TextComponentKeybind(((TextComponentKeybind)component).getKeybind());
         }
         else
         {

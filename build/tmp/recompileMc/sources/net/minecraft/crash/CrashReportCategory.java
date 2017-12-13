@@ -24,7 +24,7 @@ public class CrashReportCategory
     @SideOnly(Side.CLIENT)
     public static String getCoordinateInfo(double x, double y, double z)
     {
-        return String.format("%.2f,%.2f,%.2f - %s", new Object[] {Double.valueOf(x), Double.valueOf(y), Double.valueOf(z), getCoordinateInfo(new BlockPos(x, y, z))});
+        return String.format("%.2f,%.2f,%.2f - %s", x, y, z, getCoordinateInfo(new BlockPos(x, y, z)));
     }
 
     public static String getCoordinateInfo(BlockPos pos)
@@ -38,7 +38,7 @@ public class CrashReportCategory
 
         try
         {
-            stringbuilder.append(String.format("World: (%d,%d,%d)", new Object[] {Integer.valueOf(x), Integer.valueOf(y), Integer.valueOf(z)}));
+            stringbuilder.append(String.format("World: (%d,%d,%d)", x, y, z));
         }
         catch (Throwable var16)
         {
@@ -58,7 +58,7 @@ public class CrashReportCategory
             int k1 = j << 4;
             int l1 = (i + 1 << 4) - 1;
             int i2 = (j + 1 << 4) - 1;
-            stringbuilder.append(String.format("Chunk: (at %d,%d,%d in %d,%d; contains blocks %d,0,%d to %d,255,%d)", new Object[] {Integer.valueOf(k), Integer.valueOf(l), Integer.valueOf(i1), Integer.valueOf(i), Integer.valueOf(j), Integer.valueOf(j1), Integer.valueOf(k1), Integer.valueOf(l1), Integer.valueOf(i2)}));
+            stringbuilder.append(String.format("Chunk: (at %d,%d,%d in %d,%d; contains blocks %d,0,%d to %d,255,%d)", k, l, i1, i, j, j1, k1, l1, i2));
         }
         catch (Throwable var15)
         {
@@ -79,7 +79,7 @@ public class CrashReportCategory
             int j4 = l2 << 9;
             int k4 = (k2 + 1 << 9) - 1;
             int j2 = (l2 + 1 << 9) - 1;
-            stringbuilder.append(String.format("Region: (%d,%d; contains chunks %d,%d to %d,%d, blocks %d,0,%d to %d,255,%d)", new Object[] {Integer.valueOf(k2), Integer.valueOf(l2), Integer.valueOf(i3), Integer.valueOf(j3), Integer.valueOf(k3), Integer.valueOf(l3), Integer.valueOf(i4), Integer.valueOf(j4), Integer.valueOf(k4), Integer.valueOf(j2)}));
+            stringbuilder.append(String.format("Region: (%d,%d; contains chunks %d,%d to %d,%d, blocks %d,0,%d to %d,255,%d)", k2, l2, i3, j3, k3, l3, i4, j4, k4, j2));
         }
         catch (Throwable var14)
         {
@@ -89,7 +89,12 @@ public class CrashReportCategory
         return stringbuilder.toString();
     }
 
-    public void setDetail(String nameIn, ICrashReportDetail<String> detail)
+    /**
+     * Adds an additional section to this crash report category, resolved by calling the given callable.
+     *  
+     * If the given callable throws an exception, a detail containing that exception will be created instead.
+     */
+    public void addDetail(String nameIn, ICrashReportDetail<String> detail)
     {
         try
         {
@@ -206,7 +211,7 @@ public class CrashReportCategory
             for (StackTraceElement stacktraceelement : this.stackTrace)
             {
                 builder.append("\n\tat ");
-                builder.append(stacktraceelement.toString());
+                builder.append((Object)stacktraceelement);
             }
         }
     }
@@ -219,13 +224,13 @@ public class CrashReportCategory
     public static void addBlockInfo(CrashReportCategory category, final BlockPos pos, final Block blockIn, final int blockData)
     {
         final int i = Block.getIdFromBlock(blockIn);
-        category.setDetail("Block type", new ICrashReportDetail<String>()
+        category.addDetail("Block type", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 try
                 {
-                    return String.format("ID #%d (%s // %s)", new Object[] {Integer.valueOf(i), blockIn.getUnlocalizedName(), blockIn.getClass().getCanonicalName()});
+                    return String.format("ID #%d (%s // %s)", i, blockIn.getUnlocalizedName(), blockIn.getClass().getCanonicalName());
                 }
                 catch (Throwable var2)
                 {
@@ -233,7 +238,7 @@ public class CrashReportCategory
                 }
             }
         });
-        category.setDetail("Block data value", new ICrashReportDetail<String>()
+        category.addDetail("Block data value", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
@@ -243,12 +248,12 @@ public class CrashReportCategory
                 }
                 else
                 {
-                    String s = String.format("%4s", new Object[] {Integer.toBinaryString(blockData)}).replace(" ", "0");
-                    return String.format("%1$d / 0x%1$X / 0b%2$s", new Object[] {Integer.valueOf(blockData), s});
+                    String s = String.format("%4s", Integer.toBinaryString(blockData)).replace(" ", "0");
+                    return String.format("%1$d / 0x%1$X / 0b%2$s", blockData, s);
                 }
             }
         });
-        category.setDetail("Block location", new ICrashReportDetail<String>()
+        category.addDetail("Block location", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
@@ -259,14 +264,14 @@ public class CrashReportCategory
 
     public static void addBlockInfo(CrashReportCategory category, final BlockPos pos, final IBlockState state)
     {
-        category.setDetail("Block", new ICrashReportDetail<String>()
+        category.addDetail("Block", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 return state.toString();
             }
         });
-        category.setDetail("Block location", new ICrashReportDetail<String>()
+        category.addDetail("Block location", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {

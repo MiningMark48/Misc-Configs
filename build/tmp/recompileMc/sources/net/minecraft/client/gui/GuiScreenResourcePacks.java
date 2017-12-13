@@ -19,13 +19,15 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class GuiScreenResourcePacks extends GuiScreen
 {
     private final GuiScreen parentScreen;
+    /** List of available resource packs */
     private List<ResourcePackListEntry> availableResourcePacks;
+    /** List of selected resource packs */
     private List<ResourcePackListEntry> selectedResourcePacks;
     /** List component that contains the available resource packs */
     private GuiResourcePackAvailable availableResourcePacksList;
     /** List component that contains the selected resource packs */
     private GuiResourcePackSelected selectedResourcePacksList;
-    private boolean changed = false;
+    private boolean changed;
 
     public GuiScreenResourcePacks(GuiScreen parentScreenIn)
     {
@@ -38,8 +40,8 @@ public class GuiScreenResourcePacks extends GuiScreen
      */
     public void initGui()
     {
-        this.buttonList.add(new GuiOptionButton(2, this.width / 2 - 154, this.height - 48, I18n.format("resourcePack.openFolder", new Object[0])));
-        this.buttonList.add(new GuiOptionButton(1, this.width / 2 + 4, this.height - 48, I18n.format("gui.done", new Object[0])));
+        this.buttonList.add(new GuiOptionButton(2, this.width / 2 - 154, this.height - 48, I18n.format("resourcePack.openFolder")));
+        this.buttonList.add(new GuiOptionButton(1, this.width / 2 + 4, this.height - 48, I18n.format("gui.done")));
 
         if (!this.changed)
         {
@@ -59,7 +61,7 @@ public class GuiScreenResourcePacks extends GuiScreen
 
             if (resourcepackrepository$entry2 != null)
             {
-                this.selectedResourcePacks.add(new ResourcePackListEntryServer(this, resourcepackrepository.getResourcePackInstance()));
+                this.selectedResourcePacks.add(new ResourcePackListEntryServer(this, resourcepackrepository.getServerResourcePack()));
             }
 
             for (ResourcePackRepository.Entry resourcepackrepository$entry1 : Lists.reverse(resourcepackrepository.getRepositoryEntries()))
@@ -88,21 +90,31 @@ public class GuiScreenResourcePacks extends GuiScreen
         this.availableResourcePacksList.handleMouseInput();
     }
 
-    public boolean hasResourcePackEntry(ResourcePackListEntry p_146961_1_)
+    public boolean hasResourcePackEntry(ResourcePackListEntry resourcePackEntry)
     {
-        return this.selectedResourcePacks.contains(p_146961_1_);
+        return this.selectedResourcePacks.contains(resourcePackEntry);
     }
 
-    public List<ResourcePackListEntry> getListContaining(ResourcePackListEntry p_146962_1_)
+    /**
+     * Returns the list containing the resource pack entry, returns the selected list if it is selected, otherwise
+     * returns the available list
+     */
+    public List<ResourcePackListEntry> getListContaining(ResourcePackListEntry resourcePackEntry)
     {
-        return this.hasResourcePackEntry(p_146962_1_) ? this.selectedResourcePacks : this.availableResourcePacks;
+        return this.hasResourcePackEntry(resourcePackEntry) ? this.selectedResourcePacks : this.availableResourcePacks;
     }
 
+    /**
+     * Returns a list containing the available resource packs
+     */
     public List<ResourcePackListEntry> getAvailableResourcePacks()
     {
         return this.availableResourcePacks;
     }
 
+    /**
+     * Returns a list containing the selected resource packs
+     */
     public List<ResourcePackListEntry> getSelectedResourcePacks()
     {
         return this.selectedResourcePacks;
@@ -143,7 +155,7 @@ public class GuiScreenResourcePacks extends GuiScreen
                     {
                         this.mc.gameSettings.resourcePacks.add(resourcepackrepository$entry.getResourcePackName());
 
-                        if (resourcepackrepository$entry.getPackFormat() != 2)
+                        if (resourcepackrepository$entry.getPackFormat() != 3)
                         {
                             this.mc.gameSettings.incompatibleResourcePacks.add(resourcepackrepository$entry.getResourcePackName());
                         }
@@ -184,8 +196,8 @@ public class GuiScreenResourcePacks extends GuiScreen
         this.drawBackground(0);
         this.availableResourcePacksList.drawScreen(mouseX, mouseY, partialTicks);
         this.selectedResourcePacksList.drawScreen(mouseX, mouseY, partialTicks);
-        this.drawCenteredString(this.fontRendererObj, I18n.format("resourcePack.title", new Object[0]), this.width / 2, 16, 16777215);
-        this.drawCenteredString(this.fontRendererObj, I18n.format("resourcePack.folderInfo", new Object[0]), this.width / 2 - 77, this.height - 26, 8421504);
+        this.drawCenteredString(this.fontRenderer, I18n.format("resourcePack.title"), this.width / 2, 16, 16777215);
+        this.drawCenteredString(this.fontRenderer, I18n.format("resourcePack.folderInfo"), this.width / 2 - 77, this.height - 26, 8421504);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 

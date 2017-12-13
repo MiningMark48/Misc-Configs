@@ -16,7 +16,7 @@ public class GuiBrewingStand extends GuiContainer
     private static final int[] BUBBLELENGTHS = new int[] {29, 24, 20, 16, 11, 6, 0};
     /** The player inventory bound to this GUI. */
     private final InventoryPlayer playerInventory;
-    private IInventory tileBrewingStand;
+    private final IInventory tileBrewingStand;
 
     public GuiBrewingStand(InventoryPlayer playerInv, IInventory p_i45506_2_)
     {
@@ -26,13 +26,23 @@ public class GuiBrewingStand extends GuiContainer
     }
 
     /**
+     * Draws the screen and all the components in it.
+     */
+    public void drawScreen(int mouseX, int mouseY, float partialTicks)
+    {
+        this.drawDefaultBackground();
+        super.drawScreen(mouseX, mouseY, partialTicks);
+        this.renderHoveredToolTip(mouseX, mouseY);
+    }
+
+    /**
      * Draw the foreground layer for the GuiContainer (everything in front of the items)
      */
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY)
     {
         String s = this.tileBrewingStand.getDisplayName().getUnformattedText();
-        this.fontRendererObj.drawString(s, this.xSize / 2 - this.fontRendererObj.getStringWidth(s) / 2, 6, 4210752);
-        this.fontRendererObj.drawString(this.playerInventory.getDisplayName().getUnformattedText(), 8, this.ySize - 96 + 2, 4210752);
+        this.fontRenderer.drawString(s, this.xSize / 2 - this.fontRenderer.getStringWidth(s) / 2, 6, 4210752);
+        this.fontRenderer.drawString(this.playerInventory.getDisplayName().getUnformattedText(), 8, this.ySize - 96 + 2, 4210752);
     }
 
     /**
@@ -46,7 +56,7 @@ public class GuiBrewingStand extends GuiContainer
         int j = (this.height - this.ySize) / 2;
         this.drawTexturedModalRect(i, j, 0, 0, this.xSize, this.ySize);
         int k = this.tileBrewingStand.getField(1);
-        int l = MathHelper.clamp_int((18 * k + 20 - 1) / 20, 0, 18);
+        int l = MathHelper.clamp((18 * k + 20 - 1) / 20, 0, 18);
 
         if (l > 0)
         {

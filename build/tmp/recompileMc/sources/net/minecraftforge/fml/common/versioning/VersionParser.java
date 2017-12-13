@@ -1,23 +1,27 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
- * 
- * Contributors:
- *     cpw - implementation
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.versioning;
 
 import java.util.List;
 
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.LoaderException;
-
-import org.apache.logging.log4j.Level;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -28,7 +32,7 @@ import com.google.common.collect.Lists;
  * http://docs.codehaus.org/display/MAVEN/Versioning
  * and allows for comparison of versions based on that document.
  * Bounded version specifications are defined as
- * http://maven.apache.org/plugins/maven-enforcer-plugin/rules/versionRanges.html
+ * https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
  *
  * Borrows heavily from maven version range management code
  *
@@ -69,8 +73,7 @@ public class VersionParser
         }
         catch (InvalidVersionSpecificationException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to parse a version range specification successfully %s", range);
-            throw new LoaderException(e);
+            throw new LoaderException("Unable to parse a version range specification successfully " + range, e);
         }
     }
 }

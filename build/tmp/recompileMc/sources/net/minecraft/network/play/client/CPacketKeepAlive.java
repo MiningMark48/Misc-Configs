@@ -9,14 +9,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class CPacketKeepAlive implements Packet<INetHandlerPlayServer>
 {
-    private int key;
+    private long key;
 
     public CPacketKeepAlive()
     {
     }
 
     @SideOnly(Side.CLIENT)
-    public CPacketKeepAlive(int idIn)
+    public CPacketKeepAlive(long idIn)
     {
         this.key = idIn;
     }
@@ -34,7 +34,7 @@ public class CPacketKeepAlive implements Packet<INetHandlerPlayServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.key = buf.readVarIntFromBuffer();
+        this.key = buf.readLong();
     }
 
     /**
@@ -42,10 +42,10 @@ public class CPacketKeepAlive implements Packet<INetHandlerPlayServer>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.key);
+        buf.writeLong(this.key);
     }
 
-    public int getKey()
+    public long getKey()
     {
         return this.key;
     }

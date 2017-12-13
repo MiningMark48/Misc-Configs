@@ -27,7 +27,7 @@ public class CommandReplaceItem extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "replaceitem";
     }
@@ -43,7 +43,7 @@ public class CommandReplaceItem extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.replaceitem.usage";
     }
@@ -61,13 +61,13 @@ public class CommandReplaceItem extends CommandBase
         {
             boolean flag;
 
-            if (args[0].equals("entity"))
+            if ("entity".equals(args[0]))
             {
                 flag = false;
             }
             else
             {
-                if (!args[0].equals("block"))
+                if (!"block".equals(args[0]))
                 {
                     throw new WrongUsageException("commands.replaceitem.usage", new Object[0]);
                 }
@@ -115,13 +115,13 @@ public class CommandReplaceItem extends CommandBase
             }
 
             ++i;
-            int k = args.length > i ? parseInt(args[i++], 1, 64) : 1;
+            int k = args.length > i ? parseInt(args[i++], 1, item.getItemStackLimit()) : 1;
             int l = args.length > i ? parseInt(args[i++]) : 0;
             ItemStack itemstack = new ItemStack(item, k, l);
 
             if (args.length > i)
             {
-                String s1 = getChatComponentFromNthArg(sender, args, i).getUnformattedText();
+                String s1 = buildString(args, i);
 
                 try
                 {
@@ -133,11 +133,6 @@ public class CommandReplaceItem extends CommandBase
                 }
             }
 
-            if (itemstack.getItem() == null)
-            {
-                itemstack = null;
-            }
-
             if (flag)
             {
                 sender.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, 0);
@@ -147,7 +142,7 @@ public class CommandReplaceItem extends CommandBase
 
                 if (tileentity == null || !(tileentity instanceof IInventory))
                 {
-                    throw new CommandException("commands.replaceitem.noContainer", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                    throw new CommandException("commands.replaceitem.noContainer", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                 }
 
                 IInventory iinventory = (IInventory)tileentity;
@@ -169,7 +164,7 @@ public class CommandReplaceItem extends CommandBase
 
                 if (!entity.replaceItemInInventory(j, itemstack))
                 {
-                    throw new CommandException("commands.replaceitem.failed", new Object[] {s, Integer.valueOf(k), itemstack == null ? "Air" : itemstack.getTextComponent()});
+                    throw new CommandException("commands.replaceitem.failed", new Object[] {s, k, itemstack.isEmpty() ? "Air" : itemstack.getTextComponent()});
                 }
 
                 if (entity instanceof EntityPlayer)
@@ -179,7 +174,7 @@ public class CommandReplaceItem extends CommandBase
             }
 
             sender.setCommandStat(CommandResultStats.Type.AFFECTED_ITEMS, k);
-            notifyCommandListener(sender, this, "commands.replaceitem.success", new Object[] {s, Integer.valueOf(k), itemstack == null ? "Air" : itemstack.getTextComponent()});
+            notifyCommandListener(sender, this, "commands.replaceitem.success", new Object[] {s, k, itemstack.isEmpty() ? "Air" : itemstack.getTextComponent()});
         }
     }
 
@@ -195,9 +190,31 @@ public class CommandReplaceItem extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"entity", "block"}): (args.length == 2 && args[0].equals("entity") ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length >= 2 && args.length <= 4 && args[0].equals("block") ? getTabCompletionCoordinate(args, 1, pos) : ((args.length != 3 || !args[0].equals("entity")) && (args.length != 5 || !args[0].equals("block")) ? ((args.length != 4 || !args[0].equals("entity")) && (args.length != 6 || !args[0].equals("block")) ? Collections.<String>emptyList() : getListOfStringsMatchingLastWord(args, Item.REGISTRY.getKeys())) : getListOfStringsMatchingLastWord(args, SHORTCUTS.keySet()))));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"entity", "block"});
+        }
+        else if (args.length == 2 && "entity".equals(args[0]))
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else if (args.length >= 2 && args.length <= 4 && "block".equals(args[0]))
+        {
+            return getTabCompletionCoordinate(args, 1, targetPos);
+        }
+        else if ((args.length != 3 || !"entity".equals(args[0])) && (args.length != 5 || !"block".equals(args[0])))
+        {
+            return (args.length != 4 || !"entity".equals(args[0])) && (args.length != 6 || !"block".equals(args[0])) ? Collections.emptyList() : getListOfStringsMatchingLastWord(args, Item.REGISTRY.getKeys());
+        }
+        else
+        {
+            return getListOfStringsMatchingLastWord(args, SHORTCUTS.keySet());
+        }
     }
 
     /**
@@ -205,7 +222,7 @@ public class CommandReplaceItem extends CommandBase
      */
     public boolean isUsernameIndex(String[] args, int index)
     {
-        return args.length > 0 && args[0].equals("entity") && index == 1;
+        return args.length > 0 && "entity".equals(args[0]) && index == 1;
     }
 
     static

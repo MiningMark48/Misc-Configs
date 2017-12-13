@@ -10,6 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
+import net.minecraft.world.gen.feature.WorldGenFossils;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -20,20 +21,20 @@ public class BiomeSwamp extends Biome
     protected BiomeSwamp(Biome.BiomeProperties properties)
     {
         super(properties);
-        this.theBiomeDecorator.treesPerChunk = 2;
-        this.theBiomeDecorator.flowersPerChunk = 1;
-        this.theBiomeDecorator.deadBushPerChunk = 1;
-        this.theBiomeDecorator.mushroomsPerChunk = 8;
-        this.theBiomeDecorator.reedsPerChunk = 10;
-        this.theBiomeDecorator.clayPerChunk = 1;
-        this.theBiomeDecorator.waterlilyPerChunk = 4;
-        this.theBiomeDecorator.sandPerChunk2 = 0;
-        this.theBiomeDecorator.sandPerChunk = 0;
-        this.theBiomeDecorator.grassPerChunk = 5;
+        this.decorator.treesPerChunk = 2;
+        this.decorator.flowersPerChunk = 1;
+        this.decorator.deadBushPerChunk = 1;
+        this.decorator.mushroomsPerChunk = 8;
+        this.decorator.reedsPerChunk = 10;
+        this.decorator.clayPerChunk = 1;
+        this.decorator.waterlilyPerChunk = 4;
+        this.decorator.sandPatchesPerChunk = 0;
+        this.decorator.gravelPatchesPerChunk = 0;
+        this.decorator.grassPerChunk = 5;
         this.spawnableMonsterList.add(new Biome.SpawnListEntry(EntitySlime.class, 1, 1, 1));
     }
 
-    public WorldGenAbstractTree genBigTreeChance(Random rand)
+    public WorldGenAbstractTree getRandomTreeFeature(Random rand)
     {
         /** The swamp tree generator. */
         return SWAMP_FEATURE;
@@ -73,6 +74,17 @@ public class BiomeSwamp extends Biome
         }
 
         this.generateBiomeTerrain(worldIn, rand, chunkPrimerIn, x, z, noiseVal);
+    }
+
+    public void decorate(World worldIn, Random rand, BlockPos pos)
+    {
+        super.decorate(worldIn, rand, pos);
+
+        if(net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.FOSSIL))
+        if (rand.nextInt(64) == 0)
+        {
+            (new WorldGenFossils()).generate(worldIn, rand, pos);
+        }
     }
 
     @SideOnly(Side.CLIENT)

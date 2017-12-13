@@ -74,13 +74,13 @@ public class ServerAddress
             }
 
             String s2 = astring[0];
-            int j = astring.length > 1 ? parseIntWithDefault(astring[1], 25565) : 25565;
+            int j = astring.length > 1 ? getInt(astring[1], 25565) : 25565;
 
             if (j == 25565)
             {
                 String[] astring1 = getServerAddress(s2);
                 s2 = astring1[0];
-                j = parseIntWithDefault(astring1[1], 25565);
+                j = getInt(astring1[1], 25565);
             }
 
             return new ServerAddress(s2, j);
@@ -96,7 +96,7 @@ public class ServerAddress
         {
             String s = "com.sun.jndi.dns.DnsContextFactory";
             Class.forName("com.sun.jndi.dns.DnsContextFactory");
-            Hashtable<String, String> hashtable = new Hashtable();
+            Hashtable<String, String> hashtable = new Hashtable<String, String>();
             hashtable.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             hashtable.put("java.naming.provider.url", "dns:");
             hashtable.put("com.sun.jndi.dns.timeout.retries", "1");
@@ -111,7 +111,7 @@ public class ServerAddress
         }
     }
 
-    private static int parseIntWithDefault(String value, int defaultValue)
+    private static int getInt(String value, int defaultValue)
     {
         try
         {

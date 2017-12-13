@@ -3,6 +3,7 @@ package net.minecraft.entity.passive;
 import com.google.common.base.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityOwnable;
@@ -37,7 +38,7 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
     {
         super.entityInit();
         this.dataManager.register(TAMED, Byte.valueOf((byte)0));
-        this.dataManager.register(OWNER_UNIQUE_ID, Optional.<UUID>absent());
+        this.dataManager.register(OWNER_UNIQUE_ID, Optional.absent());
     }
 
     /**
@@ -65,7 +66,7 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
     public void readEntityFromNBT(NBTTagCompound compound)
     {
         super.readEntityFromNBT(compound);
-        String s = "";
+        String s;
 
         if (compound.hasKey("OwnerUUID", 8))
         {
@@ -100,7 +101,7 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
 
     public boolean canBeLeashedTo(EntityPlayer player)
     {
-        return this.isTamed() && this.isOwner(player);
+        return !this.getLeashed();
     }
 
     /**
@@ -120,10 +121,13 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
             double d0 = this.rand.nextGaussian() * 0.02D;
             double d1 = this.rand.nextGaussian() * 0.02D;
             double d2 = this.rand.nextGaussian() * 0.02D;
-            this.worldObj.spawnParticle(enumparticletypes, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + 0.5D + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2, new int[0]);
+            this.world.spawnParticle(enumparticletypes, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + 0.5D + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @SideOnly(Side.CLIENT)
     public void handleStatusUpdate(byte id)
     {
@@ -196,13 +200,24 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
         this.dataManager.set(OWNER_UNIQUE_ID, Optional.fromNullable(p_184754_1_));
     }
 
+    public void setTamedBy(EntityPlayer player)
+    {
+        this.setTamed(true);
+        this.setOwnerId(player.getUniqueID());
+
+        if (player instanceof EntityPlayerMP)
+        {
+            CriteriaTriggers.TAME_ANIMAL.trigger((EntityPlayerMP)player, this);
+        }
+    }
+
     @Nullable
     public EntityLivingBase getOwner()
     {
         try
         {
             UUID uuid = this.getOwnerId();
-            return uuid == null ? null : this.worldObj.getPlayerEntityByUUID(uuid);
+            return uuid == null ? null : this.world.getPlayerEntityByUUID(uuid);
         }
         catch (IllegalArgumentException var2)
         {
@@ -223,7 +238,7 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
         return this.aiSit;
     }
 
-    public boolean shouldAttackEntity(EntityLivingBase p_142018_1_, EntityLivingBase p_142018_2_)
+    public boolean shouldAttackEntity(EntityLivingBase target, EntityLivingBase owner)
     {
         return true;
     }
@@ -271,9 +286,9 @@ public abstract class EntityTameable extends EntityAnimal implements IEntityOwna
      */
     public void onDeath(DamageSource cause)
     {
-        if (!this.worldObj.isRemote && this.worldObj.getGameRules().getBoolean("showDeathMessages") && this.getOwner() instanceof EntityPlayerMP)
+        if (!this.world.isRemote && this.world.getGameRules().getBoolean("showDeathMessages") && this.getOwner() instanceof EntityPlayerMP)
         {
-            this.getOwner().addChatMessage(this.getCombatTracker().getDeathMessage());
+            this.getOwner().sendMessage(this.getCombatTracker().getDeathMessage());
         }
 
         super.onDeath(cause);

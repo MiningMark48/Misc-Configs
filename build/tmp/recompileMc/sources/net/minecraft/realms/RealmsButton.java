@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RealmsButton
 {
     protected static final ResourceLocation WIDGETS_LOCATION = new ResourceLocation("textures/gui/widgets.png");
-    private GuiButtonRealmsProxy proxy;
+    private final GuiButtonRealmsProxy proxy;
 
     public RealmsButton(int buttonId, int x, int y, String text)
     {
@@ -63,9 +63,9 @@ public class RealmsButton
         return this.proxy.getPositionY();
     }
 
-    public void render(int p_render_1_, int p_render_2_)
+    public void render(int p_render_1_, int p_render_2_, float p_render_3_)
     {
-        this.proxy.drawButton(Minecraft.getMinecraft(), p_render_1_, p_render_2_);
+        this.proxy.drawButton(Minecraft.getMinecraft(), p_render_1_, p_render_2_, p_render_3_);
     }
 
     public void clicked(int p_clicked_1_, int p_clicked_2_)

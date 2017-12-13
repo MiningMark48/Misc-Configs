@@ -1,23 +1,23 @@
 package net.minecraft.inventory;
 
-import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Items;
-import net.minecraft.init.PotionTypes;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionHelper;
+import net.minecraft.potion.PotionType;
 import net.minecraft.potion.PotionUtils;
-import net.minecraft.stats.AchievementList;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ContainerBrewingStand extends Container
 {
-    private IInventory tileBrewingStand;
+    private final IInventory tileBrewingStand;
     /** Instance of Slot. */
-    private final Slot theSlot;
+    private final Slot slot;
     /** Used to cache the brewing time to send changes to ICrafting listeners. */
     private int prevBrewTime;
     /** Used to cache the fuel remaining in the brewing stand to send changes to ICrafting listeners. */
@@ -26,10 +26,10 @@ public class ContainerBrewingStand extends Container
     public ContainerBrewingStand(InventoryPlayer playerInventory, IInventory tileBrewingStandIn)
     {
         this.tileBrewingStand = tileBrewingStandIn;
-        this.addSlotToContainer(new ContainerBrewingStand.Potion(playerInventory.player, tileBrewingStandIn, 0, 56, 51));
-        this.addSlotToContainer(new ContainerBrewingStand.Potion(playerInventory.player, tileBrewingStandIn, 1, 79, 58));
-        this.addSlotToContainer(new ContainerBrewingStand.Potion(playerInventory.player, tileBrewingStandIn, 2, 102, 51));
-        this.theSlot = this.addSlotToContainer(new ContainerBrewingStand.Ingredient(tileBrewingStandIn, 3, 79, 17));
+        this.addSlotToContainer(new ContainerBrewingStand.Potion(tileBrewingStandIn, 0, 56, 51));
+        this.addSlotToContainer(new ContainerBrewingStand.Potion(tileBrewingStandIn, 1, 79, 58));
+        this.addSlotToContainer(new ContainerBrewingStand.Potion(tileBrewingStandIn, 2, 102, 51));
+        this.slot = this.addSlotToContainer(new ContainerBrewingStand.Ingredient(tileBrewingStandIn, 3, 79, 17));
         this.addSlotToContainer(new ContainerBrewingStand.Fuel(tileBrewingStandIn, 4, 17, 17));
 
         for (int i = 0; i < 3; ++i)
@@ -61,16 +61,16 @@ public class ContainerBrewingStand extends Container
 
         for (int i = 0; i < this.listeners.size(); ++i)
         {
-            IContainerListener icontainerlistener = (IContainerListener)this.listeners.get(i);
+            IContainerListener icontainerlistener = this.listeners.get(i);
 
             if (this.prevBrewTime != this.tileBrewingStand.getField(0))
             {
-                icontainerlistener.sendProgressBarUpdate(this, 0, this.tileBrewingStand.getField(0));
+                icontainerlistener.sendWindowProperty(this, 0, this.tileBrewingStand.getField(0));
             }
 
             if (this.prevFuel != this.tileBrewingStand.getField(1))
             {
-                icontainerlistener.sendProgressBarUpdate(this, 1, this.tileBrewingStand.getField(1));
+                icontainerlistener.sendWindowProperty(this, 1, this.tileBrewingStand.getField(1));
             }
         }
 
@@ -84,19 +84,22 @@ public class ContainerBrewingStand extends Container
         this.tileBrewingStand.setField(id, data);
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     public boolean canInteractWith(EntityPlayer playerIn)
     {
-        return this.tileBrewingStand.isUseableByPlayer(playerIn);
+        return this.tileBrewingStand.isUsableByPlayer(playerIn);
     }
 
     /**
-     * Take a stack from the specified inventory slot.
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player
+     * inventory and the other inventory(s).
      */
-    @Nullable
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
     {
-        ItemStack itemstack = null;
-        Slot slot = (Slot)this.inventorySlots.get(index);
+        ItemStack itemstack = ItemStack.EMPTY;
+        Slot slot = this.inventorySlots.get(index);
 
         if (slot != null && slot.getHasStack())
         {
@@ -105,71 +108,71 @@ public class ContainerBrewingStand extends Container
 
             if ((index < 0 || index > 2) && index != 3 && index != 4)
             {
-                if (!this.theSlot.getHasStack() && this.theSlot.isItemValid(itemstack1))
+                if (this.slot.isItemValid(itemstack1))
                 {
                     if (!this.mergeItemStack(itemstack1, 3, 4, false))
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
-                else if (ContainerBrewingStand.Potion.canHoldPotion(itemstack))
+                else if (ContainerBrewingStand.Potion.canHoldPotion(itemstack) && itemstack.getCount() == 1)
                 {
                     if (!this.mergeItemStack(itemstack1, 0, 3, false))
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
                 else if (ContainerBrewingStand.Fuel.isValidBrewingFuel(itemstack))
                 {
                     if (!this.mergeItemStack(itemstack1, 4, 5, false))
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
                 else if (index >= 5 && index < 32)
                 {
                     if (!this.mergeItemStack(itemstack1, 32, 41, false))
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
                 else if (index >= 32 && index < 41)
                 {
                     if (!this.mergeItemStack(itemstack1, 5, 32, false))
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
                 else if (!this.mergeItemStack(itemstack1, 5, 41, false))
                 {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
             }
             else
             {
                 if (!this.mergeItemStack(itemstack1, 5, 41, true))
                 {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
 
                 slot.onSlotChange(itemstack1, itemstack);
             }
 
-            if (itemstack1.stackSize == 0)
+            if (itemstack1.isEmpty())
             {
-                slot.putStack((ItemStack)null);
+                slot.putStack(ItemStack.EMPTY);
             }
             else
             {
                 slot.onSlotChanged();
             }
 
-            if (itemstack1.stackSize == itemstack.stackSize)
+            if (itemstack1.getCount() == itemstack.getCount())
             {
-                return null;
+                return ItemStack.EMPTY;
             }
 
-            slot.onPickupFromSlot(playerIn, itemstack1);
+            slot.onTake(playerIn, itemstack1);
         }
 
         return itemstack;
@@ -183,22 +186,19 @@ public class ContainerBrewingStand extends Container
             }
 
             /**
-             * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+             * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
              */
-            public boolean isItemValid(@Nullable ItemStack stack)
+            public boolean isItemValid(ItemStack stack)
             {
-                /**
-                 * Returns true if the given ItemStack is usable as a fuel in the brewing stand.
-                 */
                 return isValidBrewingFuel(stack);
             }
 
             /**
              * Returns true if the given ItemStack is usable as a fuel in the brewing stand.
              */
-            public static boolean isValidBrewingFuel(@Nullable ItemStack itemStackIn)
+            public static boolean isValidBrewingFuel(ItemStack itemStackIn)
             {
-                return itemStackIn != null && itemStackIn.getItem() == Items.BLAZE_POWDER;
+                return itemStackIn.getItem() == Items.BLAZE_POWDER;
             }
 
             /**
@@ -219,11 +219,11 @@ public class ContainerBrewingStand extends Container
             }
 
             /**
-             * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+             * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
              */
-            public boolean isItemValid(@Nullable ItemStack stack)
+            public boolean isItemValid(ItemStack stack)
             {
-                return stack != null && net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidIngredient(stack);
+                return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidIngredient(stack);
             }
 
             /**
@@ -238,23 +238,16 @@ public class ContainerBrewingStand extends Container
 
     static class Potion extends Slot
         {
-            /** The player that has this container open. */
-            private EntityPlayer player;
-
-            public Potion(EntityPlayer playerIn, IInventory inventoryIn, int index, int xPosition, int yPosition)
+            public Potion(IInventory p_i47598_1_, int p_i47598_2_, int p_i47598_3_, int p_i47598_4_)
             {
-                super(inventoryIn, index, xPosition, yPosition);
-                this.player = playerIn;
+                super(p_i47598_1_, p_i47598_2_, p_i47598_3_, p_i47598_4_);
             }
 
             /**
-             * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+             * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
              */
-            public boolean isItemValid(@Nullable ItemStack stack)
+            public boolean isItemValid(ItemStack stack)
             {
-                /**
-                 * Returns true if this itemstack can be filled with a potion
-                 */
                 return canHoldPotion(stack);
             }
 
@@ -267,29 +260,26 @@ public class ContainerBrewingStand extends Container
                 return 1;
             }
 
-            public void onPickupFromSlot(EntityPlayer playerIn, ItemStack stack)
+            public ItemStack onTake(EntityPlayer thePlayer, ItemStack stack)
             {
-                if (PotionUtils.getPotionFromItem(stack) != PotionTypes.WATER)
+                PotionType potiontype = PotionUtils.getPotionFromItem(stack);
+
+                if (thePlayer instanceof EntityPlayerMP)
                 {
-                    this.player.addStat(AchievementList.POTION);
+                    net.minecraftforge.event.ForgeEventFactory.onPlayerBrewedPotion(thePlayer, stack);
+                    CriteriaTriggers.BREWED_POTION.trigger((EntityPlayerMP)thePlayer, potiontype);
                 }
 
-                super.onPickupFromSlot(playerIn, stack);
+                super.onTake(thePlayer, stack);
+                return stack;
             }
 
             /**
              * Returns true if this itemstack can be filled with a potion
              */
-            public static boolean canHoldPotion(@Nullable ItemStack stack)
+            public static boolean canHoldPotion(ItemStack stack)
             {
-                if (stack == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidInput(stack);
-                }
+                return net.minecraftforge.common.brewing.BrewingRecipeRegistry.isValidInput(stack);
             }
         }
 }

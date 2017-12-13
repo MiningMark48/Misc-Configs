@@ -7,7 +7,7 @@ public enum Mirror
     FRONT_BACK("mirror_front_back");
 
     private final String name;
-    private static String[] mirrorNames = new String[values().length];
+    private static final String[] mirrorNames = new String[values().length];
 
     private Mirror(String nameIn)
     {
@@ -25,9 +25,9 @@ public enum Mirror
 
         switch (this)
         {
-            case LEFT_RIGHT:
-                return (rotationCount - j) % rotationCount;
             case FRONT_BACK:
+                return (rotationCount - j) % rotationCount;
+            case LEFT_RIGHT:
                 return (i - j + rotationCount) % rotationCount;
             default:
                 return rotationIn;
@@ -50,7 +50,7 @@ public enum Mirror
     {
         switch (this)
         {
-            case LEFT_RIGHT:
+            case FRONT_BACK:
 
                 if (facing == EnumFacing.WEST)
                 {
@@ -66,7 +66,7 @@ public enum Mirror
                     return facing;
                 }
 
-            case FRONT_BACK:
+            case LEFT_RIGHT:
 
                 if (facing == EnumFacing.NORTH)
                 {

@@ -7,17 +7,19 @@ import java.util.Random;
 import java.util.Map.Entry;
 import net.minecraft.init.Biomes;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 
 public class MapGenVillage extends MapGenStructure
 {
-    public static List<Biome> VILLAGE_SPAWN_BIOMES = Arrays.<Biome>asList(new Biome[] {Biomes.PLAINS, Biomes.DESERT, Biomes.SAVANNA});
+    /** A list of all the biomes villages can spawn in. */
+    public static List<Biome> VILLAGE_SPAWN_BIOMES = Arrays.<Biome>asList(Biomes.PLAINS, Biomes.DESERT, Biomes.SAVANNA, Biomes.TAIGA);
     /** None */
     private int size;
     private int distance;
-    private int minTownSeparation;
+    private final int minTownSeparation;
 
     public MapGenVillage()
     {
@@ -33,11 +35,11 @@ public class MapGenVillage extends MapGenStructure
         {
             if (((String)entry.getKey()).equals("size"))
             {
-                this.size = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.size, 0);
+                this.size = MathHelper.getInt(entry.getValue(), this.size, 0);
             }
             else if (((String)entry.getKey()).equals("distance"))
             {
-                this.distance = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.distance, this.minTownSeparation + 1);
+                this.distance = MathHelper.getInt(entry.getValue(), this.distance, 9);
             }
         }
     }
@@ -64,15 +66,15 @@ public class MapGenVillage extends MapGenStructure
 
         int k = chunkX / this.distance;
         int l = chunkZ / this.distance;
-        Random random = this.worldObj.setRandomSeed(k, l, 10387312);
+        Random random = this.world.setRandomSeed(k, l, 10387312);
         k = k * this.distance;
         l = l * this.distance;
-        k = k + random.nextInt(this.distance - this.minTownSeparation);
-        l = l + random.nextInt(this.distance - this.minTownSeparation);
+        k = k + random.nextInt(this.distance - 8);
+        l = l + random.nextInt(this.distance - 8);
 
         if (i == k && j == l)
         {
-            boolean flag = this.worldObj.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 0, VILLAGE_SPAWN_BIOMES);
+            boolean flag = this.world.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 0, VILLAGE_SPAWN_BIOMES);
 
             if (flag)
             {
@@ -83,9 +85,15 @@ public class MapGenVillage extends MapGenStructure
         return false;
     }
 
+    public BlockPos getNearestStructurePos(World worldIn, BlockPos pos, boolean findUnexplored)
+    {
+        this.world = worldIn;
+        return findNearestStructurePosBySpacing(worldIn, this, pos, this.distance, 8, 10387312, false, 100, findUnexplored);
+    }
+
     protected StructureStart getStructureStart(int chunkX, int chunkZ)
     {
-        return new MapGenVillage.Start(this.worldObj, this.rand, chunkX, chunkZ, this.size);
+        return new MapGenVillage.Start(this.world, this.rand, chunkX, chunkZ, this.size);
     }
 
     public static class Start extends StructureStart
@@ -112,13 +120,13 @@ public class MapGenVillage extends MapGenStructure
                     if (list1.isEmpty())
                     {
                         int i = rand.nextInt(list2.size());
-                        StructureComponent structurecomponent = (StructureComponent)list2.remove(i);
+                        StructureComponent structurecomponent = list2.remove(i);
                         structurecomponent.buildComponent(structurevillagepieces$start, this.components, rand);
                     }
                     else
                     {
                         int j = rand.nextInt(list1.size());
-                        StructureComponent structurecomponent2 = (StructureComponent)list1.remove(j);
+                        StructureComponent structurecomponent2 = list1.remove(j);
                         structurecomponent2.buildComponent(structurevillagepieces$start, this.components, rand);
                     }
                 }

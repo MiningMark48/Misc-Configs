@@ -1,12 +1,13 @@
 package net.minecraft.block;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -62,7 +63,7 @@ public class BlockTripWireHook extends Block
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
@@ -81,18 +82,22 @@ public class BlockTripWireHook extends Block
     }
 
     /**
-     * Check whether this Block can be placed on the given side
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
      */
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
-        return side.getAxis().isHorizontal() && worldIn.getBlockState(pos.offset(side.getOpposite())).isSideSolid(worldIn, pos.offset(side.getOpposite()), side);
+        EnumFacing enumfacing = side.getOpposite();
+        BlockPos blockpos = pos.offset(enumfacing);
+        IBlockState iblockstate = worldIn.getBlockState(blockpos);
+        boolean flag = isExceptBlockForAttachWithPiston(iblockstate.getBlock());
+        return !flag && side.getAxis().isHorizontal() && iblockstate.getBlockFaceShape(worldIn, blockpos, side) == BlockFaceShape.SOLID && !iblockstate.canProvidePower();
     }
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
     {
         for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
         {
-            if (worldIn.getBlockState(pos.offset(enumfacing)).isSideSolid(worldIn, pos.offset(enumfacing), enumfacing.getOpposite()))
+            if (this.canPlaceBlockOnSide(worldIn, pos, enumfacing))
             {
                 return true;
             }
@@ -105,7 +110,7 @@ public class BlockTripWireHook extends Block
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         IBlockState iblockstate = this.getDefaultState().withProperty(POWERED, Boolean.valueOf(false)).withProperty(ATTACHED, Boolean.valueOf(false));
 
@@ -130,7 +135,7 @@ public class BlockTripWireHook extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (blockIn != this)
         {
@@ -138,7 +143,7 @@ public class BlockTripWireHook extends Block
             {
                 EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
 
-                if (!worldIn.getBlockState(pos.offset(enumfacing.getOpposite())).isSideSolid(worldIn, pos.offset(enumfacing.getOpposite()), enumfacing))
+                if (!this.canPlaceBlockOnSide(worldIn, pos, enumfacing))
                 {
                     this.dropBlockAsItem(worldIn, pos, state, 0);
                     worldIn.setBlockToAir(pos);
@@ -181,7 +186,7 @@ public class BlockTripWireHook extends Block
             {
                 if (j == p_176260_6_)
                 {
-                    iblockstate = (IBlockState)Objects.firstNonNull(p_176260_7_, iblockstate);
+                    iblockstate = (IBlockState)MoreObjects.firstNonNull(p_176260_7_, iblockstate);
                 }
 
                 boolean flag4 = !((Boolean)iblockstate.getValue(BlockTripWire.DISARMED)).booleanValue();
@@ -229,7 +234,7 @@ public class BlockTripWireHook extends Block
                 BlockPos blockpos2 = pos.offset(enumfacing, k);
                 IBlockState iblockstate2 = aiblockstate[k];
 
-                if (iblockstate2 != null && worldIn.getBlockState(blockpos2).getBlock() != Blocks.AIR)
+                if (iblockstate2 != null && worldIn.getBlockState(blockpos2).getMaterial() != Material.AIR)
                 {
                     worldIn.setBlockState(blockpos2, iblockstate2.withProperty(ATTACHED, Boolean.valueOf(flag2)), 3);
                 }
@@ -271,8 +276,8 @@ public class BlockTripWireHook extends Block
 
     private void notifyNeighbors(World worldIn, BlockPos pos, EnumFacing side)
     {
-        worldIn.notifyNeighborsOfStateChange(pos, this);
-        worldIn.notifyNeighborsOfStateChange(pos.offset(side.getOpposite()), this);
+        worldIn.notifyNeighborsOfStateChange(pos, this, false);
+        worldIn.notifyNeighborsOfStateChange(pos.offset(side.getOpposite()), this, false);
     }
 
     private boolean checkForDrop(World worldIn, BlockPos pos, IBlockState state)
@@ -289,6 +294,9 @@ public class BlockTripWireHook extends Block
         }
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         boolean flag = ((Boolean)state.getValue(ATTACHED)).booleanValue();
@@ -301,8 +309,8 @@ public class BlockTripWireHook extends Block
 
         if (flag1)
         {
-            worldIn.notifyNeighborsOfStateChange(pos, this);
-            worldIn.notifyNeighborsOfStateChange(pos.offset(((EnumFacing)state.getValue(FACING)).getOpposite()), this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
+            worldIn.notifyNeighborsOfStateChange(pos.offset(((EnumFacing)state.getValue(FACING)).getOpposite()), this, false);
         }
 
         super.breakBlock(worldIn, pos, state);
@@ -315,7 +323,14 @@ public class BlockTripWireHook extends Block
 
     public int getStrongPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side)
     {
-        return !((Boolean)blockState.getValue(POWERED)).booleanValue() ? 0 : (blockState.getValue(FACING) == side ? 15 : 0);
+        if (!((Boolean)blockState.getValue(POWERED)).booleanValue())
+        {
+            return 0;
+        }
+        else
+        {
+            return blockState.getValue(FACING) == side ? 15 : 0;
+        }
     }
 
     /**
@@ -382,5 +397,19 @@ public class BlockTripWireHook extends Block
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {FACING, POWERED, ATTACHED});
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 }

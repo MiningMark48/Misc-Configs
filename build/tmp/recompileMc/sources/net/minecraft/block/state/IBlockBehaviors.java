@@ -11,9 +11,6 @@ public interface IBlockBehaviors
      * changes to the world, like pistons replacing the block with an extended base. On the client, the update may
      * involve replacing tile entities, playing sounds, or performing other visual actions to reflect the server side
      * changes.
-     *  
-     * @param worldIn The world the block event is taking place in
-     * @param pos The position of the block event taking place
      */
     boolean onBlockEventReceived(World worldIn, BlockPos pos, int id, int param);
 
@@ -22,5 +19,5 @@ public interface IBlockBehaviors
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    void neighborChanged(World worldIn, BlockPos pos, Block p_189546_3_);
+    void neighborChanged(World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos);
 }

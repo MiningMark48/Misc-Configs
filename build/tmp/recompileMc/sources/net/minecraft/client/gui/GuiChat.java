@@ -50,8 +50,8 @@ public class GuiChat extends GuiScreen implements ITabCompleter
     {
         Keyboard.enableRepeatEvents(true);
         this.sentHistoryCursor = this.mc.ingameGUI.getChatGUI().getSentMessages().size();
-        this.inputField = new GuiTextField(0, this.fontRendererObj, 4, this.height - 12, this.width - 4, 12);
-        this.inputField.setMaxStringLength(100);
+        this.inputField = new GuiTextField(0, this.fontRenderer, 4, this.height - 12, this.width - 4, 12);
+        this.inputField.setMaxStringLength(256);
         this.inputField.setEnableBackgroundDrawing(false);
         this.inputField.setFocused(true);
         this.inputField.setText(this.defaultInputFieldText);
@@ -171,7 +171,7 @@ public class GuiChat extends GuiScreen implements ITabCompleter
         {
             ITextComponent itextcomponent = this.mc.ingameGUI.getChatGUI().getChatComponent(Mouse.getX(), Mouse.getY());
 
-            if (this.handleComponentClick(itextcomponent))
+            if (itextcomponent != null && this.handleComponentClick(itextcomponent))
             {
                 return;
             }
@@ -204,7 +204,7 @@ public class GuiChat extends GuiScreen implements ITabCompleter
     {
         int i = this.sentHistoryCursor + msgPos;
         int j = this.mc.ingameGUI.getChatGUI().getSentMessages().size();
-        i = MathHelper.clamp_int(i, 0, j);
+        i = MathHelper.clamp(i, 0, j);
 
         if (i != this.sentHistoryCursor)
         {
@@ -263,7 +263,7 @@ public class GuiChat extends GuiScreen implements ITabCompleter
     public static class ChatTabCompleter extends TabCompleter
         {
             /** The instance of the Minecraft client */
-            private Minecraft clientInstance = Minecraft.getMinecraft();
+            private final Minecraft client = Minecraft.getMinecraft();
 
             public ChatTabCompleter(GuiTextField p_i46749_1_)
             {
@@ -292,7 +292,7 @@ public class GuiChat extends GuiScreen implements ITabCompleter
                         stringbuilder.append(s);
                     }
 
-                    this.clientInstance.ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new TextComponentString(stringbuilder.toString()), 1);
+                    this.client.ingameGUI.getChatGUI().printChatMessageWithOptionalDeletion(new TextComponentString(stringbuilder.toString()), 1);
                 }
             }
 
@@ -301,9 +301,9 @@ public class GuiChat extends GuiScreen implements ITabCompleter
             {
                 BlockPos blockpos = null;
 
-                if (this.clientInstance.objectMouseOver != null && this.clientInstance.objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
+                if (this.client.objectMouseOver != null && this.client.objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
                 {
-                    blockpos = this.clientInstance.objectMouseOver.getBlockPos();
+                    blockpos = this.client.objectMouseOver.getBlockPos();
                 }
 
                 return blockpos;

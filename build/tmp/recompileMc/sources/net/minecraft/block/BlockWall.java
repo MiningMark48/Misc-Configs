@@ -2,18 +2,19 @@ package net.minecraft.block;
 
 import java.util.List;
 import javax.annotation.Nullable;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
@@ -40,7 +41,7 @@ public class BlockWall extends Block
         this.setHardness(modelBlock.blockHardness);
         this.setResistance(modelBlock.blockResistance / 3.0F);
         this.setSoundType(modelBlock.blockSoundType);
-        this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
+        this.setCreativeTab(CreativeTabs.DECORATIONS);
     }
 
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
@@ -49,8 +50,18 @@ public class BlockWall extends Block
         return AABB_BY_INDEX[getAABBIndex(state)];
     }
 
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
+    {
+        if (!isActualState)
+        {
+            state = this.getActualState(state, worldIn, pos);
+        }
+
+        addCollisionBoxToList(pos, entityBox, collidingBoxes, CLIP_AABB_BY_INDEX[getAABBIndex(state)]);
+    }
+
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         blockState = this.getActualState(blockState, worldIn, pos);
         return CLIP_AABB_BY_INDEX[getAABBIndex(blockState)];
@@ -96,6 +107,9 @@ public class BlockWall extends Block
         return false;
     }
 
+    /**
+     * Determines if an entity can path through this block
+     */
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos)
     {
         return false;
@@ -109,22 +123,28 @@ public class BlockWall extends Block
         return false;
     }
 
-    private boolean canConnectTo(IBlockAccess worldIn, BlockPos pos)
+    private boolean canConnectTo(IBlockAccess worldIn, BlockPos pos, EnumFacing p_176253_3_)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
         Block block = iblockstate.getBlock();
-        return block == Blocks.BARRIER ? false : (block != this && !(block instanceof BlockFenceGate) ? (block.blockMaterial.isOpaque() && iblockstate.isFullCube() ? block.blockMaterial != Material.GOURD : false) : true);
+        BlockFaceShape blockfaceshape = iblockstate.getBlockFaceShape(worldIn, pos, p_176253_3_);
+        boolean flag = blockfaceshape == BlockFaceShape.MIDDLE_POLE_THICK || blockfaceshape == BlockFaceShape.MIDDLE_POLE && block instanceof BlockFenceGate;
+        return !isExcepBlockForAttachWithPiston(block) && blockfaceshape == BlockFaceShape.SOLID || flag;
+    }
+
+    protected static boolean isExcepBlockForAttachWithPiston(Block p_194143_0_)
+    {
+        return Block.isExceptBlockForAttachWithPiston(p_194143_0_) || p_194143_0_ == Blocks.BARRIER || p_194143_0_ == Blocks.MELON_BLOCK || p_194143_0_ == Blocks.PUMPKIN || p_194143_0_ == Blocks.LIT_PUMPKIN;
     }
 
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (BlockWall.EnumType blockwall$enumtype : BlockWall.EnumType.values())
         {
-            list.add(new ItemStack(itemIn, 1, blockwall$enumtype.getMetadata()));
+            items.add(new ItemStack(this, 1, blockwall$enumtype.getMetadata()));
         }
     }
 
@@ -165,10 +185,10 @@ public class BlockWall extends Block
      */
     public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
-        boolean flag = this.canConnectTo(worldIn, pos.north());
-        boolean flag1 = this.canConnectTo(worldIn, pos.east());
-        boolean flag2 = this.canConnectTo(worldIn, pos.south());
-        boolean flag3 = this.canConnectTo(worldIn, pos.west());
+        boolean flag =  canWallConnectTo(worldIn, pos, EnumFacing.NORTH);
+        boolean flag1 = canWallConnectTo(worldIn, pos, EnumFacing.EAST);
+        boolean flag2 = canWallConnectTo(worldIn, pos, EnumFacing.SOUTH);
+        boolean flag3 = canWallConnectTo(worldIn, pos, EnumFacing.WEST);
         boolean flag4 = flag && !flag1 && flag2 && !flag3 || !flag && flag1 && !flag2 && flag3;
         return state.withProperty(UP, Boolean.valueOf(!flag4 || !worldIn.isAirBlock(pos.up()))).withProperty(NORTH, Boolean.valueOf(flag)).withProperty(EAST, Boolean.valueOf(flag1)).withProperty(SOUTH, Boolean.valueOf(flag2)).withProperty(WEST, Boolean.valueOf(flag3));
     }
@@ -178,6 +198,38 @@ public class BlockWall extends Block
         return new BlockStateContainer(this, new IProperty[] {UP, NORTH, EAST, WEST, SOUTH, VARIANT});
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return face != EnumFacing.UP && face != EnumFacing.DOWN ? BlockFaceShape.MIDDLE_POLE_THICK : BlockFaceShape.CENTER_BIG;
+    }
+
+    /* ======================================== FORGE START ======================================== */
+
+    @Override
+    public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing)
+    {
+        Block connector = world.getBlockState(pos.offset(facing)).getBlock();
+        return connector instanceof BlockWall || connector instanceof BlockFenceGate;
+    }
+
+    private boolean canWallConnectTo(IBlockAccess world, BlockPos pos, EnumFacing facing)
+    {
+        BlockPos other = pos.offset(facing);
+        Block block = world.getBlockState(other).getBlock();
+        return block.canBeConnectedTo(world, other, facing.getOpposite()) || canConnectTo(world, other, facing.getOpposite());
+    }
+
+    /* ======================================== FORGE END ======================================== */
+
     public static enum EnumType implements IStringSerializable
     {
         NORMAL(0, "cobblestone", "normal"),
@@ -186,7 +238,7 @@ public class BlockWall extends Block
         private static final BlockWall.EnumType[] META_LOOKUP = new BlockWall.EnumType[values().length];
         private final int meta;
         private final String name;
-        private String unlocalizedName;
+        private final String unlocalizedName;
 
         private EnumType(int meta, String name, String unlocalizedName)
         {

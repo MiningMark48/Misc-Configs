@@ -1,8 +1,9 @@
 package net.minecraft.block.state;
 
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -11,6 +12,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.collect.UnmodifiableIterator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -60,12 +62,12 @@ public class BlockStateContainer
         this(blockIn, properties, null);
     }
 
-    protected StateImplementation createState(Block block, ImmutableMap<IProperty<?>, Comparable<?>> properties, ImmutableMap<net.minecraftforge.common.property.IUnlistedProperty<?>, com.google.common.base.Optional<?>> unlistedProperties)
+    protected StateImplementation createState(Block block, ImmutableMap<IProperty<?>, Comparable<?>> properties, @Nullable ImmutableMap<net.minecraftforge.common.property.IUnlistedProperty<?>, java.util.Optional<?>> unlistedProperties)
     {
         return new StateImplementation(block, properties);
     }
 
-    protected BlockStateContainer(Block blockIn, IProperty<?>[] properties, ImmutableMap<net.minecraftforge.common.property.IUnlistedProperty<?>, com.google.common.base.Optional<?>> unlistedProperties)
+    protected BlockStateContainer(Block blockIn, IProperty<?>[] properties, ImmutableMap<net.minecraftforge.common.property.IUnlistedProperty<?>, java.util.Optional<?>> unlistedProperties)
     {
         this.block = blockIn;
         Map < String, IProperty<? >> map = Maps. < String, IProperty<? >> newHashMap();
@@ -76,7 +78,7 @@ public class BlockStateContainer
             map.put(iproperty.getName(), iproperty);
         }
 
-        this.properties = ImmutableSortedMap. < String, IProperty<? >> copyOf(map);
+        this.properties = ImmutableSortedMap.copyOf(map);
         Map < Map < IProperty<?>, Comparable<? >> , BlockStateContainer.StateImplementation > map2 = Maps. < Map < IProperty<?>, Comparable<? >> , BlockStateContainer.StateImplementation > newLinkedHashMap();
         List<BlockStateContainer.StateImplementation> list1 = Lists.<BlockStateContainer.StateImplementation>newArrayList();
 
@@ -128,9 +130,12 @@ public class BlockStateContainer
     private List < Iterable < Comparable<? >>> getAllowedValues()
     {
         List < Iterable < Comparable<? >>> list = Lists. < Iterable < Comparable<? >>> newArrayList();
+        ImmutableCollection < IProperty<? >> immutablecollection = this.properties.values();
+        UnmodifiableIterator unmodifiableiterator = immutablecollection.iterator();
 
-        for (IProperty<?> iproperty : this.properties.values())
+        while (unmodifiableiterator.hasNext())
         {
+            IProperty<?> iproperty = (IProperty)unmodifiableiterator.next();
             list.add(((IProperty)iproperty).getAllowedValues());
         }
 
@@ -154,11 +159,10 @@ public class BlockStateContainer
 
     public String toString()
     {
-        return Objects.toStringHelper(this).add("block", Block.REGISTRY.getNameForObject(this.block)).add("properties", Iterables.transform(this.properties.values(), GET_NAME_FUNC)).toString();
+        return MoreObjects.toStringHelper(this).add("block", Block.REGISTRY.getNameForObject(this.block)).add("properties", Iterables.transform(this.properties.values(), GET_NAME_FUNC)).toString();
     }
 
     @Nullable
-    @SideOnly(Side.CLIENT)
     public IProperty<?> getProperty(String propertyName)
     {
         return (IProperty)this.properties.get(propertyName);
@@ -183,11 +187,14 @@ public class BlockStateContainer
                 this.propertyValueTable = propertyValueTable;
             }
 
-            public Collection < IProperty<? >> getPropertyNames()
+            public Collection < IProperty<? >> getPropertyKeys()
             {
                 return Collections. < IProperty<? >> unmodifiableCollection(this.properties.keySet());
             }
 
+            /**
+             * Get the value of the given Property for this BlockState
+             */
             public <T extends Comparable<T>> T getValue(IProperty<T> property)
             {
                 Comparable<?> comparable = (Comparable)this.properties.get(property);
@@ -198,10 +205,13 @@ public class BlockStateContainer
                 }
                 else
                 {
-                    return (T)((Comparable)property.getValueClass().cast(comparable));
+                    return (T)(property.getValueClass().cast(comparable));
                 }
             }
 
+            /**
+             * Get a version of this BlockState with the given Property now set to the given value
+             */
             public <T extends Comparable<T>, V extends T> IBlockState withProperty(IProperty<T> property, V value)
             {
                 Comparable<?> comparable = (Comparable)this.properties.get(property);
@@ -258,9 +268,11 @@ public class BlockStateContainer
                 else
                 {
                     Table < IProperty<?>, Comparable<?>, IBlockState > table = HashBasedTable. < IProperty<?>, Comparable<?>, IBlockState > create();
+                    UnmodifiableIterator unmodifiableiterator = this.properties.entrySet().iterator();
 
-                    for (Entry < IProperty<?>, Comparable<? >> entry : this.properties.entrySet())
+                    while (unmodifiableiterator.hasNext())
                     {
+                        Entry < IProperty<?>, Comparable<? >> entry = (Entry)unmodifiableiterator.next();
                         IProperty<?> iproperty = (IProperty)entry.getKey();
 
                         for (Comparable<?> comparable : iproperty.getAllowedValues())
@@ -272,7 +284,7 @@ public class BlockStateContainer
                         }
                     }
 
-                    this.propertyValueTable = ImmutableTable. < IProperty<?>, Comparable<?>, IBlockState > copyOf(table);
+                    this.propertyValueTable = ImmutableTable.copyOf(table);
                 }
             }
 
@@ -291,6 +303,11 @@ public class BlockStateContainer
             public boolean isFullBlock()
             {
                 return this.block.isFullBlock(this);
+            }
+
+            public boolean canEntitySpawn(Entity entityIn)
+            {
+                return this.block.canEntitySpawn(this, entityIn);
             }
 
             public int getLightOpacity()
@@ -314,9 +331,9 @@ public class BlockStateContainer
                 return this.block.getUseNeighborBrightness(this);
             }
 
-            public MapColor getMapColor()
+            public MapColor getMapColor(IBlockAccess p_185909_1_, BlockPos p_185909_2_)
             {
-                return this.block.getMapColor(this);
+                return this.block.getMapColor(this, p_185909_1_, p_185909_2_);
             }
 
             /**
@@ -338,6 +355,12 @@ public class BlockStateContainer
             public boolean isFullCube()
             {
                 return this.block.isFullCube(this);
+            }
+
+            @SideOnly(Side.CLIENT)
+            public boolean hasCustomBreakingProgress()
+            {
+                return this.block.hasCustomBreakingProgress(this);
             }
 
             public EnumBlockRenderType getRenderType()
@@ -430,14 +453,14 @@ public class BlockStateContainer
             }
 
             @Nullable
-            public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos)
+            public AxisAlignedBB getCollisionBoundingBox(IBlockAccess worldIn, BlockPos pos)
             {
                 return this.block.getCollisionBoundingBox(this, worldIn, pos);
             }
 
-            public void addCollisionBoxToList(World worldIn, BlockPos pos, AxisAlignedBB p_185908_3_, List<AxisAlignedBB> p_185908_4_, @Nullable Entity p_185908_5_)
+            public void addCollisionBoxToList(World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean p_185908_6_)
             {
-                this.block.addCollisionBoxToList(this, worldIn, pos, p_185908_3_, p_185908_4_, p_185908_5_);
+                this.block.addCollisionBoxToList(this, worldIn, pos, entityBox, collidingBoxes, entityIn, p_185908_6_);
             }
 
             public AxisAlignedBB getBoundingBox(IBlockAccess blockAccess, BlockPos pos)
@@ -450,9 +473,18 @@ public class BlockStateContainer
                 return this.block.collisionRayTrace(this, worldIn, pos, start, end);
             }
 
-            public boolean isFullyOpaque()
+            /**
+             * Determines if the block is solid enough on the top side to support other blocks, like redstone
+             * components.
+             */
+            public boolean isTopSolid()
             {
-                return this.block.isFullyOpaque(this);
+                return this.block.isTopSolid(this);
+            }
+
+            public Vec3d getOffset(IBlockAccess access, BlockPos pos)
+            {
+                return this.block.getOffset(this, access, pos);
             }
 
             /**
@@ -460,9 +492,6 @@ public class BlockStateContainer
              * additional changes to the world, like pistons replacing the block with an extended base. On the client,
              * the update may involve replacing tile entities, playing sounds, or performing other visual actions to
              * reflect the server side changes.
-             *  
-             * @param worldIn The world the block event is taking place in
-             * @param pos The position of the block event taking place
              */
             public boolean onBlockEventReceived(World worldIn, BlockPos pos, int id, int param)
             {
@@ -474,9 +503,19 @@ public class BlockStateContainer
              * neighbor change. Cases may include when redstone power is updated, cactus blocks popping off due to a
              * neighboring solid block, etc.
              */
-            public void neighborChanged(World worldIn, BlockPos pos, Block p_189546_3_)
+            public void neighborChanged(World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
             {
-                this.block.neighborChanged(this, worldIn, pos, p_189546_3_);
+                this.block.neighborChanged(this, worldIn, pos, blockIn, fromPos);
+            }
+
+            public boolean causesSuffocation()
+            {
+                return this.block.causesSuffocation(this);
+            }
+
+            public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, BlockPos pos, EnumFacing facing)
+            {
+                return this.block.getBlockFaceShape(worldIn, this, pos, facing);
             }
 
             //Forge Start

@@ -1,6 +1,7 @@
 package net.minecraft.world.storage.loot;
 
 import com.google.common.collect.Sets;
+import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 import net.minecraft.util.ResourceLocation;
@@ -23,6 +24,7 @@ public class LootTableList
     public static final ResourceLocation CHESTS_JUNGLE_TEMPLE = register("chests/jungle_temple");
     public static final ResourceLocation CHESTS_JUNGLE_TEMPLE_DISPENSER = register("chests/jungle_temple_dispenser");
     public static final ResourceLocation CHESTS_IGLOO_CHEST = register("chests/igloo_chest");
+    public static final ResourceLocation CHESTS_WOODLAND_MANSION = register("chests/woodland_mansion");
     public static final ResourceLocation ENTITIES_WITCH = register("entities/witch");
     public static final ResourceLocation ENTITIES_BLAZE = register("entities/blaze");
     public static final ResourceLocation ENTITIES_CREEPER = register("entities/creeper");
@@ -39,7 +41,10 @@ public class LootTableList
     public static final ResourceLocation ENTITIES_RABBIT = register("entities/rabbit");
     public static final ResourceLocation ENTITIES_CHICKEN = register("entities/chicken");
     public static final ResourceLocation ENTITIES_PIG = register("entities/pig");
+    public static final ResourceLocation ENTITIES_POLAR_BEAR = register("entities/polar_bear");
     public static final ResourceLocation ENTITIES_HORSE = register("entities/horse");
+    public static final ResourceLocation ENTITIES_DONKEY = register("entities/donkey");
+    public static final ResourceLocation ENTITIES_MULE = register("entities/mule");
     public static final ResourceLocation ENTITIES_ZOMBIE_HORSE = register("entities/zombie_horse");
     public static final ResourceLocation ENTITIES_SKELETON_HORSE = register("entities/skeleton_horse");
     public static final ResourceLocation ENTITIES_COW = register("entities/cow");
@@ -73,6 +78,16 @@ public class LootTableList
     public static final ResourceLocation ENTITIES_ZOMBIE_PIGMAN = register("entities/zombie_pigman");
     public static final ResourceLocation ENTITIES_SKELETON = register("entities/skeleton");
     public static final ResourceLocation ENTITIES_WITHER_SKELETON = register("entities/wither_skeleton");
+    public static final ResourceLocation ENTITIES_STRAY = register("entities/stray");
+    public static final ResourceLocation ENTITIES_HUSK = register("entities/husk");
+    public static final ResourceLocation ENTITIES_ZOMBIE_VILLAGER = register("entities/zombie_villager");
+    public static final ResourceLocation ENTITIES_VILLAGER = register("entities/villager");
+    public static final ResourceLocation ENTITIES_EVOCATION_ILLAGER = register("entities/evocation_illager");
+    public static final ResourceLocation ENTITIES_VINDICATION_ILLAGER = register("entities/vindication_illager");
+    public static final ResourceLocation ENTITIES_LLAMA = register("entities/llama");
+    public static final ResourceLocation ENTITIES_PARROT = register("entities/parrot");
+    public static final ResourceLocation ENTITIES_VEX = register("entities/vex");
+    public static final ResourceLocation ENTITIES_ENDER_DRAGON = register("entities/ender_dragon");
     public static final ResourceLocation GAMEPLAY_FISHING = register("gameplay/fishing");
     public static final ResourceLocation GAMEPLAY_FISHING_JUNK = register("gameplay/fishing/junk");
     public static final ResourceLocation GAMEPLAY_FISHING_TREASURE = register("gameplay/fishing/treasure");
@@ -95,8 +110,26 @@ public class LootTableList
         }
     }
 
+    /**
+     * An unmodifiable set is returned
+     */
     public static Set<ResourceLocation> getAll()
     {
         return READ_ONLY_LOOT_TABLES;
+    }
+
+    public static boolean test()
+    {
+        LootTableManager loottablemanager = new LootTableManager((File)null);
+
+        for (ResourceLocation resourcelocation : READ_ONLY_LOOT_TABLES)
+        {
+            if (loottablemanager.getLootTableFromLocation(resourcelocation) == LootTable.EMPTY_LOOT_TABLE)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

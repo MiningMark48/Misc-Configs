@@ -2,9 +2,7 @@ package net.minecraft.client.renderer.entity.layers;
 
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderWolf;
-import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.entity.passive.EntityWolf;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -25,8 +23,7 @@ public class LayerWolfCollar implements LayerRenderer<EntityWolf>
         if (entitylivingbaseIn.isTamed() && !entitylivingbaseIn.isInvisible())
         {
             this.wolfRenderer.bindTexture(WOLF_COLLAR);
-            EnumDyeColor enumdyecolor = EnumDyeColor.byMetadata(entitylivingbaseIn.getCollarColor().getMetadata());
-            float[] afloat = EntitySheep.getDyeRgb(enumdyecolor);
+            float[] afloat = entitylivingbaseIn.getCollarColor().getColorComponentValues();
             GlStateManager.color(afloat[0], afloat[1], afloat[2]);
             this.wolfRenderer.getMainModel().render(entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
         }

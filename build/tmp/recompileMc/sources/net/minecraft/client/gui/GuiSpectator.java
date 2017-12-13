@@ -44,7 +44,7 @@ public class GuiSpectator extends Gui implements ISpectatorMenuRecipient
     private float getHotbarAlpha()
     {
         long i = this.lastSelectionTime - Minecraft.getSystemTime() + 5000L;
-        return MathHelper.clamp_float((float)i / 2000.0F, 0.0F, 1.0F);
+        return MathHelper.clamp((float)i / 2000.0F, 0.0F, 1.0F);
     }
 
     public void renderTooltip(ScaledResolution p_175264_1_, float p_175264_2_)
@@ -113,7 +113,7 @@ public class GuiSpectator extends Gui implements ISpectatorMenuRecipient
 
             if (i > 3 && p_175266_5_.isEnabled())
             {
-                this.mc.fontRendererObj.drawStringWithShadow(s, (float)(p_175266_2_ + 19 - 2 - this.mc.fontRendererObj.getStringWidth(s)), p_175266_3_ + 6.0F + 3.0F, 16777215 + (i << 24));
+                this.mc.fontRenderer.drawStringWithShadow(s, (float)(p_175266_2_ + 19 - 2 - this.mc.fontRenderer.getStringWidth(s)), p_175266_3_ + 6.0F + 3.0F, 16777215 + (i << 24));
             }
         }
     }
@@ -125,23 +125,23 @@ public class GuiSpectator extends Gui implements ISpectatorMenuRecipient
         if (i > 3 && this.menu != null)
         {
             ISpectatorMenuObject ispectatormenuobject = this.menu.getSelectedItem();
-            String s = ispectatormenuobject != SpectatorMenu.EMPTY_SLOT ? ispectatormenuobject.getSpectatorName().getFormattedText() : this.menu.getSelectedCategory().getPrompt().getFormattedText();
+            String s = ispectatormenuobject == SpectatorMenu.EMPTY_SLOT ? this.menu.getSelectedCategory().getPrompt().getFormattedText() : ispectatormenuobject.getSpectatorName().getFormattedText();
 
             if (s != null)
             {
-                int j = (p_175263_1_.getScaledWidth() - this.mc.fontRendererObj.getStringWidth(s)) / 2;
+                int j = (p_175263_1_.getScaledWidth() - this.mc.fontRenderer.getStringWidth(s)) / 2;
                 int k = p_175263_1_.getScaledHeight() - 35;
                 GlStateManager.pushMatrix();
                 GlStateManager.enableBlend();
                 GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-                this.mc.fontRendererObj.drawStringWithShadow(s, (float)j, (float)k, 16777215 + (i << 24));
+                this.mc.fontRenderer.drawStringWithShadow(s, (float)j, (float)k, 16777215 + (i << 24));
                 GlStateManager.disableBlend();
                 GlStateManager.popMatrix();
             }
         }
     }
 
-    public void onSpectatorMenuClosed(SpectatorMenu p_175257_1_)
+    public void onSpectatorMenuClosed(SpectatorMenu menu)
     {
         this.menu = null;
         this.lastSelectionTime = 0L;

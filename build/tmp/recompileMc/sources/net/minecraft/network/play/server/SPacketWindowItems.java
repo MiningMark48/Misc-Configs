@@ -6,27 +6,28 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
+import net.minecraft.util.NonNullList;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class SPacketWindowItems implements Packet<INetHandlerPlayClient>
 {
     private int windowId;
-    private ItemStack[] itemStacks;
+    private List<ItemStack> itemStacks;
 
     public SPacketWindowItems()
     {
     }
 
-    public SPacketWindowItems(int windowIdIn, List<ItemStack> stacks)
+    public SPacketWindowItems(int p_i47317_1_, NonNullList<ItemStack> p_i47317_2_)
     {
-        this.windowId = windowIdIn;
-        this.itemStacks = new ItemStack[stacks.size()];
+        this.windowId = p_i47317_1_;
+        this.itemStacks = NonNullList.<ItemStack>withSize(p_i47317_2_.size(), ItemStack.EMPTY);
 
-        for (int i = 0; i < this.itemStacks.length; ++i)
+        for (int i = 0; i < this.itemStacks.size(); ++i)
         {
-            ItemStack itemstack = (ItemStack)stacks.get(i);
-            this.itemStacks[i] = itemstack == null ? null : itemstack.copy();
+            ItemStack itemstack = p_i47317_2_.get(i);
+            this.itemStacks.set(i, itemstack.copy());
         }
     }
 
@@ -37,11 +38,11 @@ public class SPacketWindowItems implements Packet<INetHandlerPlayClient>
     {
         this.windowId = buf.readUnsignedByte();
         int i = buf.readShort();
-        this.itemStacks = new ItemStack[i];
+        this.itemStacks = NonNullList.<ItemStack>withSize(i, ItemStack.EMPTY);
 
         for (int j = 0; j < i; ++j)
         {
-            this.itemStacks[j] = buf.readItemStackFromBuffer();
+            this.itemStacks.set(j, buf.readItemStack());
         }
     }
 
@@ -51,11 +52,11 @@ public class SPacketWindowItems implements Packet<INetHandlerPlayClient>
     public void writePacketData(PacketBuffer buf) throws IOException
     {
         buf.writeByte(this.windowId);
-        buf.writeShort(this.itemStacks.length);
+        buf.writeShort(this.itemStacks.size());
 
         for (ItemStack itemstack : this.itemStacks)
         {
-            buf.writeItemStackToBuffer(itemstack);
+            buf.writeItemStack(itemstack);
         }
     }
 
@@ -74,7 +75,7 @@ public class SPacketWindowItems implements Packet<INetHandlerPlayClient>
     }
 
     @SideOnly(Side.CLIENT)
-    public ItemStack[] getItemStacks()
+    public List<ItemStack> getItemStacks()
     {
         return this.itemStacks;
     }

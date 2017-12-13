@@ -84,7 +84,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Failed to save ip banlist: ", (Throwable)ioexception);
+            LOGGER.warn("Failed to save ip banlist: ", (Throwable)ioexception);
         }
     }
 
@@ -96,7 +96,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Failed to save user banlist: ", (Throwable)ioexception);
+            LOGGER.warn("Failed to save user banlist: ", (Throwable)ioexception);
         }
     }
 
@@ -108,7 +108,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Failed to load ip banlist: ", (Throwable)ioexception);
+            LOGGER.warn("Failed to load ip banlist: ", (Throwable)ioexception);
         }
     }
 
@@ -120,7 +120,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (IOException ioexception)
         {
-            LOGGER.warn((String)"Failed to load user banlist: ", (Throwable)ioexception);
+            LOGGER.warn("Failed to load user banlist: ", (Throwable)ioexception);
         }
     }
 
@@ -132,7 +132,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)"Failed to load operators list: ", (Throwable)exception);
+            LOGGER.warn("Failed to load operators list: ", (Throwable)exception);
         }
     }
 
@@ -144,7 +144,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)"Failed to save operators list: ", (Throwable)exception);
+            LOGGER.warn("Failed to save operators list: ", (Throwable)exception);
         }
     }
 
@@ -156,7 +156,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)"Failed to load white-list: ", (Throwable)exception);
+            LOGGER.warn("Failed to load white-list: ", (Throwable)exception);
         }
     }
 
@@ -168,7 +168,7 @@ public class DedicatedPlayerList extends PlayerList
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)"Failed to save white-list: ", (Throwable)exception);
+            LOGGER.warn("Failed to save white-list: ", (Throwable)exception);
         }
     }
 

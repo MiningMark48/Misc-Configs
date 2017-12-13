@@ -6,12 +6,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.CommandResultStats;
+import net.minecraft.command.EntitySelector;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.SyntaxErrorException;
 import net.minecraft.command.WrongUsageException;
@@ -38,7 +40,7 @@ public class CommandScoreboard extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "scoreboard";
     }
@@ -54,7 +56,7 @@ public class CommandScoreboard extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.scoreboard.usage";
     }
@@ -72,18 +74,18 @@ public class CommandScoreboard extends CommandBase
             }
             else
             {
-                if (args[0].equalsIgnoreCase("objectives"))
+                if ("objectives".equalsIgnoreCase(args[0]))
                 {
                     if (args.length == 1)
                     {
                         throw new WrongUsageException("commands.scoreboard.objectives.usage", new Object[0]);
                     }
 
-                    if (args[1].equalsIgnoreCase("list"))
+                    if ("list".equalsIgnoreCase(args[1]))
                     {
                         this.listObjectives(sender, server);
                     }
-                    else if (args[1].equalsIgnoreCase("add"))
+                    else if ("add".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 4)
                         {
@@ -92,7 +94,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.addObjective(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("remove"))
+                    else if ("remove".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 3)
                         {
@@ -103,7 +105,7 @@ public class CommandScoreboard extends CommandBase
                     }
                     else
                     {
-                        if (!args[1].equalsIgnoreCase("setdisplay"))
+                        if (!"setdisplay".equalsIgnoreCase(args[1]))
                         {
                             throw new WrongUsageException("commands.scoreboard.objectives.usage", new Object[0]);
                         }
@@ -116,14 +118,14 @@ public class CommandScoreboard extends CommandBase
                         this.setDisplayObjective(sender, args, 2, server);
                     }
                 }
-                else if (args[0].equalsIgnoreCase("players"))
+                else if ("players".equalsIgnoreCase(args[0]))
                 {
                     if (args.length == 1)
                     {
                         throw new WrongUsageException("commands.scoreboard.players.usage", new Object[0]);
                     }
 
-                    if (args[1].equalsIgnoreCase("list"))
+                    if ("list".equalsIgnoreCase(args[1]))
                     {
                         if (args.length > 3)
                         {
@@ -132,7 +134,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.listPlayers(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("add"))
+                    else if ("add".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 5)
                         {
@@ -141,7 +143,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.addPlayerScore(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("remove"))
+                    else if ("remove".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 5)
                         {
@@ -150,7 +152,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.addPlayerScore(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("set"))
+                    else if ("set".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 5)
                         {
@@ -159,7 +161,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.addPlayerScore(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("reset"))
+                    else if ("reset".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 3 && args.length != 4)
                         {
@@ -168,7 +170,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.resetPlayerScore(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("enable"))
+                    else if ("enable".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 4)
                         {
@@ -177,7 +179,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.enablePlayerTrigger(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("test"))
+                    else if ("test".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 5 && args.length != 6)
                         {
@@ -186,7 +188,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.testPlayerScore(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("operation"))
+                    else if ("operation".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 7)
                         {
@@ -197,7 +199,7 @@ public class CommandScoreboard extends CommandBase
                     }
                     else
                     {
-                        if (!args[1].equalsIgnoreCase("tag"))
+                        if (!"tag".equalsIgnoreCase(args[1]))
                         {
                             throw new WrongUsageException("commands.scoreboard.players.usage", new Object[0]);
                         }
@@ -212,7 +214,7 @@ public class CommandScoreboard extends CommandBase
                 }
                 else
                 {
-                    if (!args[0].equalsIgnoreCase("teams"))
+                    if (!"teams".equalsIgnoreCase(args[0]))
                     {
                         throw new WrongUsageException("commands.scoreboard.usage", new Object[0]);
                     }
@@ -222,7 +224,7 @@ public class CommandScoreboard extends CommandBase
                         throw new WrongUsageException("commands.scoreboard.teams.usage", new Object[0]);
                     }
 
-                    if (args[1].equalsIgnoreCase("list"))
+                    if ("list".equalsIgnoreCase(args[1]))
                     {
                         if (args.length > 3)
                         {
@@ -231,7 +233,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.listTeams(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("add"))
+                    else if ("add".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 3)
                         {
@@ -240,7 +242,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.addTeam(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("remove"))
+                    else if ("remove".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 3)
                         {
@@ -249,7 +251,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.removeTeam(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("empty"))
+                    else if ("empty".equalsIgnoreCase(args[1]))
                     {
                         if (args.length != 3)
                         {
@@ -258,7 +260,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.emptyTeam(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("join"))
+                    else if ("join".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 4 && (args.length != 3 || !(sender instanceof EntityPlayer)))
                         {
@@ -267,7 +269,7 @@ public class CommandScoreboard extends CommandBase
 
                         this.joinTeam(sender, args, 2, server);
                     }
-                    else if (args[1].equalsIgnoreCase("leave"))
+                    else if ("leave".equalsIgnoreCase(args[1]))
                     {
                         if (args.length < 3 && !(sender instanceof EntityPlayer))
                         {
@@ -278,7 +280,7 @@ public class CommandScoreboard extends CommandBase
                     }
                     else
                     {
-                        if (!args[1].equalsIgnoreCase("option"))
+                        if (!"option".equalsIgnoreCase(args[1]))
                         {
                             throw new WrongUsageException("commands.scoreboard.teams.usage", new Object[0]);
                         }
@@ -335,7 +337,7 @@ public class CommandScoreboard extends CommandBase
                 {
                     TextComponentTranslation textcomponenttranslation = new TextComponentTranslation(commandexception.getMessage(), commandexception.getErrorObjects());
                     textcomponenttranslation.getStyle().setColor(TextFormatting.RED);
-                    sender.addChatMessage(textcomponenttranslation);
+                    sender.sendMessage(textcomponenttranslation);
                 }
             }
 
@@ -355,7 +357,7 @@ public class CommandScoreboard extends CommandBase
 
     protected Scoreboard getScoreboard(MinecraftServer server)
     {
-        return server.worldServerForDimension(0).getScoreboard();
+        return server.getWorld(0).getScoreboard();
     }
 
     protected ScoreObjective convertToObjective(String name, boolean forWrite, MinecraftServer server) throws CommandException
@@ -377,14 +379,14 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected ScorePlayerTeam convertToTeam(String p_184915_1_, MinecraftServer server) throws CommandException
+    protected ScorePlayerTeam convertToTeam(String name, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        ScorePlayerTeam scoreplayerteam = scoreboard.getTeam(p_184915_1_);
+        ScorePlayerTeam scoreplayerteam = scoreboard.getTeam(name);
 
         if (scoreplayerteam == null)
         {
-            throw new CommandException("commands.scoreboard.teamNotFound", new Object[] {p_184915_1_});
+            throw new CommandException("commands.scoreboard.teamNotFound", new Object[] {name});
         }
         else
         {
@@ -392,12 +394,12 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void addObjective(ICommandSender sender, String[] p_184908_2_, int p_184908_3_, MinecraftServer server) throws CommandException
+    protected void addObjective(ICommandSender sender, String[] commandArgs, int argStartIndex, MinecraftServer server) throws CommandException
     {
-        String s = p_184908_2_[p_184908_3_++];
-        String s1 = p_184908_2_[p_184908_3_++];
+        String s = commandArgs[argStartIndex++];
+        String s1 = commandArgs[argStartIndex++];
         Scoreboard scoreboard = this.getScoreboard(server);
-        IScoreCriteria iscorecriteria = (IScoreCriteria)IScoreCriteria.INSTANCES.get(s1);
+        IScoreCriteria iscorecriteria = IScoreCriteria.INSTANCES.get(s1);
 
         if (iscorecriteria == null)
         {
@@ -417,22 +419,22 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            if (p_184908_2_.length > p_184908_3_)
+            if (commandArgs.length > argStartIndex)
             {
-                String s2 = getChatComponentFromNthArg(sender, p_184908_2_, p_184908_3_).getUnformattedText();
+                String s2 = getChatComponentFromNthArg(sender, commandArgs, argStartIndex).getUnformattedText();
 
                 if (s2.length() > 32)
                 {
                     throw new SyntaxErrorException("commands.scoreboard.objectives.add.displayTooLong", new Object[] {s2, Integer.valueOf(32)});
                 }
 
-                if (!s2.isEmpty())
+                if (s2.isEmpty())
                 {
-                    scoreboard.addScoreObjective(s, iscorecriteria).setDisplayName(s2);
+                    scoreboard.addScoreObjective(s, iscorecriteria);
                 }
                 else
                 {
-                    scoreboard.addScoreObjective(s, iscorecriteria);
+                    scoreboard.addScoreObjective(s, iscorecriteria).setDisplayName(s2);
                 }
             }
             else
@@ -444,9 +446,9 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void addTeam(ICommandSender sender, String[] p_184910_2_, int p_184910_3_, MinecraftServer server) throws CommandException
+    protected void addTeam(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
-        String s = p_184910_2_[p_184910_3_++];
+        String s = args[startIndex++];
         Scoreboard scoreboard = this.getScoreboard(server);
 
         if (scoreboard.getTeam(s) != null)
@@ -463,22 +465,22 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            if (p_184910_2_.length > p_184910_3_)
+            if (args.length > startIndex)
             {
-                String s1 = getChatComponentFromNthArg(sender, p_184910_2_, p_184910_3_).getUnformattedText();
+                String s1 = getChatComponentFromNthArg(sender, args, startIndex).getUnformattedText();
 
                 if (s1.length() > 32)
                 {
                     throw new SyntaxErrorException("commands.scoreboard.teams.add.displayTooLong", new Object[] {s1, Integer.valueOf(32)});
                 }
 
-                if (!s1.isEmpty())
+                if (s1.isEmpty())
                 {
-                    scoreboard.createTeam(s).setTeamName(s1);
+                    scoreboard.createTeam(s);
                 }
                 else
                 {
-                    scoreboard.createTeam(s);
+                    scoreboard.createTeam(s).setDisplayName(s1);
                 }
             }
             else
@@ -490,29 +492,29 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void setTeamOption(ICommandSender sender, String[] p_184923_2_, int p_184923_3_, MinecraftServer server) throws CommandException
+    protected void setTeamOption(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
-        ScorePlayerTeam scoreplayerteam = this.convertToTeam(p_184923_2_[p_184923_3_++], server);
+        ScorePlayerTeam scoreplayerteam = this.convertToTeam(args[startIndex++], server);
 
         if (scoreplayerteam != null)
         {
-            String s = p_184923_2_[p_184923_3_++].toLowerCase();
+            String s = args[startIndex++].toLowerCase(Locale.ROOT);
 
-            if (!s.equalsIgnoreCase("color") && !s.equalsIgnoreCase("friendlyfire") && !s.equalsIgnoreCase("seeFriendlyInvisibles") && !s.equalsIgnoreCase("nametagVisibility") && !s.equalsIgnoreCase("deathMessageVisibility") && !s.equalsIgnoreCase("collisionRule"))
+            if (!"color".equalsIgnoreCase(s) && !"friendlyfire".equalsIgnoreCase(s) && !"seeFriendlyInvisibles".equalsIgnoreCase(s) && !"nametagVisibility".equalsIgnoreCase(s) && !"deathMessageVisibility".equalsIgnoreCase(s) && !"collisionRule".equalsIgnoreCase(s))
             {
                 throw new WrongUsageException("commands.scoreboard.teams.option.usage", new Object[0]);
             }
-            else if (p_184923_2_.length == 4)
+            else if (args.length == 4)
             {
-                if (s.equalsIgnoreCase("color"))
+                if ("color".equalsIgnoreCase(s))
                 {
                     throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(TextFormatting.getValidValues(true, false))});
                 }
-                else if (!s.equalsIgnoreCase("friendlyfire") && !s.equalsIgnoreCase("seeFriendlyInvisibles"))
+                else if (!"friendlyfire".equalsIgnoreCase(s) && !"seeFriendlyInvisibles".equalsIgnoreCase(s))
                 {
-                    if (!s.equalsIgnoreCase("nametagVisibility") && !s.equalsIgnoreCase("deathMessageVisibility"))
+                    if (!"nametagVisibility".equalsIgnoreCase(s) && !"deathMessageVisibility".equalsIgnoreCase(s))
                     {
-                        if (s.equalsIgnoreCase("collisionRule"))
+                        if ("collisionRule".equalsIgnoreCase(s))
                         {
                             throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceString(Team.CollisionRule.getNames())});
                         }
@@ -528,14 +530,14 @@ public class CommandScoreboard extends CommandBase
                 }
                 else
                 {
-                    throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList(new String[]{"true", "false"}))});
+                    throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList("true", "false"))});
                 }
             }
             else
             {
-                String s1 = p_184923_2_[p_184923_3_];
+                String s1 = args[startIndex];
 
-                if (s.equalsIgnoreCase("color"))
+                if ("color".equalsIgnoreCase(s))
                 {
                     TextFormatting textformatting = TextFormatting.getValueByName(s1);
 
@@ -544,29 +546,29 @@ public class CommandScoreboard extends CommandBase
                         throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(TextFormatting.getValidValues(true, false))});
                     }
 
-                    scoreplayerteam.setChatFormat(textformatting);
-                    scoreplayerteam.setNamePrefix(textformatting.toString());
-                    scoreplayerteam.setNameSuffix(TextFormatting.RESET.toString());
+                    scoreplayerteam.setColor(textformatting);
+                    scoreplayerteam.setPrefix(textformatting.toString());
+                    scoreplayerteam.setSuffix(TextFormatting.RESET.toString());
                 }
-                else if (s.equalsIgnoreCase("friendlyfire"))
+                else if ("friendlyfire".equalsIgnoreCase(s))
                 {
-                    if (!s1.equalsIgnoreCase("true") && !s1.equalsIgnoreCase("false"))
+                    if (!"true".equalsIgnoreCase(s1) && !"false".equalsIgnoreCase(s1))
                     {
-                        throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList(new String[]{"true", "false"}))});
+                        throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList("true", "false"))});
                     }
 
-                    scoreplayerteam.setAllowFriendlyFire(s1.equalsIgnoreCase("true"));
+                    scoreplayerteam.setAllowFriendlyFire("true".equalsIgnoreCase(s1));
                 }
-                else if (s.equalsIgnoreCase("seeFriendlyInvisibles"))
+                else if ("seeFriendlyInvisibles".equalsIgnoreCase(s))
                 {
-                    if (!s1.equalsIgnoreCase("true") && !s1.equalsIgnoreCase("false"))
+                    if (!"true".equalsIgnoreCase(s1) && !"false".equalsIgnoreCase(s1))
                     {
-                        throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList(new String[]{"true", "false"}))});
+                        throw new WrongUsageException("commands.scoreboard.teams.option.noValue", new Object[] {s, joinNiceStringFromCollection(Arrays.asList("true", "false"))});
                     }
 
-                    scoreplayerteam.setSeeFriendlyInvisiblesEnabled(s1.equalsIgnoreCase("true"));
+                    scoreplayerteam.setSeeFriendlyInvisiblesEnabled("true".equalsIgnoreCase(s1));
                 }
-                else if (s.equalsIgnoreCase("nametagVisibility"))
+                else if ("nametagVisibility".equalsIgnoreCase(s))
                 {
                     Team.EnumVisible team$enumvisible = Team.EnumVisible.getByName(s1);
 
@@ -577,7 +579,7 @@ public class CommandScoreboard extends CommandBase
 
                     scoreplayerteam.setNameTagVisibility(team$enumvisible);
                 }
-                else if (s.equalsIgnoreCase("deathMessageVisibility"))
+                else if ("deathMessageVisibility".equalsIgnoreCase(s))
                 {
                     Team.EnumVisible team$enumvisible1 = Team.EnumVisible.getByName(s1);
 
@@ -588,7 +590,7 @@ public class CommandScoreboard extends CommandBase
 
                     scoreplayerteam.setDeathMessageVisibility(team$enumvisible1);
                 }
-                else if (s.equalsIgnoreCase("collisionRule"))
+                else if ("collisionRule".equalsIgnoreCase(s))
                 {
                     Team.CollisionRule team$collisionrule = Team.CollisionRule.getByName(s1);
 
@@ -600,30 +602,30 @@ public class CommandScoreboard extends CommandBase
                     scoreplayerteam.setCollisionRule(team$collisionrule);
                 }
 
-                notifyCommandListener(sender, this, "commands.scoreboard.teams.option.success", new Object[] {s, scoreplayerteam.getRegisteredName(), s1});
+                notifyCommandListener(sender, this, "commands.scoreboard.teams.option.success", new Object[] {s, scoreplayerteam.getName(), s1});
             }
         }
     }
 
-    protected void removeTeam(ICommandSender sender, String[] p_184921_2_, int p_184921_3_, MinecraftServer server) throws CommandException
+    protected void removeTeam(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        ScorePlayerTeam scoreplayerteam = this.convertToTeam(p_184921_2_[p_184921_3_], server);
+        ScorePlayerTeam scoreplayerteam = this.convertToTeam(args[startIndex], server);
 
         if (scoreplayerteam != null)
         {
             scoreboard.removeTeam(scoreplayerteam);
-            notifyCommandListener(sender, this, "commands.scoreboard.teams.remove.success", new Object[] {scoreplayerteam.getRegisteredName()});
+            notifyCommandListener(sender, this, "commands.scoreboard.teams.remove.success", new Object[] {scoreplayerteam.getName()});
         }
     }
 
-    protected void listTeams(ICommandSender sender, String[] p_184922_2_, int p_184922_3_, MinecraftServer server) throws CommandException
+    protected void listTeams(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
 
-        if (p_184922_2_.length > p_184922_3_)
+        if (args.length > startIndex)
         {
-            ScorePlayerTeam scoreplayerteam = this.convertToTeam(p_184922_2_[p_184922_3_], server);
+            ScorePlayerTeam scoreplayerteam = this.convertToTeam(args[startIndex], server);
 
             if (scoreplayerteam == null)
             {
@@ -635,13 +637,13 @@ public class CommandScoreboard extends CommandBase
 
             if (collection.isEmpty())
             {
-                throw new CommandException("commands.scoreboard.teams.list.player.empty", new Object[] {scoreplayerteam.getRegisteredName()});
+                throw new CommandException("commands.scoreboard.teams.list.player.empty", new Object[] {scoreplayerteam.getName()});
             }
 
-            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.teams.list.player.count", new Object[] {Integer.valueOf(collection.size()), scoreplayerteam.getRegisteredName()});
+            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.teams.list.player.count", new Object[] {collection.size(), scoreplayerteam.getName()});
             textcomponenttranslation.getStyle().setColor(TextFormatting.DARK_GREEN);
-            sender.addChatMessage(textcomponenttranslation);
-            sender.addChatMessage(new TextComponentString(joinNiceString(collection.toArray())));
+            sender.sendMessage(textcomponenttranslation);
+            sender.sendMessage(new TextComponentString(joinNiceString(collection.toArray())));
         }
         else
         {
@@ -653,25 +655,25 @@ public class CommandScoreboard extends CommandBase
                 throw new CommandException("commands.scoreboard.teams.list.empty", new Object[0]);
             }
 
-            TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.scoreboard.teams.list.count", new Object[] {Integer.valueOf(collection1.size())});
+            TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.scoreboard.teams.list.count", new Object[] {collection1.size()});
             textcomponenttranslation1.getStyle().setColor(TextFormatting.DARK_GREEN);
-            sender.addChatMessage(textcomponenttranslation1);
+            sender.sendMessage(textcomponenttranslation1);
 
             for (ScorePlayerTeam scoreplayerteam1 : collection1)
             {
-                sender.addChatMessage(new TextComponentTranslation("commands.scoreboard.teams.list.entry", new Object[] {scoreplayerteam1.getRegisteredName(), scoreplayerteam1.getTeamName(), Integer.valueOf(scoreplayerteam1.getMembershipCollection().size())}));
+                sender.sendMessage(new TextComponentTranslation("commands.scoreboard.teams.list.entry", new Object[] {scoreplayerteam1.getName(), scoreplayerteam1.getDisplayName(), scoreplayerteam1.getMembershipCollection().size()}));
             }
         }
     }
 
-    protected void joinTeam(ICommandSender sender, String[] p_184916_2_, int p_184916_3_, MinecraftServer server) throws CommandException
+    protected void joinTeam(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = p_184916_2_[p_184916_3_++];
+        String s = args[startIndex++];
         Set<String> set = Sets.<String>newHashSet();
         Set<String> set1 = Sets.<String>newHashSet();
 
-        if (sender instanceof EntityPlayer && p_184916_3_ == p_184916_2_.length)
+        if (sender instanceof EntityPlayer && startIndex == args.length)
         {
             String s4 = getCommandSenderAsPlayer(sender).getName();
 
@@ -686,11 +688,11 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            while (p_184916_3_ < p_184916_2_.length)
+            while (startIndex < args.length)
             {
-                String s1 = p_184916_2_[p_184916_3_++];
+                String s1 = args[startIndex++];
 
-                if (s1.startsWith("@"))
+                if (EntitySelector.isSelector(s1))
                 {
                     for (Entity entity : getEntityList(server, sender, s1))
                     {
@@ -725,22 +727,22 @@ public class CommandScoreboard extends CommandBase
         if (!set.isEmpty())
         {
             sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, set.size());
-            notifyCommandListener(sender, this, "commands.scoreboard.teams.join.success", new Object[] {Integer.valueOf(set.size()), s, joinNiceString(set.toArray(new String[set.size()]))});
+            notifyCommandListener(sender, this, "commands.scoreboard.teams.join.success", new Object[] {set.size(), s, joinNiceString(set.toArray(new String[set.size()]))});
         }
 
         if (!set1.isEmpty())
         {
-            throw new CommandException("commands.scoreboard.teams.join.failure", new Object[] {Integer.valueOf(set1.size()), s, joinNiceString(set1.toArray(new String[set1.size()]))});
+            throw new CommandException("commands.scoreboard.teams.join.failure", new Object[] {set1.size(), s, joinNiceString(set1.toArray(new String[set1.size()]))});
         }
     }
 
-    protected void leaveTeam(ICommandSender sender, String[] p_184911_2_, int p_184911_3_, MinecraftServer server) throws CommandException
+    protected void leaveTeam(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
         Set<String> set = Sets.<String>newHashSet();
         Set<String> set1 = Sets.<String>newHashSet();
 
-        if (sender instanceof EntityPlayer && p_184911_3_ == p_184911_2_.length)
+        if (sender instanceof EntityPlayer && startIndex == args.length)
         {
             String s3 = getCommandSenderAsPlayer(sender).getName();
 
@@ -755,11 +757,11 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            while (p_184911_3_ < p_184911_2_.length)
+            while (startIndex < args.length)
             {
-                String s = p_184911_2_[p_184911_3_++];
+                String s = args[startIndex++];
 
-                if (s.startsWith("@"))
+                if (EntitySelector.isSelector(s))
                 {
                     for (Entity entity : getEntityList(server, sender, s))
                     {
@@ -794,19 +796,19 @@ public class CommandScoreboard extends CommandBase
         if (!set.isEmpty())
         {
             sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, set.size());
-            notifyCommandListener(sender, this, "commands.scoreboard.teams.leave.success", new Object[] {Integer.valueOf(set.size()), joinNiceString(set.toArray(new String[set.size()]))});
+            notifyCommandListener(sender, this, "commands.scoreboard.teams.leave.success", new Object[] {set.size(), joinNiceString(set.toArray(new String[set.size()]))});
         }
 
         if (!set1.isEmpty())
         {
-            throw new CommandException("commands.scoreboard.teams.leave.failure", new Object[] {Integer.valueOf(set1.size()), joinNiceString(set1.toArray(new String[set1.size()]))});
+            throw new CommandException("commands.scoreboard.teams.leave.failure", new Object[] {set1.size(), joinNiceString(set1.toArray(new String[set1.size()]))});
         }
     }
 
-    protected void emptyTeam(ICommandSender sender, String[] p_184917_2_, int p_184917_3_, MinecraftServer server) throws CommandException
+    protected void emptyTeam(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        ScorePlayerTeam scoreplayerteam = this.convertToTeam(p_184917_2_[p_184917_3_], server);
+        ScorePlayerTeam scoreplayerteam = this.convertToTeam(args[startIndex], server);
 
         if (scoreplayerteam != null)
         {
@@ -815,7 +817,7 @@ public class CommandScoreboard extends CommandBase
 
             if (collection.isEmpty())
             {
-                throw new CommandException("commands.scoreboard.teams.empty.alreadyEmpty", new Object[] {scoreplayerteam.getRegisteredName()});
+                throw new CommandException("commands.scoreboard.teams.empty.alreadyEmpty", new Object[] {scoreplayerteam.getName()});
             }
             else
             {
@@ -824,17 +826,17 @@ public class CommandScoreboard extends CommandBase
                     scoreboard.removePlayerFromTeam(s, scoreplayerteam);
                 }
 
-                notifyCommandListener(sender, this, "commands.scoreboard.teams.empty.success", new Object[] {Integer.valueOf(collection.size()), scoreplayerteam.getRegisteredName()});
+                notifyCommandListener(sender, this, "commands.scoreboard.teams.empty.success", new Object[] {collection.size(), scoreplayerteam.getName()});
             }
         }
     }
 
-    protected void removeObjective(ICommandSender sender, String p_184905_2_, MinecraftServer server) throws CommandException
+    protected void removeObjective(ICommandSender sender, String name, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        ScoreObjective scoreobjective = this.convertToObjective(p_184905_2_, false, server);
+        ScoreObjective scoreobjective = this.convertToObjective(name, false, server);
         scoreboard.removeObjective(scoreobjective);
-        notifyCommandListener(sender, this, "commands.scoreboard.objectives.remove.success", new Object[] {p_184905_2_});
+        notifyCommandListener(sender, this, "commands.scoreboard.objectives.remove.success", new Object[] {name});
     }
 
     protected void listObjectives(ICommandSender sender, MinecraftServer server) throws CommandException
@@ -848,27 +850,27 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.objectives.list.count", new Object[] {Integer.valueOf(collection.size())});
+            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.objectives.list.count", new Object[] {collection.size()});
             textcomponenttranslation.getStyle().setColor(TextFormatting.DARK_GREEN);
-            sender.addChatMessage(textcomponenttranslation);
+            sender.sendMessage(textcomponenttranslation);
 
             for (ScoreObjective scoreobjective : collection)
             {
-                sender.addChatMessage(new TextComponentTranslation("commands.scoreboard.objectives.list.entry", new Object[] {scoreobjective.getName(), scoreobjective.getDisplayName(), scoreobjective.getCriteria().getName()}));
+                sender.sendMessage(new TextComponentTranslation("commands.scoreboard.objectives.list.entry", new Object[] {scoreobjective.getName(), scoreobjective.getDisplayName(), scoreobjective.getCriteria().getName()}));
             }
         }
     }
 
-    protected void setDisplayObjective(ICommandSender sender, String[] p_184919_2_, int p_184919_3_, MinecraftServer server) throws CommandException
+    protected void setDisplayObjective(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = p_184919_2_[p_184919_3_++];
+        String s = args[startIndex++];
         int i = Scoreboard.getObjectiveDisplaySlotNumber(s);
         ScoreObjective scoreobjective = null;
 
-        if (p_184919_2_.length == 4)
+        if (args.length == 4)
         {
-            scoreobjective = this.convertToObjective(p_184919_2_[p_184919_3_], false, server);
+            scoreobjective = this.convertToObjective(args[startIndex], false, server);
         }
 
         if (i < 0)
@@ -890,13 +892,13 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void listPlayers(ICommandSender sender, String[] p_184920_2_, int p_184920_3_, MinecraftServer server) throws CommandException
+    protected void listPlayers(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
 
-        if (p_184920_2_.length > p_184920_3_)
+        if (args.length > startIndex)
         {
-            String s = getEntityName(server, sender, p_184920_2_[p_184920_3_]);
+            String s = getEntityName(server, sender, args[startIndex]);
             Map<ScoreObjective, Score> map = scoreboard.getObjectivesForEntity(s);
             sender.setCommandStat(CommandResultStats.Type.QUERY_RESULT, map.size());
 
@@ -905,13 +907,13 @@ public class CommandScoreboard extends CommandBase
                 throw new CommandException("commands.scoreboard.players.list.player.empty", new Object[] {s});
             }
 
-            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.players.list.player.count", new Object[] {Integer.valueOf(map.size()), s});
+            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.players.list.player.count", new Object[] {map.size(), s});
             textcomponenttranslation.getStyle().setColor(TextFormatting.DARK_GREEN);
-            sender.addChatMessage(textcomponenttranslation);
+            sender.sendMessage(textcomponenttranslation);
 
             for (Score score : map.values())
             {
-                sender.addChatMessage(new TextComponentTranslation("commands.scoreboard.players.list.player.entry", new Object[] {Integer.valueOf(score.getScorePoints()), score.getObjective().getDisplayName(), score.getObjective().getName()}));
+                sender.sendMessage(new TextComponentTranslation("commands.scoreboard.players.list.player.entry", new Object[] {score.getScorePoints(), score.getObjective().getDisplayName(), score.getObjective().getName()}));
             }
         }
         else
@@ -924,18 +926,18 @@ public class CommandScoreboard extends CommandBase
                 throw new CommandException("commands.scoreboard.players.list.empty", new Object[0]);
             }
 
-            TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.scoreboard.players.list.count", new Object[] {Integer.valueOf(collection.size())});
+            TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.scoreboard.players.list.count", new Object[] {collection.size()});
             textcomponenttranslation1.getStyle().setColor(TextFormatting.DARK_GREEN);
-            sender.addChatMessage(textcomponenttranslation1);
-            sender.addChatMessage(new TextComponentString(joinNiceString(collection.toArray())));
+            sender.sendMessage(textcomponenttranslation1);
+            sender.sendMessage(new TextComponentString(joinNiceString(collection.toArray())));
         }
     }
 
-    protected void addPlayerScore(ICommandSender sender, String[] p_184918_2_, int p_184918_3_, MinecraftServer server) throws CommandException
+    protected void addPlayerScore(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
-        String s = p_184918_2_[p_184918_3_ - 1];
-        int i = p_184918_3_;
-        String s1 = getEntityName(server, sender, p_184918_2_[p_184918_3_++]);
+        String s = args[startIndex - 1];
+        int i = startIndex;
+        String s1 = getEntityName(server, sender, args[startIndex++]);
 
         if (s1.length() > 40)
         {
@@ -943,16 +945,16 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            ScoreObjective scoreobjective = this.convertToObjective(p_184918_2_[p_184918_3_++], true, server);
-            int j = s.equalsIgnoreCase("set") ? parseInt(p_184918_2_[p_184918_3_++]) : parseInt(p_184918_2_[p_184918_3_++], 0);
+            ScoreObjective scoreobjective = this.convertToObjective(args[startIndex++], true, server);
+            int j = "set".equalsIgnoreCase(s) ? parseInt(args[startIndex++]) : parseInt(args[startIndex++], 0);
 
-            if (p_184918_2_.length > p_184918_3_)
+            if (args.length > startIndex)
             {
-                Entity entity = getEntity(server, sender, p_184918_2_[i]);
+                Entity entity = getEntity(server, sender, args[i]);
 
                 try
                 {
-                    NBTTagCompound nbttagcompound = JsonToNBT.getTagFromJson(buildString(p_184918_2_, p_184918_3_));
+                    NBTTagCompound nbttagcompound = JsonToNBT.getTagFromJson(buildString(args, startIndex));
                     NBTTagCompound nbttagcompound1 = entityToNBT(entity);
 
                     if (!NBTUtil.areNBTEquals(nbttagcompound, nbttagcompound1, true))
@@ -969,11 +971,11 @@ public class CommandScoreboard extends CommandBase
             Scoreboard scoreboard = this.getScoreboard(server);
             Score score = scoreboard.getOrCreateScore(s1, scoreobjective);
 
-            if (s.equalsIgnoreCase("set"))
+            if ("set".equalsIgnoreCase(s))
             {
                 score.setScorePoints(j);
             }
-            else if (s.equalsIgnoreCase("add"))
+            else if ("add".equalsIgnoreCase(s))
             {
                 score.increaseScore(j);
             }
@@ -982,18 +984,18 @@ public class CommandScoreboard extends CommandBase
                 score.decreaseScore(j);
             }
 
-            notifyCommandListener(sender, this, "commands.scoreboard.players.set.success", new Object[] {scoreobjective.getName(), s1, Integer.valueOf(score.getScorePoints())});
+            notifyCommandListener(sender, this, "commands.scoreboard.players.set.success", new Object[] {scoreobjective.getName(), s1, score.getScorePoints()});
         }
     }
 
-    protected void resetPlayerScore(ICommandSender sender, String[] p_184912_2_, int p_184912_3_, MinecraftServer server) throws CommandException
+    protected void resetPlayerScore(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = getEntityName(server, sender, p_184912_2_[p_184912_3_++]);
+        String s = getEntityName(server, sender, args[startIndex++]);
 
-        if (p_184912_2_.length > p_184912_3_)
+        if (args.length > startIndex)
         {
-            ScoreObjective scoreobjective = this.convertToObjective(p_184912_2_[p_184912_3_++], false, server);
+            ScoreObjective scoreobjective = this.convertToObjective(args[startIndex++], false, server);
             scoreboard.removeObjectiveFromEntity(s, scoreobjective);
             notifyCommandListener(sender, this, "commands.scoreboard.players.resetscore.success", new Object[] {scoreobjective.getName(), s});
         }
@@ -1004,10 +1006,10 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void enablePlayerTrigger(ICommandSender sender, String[] p_184914_2_, int p_184914_3_, MinecraftServer server) throws CommandException
+    protected void enablePlayerTrigger(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = getPlayerName(server, sender, p_184914_2_[p_184914_3_++]);
+        String s = getPlayerName(server, sender, args[startIndex++]);
 
         if (s.length() > 40)
         {
@@ -1015,7 +1017,7 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            ScoreObjective scoreobjective = this.convertToObjective(p_184914_2_[p_184914_3_], false, server);
+            ScoreObjective scoreobjective = this.convertToObjective(args[startIndex], false, server);
 
             if (scoreobjective.getCriteria() != IScoreCriteria.TRIGGER)
             {
@@ -1030,10 +1032,10 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void testPlayerScore(ICommandSender sender, String[] p_184907_2_, int p_184907_3_, MinecraftServer server) throws CommandException
+    protected void testPlayerScore(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = getEntityName(server, sender, p_184907_2_[p_184907_3_++]);
+        String s = getEntityName(server, sender, args[startIndex++]);
 
         if (s.length() > 40)
         {
@@ -1041,7 +1043,7 @@ public class CommandScoreboard extends CommandBase
         }
         else
         {
-            ScoreObjective scoreobjective = this.convertToObjective(p_184907_2_[p_184907_3_++], false, server);
+            ScoreObjective scoreobjective = this.convertToObjective(args[startIndex++], false, server);
 
             if (!scoreboard.entityHasObjective(s, scoreobjective))
             {
@@ -1049,31 +1051,31 @@ public class CommandScoreboard extends CommandBase
             }
             else
             {
-                int i = p_184907_2_[p_184907_3_].equals("*") ? Integer.MIN_VALUE : parseInt(p_184907_2_[p_184907_3_]);
-                ++p_184907_3_;
-                int j = p_184907_3_ < p_184907_2_.length && !p_184907_2_[p_184907_3_].equals("*") ? parseInt(p_184907_2_[p_184907_3_], i) : Integer.MAX_VALUE;
+                int i = args[startIndex].equals("*") ? Integer.MIN_VALUE : parseInt(args[startIndex]);
+                ++startIndex;
+                int j = startIndex < args.length && !args[startIndex].equals("*") ? parseInt(args[startIndex], i) : Integer.MAX_VALUE;
                 Score score = scoreboard.getOrCreateScore(s, scoreobjective);
 
                 if (score.getScorePoints() >= i && score.getScorePoints() <= j)
                 {
-                    notifyCommandListener(sender, this, "commands.scoreboard.players.test.success", new Object[] {Integer.valueOf(score.getScorePoints()), Integer.valueOf(i), Integer.valueOf(j)});
+                    notifyCommandListener(sender, this, "commands.scoreboard.players.test.success", new Object[] {score.getScorePoints(), i, j});
                 }
                 else
                 {
-                    throw new CommandException("commands.scoreboard.players.test.failed", new Object[] {Integer.valueOf(score.getScorePoints()), Integer.valueOf(i), Integer.valueOf(j)});
+                    throw new CommandException("commands.scoreboard.players.test.failed", new Object[] {score.getScorePoints(), i, j});
                 }
             }
         }
     }
 
-    protected void applyPlayerOperation(ICommandSender sender, String[] p_184906_2_, int p_184906_3_, MinecraftServer server) throws CommandException
+    protected void applyPlayerOperation(ICommandSender sender, String[] args, int startIndex, MinecraftServer server) throws CommandException
     {
         Scoreboard scoreboard = this.getScoreboard(server);
-        String s = getEntityName(server, sender, p_184906_2_[p_184906_3_++]);
-        ScoreObjective scoreobjective = this.convertToObjective(p_184906_2_[p_184906_3_++], true, server);
-        String s1 = p_184906_2_[p_184906_3_++];
-        String s2 = getEntityName(server, sender, p_184906_2_[p_184906_3_++]);
-        ScoreObjective scoreobjective1 = this.convertToObjective(p_184906_2_[p_184906_3_], false, server);
+        String s = getEntityName(server, sender, args[startIndex++]);
+        ScoreObjective scoreobjective = this.convertToObjective(args[startIndex++], true, server);
+        String s1 = args[startIndex++];
+        String s2 = getEntityName(server, sender, args[startIndex++]);
+        ScoreObjective scoreobjective1 = this.convertToObjective(args[startIndex], false, server);
 
         if (s.length() > 40)
         {
@@ -1095,47 +1097,47 @@ public class CommandScoreboard extends CommandBase
             {
                 Score score1 = scoreboard.getOrCreateScore(s2, scoreobjective1);
 
-                if (s1.equals("+="))
+                if ("+=".equals(s1))
                 {
                     score.setScorePoints(score.getScorePoints() + score1.getScorePoints());
                 }
-                else if (s1.equals("-="))
+                else if ("-=".equals(s1))
                 {
                     score.setScorePoints(score.getScorePoints() - score1.getScorePoints());
                 }
-                else if (s1.equals("*="))
+                else if ("*=".equals(s1))
                 {
                     score.setScorePoints(score.getScorePoints() * score1.getScorePoints());
                 }
-                else if (s1.equals("/="))
+                else if ("/=".equals(s1))
                 {
                     if (score1.getScorePoints() != 0)
                     {
                         score.setScorePoints(score.getScorePoints() / score1.getScorePoints());
                     }
                 }
-                else if (s1.equals("%="))
+                else if ("%=".equals(s1))
                 {
                     if (score1.getScorePoints() != 0)
                     {
                         score.setScorePoints(score.getScorePoints() % score1.getScorePoints());
                     }
                 }
-                else if (s1.equals("="))
+                else if ("=".equals(s1))
                 {
                     score.setScorePoints(score1.getScorePoints());
                 }
-                else if (s1.equals("<"))
+                else if ("<".equals(s1))
                 {
                     score.setScorePoints(Math.min(score.getScorePoints(), score1.getScorePoints()));
                 }
-                else if (s1.equals(">"))
+                else if (">".equals(s1))
                 {
                     score.setScorePoints(Math.max(score.getScorePoints(), score1.getScorePoints()));
                 }
                 else
                 {
-                    if (!s1.equals("><"))
+                    if (!"><".equals(s1))
                     {
                         throw new CommandException("commands.scoreboard.players.operation.invalidOperation", new Object[] {s1});
                     }
@@ -1150,11 +1152,11 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected void applyPlayerTag(MinecraftServer server, ICommandSender sender, String[] p_184924_3_, int p_184924_4_) throws CommandException
+    protected void applyPlayerTag(MinecraftServer server, ICommandSender sender, String[] args, int startIndex) throws CommandException
     {
-        String s = getEntityName(server, sender, p_184924_3_[p_184924_4_]);
-        Entity entity = getEntity(server, sender, p_184924_3_[p_184924_4_++]);
-        String s1 = p_184924_3_[p_184924_4_++];
+        String s = getEntityName(server, sender, args[startIndex]);
+        Entity entity = getEntity(server, sender, args[startIndex++]);
+        String s1 = args[startIndex++];
         Set<String> set = entity.getTags();
 
         if ("list".equals(s1))
@@ -1163,25 +1165,25 @@ public class CommandScoreboard extends CommandBase
             {
                 TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.scoreboard.players.tag.list", new Object[] {s});
                 textcomponenttranslation.getStyle().setColor(TextFormatting.DARK_GREEN);
-                sender.addChatMessage(textcomponenttranslation);
-                sender.addChatMessage(new TextComponentString(joinNiceString(set.toArray())));
+                sender.sendMessage(textcomponenttranslation);
+                sender.sendMessage(new TextComponentString(joinNiceString(set.toArray())));
             }
 
             sender.setCommandStat(CommandResultStats.Type.QUERY_RESULT, set.size());
         }
-        else if (p_184924_3_.length < 5)
+        else if (args.length < 5)
         {
             throw new WrongUsageException("commands.scoreboard.players.tag.usage", new Object[0]);
         }
         else
         {
-            String s2 = p_184924_3_[p_184924_4_++];
+            String s2 = args[startIndex++];
 
-            if (p_184924_3_.length > p_184924_4_)
+            if (args.length > startIndex)
             {
                 try
                 {
-                    NBTTagCompound nbttagcompound = JsonToNBT.getTagFromJson(buildString(p_184924_3_, p_184924_4_));
+                    NBTTagCompound nbttagcompound = JsonToNBT.getTagFromJson(buildString(args, startIndex));
                     NBTTagCompound nbttagcompound1 = entityToNBT(entity);
 
                     if (!NBTUtil.areNBTEquals(nbttagcompound, nbttagcompound1, true))
@@ -1221,30 +1223,25 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
         if (args.length == 1)
         {
-            /**
-             * Returns a List of strings (chosen from the given strings) which the last word in the given string array
-             * is a beginning-match for. (Tab completion).
-             */
             return getListOfStringsMatchingLastWord(args, new String[] {"objectives", "players", "teams"});
         }
         else
         {
-            if (args[0].equalsIgnoreCase("objectives"))
+            if ("objectives".equalsIgnoreCase(args[0]))
             {
                 if (args.length == 2)
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, new String[] {"list", "add", "remove", "setdisplay"});
                 }
 
-                if (args[1].equalsIgnoreCase("add"))
+                if ("add".equalsIgnoreCase(args[1]))
                 {
                     if (args.length == 4)
                     {
@@ -1252,21 +1249,17 @@ public class CommandScoreboard extends CommandBase
                         return getListOfStringsMatchingLastWord(args, set);
                     }
                 }
-                else if (args[1].equalsIgnoreCase("remove"))
+                else if ("remove".equalsIgnoreCase(args[1]))
                 {
                     if (args.length == 3)
                     {
                         return getListOfStringsMatchingLastWord(args, this.getObjectiveNames(false, server));
                     }
                 }
-                else if (args[1].equalsIgnoreCase("setdisplay"))
+                else if ("setdisplay".equalsIgnoreCase(args[1]))
                 {
                     if (args.length == 3)
                     {
-                        /**
-                         * Returns a List of strings (chosen from the given strings) which the last word in the given
-                         * string array is a beginning-match for. (Tab completion).
-                         */
                         return getListOfStringsMatchingLastWord(args, Scoreboard.getDisplaySlotStrings());
                     }
 
@@ -1276,28 +1269,20 @@ public class CommandScoreboard extends CommandBase
                     }
                 }
             }
-            else if (args[0].equalsIgnoreCase("players"))
+            else if ("players".equalsIgnoreCase(args[0]))
             {
                 if (args.length == 2)
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, new String[] {"set", "add", "remove", "reset", "list", "enable", "test", "operation", "tag"});
                 }
 
-                if (!args[1].equalsIgnoreCase("set") && !args[1].equalsIgnoreCase("add") && !args[1].equalsIgnoreCase("remove") && !args[1].equalsIgnoreCase("reset"))
+                if (!"set".equalsIgnoreCase(args[1]) && !"add".equalsIgnoreCase(args[1]) && !"remove".equalsIgnoreCase(args[1]) && !"reset".equalsIgnoreCase(args[1]))
                 {
-                    if (args[1].equalsIgnoreCase("enable"))
+                    if ("enable".equalsIgnoreCase(args[1]))
                     {
                         if (args.length == 3)
                         {
-                            /**
-                             * Returns a List of strings (chosen from the given strings) which the last word in the
-                             * given string array is a beginning-match for. (Tab completion).
-                             */
-                            return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                         }
 
                         if (args.length == 4)
@@ -1305,9 +1290,9 @@ public class CommandScoreboard extends CommandBase
                             return getListOfStringsMatchingLastWord(args, this.getTriggerNames(server));
                         }
                     }
-                    else if (!args[1].equalsIgnoreCase("list") && !args[1].equalsIgnoreCase("test"))
+                    else if (!"list".equalsIgnoreCase(args[1]) && !"test".equalsIgnoreCase(args[1]))
                     {
-                        if (args[1].equalsIgnoreCase("operation"))
+                        if ("operation".equalsIgnoreCase(args[1]))
                         {
                             if (args.length == 3)
                             {
@@ -1321,20 +1306,12 @@ public class CommandScoreboard extends CommandBase
 
                             if (args.length == 5)
                             {
-                                /**
-                                 * Returns a List of strings (chosen from the given strings) which the last word in the
-                                 * given string array is a beginning-match for. (Tab completion).
-                                 */
                                 return getListOfStringsMatchingLastWord(args, new String[] {"+=", "-=", "*=", "/=", "%=", "=", "<", ">", "><"});
                             }
 
                             if (args.length == 6)
                             {
-                                /**
-                                 * Returns a List of strings (chosen from the given strings) which the last word in the
-                                 * given string array is a beginning-match for. (Tab completion).
-                                 */
-                                return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                                return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                             }
 
                             if (args.length == 7)
@@ -1342,7 +1319,7 @@ public class CommandScoreboard extends CommandBase
                                 return getListOfStringsMatchingLastWord(args, this.getObjectiveNames(false, server));
                             }
                         }
-                        else if (args[1].equalsIgnoreCase("tag"))
+                        else if ("tag".equalsIgnoreCase(args[1]))
                         {
                             if (args.length == 3)
                             {
@@ -1351,10 +1328,6 @@ public class CommandScoreboard extends CommandBase
 
                             if (args.length == 4)
                             {
-                                /**
-                                 * Returns a List of strings (chosen from the given strings) which the last word in the
-                                 * given string array is a beginning-match for. (Tab completion).
-                                 */
                                 return getListOfStringsMatchingLastWord(args, new String[] {"add", "remove", "list"});
                             }
                         }
@@ -1366,7 +1339,7 @@ public class CommandScoreboard extends CommandBase
                             return getListOfStringsMatchingLastWord(args, this.getScoreboard(server).getObjectiveNames());
                         }
 
-                        if (args.length == 4 && args[1].equalsIgnoreCase("test"))
+                        if (args.length == 4 && "test".equalsIgnoreCase(args[1]))
                         {
                             return getListOfStringsMatchingLastWord(args, this.getObjectiveNames(false, server));
                         }
@@ -1376,11 +1349,7 @@ public class CommandScoreboard extends CommandBase
                 {
                     if (args.length == 3)
                     {
-                        /**
-                         * Returns a List of strings (chosen from the given strings) which the last word in the given
-                         * string array is a beginning-match for. (Tab completion).
-                         */
-                        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                     }
 
                     if (args.length == 4)
@@ -1389,18 +1358,14 @@ public class CommandScoreboard extends CommandBase
                     }
                 }
             }
-            else if (args[0].equalsIgnoreCase("teams"))
+            else if ("teams".equalsIgnoreCase(args[0]))
             {
                 if (args.length == 2)
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, new String[] {"add", "remove", "join", "leave", "empty", "list", "option"});
                 }
 
-                if (args[1].equalsIgnoreCase("join"))
+                if ("join".equalsIgnoreCase(args[1]))
                 {
                     if (args.length == 3)
                     {
@@ -1409,27 +1374,19 @@ public class CommandScoreboard extends CommandBase
 
                     if (args.length >= 4)
                     {
-                        /**
-                         * Returns a List of strings (chosen from the given strings) which the last word in the given
-                         * string array is a beginning-match for. (Tab completion).
-                         */
-                        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                     }
                 }
                 else
                 {
-                    if (args[1].equalsIgnoreCase("leave"))
+                    if ("leave".equalsIgnoreCase(args[1]))
                     {
-                        /**
-                         * Returns a List of strings (chosen from the given strings) which the last word in the given
-                         * string array is a beginning-match for. (Tab completion).
-                         */
-                        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+                        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
                     }
 
-                    if (!args[1].equalsIgnoreCase("empty") && !args[1].equalsIgnoreCase("list") && !args[1].equalsIgnoreCase("remove"))
+                    if (!"empty".equalsIgnoreCase(args[1]) && !"list".equalsIgnoreCase(args[1]) && !"remove".equalsIgnoreCase(args[1]))
                     {
-                        if (args[1].equalsIgnoreCase("option"))
+                        if ("option".equalsIgnoreCase(args[1]))
                         {
                             if (args.length == 3)
                             {
@@ -1438,44 +1395,28 @@ public class CommandScoreboard extends CommandBase
 
                             if (args.length == 4)
                             {
-                                /**
-                                 * Returns a List of strings (chosen from the given strings) which the last word in the
-                                 * given string array is a beginning-match for. (Tab completion).
-                                 */
                                 return getListOfStringsMatchingLastWord(args, new String[] {"color", "friendlyfire", "seeFriendlyInvisibles", "nametagVisibility", "deathMessageVisibility", "collisionRule"});
                             }
 
                             if (args.length == 5)
                             {
-                                if (args[3].equalsIgnoreCase("color"))
+                                if ("color".equalsIgnoreCase(args[3]))
                                 {
                                     return getListOfStringsMatchingLastWord(args, TextFormatting.getValidValues(true, false));
                                 }
 
-                                if (args[3].equalsIgnoreCase("nametagVisibility") || args[3].equalsIgnoreCase("deathMessageVisibility"))
+                                if ("nametagVisibility".equalsIgnoreCase(args[3]) || "deathMessageVisibility".equalsIgnoreCase(args[3]))
                                 {
-                                    /**
-                                     * Returns a List of strings (chosen from the given strings) which the last word in
-                                     * the given string array is a beginning-match for. (Tab completion).
-                                     */
                                     return getListOfStringsMatchingLastWord(args, Team.EnumVisible.getNames());
                                 }
 
-                                if (args[3].equalsIgnoreCase("collisionRule"))
+                                if ("collisionRule".equalsIgnoreCase(args[3]))
                                 {
-                                    /**
-                                     * Returns a List of strings (chosen from the given strings) which the last word in
-                                     * the given string array is a beginning-match for. (Tab completion).
-                                     */
                                     return getListOfStringsMatchingLastWord(args, Team.CollisionRule.getNames());
                                 }
 
-                                if (args[3].equalsIgnoreCase("friendlyfire") || args[3].equalsIgnoreCase("seeFriendlyInvisibles"))
+                                if ("friendlyfire".equalsIgnoreCase(args[3]) || "seeFriendlyInvisibles".equalsIgnoreCase(args[3]))
                                 {
-                                    /**
-                                     * Returns a List of strings (chosen from the given strings) which the last word in
-                                     * the given string array is a beginning-match for. (Tab completion).
-                                     */
                                     return getListOfStringsMatchingLastWord(args, new String[] {"true", "false"});
                                 }
                             }
@@ -1492,14 +1433,14 @@ public class CommandScoreboard extends CommandBase
         }
     }
 
-    protected List<String> getObjectiveNames(boolean p_184926_1_, MinecraftServer server)
+    protected List<String> getObjectiveNames(boolean writableOnly, MinecraftServer server)
     {
         Collection<ScoreObjective> collection = this.getScoreboard(server).getScoreObjectives();
         List<String> list = Lists.<String>newArrayList();
 
         for (ScoreObjective scoreobjective : collection)
         {
-            if (!p_184926_1_ || !scoreobjective.getCriteria().isReadOnly())
+            if (!writableOnly || !scoreobjective.getCriteria().isReadOnly())
             {
                 list.add(scoreobjective.getName());
             }
@@ -1529,6 +1470,24 @@ public class CommandScoreboard extends CommandBase
      */
     public boolean isUsernameIndex(String[] args, int index)
     {
-        return !args[0].equalsIgnoreCase("players") ? (args[0].equalsIgnoreCase("teams") ? index == 2 : false) : (args.length > 1 && args[1].equalsIgnoreCase("operation") ? index == 2 || index == 5 : index == 2);
+        if (!"players".equalsIgnoreCase(args[0]))
+        {
+            if ("teams".equalsIgnoreCase(args[0]))
+            {
+                return index == 2;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (args.length > 1 && "operation".equalsIgnoreCase(args[1]))
+        {
+            return index == 2 || index == 5;
+        }
+        else
+        {
+            return index == 2;
+        }
     }
 }

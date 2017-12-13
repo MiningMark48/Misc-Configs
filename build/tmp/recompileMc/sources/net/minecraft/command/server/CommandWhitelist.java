@@ -18,7 +18,7 @@ public class CommandWhitelist extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "whitelist";
     }
@@ -34,7 +34,7 @@ public class CommandWhitelist extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.whitelist.usage";
     }
@@ -50,23 +50,23 @@ public class CommandWhitelist extends CommandBase
         }
         else
         {
-            if (args[0].equals("on"))
+            if ("on".equals(args[0]))
             {
                 server.getPlayerList().setWhiteListEnabled(true);
                 notifyCommandListener(sender, this, "commands.whitelist.enabled", new Object[0]);
             }
-            else if (args[0].equals("off"))
+            else if ("off".equals(args[0]))
             {
                 server.getPlayerList().setWhiteListEnabled(false);
                 notifyCommandListener(sender, this, "commands.whitelist.disabled", new Object[0]);
             }
-            else if (args[0].equals("list"))
+            else if ("list".equals(args[0]))
             {
-                sender.addChatMessage(new TextComponentTranslation("commands.whitelist.list", new Object[] {Integer.valueOf(server.getPlayerList().getWhitelistedPlayerNames().length), Integer.valueOf(server.getPlayerList().getAvailablePlayerDat().length)}));
+                sender.sendMessage(new TextComponentTranslation("commands.whitelist.list", new Object[] {server.getPlayerList().getWhitelistedPlayerNames().length, server.getPlayerList().getAvailablePlayerDat().length}));
                 String[] astring = server.getPlayerList().getWhitelistedPlayerNames();
-                sender.addChatMessage(new TextComponentString(joinNiceString(astring)));
+                sender.sendMessage(new TextComponentString(joinNiceString(astring)));
             }
-            else if (args[0].equals("add"))
+            else if ("add".equals(args[0]))
             {
                 if (args.length < 2)
                 {
@@ -83,7 +83,7 @@ public class CommandWhitelist extends CommandBase
                 server.getPlayerList().addWhitelistedPlayer(gameprofile);
                 notifyCommandListener(sender, this, "commands.whitelist.add.success", new Object[] {args[1]});
             }
-            else if (args[0].equals("remove"))
+            else if ("remove".equals(args[0]))
             {
                 if (args.length < 2)
                 {
@@ -100,7 +100,7 @@ public class CommandWhitelist extends CommandBase
                 server.getPlayerList().removePlayerFromWhitelist(gameprofile1);
                 notifyCommandListener(sender, this, "commands.whitelist.remove.success", new Object[] {args[1]});
             }
-            else if (args[0].equals("reload"))
+            else if ("reload".equals(args[0]))
             {
                 server.getPlayerList().reloadWhitelist();
                 notifyCommandListener(sender, this, "commands.whitelist.reloaded", new Object[0]);
@@ -108,35 +108,26 @@ public class CommandWhitelist extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
         if (args.length == 1)
         {
-            /**
-             * Returns a List of strings (chosen from the given strings) which the last word in the given string array
-             * is a beginning-match for. (Tab completion).
-             */
             return getListOfStringsMatchingLastWord(args, new String[] {"on", "off", "list", "add", "remove", "reload"});
         }
         else
         {
             if (args.length == 2)
             {
-                if (args[0].equals("remove"))
+                if ("remove".equals(args[0]))
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, server.getPlayerList().getWhitelistedPlayerNames());
                 }
 
-                if (args[0].equals("add"))
+                if ("add".equals(args[0]))
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, server.getPlayerProfileCache().getUsernames());
                 }
             }

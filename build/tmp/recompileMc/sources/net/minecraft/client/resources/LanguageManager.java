@@ -19,14 +19,14 @@ import org.apache.logging.log4j.Logger;
 public class LanguageManager implements IResourceManagerReloadListener
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final MetadataSerializer theMetadataSerializer;
+    private final MetadataSerializer metadataSerializer;
     private String currentLanguage;
     protected static final Locale CURRENT_LOCALE = new Locale();
-    private Map<String, Language> languageMap = Maps.<String, Language>newHashMap();
+    private final Map<String, Language> languageMap = Maps.<String, Language>newHashMap();
 
     public LanguageManager(MetadataSerializer theMetadataSerializerIn, String currentLanguageIn)
     {
-        this.theMetadataSerializer = theMetadataSerializerIn;
+        this.metadataSerializer = theMetadataSerializerIn;
         this.currentLanguage = currentLanguageIn;
         I18n.setLocale(CURRENT_LOCALE);
     }
@@ -39,7 +39,7 @@ public class LanguageManager implements IResourceManagerReloadListener
         {
             try
             {
-                LanguageMetadataSection languagemetadatasection = (LanguageMetadataSection)iresourcepack.getPackMetadata(this.theMetadataSerializer, "language");
+                LanguageMetadataSection languagemetadatasection = (LanguageMetadataSection)iresourcepack.getPackMetadata(this.metadataSerializer, "language");
 
                 if (languagemetadatasection != null)
                 {
@@ -54,20 +54,20 @@ public class LanguageManager implements IResourceManagerReloadListener
             }
             catch (RuntimeException runtimeexception)
             {
-                LOGGER.warn((String)("Unable to parse metadata section of resourcepack: " + iresourcepack.getPackName()), (Throwable)runtimeexception);
+                LOGGER.warn("Unable to parse language metadata section of resourcepack: {}", iresourcepack.getPackName(), runtimeexception);
             }
             catch (IOException ioexception)
             {
-                LOGGER.warn((String)("Unable to parse metadata section of resourcepack: " + iresourcepack.getPackName()), (Throwable)ioexception);
+                LOGGER.warn("Unable to parse language metadata section of resourcepack: {}", iresourcepack.getPackName(), ioexception);
             }
         }
     }
 
     public void onResourceManagerReload(IResourceManager resourceManager)
     {
-        List<String> list = Lists.newArrayList(new String[] {"en_US"});
+        List<String> list = Lists.newArrayList("en_us");
 
-        if (!"en_US".equals(this.currentLanguage))
+        if (!"en_us".equals(this.currentLanguage))
         {
             list.add(this.currentLanguage);
         }
@@ -93,11 +93,17 @@ public class LanguageManager implements IResourceManagerReloadListener
 
     public Language getCurrentLanguage()
     {
-        return this.languageMap.containsKey(this.currentLanguage) ? (Language)this.languageMap.get(this.currentLanguage) : (Language)this.languageMap.get("en_US");
+        String s = this.languageMap.containsKey(this.currentLanguage) ? this.currentLanguage : "en_us";
+        return this.languageMap.get(s);
     }
 
     public SortedSet<Language> getLanguages()
     {
         return Sets.newTreeSet(this.languageMap.values());
+    }
+
+    public Language getLanguage(String p_191960_1_)
+    {
+        return this.languageMap.get(p_191960_1_);
     }
 }

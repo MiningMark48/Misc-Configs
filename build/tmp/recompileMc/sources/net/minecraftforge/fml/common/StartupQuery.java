@@ -1,9 +1,30 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.minecraft.server.MinecraftServer;
+
+import javax.annotation.Nullable;
 
 public class StartupQuery {
     // internal class/functionality, do not use
@@ -47,7 +68,7 @@ public class StartupQuery {
             }
             catch (InterruptedException e)
             {
-                FMLLog.warning("query interrupted");
+                FMLLog.log.warn("query interrupted");
                 abort();
             }
 
@@ -61,12 +82,13 @@ public class StartupQuery {
     private static volatile boolean aborted = false;
 
 
-    private StartupQuery(String text, AtomicBoolean result)
+    private StartupQuery(String text, @Nullable AtomicBoolean result)
     {
         this.text = text;
         this.result = result;
     }
 
+    @Nullable
     public Boolean getResult()
     {
         return result == null ? null : result.get();
@@ -98,7 +120,7 @@ public class StartupQuery {
 
         if (result != null && prop != null)
         {
-            FMLLog.info("Using fml.queryResult %s to answer the following query:\n%s", prop, text);
+            FMLLog.log.info("Using fml.queryResult {} to answer the following query:\n{}", prop, text);
 
             if (prop.equalsIgnoreCase("confirm"))
             {
@@ -111,7 +133,7 @@ public class StartupQuery {
                 return;
             }
 
-            FMLLog.warning("Invalid value for fml.queryResult: %s, expected confirm or cancel", prop);
+            FMLLog.log.warn("Invalid value for fml.queryResult: {}, expected confirm or cancel", prop);
         }
 
         synchronous = false;
@@ -134,12 +156,13 @@ public class StartupQuery {
         }
         catch (InterruptedException e)
         {
-            FMLLog.warning("query interrupted");
+            FMLLog.log.warn("query interrupted");
             abort();
         }
     }
 
     private String text;
+    @Nullable
     private AtomicBoolean result;
     private CountDownLatch signal = new CountDownLatch(1);
     private volatile boolean synchronous;

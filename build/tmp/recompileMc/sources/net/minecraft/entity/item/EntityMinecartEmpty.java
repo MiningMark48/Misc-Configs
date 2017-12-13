@@ -1,9 +1,8 @@
 package net.minecraft.entity.item;
 
-import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.World;
 
 public class EntityMinecartEmpty extends EntityMinecart
@@ -18,9 +17,14 @@ public class EntityMinecartEmpty extends EntityMinecart
         super(worldIn, x, y, z);
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public static void registerFixesMinecartEmpty(DataFixer fixer)
     {
-        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, stack, hand))) return true;
+        EntityMinecart.registerFixesMinecart(fixer, EntityMinecartEmpty.class);
+    }
+
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
+    {
+        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, hand))) return true;
 
         if (player.isSneaking())
         {
@@ -32,7 +36,7 @@ public class EntityMinecartEmpty extends EntityMinecart
         }
         else
         {
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
                 player.startRiding(this);
             }
@@ -58,7 +62,7 @@ public class EntityMinecartEmpty extends EntityMinecart
                 this.setRollingDirection(-this.getRollingDirection());
                 this.setRollingAmplitude(10);
                 this.setDamage(50.0F);
-                this.setBeenAttacked();
+                this.markVelocityChanged();
             }
         }
     }

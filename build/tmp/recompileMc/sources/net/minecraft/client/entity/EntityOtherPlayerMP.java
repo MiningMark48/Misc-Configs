@@ -23,7 +23,7 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
     public EntityOtherPlayerMP(World worldIn, GameProfile gameProfileIn)
     {
         super(worldIn, gameProfileIn);
-        this.stepHeight = 0.0F;
+        this.stepHeight = 1.0F;
         this.noClip = true;
         this.renderOffsetY = 0.25F;
     }
@@ -49,6 +49,7 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
      */
     public boolean attackEntityFrom(DamageSource source, float amount)
     {
+        net.minecraftforge.common.ForgeHooks.onLivingAttack(this, source, amount);
         return true;
     }
 
@@ -75,7 +76,7 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
         this.prevLimbSwingAmount = this.limbSwingAmount;
         double d0 = this.posX - this.prevPosX;
         double d1 = this.posZ - this.prevPosZ;
-        float f = MathHelper.sqrt_double(d0 * d0 + d1 * d1) * 4.0F;
+        float f = MathHelper.sqrt(d0 * d0 + d1 * d1) * 4.0F;
 
         if (f > 1.0F)
         {
@@ -118,7 +119,7 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
 
         this.prevCameraYaw = this.cameraYaw;
         this.updateArmSwingProgress();
-        float f1 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
+        float f1 = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
         float f = (float)Math.atan(-this.motionY * 0.20000000298023224D) * 15.0F;
 
         if (f1 > 0.1F)
@@ -138,15 +139,15 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
 
         this.cameraYaw += (f1 - this.cameraYaw) * 0.4F;
         this.cameraPitch += (f - this.cameraPitch) * 0.8F;
-        this.worldObj.theProfiler.startSection("push");
+        this.world.profiler.startSection("push");
         this.collideWithNearbyEntities();
-        this.worldObj.theProfiler.endSection();
+        this.world.profiler.endSection();
     }
 
     /**
      * Send a chat message to the CommandSender
      */
-    public void addChatMessage(ITextComponent component)
+    public void sendMessage(ITextComponent component)
     {
         Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(component);
     }
@@ -154,7 +155,7 @@ public class EntityOtherPlayerMP extends AbstractClientPlayer
     /**
      * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
      */
-    public boolean canCommandSenderUseCommand(int permLevel, String commandName)
+    public boolean canUseCommand(int permLevel, String commandName)
     {
         return false;
     }

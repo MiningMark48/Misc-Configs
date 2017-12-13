@@ -3,6 +3,7 @@ package net.minecraft.client.model;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -79,12 +80,12 @@ public class ModelBiped extends ModelBase
         if (this.isChild)
         {
             float f = 2.0F;
-            GlStateManager.scale(1.5F / f, 1.5F / f, 1.5F / f);
+            GlStateManager.scale(0.75F, 0.75F, 0.75F);
             GlStateManager.translate(0.0F, 16.0F * scale, 0.0F);
             this.bipedHead.render(scale);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.scale(1.0F / f, 1.0F / f, 1.0F / f);
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
             GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
             this.bipedBody.render(scale);
             this.bipedRightArm.render(scale);
@@ -209,9 +210,8 @@ public class ModelBiped extends ModelBase
         {
             EnumHandSide enumhandside = this.getMainHand(entityIn);
             ModelRenderer modelrenderer = this.getArmForSide(enumhandside);
-            this.getArmForSide(enumhandside.opposite());
             float f1 = this.swingProgress;
-            this.bipedBody.rotateAngleY = MathHelper.sin(MathHelper.sqrt_float(f1) * ((float)Math.PI * 2F)) * 0.2F;
+            this.bipedBody.rotateAngleY = MathHelper.sin(MathHelper.sqrt(f1) * ((float)Math.PI * 2F)) * 0.2F;
 
             if (enumhandside == EnumHandSide.LEFT)
             {
@@ -293,15 +293,15 @@ public class ModelBiped extends ModelBase
         }
     }
 
-    public void setInvisible(boolean invisible)
+    public void setVisible(boolean visible)
     {
-        this.bipedHead.showModel = invisible;
-        this.bipedHeadwear.showModel = invisible;
-        this.bipedBody.showModel = invisible;
-        this.bipedRightArm.showModel = invisible;
-        this.bipedLeftArm.showModel = invisible;
-        this.bipedRightLeg.showModel = invisible;
-        this.bipedLeftLeg.showModel = invisible;
+        this.bipedHead.showModel = visible;
+        this.bipedHeadwear.showModel = visible;
+        this.bipedBody.showModel = visible;
+        this.bipedRightArm.showModel = visible;
+        this.bipedLeftArm.showModel = visible;
+        this.bipedRightLeg.showModel = visible;
+        this.bipedLeftLeg.showModel = visible;
     }
 
     public void postRenderArm(float scale, EnumHandSide side)
@@ -316,7 +316,16 @@ public class ModelBiped extends ModelBase
 
     protected EnumHandSide getMainHand(Entity entityIn)
     {
-        return entityIn instanceof EntityLivingBase ? ((EntityLivingBase)entityIn).getPrimaryHand() : EnumHandSide.RIGHT;
+        if (entityIn instanceof EntityLivingBase)
+        {
+            EntityLivingBase entitylivingbase = (EntityLivingBase)entityIn;
+            EnumHandSide enumhandside = entitylivingbase.getPrimaryHand();
+            return entitylivingbase.swingingHand == EnumHand.MAIN_HAND ? enumhandside : enumhandside.opposite();
+        }
+        else
+        {
+            return EnumHandSide.RIGHT;
+        }
     }
 
     @SideOnly(Side.CLIENT)

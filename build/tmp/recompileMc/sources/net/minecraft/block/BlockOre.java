@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -31,10 +30,28 @@ public class BlockOre extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return this == Blocks.COAL_ORE ? Items.COAL : (this == Blocks.DIAMOND_ORE ? Items.DIAMOND : (this == Blocks.LAPIS_ORE ? Items.DYE : (this == Blocks.EMERALD_ORE ? Items.EMERALD : (this == Blocks.QUARTZ_ORE ? Items.QUARTZ : Item.getItemFromBlock(this)))));
+        if (this == Blocks.COAL_ORE)
+        {
+            return Items.COAL;
+        }
+        else if (this == Blocks.DIAMOND_ORE)
+        {
+            return Items.DIAMOND;
+        }
+        else if (this == Blocks.LAPIS_ORE)
+        {
+            return Items.DYE;
+        }
+        else if (this == Blocks.EMERALD_ORE)
+        {
+            return Items.EMERALD;
+        }
+        else
+        {
+            return this == Blocks.QUARTZ_ORE ? Items.QUARTZ : Item.getItemFromBlock(this);
+        }
     }
 
     /**
@@ -84,23 +101,23 @@ public class BlockOre extends Block
 
             if (this == Blocks.COAL_ORE)
             {
-                i = MathHelper.getRandomIntegerInRange(rand, 0, 2);
+                i = MathHelper.getInt(rand, 0, 2);
             }
             else if (this == Blocks.DIAMOND_ORE)
             {
-                i = MathHelper.getRandomIntegerInRange(rand, 3, 7);
+                i = MathHelper.getInt(rand, 3, 7);
             }
             else if (this == Blocks.EMERALD_ORE)
             {
-                i = MathHelper.getRandomIntegerInRange(rand, 3, 7);
+                i = MathHelper.getInt(rand, 3, 7);
             }
             else if (this == Blocks.LAPIS_ORE)
             {
-                i = MathHelper.getRandomIntegerInRange(rand, 2, 5);
+                i = MathHelper.getInt(rand, 2, 5);
             }
             else if (this == Blocks.QUARTZ_ORE)
             {
-                i = MathHelper.getRandomIntegerInRange(rand, 2, 5);
+                i = MathHelper.getInt(rand, 2, 5);
             }
 
             return i;

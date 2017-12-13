@@ -19,11 +19,11 @@ public class WorldGenMegaPineTree extends WorldGenHugeTrees
     private static final IBlockState TRUNK = Blocks.LOG.getDefaultState().withProperty(BlockOldLog.VARIANT, BlockPlanks.EnumType.SPRUCE);
     private static final IBlockState LEAF = Blocks.LEAVES.getDefaultState().withProperty(BlockOldLeaf.VARIANT, BlockPlanks.EnumType.SPRUCE).withProperty(BlockLeaves.CHECK_DECAY, Boolean.valueOf(false));
     private static final IBlockState PODZOL = Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.PODZOL);
-    private boolean useBaseHeight;
+    private final boolean useBaseHeight;
 
-    public WorldGenMegaPineTree(boolean p_i45457_1_, boolean p_i45457_2_)
+    public WorldGenMegaPineTree(boolean notify, boolean p_i45457_2_)
     {
-        super(p_i45457_1_, 13, 15, TRUNK, LEAF);
+        super(notify, 13, 15, TRUNK, LEAF);
         this.useBaseHeight = p_i45457_2_;
     }
 
@@ -70,16 +70,16 @@ public class WorldGenMegaPineTree extends WorldGenHugeTrees
         }
     }
 
-    private void createCrown(World worldIn, int p_150541_2_, int p_150541_3_, int p_150541_4_, int p_150541_5_, Random p_150541_6_)
+    private void createCrown(World worldIn, int x, int z, int y, int p_150541_5_, Random rand)
     {
-        int i = p_150541_6_.nextInt(5) + (this.useBaseHeight ? this.baseHeight : 3);
+        int i = rand.nextInt(5) + (this.useBaseHeight ? this.baseHeight : 3);
         int j = 0;
 
-        for (int k = p_150541_4_ - i; k <= p_150541_4_; ++k)
+        for (int k = y - i; k <= y; ++k)
         {
-            int l = p_150541_4_ - k;
-            int i1 = p_150541_5_ + MathHelper.floor_float((float)l / (float)i * 3.5F);
-            this.growLeavesLayerStrict(worldIn, new BlockPos(p_150541_2_, k, p_150541_3_), i1 + (l > 0 && i1 == j && (k & 1) == 0 ? 1 : 0));
+            int l = y - k;
+            int i1 = p_150541_5_ + MathHelper.floor((float)l / (float)i * 3.5F);
+            this.growLeavesLayerStrict(worldIn, new BlockPos(x, k, z), i1 + (l > 0 && i1 == j && (k & 1) == 0 ? 1 : 0));
             j = i1;
         }
     }

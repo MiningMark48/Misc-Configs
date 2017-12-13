@@ -16,11 +16,11 @@ public class CPacketClickWindow implements Packet<INetHandlerPlayServer>
     /** Id of the clicked slot */
     private int slotId;
     /** Button used */
-    private int usedButton;
+    private int packedClickData;
     /** A unique number for the action, used for transaction handling */
     private short actionNumber;
     /** The item stack present in the slot */
-    private ItemStack clickedItem;
+    private ItemStack clickedItem = ItemStack.EMPTY;
     /** Inventory operation mode */
     private ClickType mode;
 
@@ -33,8 +33,8 @@ public class CPacketClickWindow implements Packet<INetHandlerPlayServer>
     {
         this.windowId = windowIdIn;
         this.slotId = slotIdIn;
-        this.usedButton = usedButtonIn;
-        this.clickedItem = clickedItemIn != null ? clickedItemIn.copy() : null;
+        this.packedClickData = usedButtonIn;
+        this.clickedItem = clickedItemIn.copy();
         this.actionNumber = actionNumberIn;
         this.mode = modeIn;
     }
@@ -54,10 +54,10 @@ public class CPacketClickWindow implements Packet<INetHandlerPlayServer>
     {
         this.windowId = buf.readByte();
         this.slotId = buf.readShort();
-        this.usedButton = buf.readByte();
+        this.packedClickData = buf.readByte();
         this.actionNumber = buf.readShort();
         this.mode = (ClickType)buf.readEnumValue(ClickType.class);
-        this.clickedItem = buf.readItemStackFromBuffer();
+        this.clickedItem = buf.readItemStack();
     }
 
     /**
@@ -67,10 +67,10 @@ public class CPacketClickWindow implements Packet<INetHandlerPlayServer>
     {
         buf.writeByte(this.windowId);
         buf.writeShort(this.slotId);
-        buf.writeByte(this.usedButton);
+        buf.writeByte(this.packedClickData);
         buf.writeShort(this.actionNumber);
         buf.writeEnumValue(this.mode);
-        buf.writeItemStackToBuffer(this.clickedItem);
+        net.minecraftforge.common.util.PacketUtil.writeItemStackFromClientToServer(buf, this.clickedItem);
     }
 
     public int getWindowId()
@@ -85,7 +85,7 @@ public class CPacketClickWindow implements Packet<INetHandlerPlayServer>
 
     public int getUsedButton()
     {
-        return this.usedButton;
+        return this.packedClickData;
     }
 
     public short getActionNumber()

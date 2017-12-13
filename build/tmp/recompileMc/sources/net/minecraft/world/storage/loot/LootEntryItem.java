@@ -28,33 +28,30 @@ public class LootEntryItem extends LootEntry
     public void addLoot(Collection<ItemStack> stacks, Random rand, LootContext context)
     {
         ItemStack itemstack = new ItemStack(this.item);
-        int i = 0;
 
-        for (int j = this.functions.length; i < j; ++i)
+        for (LootFunction lootfunction : this.functions)
         {
-            LootFunction lootfunction = this.functions[i];
-
             if (LootConditionManager.testAllConditions(lootfunction.getConditions(), rand, context))
             {
                 itemstack = lootfunction.apply(itemstack, rand, context);
             }
         }
 
-        if (itemstack.stackSize > 0)
+        if (!itemstack.isEmpty())
         {
-            if (itemstack.stackSize < this.item.getItemStackLimit(itemstack))
+            if (itemstack.getCount() < this.item.getItemStackLimit(itemstack))
             {
                 stacks.add(itemstack);
             }
             else
             {
-                i = itemstack.stackSize;
+                int i = itemstack.getCount();
 
                 while (i > 0)
                 {
                     ItemStack itemstack1 = itemstack.copy();
-                    itemstack1.stackSize = Math.min(itemstack.getMaxStackSize(), i);
-                    i -= itemstack1.stackSize;
+                    itemstack1.setCount(Math.min(itemstack.getMaxStackSize(), i));
+                    i -= itemstack1.getCount();
                     stacks.add(itemstack1);
                 }
             }
@@ -68,11 +65,11 @@ public class LootEntryItem extends LootEntry
             json.add("functions", context.serialize(this.functions));
         }
 
-        ResourceLocation resourcelocation = (ResourceLocation)Item.REGISTRY.getNameForObject(this.item);
+        ResourceLocation resourcelocation = Item.REGISTRY.getNameForObject(this.item);
 
         if (resourcelocation == null)
         {
-            throw new IllegalArgumentException("Can\'t serialize unknown item " + this.item);
+            throw new IllegalArgumentException("Can't serialize unknown item " + this.item);
         }
         else
         {

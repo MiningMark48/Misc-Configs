@@ -126,10 +126,13 @@ public class TextureAtlasSprite
         return this.minU + f * (float)u / 16.0F;
     }
 
-    public float getUnInterpolatedU(float p_188537_1_)
+    /**
+     * The opposite of getInterpolatedU. Takes the return value of that method and returns the input to it.
+     */
+    public float getUnInterpolatedU(float u)
     {
         float f = this.maxU - this.minU;
-        return (p_188537_1_ - this.minU) / f * 16.0F;
+        return (u - this.minU) / f * 16.0F;
     }
 
     /**
@@ -157,6 +160,9 @@ public class TextureAtlasSprite
         return this.minV + f * (float)v / 16.0F;
     }
 
+    /**
+     * The opposite of getInterpolatedV. Takes the return value of that method and returns the input to it.
+     */
     public float getUnInterpolatedV(float p_188536_1_)
     {
         float f = this.maxV - this.minV;
@@ -182,7 +188,7 @@ public class TextureAtlasSprite
 
             if (i != k && k >= 0 && k < this.framesTextureData.size())
             {
-                TextureUtil.uploadTextureMipmap((int[][])this.framesTextureData.get(k), this.width, this.height, this.originX, this.originY, false, false);
+                TextureUtil.uploadTextureMipmap(this.framesTextureData.get(k), this.width, this.height, this.originX, this.originY, false, false);
             }
         }
         else if (this.animationMetadata.isInterpolate())
@@ -200,8 +206,8 @@ public class TextureAtlasSprite
 
         if (i != k && k >= 0 && k < this.framesTextureData.size())
         {
-            int[][] aint = (int[][])this.framesTextureData.get(i);
-            int[][] aint1 = (int[][])this.framesTextureData.get(k);
+            int[][] aint = this.framesTextureData.get(i);
+            int[][] aint1 = this.framesTextureData.get(k);
 
             if (this.interpolatedFrameData == null || this.interpolatedFrameData.length != aint.length)
             {
@@ -240,7 +246,7 @@ public class TextureAtlasSprite
 
     public int[][] getFrameTextureData(int index)
     {
-        return (int[][])this.framesTextureData.get(index);
+        return this.framesTextureData.get(index);
     }
 
     public int getFrameCount()
@@ -292,11 +298,11 @@ public class TextureAtlasSprite
 
             if (animationmetadatasection.getFrameCount() > 0)
             {
-                Iterator iterator = animationmetadatasection.getFrameIndexSet().iterator();
+                Iterator lvt_7_1_ = animationmetadatasection.getFrameIndexSet().iterator();
 
-                while (iterator.hasNext())
+                while (lvt_7_1_.hasNext())
                 {
-                    int j = ((Integer)iterator.next()).intValue();
+                    int j = ((Integer)lvt_7_1_.next()).intValue();
 
                     if (j >= i)
                     {
@@ -330,7 +336,7 @@ public class TextureAtlasSprite
 
         for (int i = 0; i < this.framesTextureData.size(); ++i)
         {
-            final int[][] aint = (int[][])this.framesTextureData.get(i);
+            final int[][] aint = this.framesTextureData.get(i);
 
             if (aint != null)
             {
@@ -343,7 +349,7 @@ public class TextureAtlasSprite
                     CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Generating mipmaps for frame");
                     CrashReportCategory crashreportcategory = crashreport.makeCategory("Frame being iterated");
                     crashreportcategory.addCrashSection("Frame index", Integer.valueOf(i));
-                    crashreportcategory.setDetail("Frame sizes", new ICrashReportDetail<String>()
+                    crashreportcategory.addDetail("Frame sizes", new ICrashReportDetail<String>()
                     {
                         public String call() throws Exception
                         {
@@ -356,7 +362,7 @@ public class TextureAtlasSprite
                                     stringbuilder.append(", ");
                                 }
 
-                                stringbuilder.append(aint1 == null ? "null" : Integer.valueOf(aint1.length));
+                                stringbuilder.append(aint1 == null ? "null" : aint1.length);
                             }
 
                             return stringbuilder.toString();
@@ -376,7 +382,7 @@ public class TextureAtlasSprite
         {
             for (int i = this.framesTextureData.size(); i <= index; ++i)
             {
-                this.framesTextureData.add((int[][])null);
+                this.framesTextureData.add(null);
             }
         }
     }
@@ -417,22 +423,22 @@ public class TextureAtlasSprite
     private void resetSprite()
     {
         this.animationMetadata = null;
-        this.setFramesTextureData(Lists.<int[][]>newArrayList());
+        this.setFramesTextureData(Lists.newArrayList());
         this.frameCounter = 0;
         this.tickCounter = 0;
     }
 
     public String toString()
     {
-        return "TextureAtlasSprite{name=\'" + this.iconName + '\'' + ", frameCount=" + this.framesTextureData.size() + ", rotated=" + this.rotated + ", x=" + this.originX + ", y=" + this.originY + ", height=" + this.height + ", width=" + this.width + ", u0=" + this.minU + ", u1=" + this.maxU + ", v0=" + this.minV + ", v1=" + this.maxV + '}';
+        return "TextureAtlasSprite{name='" + this.iconName + '\'' + ", frameCount=" + this.framesTextureData.size() + ", rotated=" + this.rotated + ", x=" + this.originX + ", y=" + this.originY + ", height=" + this.height + ", width=" + this.width + ", u0=" + this.minU + ", u1=" + this.maxU + ", v0=" + this.minV + ", v1=" + this.maxV + '}';
     }
 
     /*===================================== FORGE START =====================================*/
     /**
      * The result of this function determines is the below 'load' function is called, and the
      * default vanilla loading code is bypassed completely.
-     * @param manager
-     * @param location
+     * @param manager Main resource manager
+     * @param location File resource location
      * @return True to use your own custom load code and bypass vanilla loading.
      */
     public boolean hasCustomLoader(net.minecraft.client.resources.IResourceManager manager, net.minecraft.util.ResourceLocation location)
@@ -445,11 +451,20 @@ public class TextureAtlasSprite
      * Returning false from this function will prevent this icon from being stitched onto the master texture.
      * @param manager Main resource manager
      * @param location File resource location
+     * @param textureGetter accessor for dependencies. All of them will be loaded before this one
      * @return False to prevent this Icon from being stitched
      */
-    public boolean load(net.minecraft.client.resources.IResourceManager manager, net.minecraft.util.ResourceLocation location)
+    public boolean load(net.minecraft.client.resources.IResourceManager manager, net.minecraft.util.ResourceLocation location, java.util.function.Function<ResourceLocation, TextureAtlasSprite> textureGetter)
     {
         return true;
     }
+
+    /**
+     * @return all textures that should be loaded before this texture.
+     */
+    public java.util.Collection<ResourceLocation> getDependencies() {
+        return com.google.common.collect.ImmutableList.of();
+    }
+
     /*===================================== FORGE END ======================================*/
 }

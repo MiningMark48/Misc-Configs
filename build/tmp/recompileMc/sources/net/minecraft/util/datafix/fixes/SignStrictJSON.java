@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.datafix.IFixableData;
 import net.minecraft.util.text.ITextComponent;
@@ -47,7 +48,7 @@ public class SignStrictJSON implements IFixableData
             }
             else
             {
-                throw new JsonParseException("Don\'t know how to turn " + p_deserialize_1_.toString() + " into a Component");
+                throw new JsonParseException("Don't know how to turn " + p_deserialize_1_ + " into a Component");
             }
         }
     }).create();
@@ -77,11 +78,11 @@ public class SignStrictJSON implements IFixableData
 
         if (!"null".equals(s) && !StringUtils.isNullOrEmpty(s))
         {
-            if (s.charAt(0) == 34 && s.charAt(s.length() - 1) == 34 || s.charAt(0) == 123 && s.charAt(s.length() - 1) == 125)
+            if (s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"' || s.charAt(0) == '{' && s.charAt(s.length() - 1) == '}')
             {
                 try
                 {
-                    itextcomponent = (ITextComponent)GSON_INSTANCE.fromJson(s, ITextComponent.class);
+                    itextcomponent = (ITextComponent)JsonUtils.gsonDeserialize(GSON_INSTANCE, s, ITextComponent.class, true);
 
                     if (itextcomponent == null)
                     {

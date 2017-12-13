@@ -43,9 +43,9 @@ public class TextureUtil
         GlStateManager.deleteTexture(textureId);
     }
 
-    public static int uploadTextureImage(int p_110987_0_, BufferedImage p_110987_1_)
+    public static int uploadTextureImage(int textureId, BufferedImage texture)
     {
-        return uploadTextureImageAllocate(p_110987_0_, p_110987_1_, false, false);
+        return uploadTextureImageAllocate(textureId, texture, false, false);
     }
 
     public static void uploadTexture(int textureId, int[] p_110988_1_, int p_110988_2_, int p_110988_3_)
@@ -83,6 +83,7 @@ public class TextureUtil
                     int[] aint1 = aint[l1 - 1];
                     int[] aint2 = new int[aint1.length >> 2];
                     int j = p_147949_1_ >> l1;
+                    if (j > 0) { // FORGE: forcing higher mipmap levels on odd textures needs this check
                     int k = aint2.length / j;
                     int l = j << 1;
 
@@ -94,6 +95,7 @@ public class TextureUtil
                             aint2[i1 + j1 * j] = blendColors(aint1[k1 + 0], aint1[k1 + 1], aint1[k1 + 0 + l], aint1[k1 + 1 + l], flag);
                         }
                     }
+                    } // end if (j > 0)
 
                     aint[l1] = aint2;
                 }
@@ -105,15 +107,7 @@ public class TextureUtil
 
     private static int blendColors(int p_147943_0_, int p_147943_1_, int p_147943_2_, int p_147943_3_, boolean p_147943_4_)
     {
-        if (!p_147943_4_)
-        {
-            int i1 = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 24);
-            int j1 = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 16);
-            int k1 = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 8);
-            int l1 = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 0);
-            return i1 << 24 | j1 << 16 | k1 << 8 | l1;
-        }
-        else
+        if (p_147943_4_)
         {
             MIPMAP_BUFFER[0] = p_147943_0_;
             MIPMAP_BUFFER[1] = p_147943_1_;
@@ -124,14 +118,14 @@ public class TextureUtil
             float f2 = 0.0F;
             float f3 = 0.0F;
 
-            for (int i = 0; i < 4; ++i)
+            for (int i1 = 0; i1 < 4; ++i1)
             {
-                if (MIPMAP_BUFFER[i] >> 24 != 0)
+                if (MIPMAP_BUFFER[i1] >> 24 != 0)
                 {
-                    f += getColorGamma(MIPMAP_BUFFER[i] >> 24);
-                    f1 += getColorGamma(MIPMAP_BUFFER[i] >> 16);
-                    f2 += getColorGamma(MIPMAP_BUFFER[i] >> 8);
-                    f3 += getColorGamma(MIPMAP_BUFFER[i] >> 0);
+                    f += getColorGamma(MIPMAP_BUFFER[i1] >> 24);
+                    f1 += getColorGamma(MIPMAP_BUFFER[i1] >> 16);
+                    f2 += getColorGamma(MIPMAP_BUFFER[i1] >> 8);
+                    f3 += getColorGamma(MIPMAP_BUFFER[i1] >> 0);
                 }
             }
 
@@ -140,16 +134,24 @@ public class TextureUtil
             f2 = f2 / 4.0F;
             f3 = f3 / 4.0F;
             int i2 = (int)(Math.pow((double)f, 0.45454545454545453D) * 255.0D);
-            int j = (int)(Math.pow((double)f1, 0.45454545454545453D) * 255.0D);
-            int k = (int)(Math.pow((double)f2, 0.45454545454545453D) * 255.0D);
-            int l = (int)(Math.pow((double)f3, 0.45454545454545453D) * 255.0D);
+            int j1 = (int)(Math.pow((double)f1, 0.45454545454545453D) * 255.0D);
+            int k1 = (int)(Math.pow((double)f2, 0.45454545454545453D) * 255.0D);
+            int l1 = (int)(Math.pow((double)f3, 0.45454545454545453D) * 255.0D);
 
             if (i2 < 96)
             {
                 i2 = 0;
             }
 
-            return i2 << 24 | j << 16 | k << 8 | l;
+            return i2 << 24 | j1 << 16 | k1 << 8 | l1;
+        }
+        else
+        {
+            int i = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 24);
+            int j = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 16);
+            int k = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 8);
+            int l = blendColorComponent(p_147943_0_, p_147943_1_, p_147943_2_, p_147943_3_, 0);
+            return i << 24 | j << 16 | k << 8 | l;
         }
     }
 
@@ -168,6 +170,7 @@ public class TextureUtil
         for (int i = 0; i < p_147955_0_.length; ++i)
         {
             int[] aint = p_147955_0_[i];
+            if ((p_147955_1_ >> i <= 0) || (p_147955_2_ >> i <= 0)) break;
             uploadTextureSub(i, aint, p_147955_1_ >> i, p_147955_2_ >> i, p_147955_3_ >> i, p_147955_4_ >> i, p_147955_5_, p_147955_6_, p_147955_0_.length > 1);
         }
     }
@@ -189,35 +192,35 @@ public class TextureUtil
         }
     }
 
-    public static int uploadTextureImageAllocate(int p_110989_0_, BufferedImage p_110989_1_, boolean blur, boolean clamp)
+    public static int uploadTextureImageAllocate(int textureId, BufferedImage texture, boolean blur, boolean clamp)
     {
-        allocateTexture(p_110989_0_, p_110989_1_.getWidth(), p_110989_1_.getHeight());
-        return uploadTextureImageSub(p_110989_0_, p_110989_1_, 0, 0, blur, clamp);
+        allocateTexture(textureId, texture.getWidth(), texture.getHeight());
+        return uploadTextureImageSub(textureId, texture, 0, 0, blur, clamp);
     }
 
-    public static void allocateTexture(int p_110991_0_, int p_110991_1_, int p_110991_2_)
+    public static void allocateTexture(int textureId, int width, int height)
     {
-        allocateTextureImpl(p_110991_0_, 0, p_110991_1_, p_110991_2_);
+        allocateTextureImpl(textureId, 0, width, height);
     }
 
-    public static void allocateTextureImpl(int p_180600_0_, int p_180600_1_, int p_180600_2_, int p_180600_3_)
+    public static void allocateTextureImpl(int glTextureId, int mipmapLevels, int width, int height)
     {
         synchronized (net.minecraftforge.fml.client.SplashProgress.class)
         {
-        deleteTexture(p_180600_0_);
-        bindTexture(p_180600_0_);
+        deleteTexture(glTextureId);
+        bindTexture(glTextureId);
         }
-        if (p_180600_1_ >= 0)
+        if (mipmapLevels >= 0)
         {
-            GlStateManager.glTexParameteri(3553, 33085, p_180600_1_);
+            GlStateManager.glTexParameteri(3553, 33085, mipmapLevels);
             GlStateManager.glTexParameteri(3553, 33082, 0);
-            GlStateManager.glTexParameteri(3553, 33083, p_180600_1_);
+            GlStateManager.glTexParameteri(3553, 33083, mipmapLevels);
             GlStateManager.glTexParameterf(3553, 34049, 0.0F);
         }
 
-        for (int i = 0; i <= p_180600_1_; ++i)
+        for (int i = 0; i <= mipmapLevels; ++i)
         {
-            GlStateManager.glTexImage2D(3553, i, 6408, p_180600_2_ >> i, p_180600_3_ >> i, 0, 32993, 33639, (IntBuffer)null);
+            GlStateManager.glTexImage2D(3553, i, 6408, width >> i, height >> i, 0, 32993, 33639, (IntBuffer)null);
         }
     }
 
@@ -398,9 +401,9 @@ public class TextureUtil
         MISSING_TEXTURE.updateDynamicTexture();
         COLOR_GAMMAS = new float[256];
 
-        for (i = 0; i < COLOR_GAMMAS.length; ++i)
+        for (int i1 = 0; i1 < COLOR_GAMMAS.length; ++i1)
         {
-            COLOR_GAMMAS[i] = (float)Math.pow((double)((float)i / 255.0F), 2.2D);
+            COLOR_GAMMAS[i1] = (float)Math.pow((double)((float)i1 / 255.0F), 2.2D);
         }
 
         MIPMAP_BUFFER = new int[4];

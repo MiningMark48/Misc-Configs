@@ -6,6 +6,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
@@ -271,7 +272,7 @@ public class OpenGlHelper
         }
 
         shadersSupported = framebufferSupported && shadersAvailable;
-        String s = GL11.glGetString(GL11.GL_VENDOR).toLowerCase();
+        String s = GL11.glGetString(GL11.GL_VENDOR).toLowerCase(Locale.ROOT);
         nvidia = s.contains("nvidia");
         arbVbo = !contextcapabilities.OpenGL15 && contextcapabilities.GL_ARB_vertex_buffer_object;
         vboSupported = contextcapabilities.OpenGL15 || arbVbo;
@@ -310,7 +311,7 @@ public class OpenGlHelper
         try
         {
             Processor[] aprocessor = (new SystemInfo()).getHardware().getProcessors();
-            cpu = String.format("%dx %s", new Object[] {Integer.valueOf(aprocessor.length), aprocessor[0]}).replaceAll("\\s+", " ");
+            cpu = String.format("%dx %s", aprocessor.length, aprocessor[0]).replaceAll("\\s+", " ");
         }
         catch (Throwable var3)
         {
@@ -925,15 +926,24 @@ public class OpenGlHelper
         GlStateManager.disableTexture2D();
         GlStateManager.depthMask(false);
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(1, DefaultVertexFormats.POSITION_COLOR);
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        GL11.glLineWidth(4.0F);
+        bufferbuilder.begin(1, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.pos((double)p_188785_0_, 0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, (double)p_188785_0_, 0.0D).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, (double)p_188785_0_).color(0, 0, 0, 255).endVertex();
+        tessellator.draw();
         GL11.glLineWidth(2.0F);
-        vertexbuffer.pos(0.0D, 0.0D, 0.0D).color(255, 0, 0, 255).endVertex();
-        vertexbuffer.pos((double)p_188785_0_, 0.0D, 0.0D).color(255, 0, 0, 255).endVertex();
-        vertexbuffer.pos(0.0D, 0.0D, 0.0D).color(0, 255, 0, 255).endVertex();
-        vertexbuffer.pos(0.0D, (double)p_188785_0_, 0.0D).color(0, 255, 0, 255).endVertex();
-        vertexbuffer.pos(0.0D, 0.0D, 0.0D).color(0, 0, 255, 255).endVertex();
-        vertexbuffer.pos(0.0D, 0.0D, (double)p_188785_0_).color(0, 0, 255, 255).endVertex();
+        bufferbuilder.begin(1, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(255, 0, 0, 255).endVertex();
+        bufferbuilder.pos((double)p_188785_0_, 0.0D, 0.0D).color(255, 0, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(0, 255, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, (double)p_188785_0_, 0.0D).color(0, 255, 0, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 0.0D).color(127, 127, 255, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, (double)p_188785_0_).color(127, 127, 255, 255).endVertex();
         tessellator.draw();
         GL11.glLineWidth(1.0F);
         GlStateManager.depthMask(true);
@@ -954,12 +964,12 @@ public class OpenGlHelper
             }
             catch (IOException ioexception1)
             {
-                LOGGER.error((String)"Couldn\'t open file", (Throwable)ioexception1);
+                LOGGER.error("Couldn't open file", (Throwable)ioexception1);
             }
         }
         else if (Util.getOSType() == Util.EnumOS.WINDOWS)
         {
-            String s1 = String.format("cmd.exe /C start \"Open file\" \"%s\"", new Object[] {s});
+            String s1 = String.format("cmd.exe /C start \"Open file\" \"%s\"", s);
 
             try
             {
@@ -968,7 +978,7 @@ public class OpenGlHelper
             }
             catch (IOException ioexception)
             {
-                LOGGER.error((String)"Couldn\'t open file", (Throwable)ioexception);
+                LOGGER.error("Couldn't open file", (Throwable)ioexception);
             }
         }
 
@@ -977,12 +987,12 @@ public class OpenGlHelper
         try
         {
             Class<?> oclass = Class.forName("java.awt.Desktop");
-            Object object = oclass.getMethod("getDesktop", new Class[0]).invoke((Object)null, new Object[0]);
-            oclass.getMethod("browse", new Class[] {URI.class}).invoke(object, new Object[] {fileIn.toURI()});
+            Object object = oclass.getMethod("getDesktop").invoke((Object)null);
+            oclass.getMethod("browse", URI.class).invoke(object, fileIn.toURI());
         }
         catch (Throwable throwable)
         {
-            LOGGER.error("Couldn\'t open link", throwable);
+            LOGGER.error("Couldn't open link", throwable);
             flag = true;
         }
 

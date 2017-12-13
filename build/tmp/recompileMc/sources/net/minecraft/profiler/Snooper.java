@@ -18,7 +18,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class Snooper
 {
+    /** The snooper Map of stats */
     private final Map<String, Object> snooperStats = Maps.<String, Object>newHashMap();
+    /** The client Map of stats */
     private final Map<String, Object> clientStats = Maps.<String, Object>newHashMap();
     private final String uniqueID = UUID.randomUUID().toString();
     /** URL of the server to send the report to */
@@ -97,7 +99,7 @@ public class Snooper
         this.addStatToSnooper("os_version", System.getProperty("os.version"));
         this.addStatToSnooper("os_architecture", System.getProperty("os.arch"));
         this.addStatToSnooper("java_version", System.getProperty("java.version"));
-        this.addClientStat("version", "1.9.4");
+        this.addClientStat("version", "1.12.2");
         this.playerStatsCollector.addServerTypeToSnooper(this);
     }
 

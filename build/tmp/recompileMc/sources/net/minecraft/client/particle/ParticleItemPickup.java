@@ -1,9 +1,9 @@
 package net.minecraft.client.particle;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
@@ -13,12 +13,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ParticleItemPickup extends Particle
 {
-    private Entity item;
-    private Entity target;
+    private final Entity item;
+    private final Entity target;
     private int age;
-    private int maxAge;
-    private float yOffset;
-    private RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
+    private final int maxAge;
+    private final float yOffset;
+    private final RenderManager renderManager = Minecraft.getMinecraft().getRenderManager();
 
     public ParticleItemPickup(World worldIn, Entity p_i1233_2_, Entity p_i1233_3_, float p_i1233_4_)
     {
@@ -32,7 +32,7 @@ public class ParticleItemPickup extends Particle
     /**
      * Renders the particle
      */
-    public void renderParticle(VertexBuffer worldRendererIn, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
+    public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
     {
         float f = ((float)this.age + partialTicks) / (float)this.maxAge;
         f = f * f;
@@ -54,7 +54,7 @@ public class ParticleItemPickup extends Particle
         d7 = d7 - interpPosY;
         d8 = d8 - interpPosZ;
         GlStateManager.enableLighting();
-        this.renderManager.doRenderEntity(this.item, d6, d7, d8, this.item.rotationYaw, partialTicks, false);
+        this.renderManager.renderEntity(this.item, d6, d7, d8, this.item.rotationYaw, partialTicks, false);
     }
 
     public void onUpdate()
@@ -67,6 +67,10 @@ public class ParticleItemPickup extends Particle
         }
     }
 
+    /**
+     * Retrieve what effect layer (what texture) the particle should be rendered with. 0 for the particle sprite sheet,
+     * 1 for the main Texture atlas, and 3 for a custom texture
+     */
     public int getFXLayer()
     {
         return 3;

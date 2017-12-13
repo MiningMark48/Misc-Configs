@@ -20,7 +20,7 @@ public enum PathNodeType
     DOOR_WOOD_CLOSED(-1.0F),
     DOOR_IRON_CLOSED(-1.0F);
 
-    private float priority;
+    private final float priority;
 
     private PathNodeType(float priorityIn)
     {

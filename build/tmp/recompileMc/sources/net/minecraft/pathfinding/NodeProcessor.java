@@ -9,22 +9,22 @@ public abstract class NodeProcessor
 {
     protected IBlockAccess blockaccess;
     protected EntityLiving entity;
-    protected final IntHashMap<PathPoint> pointMap = new IntHashMap();
+    protected final IntHashMap<PathPoint> pointMap = new IntHashMap<PathPoint>();
     protected int entitySizeX;
     protected int entitySizeY;
     protected int entitySizeZ;
     protected boolean canEnterDoors;
-    protected boolean canBreakDoors;
+    protected boolean canOpenDoors;
     protected boolean canSwim;
 
-    public void initProcessor(IBlockAccess sourceIn, EntityLiving mob)
+    public void init(IBlockAccess sourceIn, EntityLiving mob)
     {
         this.blockaccess = sourceIn;
         this.entity = mob;
         this.pointMap.clearMap();
-        this.entitySizeX = MathHelper.floor_float(mob.width + 1.0F);
-        this.entitySizeY = MathHelper.floor_float(mob.height + 1.0F);
-        this.entitySizeZ = MathHelper.floor_float(mob.width + 1.0F);
+        this.entitySizeX = MathHelper.floor(mob.width + 1.0F);
+        this.entitySizeY = MathHelper.floor(mob.height + 1.0F);
+        this.entitySizeZ = MathHelper.floor(mob.width + 1.0F);
     }
 
     /**
@@ -44,7 +44,7 @@ public abstract class NodeProcessor
     protected PathPoint openPoint(int x, int y, int z)
     {
         int i = PathPoint.makeHash(x, y, z);
-        PathPoint pathpoint = (PathPoint)this.pointMap.lookup(i);
+        PathPoint pathpoint = this.pointMap.lookup(i);
 
         if (pathpoint == null)
         {
@@ -66,16 +66,16 @@ public abstract class NodeProcessor
 
     public abstract PathNodeType getPathNodeType(IBlockAccess blockaccessIn, int x, int y, int z, EntityLiving entitylivingIn, int xSize, int ySize, int zSize, boolean canBreakDoorsIn, boolean canEnterDoorsIn);
 
-    public abstract PathNodeType getPathNodeType(IBlockAccess x, int y, int z, int p_186330_4_);
+    public abstract PathNodeType getPathNodeType(IBlockAccess blockaccessIn, int x, int y, int z);
 
     public void setCanEnterDoors(boolean canEnterDoorsIn)
     {
         this.canEnterDoors = canEnterDoorsIn;
     }
 
-    public void setCanBreakDoors(boolean canBreakDoorsIn)
+    public void setCanOpenDoors(boolean canOpenDoorsIn)
     {
-        this.canBreakDoors = canBreakDoorsIn;
+        this.canOpenDoors = canOpenDoorsIn;
     }
 
     public void setCanSwim(boolean canSwimIn)
@@ -88,9 +88,9 @@ public abstract class NodeProcessor
         return this.canEnterDoors;
     }
 
-    public boolean getCanBreakDoors()
+    public boolean getCanOpenDoors()
     {
-        return this.canBreakDoors;
+        return this.canOpenDoors;
     }
 
     public boolean getCanSwim()

@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
@@ -9,6 +8,7 @@ import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -85,6 +85,9 @@ public class BlockDoor extends Block
         return false;
     }
 
+    /**
+     * Determines if an entity can path through this block
+     */
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos)
     {
         return isOpen(combineMetadata(worldIn, pos));
@@ -108,16 +111,46 @@ public class BlockDoor extends Block
     /**
      * Get the MapColor for this Block and the given BlockState
      */
-    public MapColor getMapColor(IBlockState state)
+    public MapColor getMapColor(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
-        return state.getBlock() == Blocks.IRON_DOOR ? MapColor.IRON : (state.getBlock() == Blocks.OAK_DOOR ? BlockPlanks.EnumType.OAK.getMapColor() : (state.getBlock() == Blocks.SPRUCE_DOOR ? BlockPlanks.EnumType.SPRUCE.getMapColor() : (state.getBlock() == Blocks.BIRCH_DOOR ? BlockPlanks.EnumType.BIRCH.getMapColor() : (state.getBlock() == Blocks.JUNGLE_DOOR ? BlockPlanks.EnumType.JUNGLE.getMapColor() : (state.getBlock() == Blocks.ACACIA_DOOR ? BlockPlanks.EnumType.ACACIA.getMapColor() : (state.getBlock() == Blocks.DARK_OAK_DOOR ? BlockPlanks.EnumType.DARK_OAK.getMapColor() : super.getMapColor(state)))))));
+        if (state.getBlock() == Blocks.IRON_DOOR)
+        {
+            return MapColor.IRON;
+        }
+        else if (state.getBlock() == Blocks.OAK_DOOR)
+        {
+            return BlockPlanks.EnumType.OAK.getMapColor();
+        }
+        else if (state.getBlock() == Blocks.SPRUCE_DOOR)
+        {
+            return BlockPlanks.EnumType.SPRUCE.getMapColor();
+        }
+        else if (state.getBlock() == Blocks.BIRCH_DOOR)
+        {
+            return BlockPlanks.EnumType.BIRCH.getMapColor();
+        }
+        else if (state.getBlock() == Blocks.JUNGLE_DOOR)
+        {
+            return BlockPlanks.EnumType.JUNGLE.getMapColor();
+        }
+        else if (state.getBlock() == Blocks.ACACIA_DOOR)
+        {
+            return BlockPlanks.EnumType.ACACIA.getMapColor();
+        }
+        else
+        {
+            return state.getBlock() == Blocks.DARK_OAK_DOOR ? BlockPlanks.EnumType.DARK_OAK.getMapColor() : super.getMapColor(state, worldIn, pos);
+        }
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (this.blockMaterial == Material.IRON)
         {
-            return false; //Allow items to interact with the door
+            return false;
         }
         else
         {
@@ -162,7 +195,7 @@ public class BlockDoor extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (state.getValue(HALF) == BlockDoor.EnumDoorHalf.UPPER)
         {
@@ -175,7 +208,7 @@ public class BlockDoor extends Block
             }
             else if (blockIn != this)
             {
-                iblockstate.neighborChanged(worldIn, blockpos, blockIn);
+                iblockstate.neighborChanged(worldIn, blockpos, blockIn, fromPos);
             }
         }
         else
@@ -190,7 +223,7 @@ public class BlockDoor extends Block
                 flag1 = true;
             }
 
-            if (!worldIn.getBlockState(pos.down()).isFullyOpaque())
+            if (!worldIn.getBlockState(pos.down()).isSideSolid(worldIn,  pos.down(), EnumFacing.UP))
             {
                 worldIn.setBlockToAir(pos);
                 flag1 = true;
@@ -230,15 +263,22 @@ public class BlockDoor extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return state.getValue(HALF) == BlockDoor.EnumDoorHalf.UPPER ? null : this.getItem();
+        return state.getValue(HALF) == BlockDoor.EnumDoorHalf.UPPER ? Items.AIR : this.getItem();
     }
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
     {
-        return pos.getY() >= worldIn.getHeight() - 1 ? false : worldIn.getBlockState(pos.down()).isSideSolid(worldIn,  pos.down(), EnumFacing.UP) && super.canPlaceBlockAt(worldIn, pos) && super.canPlaceBlockAt(worldIn, pos.up());
+        if (pos.getY() >= worldIn.getHeight() - 1)
+        {
+            return false;
+        }
+        else
+        {
+            IBlockState state = worldIn.getBlockState(pos.down());
+            return (state.isTopSolid() || state.getBlockFaceShape(worldIn, pos.down(), EnumFacing.UP) == BlockFaceShape.SOLID) && super.canPlaceBlockAt(worldIn, pos) && super.canPlaceBlockAt(worldIn, pos.up());
+        }
     }
 
     public EnumPushReaction getMobilityFlag(IBlockState state)
@@ -269,9 +309,36 @@ public class BlockDoor extends Block
 
     private Item getItem()
     {
-        return this == Blocks.IRON_DOOR ? Items.IRON_DOOR : (this == Blocks.SPRUCE_DOOR ? Items.SPRUCE_DOOR : (this == Blocks.BIRCH_DOOR ? Items.BIRCH_DOOR : (this == Blocks.JUNGLE_DOOR ? Items.JUNGLE_DOOR : (this == Blocks.ACACIA_DOOR ? Items.ACACIA_DOOR : (this == Blocks.DARK_OAK_DOOR ? Items.DARK_OAK_DOOR : Items.OAK_DOOR)))));
+        if (this == Blocks.IRON_DOOR)
+        {
+            return Items.IRON_DOOR;
+        }
+        else if (this == Blocks.SPRUCE_DOOR)
+        {
+            return Items.SPRUCE_DOOR;
+        }
+        else if (this == Blocks.BIRCH_DOOR)
+        {
+            return Items.BIRCH_DOOR;
+        }
+        else if (this == Blocks.JUNGLE_DOOR)
+        {
+            return Items.JUNGLE_DOOR;
+        }
+        else if (this == Blocks.ACACIA_DOOR)
+        {
+            return Items.ACACIA_DOOR;
+        }
+        else
+        {
+            return this == Blocks.DARK_OAK_DOOR ? Items.DARK_OAK_DOOR : Items.OAK_DOOR;
+        }
     }
 
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
     public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player)
     {
         BlockPos blockpos = pos.down();
@@ -342,7 +409,7 @@ public class BlockDoor extends Block
      */
     public IBlockState withMirror(IBlockState state, Mirror mirrorIn)
     {
-        return state.withRotation(mirrorIn.toRotation((EnumFacing)state.getValue(FACING)));
+        return mirrorIn == Mirror.NONE ? state : state.withRotation(mirrorIn.toRotation((EnumFacing)state.getValue(FACING))).cycleProperty(HINGE);
     }
 
     /**
@@ -420,6 +487,20 @@ public class BlockDoor extends Block
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {HALF, FACING, OPEN, HINGE, POWERED});
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 
     public static enum EnumDoorHalf implements IStringSerializable

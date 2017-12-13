@@ -11,10 +11,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ModelGuardian extends ModelBase
 {
-    private ModelRenderer guardianBody;
-    private ModelRenderer guardianEye;
-    private ModelRenderer[] guardianSpines;
-    private ModelRenderer[] guardianTail;
+    private final ModelRenderer guardianBody;
+    private final ModelRenderer guardianEye;
+    private final ModelRenderer[] guardianSpines;
+    private final ModelRenderer[] guardianTail;
 
     public ModelGuardian()
     {
@@ -49,11 +49,6 @@ public class ModelGuardian extends ModelBase
         this.guardianBody.addChild(this.guardianTail[0]);
         this.guardianTail[0].addChild(this.guardianTail[1]);
         this.guardianTail[1].addChild(this.guardianTail[2]);
-    }
-
-    public int getModelVersion()
-    {
-        return 54;
     }
 
     /**
@@ -106,7 +101,7 @@ public class ModelGuardian extends ModelBase
         {
             Vec3d vec3d = entity.getPositionEyes(0.0F);
             Vec3d vec3d1 = entityIn.getPositionEyes(0.0F);
-            double d0 = vec3d.yCoord - vec3d1.yCoord;
+            double d0 = vec3d.y - vec3d1.y;
 
             if (d0 > 0.0D)
             {
@@ -118,10 +113,10 @@ public class ModelGuardian extends ModelBase
             }
 
             Vec3d vec3d2 = entityIn.getLook(0.0F);
-            vec3d2 = new Vec3d(vec3d2.xCoord, 0.0D, vec3d2.zCoord);
-            Vec3d vec3d3 = (new Vec3d(vec3d1.xCoord - vec3d.xCoord, 0.0D, vec3d1.zCoord - vec3d.zCoord)).normalize().rotateYaw(((float)Math.PI / 2F));
+            vec3d2 = new Vec3d(vec3d2.x, 0.0D, vec3d2.z);
+            Vec3d vec3d3 = (new Vec3d(vec3d1.x - vec3d.x, 0.0D, vec3d1.z - vec3d.z)).normalize().rotateYaw(((float)Math.PI / 2F));
             double d1 = vec3d2.dotProduct(vec3d3);
-            this.guardianEye.rotationPointX = MathHelper.sqrt_float((float)Math.abs(d1)) * 2.0F * (float)Math.signum(d1);
+            this.guardianEye.rotationPointX = MathHelper.sqrt((float)Math.abs(d1)) * 2.0F * (float)Math.signum(d1);
         }
 
         this.guardianEye.showModel = true;

@@ -5,6 +5,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.regex.Pattern;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
 @SideOnly(Side.CLIENT)
@@ -33,7 +33,7 @@ public class Locale
 
         for (String s : languageList)
         {
-            String s1 = String.format("lang/%s.lang", new Object[] {s});
+            String s1 = String.format("lang/%s.lang", s);
 
             for (String s2 : resourceManager.getResourceDomains())
             {
@@ -104,9 +104,9 @@ public class Locale
     {
         inputStreamIn = net.minecraftforge.fml.common.FMLCommonHandler.instance().loadLanguage(properties, inputStreamIn);
         if (inputStreamIn == null) return;
-        for (String s : IOUtils.readLines(inputStreamIn, Charsets.UTF_8))
+        for (String s : IOUtils.readLines(inputStreamIn, StandardCharsets.UTF_8))
         {
-            if (!s.isEmpty() && s.charAt(0) != 35)
+            if (!s.isEmpty() && s.charAt(0) != '#')
             {
                 String[] astring = (String[])Iterables.toArray(SPLITTER.split(s), String.class);
 
@@ -125,7 +125,7 @@ public class Locale
      */
     private String translateKeyPrivate(String translateKey)
     {
-        String s = (String)this.properties.get(translateKey);
+        String s = this.properties.get(translateKey);
         return s == null ? translateKey : s;
     }
 

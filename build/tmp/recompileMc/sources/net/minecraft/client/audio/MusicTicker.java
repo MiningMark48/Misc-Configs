@@ -34,13 +34,13 @@ public class MusicTicker implements ITickable
             if (!musicticker$musictype.getMusicLocation().getSoundName().equals(this.currentMusic.getSoundLocation()))
             {
                 this.mc.getSoundHandler().stopSound(this.currentMusic);
-                this.timeUntilNextMusic = MathHelper.getRandomIntegerInRange(this.rand, 0, musicticker$musictype.getMinDelay() / 2);
+                this.timeUntilNextMusic = MathHelper.getInt(this.rand, 0, musicticker$musictype.getMinDelay() / 2);
             }
 
             if (!this.mc.getSoundHandler().isSoundPlaying(this.currentMusic))
             {
                 this.currentMusic = null;
-                this.timeUntilNextMusic = Math.min(MathHelper.getRandomIntegerInRange(this.rand, musicticker$musictype.getMinDelay(), musicticker$musictype.getMaxDelay()), this.timeUntilNextMusic);
+                this.timeUntilNextMusic = Math.min(MathHelper.getInt(this.rand, musicticker$musictype.getMinDelay(), musicticker$musictype.getMaxDelay()), this.timeUntilNextMusic);
             }
         }
 
@@ -62,26 +62,13 @@ public class MusicTicker implements ITickable
         this.timeUntilNextMusic = Integer.MAX_VALUE;
     }
 
-    /**
-     * Stops playing the current music track
-     */
-    public void stopMusic()
-    {
-        if (this.currentMusic != null)
-        {
-            this.mc.getSoundHandler().stopSound(this.currentMusic);
-            this.currentMusic = null;
-            this.timeUntilNextMusic = 0;
-        }
-    }
-
     @SideOnly(Side.CLIENT)
     public static enum MusicType
     {
         MENU(SoundEvents.MUSIC_MENU, 20, 600),
         GAME(SoundEvents.MUSIC_GAME, 12000, 24000),
         CREATIVE(SoundEvents.MUSIC_CREATIVE, 1200, 3600),
-        CREDITS(SoundEvents.MUSIC_CREDITS, Integer.MAX_VALUE, Integer.MAX_VALUE),
+        CREDITS(SoundEvents.MUSIC_CREDITS, 0, 0),
         NETHER(SoundEvents.MUSIC_NETHER, 1200, 3600),
         END_BOSS(SoundEvents.MUSIC_DRAGON, 0, 0),
         END(SoundEvents.MUSIC_END, 6000, 24000);

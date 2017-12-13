@@ -34,11 +34,11 @@ public class GuiSnooper extends GuiScreen
      */
     public void initGui()
     {
-        this.title = I18n.format("options.snooper.title", new Object[0]);
-        String s = I18n.format("options.snooper.desc", new Object[0]);
+        this.title = I18n.format("options.snooper.title");
+        String s = I18n.format("options.snooper.desc");
         java.util.List<String> list = Lists.<String>newArrayList();
 
-        for (String s1 : this.fontRendererObj.listFormattedStringToWidth(s, this.width - 30))
+        for (String s1 : this.fontRenderer.listFormattedStringToWidth(s, this.width - 30))
         {
             list.add(s1);
         }
@@ -46,14 +46,14 @@ public class GuiSnooper extends GuiScreen
         this.desc = (String[])list.toArray(new String[list.size()]);
         this.keys.clear();
         this.values.clear();
-        this.buttonList.add(this.toggleButton = new GuiButton(1, this.width / 2 - 152, this.height - 30, 150, 20, this.game_settings_2.getKeyBinding(GameSettings.Options.SNOOPER_ENABLED)));
-        this.buttonList.add(new GuiButton(2, this.width / 2 + 2, this.height - 30, 150, 20, I18n.format("gui.done", new Object[0])));
+        this.toggleButton = this.addButton(new GuiButton(1, this.width / 2 - 152, this.height - 30, 150, 20, this.game_settings_2.getKeyBinding(GameSettings.Options.SNOOPER_ENABLED)));
+        this.buttonList.add(new GuiButton(2, this.width / 2 + 2, this.height - 30, 150, 20, I18n.format("gui.done")));
         boolean flag = this.mc.getIntegratedServer() != null && this.mc.getIntegratedServer().getPlayerUsageSnooper() != null;
 
         for (Entry<String, String> entry : (new TreeMap<String, String>(this.mc.getPlayerUsageSnooper().getCurrentStats())).entrySet())
         {
             this.keys.add((flag ? "C " : "") + (String)entry.getKey());
-            this.values.add(this.fontRendererObj.trimStringToWidth((String)entry.getValue(), this.width - 220));
+            this.values.add(this.fontRenderer.trimStringToWidth(entry.getValue(), this.width - 220));
         }
 
         if (flag)
@@ -61,7 +61,7 @@ public class GuiSnooper extends GuiScreen
             for (Entry<String, String> entry1 : (new TreeMap<String, String>(this.mc.getIntegratedServer().getPlayerUsageSnooper().getCurrentStats())).entrySet())
             {
                 this.keys.add("S " + (String)entry1.getKey());
-                this.values.add(this.fontRendererObj.trimStringToWidth((String)entry1.getValue(), this.width - 220));
+                this.values.add(this.fontRenderer.trimStringToWidth(entry1.getValue(), this.width - 220));
             }
         }
 
@@ -106,13 +106,13 @@ public class GuiSnooper extends GuiScreen
     {
         this.drawDefaultBackground();
         this.list.drawScreen(mouseX, mouseY, partialTicks);
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, 8, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, 8, 16777215);
         int i = 22;
 
         for (String s : this.desc)
         {
-            this.drawCenteredString(this.fontRendererObj, s, this.width / 2, i, 8421504);
-            i += this.fontRendererObj.FONT_HEIGHT;
+            this.drawCenteredString(this.fontRenderer, s, this.width / 2, i, 8421504);
+            i += this.fontRenderer.FONT_HEIGHT;
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -123,7 +123,7 @@ public class GuiSnooper extends GuiScreen
     {
         public List()
         {
-            super(GuiSnooper.this.mc, GuiSnooper.this.width, GuiSnooper.this.height, 80, GuiSnooper.this.height - 40, GuiSnooper.this.fontRendererObj.FONT_HEIGHT + 1);
+            super(GuiSnooper.this.mc, GuiSnooper.this.width, GuiSnooper.this.height, 80, GuiSnooper.this.height - 40, GuiSnooper.this.fontRenderer.FONT_HEIGHT + 1);
         }
 
         protected int getSize()
@@ -150,10 +150,10 @@ public class GuiSnooper extends GuiScreen
         {
         }
 
-        protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+        protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
         {
-            GuiSnooper.this.fontRendererObj.drawString((String)GuiSnooper.this.keys.get(entryID), 10, yPos, 16777215);
-            GuiSnooper.this.fontRendererObj.drawString((String)GuiSnooper.this.values.get(entryID), 230, yPos, 16777215);
+            GuiSnooper.this.fontRenderer.drawString(GuiSnooper.this.keys.get(slotIndex), 10, yPos, 16777215);
+            GuiSnooper.this.fontRenderer.drawString(GuiSnooper.this.values.get(slotIndex), 230, yPos, 16777215);
         }
 
         protected int getScrollBarX()

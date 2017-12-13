@@ -1,5 +1,6 @@
 package net.minecraft.block.material;
 
+import net.minecraft.item.EnumDyeColor;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -7,6 +8,7 @@ public class MapColor
 {
     /** Holds all the 16 colors used on maps, very similar of a pallete system. */
     public static final MapColor[] COLORS = new MapColor[64];
+    public static final MapColor[] BLOCK_COLORS = new MapColor[16];
     public static final MapColor AIR = new MapColor(0, 0);
     public static final MapColor GRASS = new MapColor(1, 8368696);
     public static final MapColor SAND = new MapColor(2, 16247203);
@@ -43,6 +45,22 @@ public class MapColor
     public static final MapColor EMERALD = new MapColor(33, 55610);
     public static final MapColor OBSIDIAN = new MapColor(34, 8476209);
     public static final MapColor NETHERRACK = new MapColor(35, 7340544);
+    public static final MapColor WHITE_STAINED_HARDENED_CLAY = new MapColor(36, 13742497);
+    public static final MapColor ORANGE_STAINED_HARDENED_CLAY = new MapColor(37, 10441252);
+    public static final MapColor MAGENTA_STAINED_HARDENED_CLAY = new MapColor(38, 9787244);
+    public static final MapColor LIGHT_BLUE_STAINED_HARDENED_CLAY = new MapColor(39, 7367818);
+    public static final MapColor YELLOW_STAINED_HARDENED_CLAY = new MapColor(40, 12223780);
+    public static final MapColor LIME_STAINED_HARDENED_CLAY = new MapColor(41, 6780213);
+    public static final MapColor PINK_STAINED_HARDENED_CLAY = new MapColor(42, 10505550);
+    public static final MapColor GRAY_STAINED_HARDENED_CLAY = new MapColor(43, 3746083);
+    public static final MapColor SILVER_STAINED_HARDENED_CLAY = new MapColor(44, 8874850);
+    public static final MapColor CYAN_STAINED_HARDENED_CLAY = new MapColor(45, 5725276);
+    public static final MapColor PURPLE_STAINED_HARDENED_CLAY = new MapColor(46, 8014168);
+    public static final MapColor BLUE_STAINED_HARDENED_CLAY = new MapColor(47, 4996700);
+    public static final MapColor BROWN_STAINED_HARDENED_CLAY = new MapColor(48, 4993571);
+    public static final MapColor GREEN_STAINED_HARDENED_CLAY = new MapColor(49, 5001770);
+    public static final MapColor RED_STAINED_HARDENED_CLAY = new MapColor(50, 9321518);
+    public static final MapColor BLACK_STAINED_HARDENED_CLAY = new MapColor(51, 2430480);
     /** Holds the color in RGB value that will be rendered on maps. */
     public final int colorValue;
     /** Holds the index of the color used on map. */
@@ -63,26 +81,26 @@ public class MapColor
     }
 
     @SideOnly(Side.CLIENT)
-    public int getMapColor(int p_151643_1_)
+    public int getMapColor(int index)
     {
         int i = 220;
 
-        if (p_151643_1_ == 3)
+        if (index == 3)
         {
             i = 135;
         }
 
-        if (p_151643_1_ == 2)
+        if (index == 2)
         {
             i = 255;
         }
 
-        if (p_151643_1_ == 1)
+        if (index == 1)
         {
             i = 220;
         }
 
-        if (p_151643_1_ == 0)
+        if (index == 0)
         {
             i = 180;
         }
@@ -91,5 +109,30 @@ public class MapColor
         int k = (this.colorValue >> 8 & 255) * i / 255;
         int l = (this.colorValue & 255) * i / 255;
         return -16777216 | j << 16 | k << 8 | l;
+    }
+
+    public static MapColor getBlockColor(EnumDyeColor dyeColorIn)
+    {
+        return BLOCK_COLORS[dyeColorIn.getMetadata()];
+    }
+
+    static
+    {
+        BLOCK_COLORS[EnumDyeColor.WHITE.getMetadata()] = SNOW;
+        BLOCK_COLORS[EnumDyeColor.ORANGE.getMetadata()] = ADOBE;
+        BLOCK_COLORS[EnumDyeColor.MAGENTA.getMetadata()] = MAGENTA;
+        BLOCK_COLORS[EnumDyeColor.LIGHT_BLUE.getMetadata()] = LIGHT_BLUE;
+        BLOCK_COLORS[EnumDyeColor.YELLOW.getMetadata()] = YELLOW;
+        BLOCK_COLORS[EnumDyeColor.LIME.getMetadata()] = LIME;
+        BLOCK_COLORS[EnumDyeColor.PINK.getMetadata()] = PINK;
+        BLOCK_COLORS[EnumDyeColor.GRAY.getMetadata()] = GRAY;
+        BLOCK_COLORS[EnumDyeColor.SILVER.getMetadata()] = SILVER;
+        BLOCK_COLORS[EnumDyeColor.CYAN.getMetadata()] = CYAN;
+        BLOCK_COLORS[EnumDyeColor.PURPLE.getMetadata()] = PURPLE;
+        BLOCK_COLORS[EnumDyeColor.BLUE.getMetadata()] = BLUE;
+        BLOCK_COLORS[EnumDyeColor.BROWN.getMetadata()] = BROWN;
+        BLOCK_COLORS[EnumDyeColor.GREEN.getMetadata()] = GREEN;
+        BLOCK_COLORS[EnumDyeColor.RED.getMetadata()] = RED;
+        BLOCK_COLORS[EnumDyeColor.BLACK.getMetadata()] = BLACK;
     }
 }

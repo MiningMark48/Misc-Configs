@@ -15,16 +15,16 @@ public class GuiLabel extends Gui
     protected int height = 20;
     public int x;
     public int y;
-    private List<String> labels;
+    private final List<String> labels;
     public int id;
     private boolean centered;
     public boolean visible = true;
     private boolean labelBgEnabled;
-    private int textColor;
+    private final int textColor;
     private int backColor;
     private int ulColor;
     private int brColor;
-    private FontRenderer fontRenderer;
+    private final FontRenderer fontRenderer;
     private int border;
 
     public GuiLabel(FontRenderer fontRendererObj, int p_i45540_2_, int p_i45540_3_, int p_i45540_4_, int p_i45540_5_, int p_i45540_6_, int p_i45540_7_)
@@ -47,7 +47,7 @@ public class GuiLabel extends Gui
 
     public void addLine(String p_175202_1_)
     {
-        this.labels.add(I18n.format(p_175202_1_, new Object[0]));
+        this.labels.add(I18n.format(p_175202_1_));
     }
 
     /**
@@ -73,11 +73,11 @@ public class GuiLabel extends Gui
             {
                 if (this.centered)
                 {
-                    this.drawCenteredString(this.fontRenderer, (String)this.labels.get(k), this.x + this.width / 2, j + k * 10, this.textColor);
+                    this.drawCenteredString(this.fontRenderer, this.labels.get(k), this.x + this.width / 2, j + k * 10, this.textColor);
                 }
                 else
                 {
-                    this.drawString(this.fontRenderer, (String)this.labels.get(k), this.x, j + k * 10, this.textColor);
+                    this.drawString(this.fontRenderer, this.labels.get(k), this.x, j + k * 10, this.textColor);
                 }
             }
         }

@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.network.internal;
 
 import io.netty.buffer.ByteBuf;
@@ -21,14 +40,13 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import net.minecraftforge.fml.relauncher.Side;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.helpers.Integers;
-
 import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Multisets;
+
+import javax.annotation.Nullable;
 
 public class FMLProxyPacket implements Packet<INetHandler> {
     final String channel;
@@ -37,7 +55,7 @@ public class FMLProxyPacket implements Packet<INetHandler> {
     private INetHandler netHandler;
     private NetworkDispatcher dispatcher;
     private static Multiset<String> badPackets = ConcurrentHashMultiset.create();
-    private static int packetCountWarning = Integers.parseInt(System.getProperty("fml.badPacketCounter", "100"), 100);
+    private static int packetCountWarning = Integer.parseInt(System.getProperty("fml.badPacketCounter", "100"));
 
     public FMLProxyPacket(SPacketCustomPayload original)
     {
@@ -92,12 +110,12 @@ public class FMLProxyPacket implements Packet<INetHandler> {
                     badPackets.add(this.channel);
                     if (badPackets.size() % packetCountWarning == 0)
                     {
-                        FMLLog.severe("Detected ongoing potential memory leak. %d packets have leaked. Top offenders", badPackets.size());
+                        FMLLog.log.fatal("Detected ongoing potential memory leak. {} packets have leaked. Top offenders", badPackets.size());
                         int i = 0;
                         for (Entry<String> s  : Multisets.copyHighestCountFirst(badPackets).entrySet())
                         {
                             if (i++ > 10) break;
-                            FMLLog.severe("\t %s : %d", s.getElement(), s.getCount());
+                            FMLLog.log.fatal("\t {} : {}", s.getElement(), s.getCount());
                         }
                     }
                 }
@@ -105,12 +123,12 @@ public class FMLProxyPacket implements Packet<INetHandler> {
             }
             catch (FMLNetworkException ne)
             {
-                FMLLog.log(Level.ERROR, ne, "There was a network exception handling a packet on channel %s", channel);
+                FMLLog.log.error("There was a network exception handling a packet on channel {}", channel, ne);
                 dispatcher.rejectHandshake(ne.getMessage());
             }
             catch (Throwable t)
             {
-                FMLLog.log(Level.ERROR, t, "There was a critical exception handling a packet on channel %s", channel);
+                FMLLog.log.error("There was a critical exception handling a packet on channel {}", channel, t);
                 dispatcher.rejectHandshake("A fatal error has occurred, this connection is terminated");
             }
         }
@@ -133,7 +151,7 @@ public class FMLProxyPacket implements Packet<INetHandler> {
         return new CPacketCustomPayload(channel, payload);
     }
 
-    static final int PART_SIZE = 0x1000000 - 0x50; // Make it a constant so that it gets inlined below.
+    static final int PART_SIZE = 0x100000 - 0x50; // Make it a constant so that it gets inlined below.
     // FIXME int overflow
     public static final int MAX_LENGTH = PART_SIZE * 255;
     public List<Packet<INetHandlerPlayClient>> toS3FPackets() throws IOException
@@ -182,6 +200,7 @@ public class FMLProxyPacket implements Packet<INetHandler> {
         this.dispatcher = networkDispatcher;
     }
 
+    @Nullable
     public NetworkManager getOrigin()
     {
         return this.dispatcher != null ? this.dispatcher.manager : null;

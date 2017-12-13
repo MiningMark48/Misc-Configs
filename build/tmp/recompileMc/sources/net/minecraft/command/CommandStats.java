@@ -19,7 +19,7 @@ public class CommandStats extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "stats";
     }
@@ -35,7 +35,7 @@ public class CommandStats extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.stats.usage";
     }
@@ -53,13 +53,13 @@ public class CommandStats extends CommandBase
         {
             boolean flag;
 
-            if (args[0].equals("entity"))
+            if ("entity".equals(args[0]))
             {
                 flag = false;
             }
             else
             {
-                if (!args[0].equals("block"))
+                if (!"block".equals(args[0]))
                 {
                     throw new WrongUsageException("commands.stats.usage", new Object[0]);
                 }
@@ -138,7 +138,7 @@ public class CommandStats extends CommandBase
 
                     if (tileentity == null)
                     {
-                        throw new CommandException("commands.stats.noCompatibleBlock", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                        throw new CommandException("commands.stats.noCompatibleBlock", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                     }
 
                     if (tileentity instanceof TileEntityCommandBlock)
@@ -149,7 +149,7 @@ public class CommandStats extends CommandBase
                     {
                         if (!(tileentity instanceof TileEntitySign))
                         {
-                            throw new CommandException("commands.stats.noCompatibleBlock", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                            throw new CommandException("commands.stats.noCompatibleBlock", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                         }
 
                         commandresultstats = ((TileEntitySign)tileentity).getStats();
@@ -190,14 +190,43 @@ public class CommandStats extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"entity", "block"}): (args.length == 2 && args[0].equals("entity") ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length >= 2 && args.length <= 4 && args[0].equals("block") ? getTabCompletionCoordinate(args, 1, pos) : ((args.length != 3 || !args[0].equals("entity")) && (args.length != 5 || !args[0].equals("block")) ? ((args.length != 4 || !args[0].equals("entity")) && (args.length != 6 || !args[0].equals("block")) ? ((args.length != 6 || !args[0].equals("entity")) && (args.length != 8 || !args[0].equals("block")) ? Collections.<String>emptyList() : getListOfStringsMatchingLastWord(args, this.getObjectiveNames(server))) : getListOfStringsMatchingLastWord(args, CommandResultStats.Type.getTypeNames())) : getListOfStringsMatchingLastWord(args, new String[] {"set", "clear"}))));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"entity", "block"});
+        }
+        else if (args.length == 2 && "entity".equals(args[0]))
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else if (args.length >= 2 && args.length <= 4 && "block".equals(args[0]))
+        {
+            return getTabCompletionCoordinate(args, 1, targetPos);
+        }
+        else if ((args.length != 3 || !"entity".equals(args[0])) && (args.length != 5 || !"block".equals(args[0])))
+        {
+            if ((args.length != 4 || !"entity".equals(args[0])) && (args.length != 6 || !"block".equals(args[0])))
+            {
+                return (args.length != 6 || !"entity".equals(args[0])) && (args.length != 8 || !"block".equals(args[0])) ? Collections.emptyList() : getListOfStringsMatchingLastWord(args, this.getObjectiveNames(server));
+            }
+            else
+            {
+                return getListOfStringsMatchingLastWord(args, CommandResultStats.Type.getTypeNames());
+            }
+        }
+        else
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"set", "clear"});
+        }
     }
 
     protected List<String> getObjectiveNames(MinecraftServer server)
     {
-        Collection<ScoreObjective> collection = server.worldServerForDimension(0).getScoreboard().getScoreObjectives();
+        Collection<ScoreObjective> collection = server.getWorld(0).getScoreboard().getScoreObjectives();
         List<String> list = Lists.<String>newArrayList();
 
         for (ScoreObjective scoreobjective : collection)
@@ -216,6 +245,6 @@ public class CommandStats extends CommandBase
      */
     public boolean isUsernameIndex(String[] args, int index)
     {
-        return args.length > 0 && args[0].equals("entity") && index == 1;
+        return args.length > 0 && "entity".equals(args[0]) && index == 1;
     }
 }

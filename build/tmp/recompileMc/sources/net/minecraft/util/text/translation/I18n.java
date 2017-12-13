@@ -3,12 +3,12 @@ package net.minecraft.util.text.translation;
 @Deprecated
 public class I18n
 {
-    private static LanguageMap localizedName = LanguageMap.getInstance();
+    private static final LanguageMap localizedName = LanguageMap.getInstance();
     /**
      * A StringTranslate instance using the hardcoded default locale (en_US).  Used as a fallback in case the shared
      * StringTranslate singleton instance fails to translate a key.
      */
-    private static LanguageMap fallbackTranslator = new LanguageMap();
+    private static final LanguageMap fallbackTranslator = new LanguageMap();
 
     /**
      * Translates a Stat name

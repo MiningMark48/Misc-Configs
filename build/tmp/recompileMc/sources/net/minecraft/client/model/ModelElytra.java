@@ -11,8 +11,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ModelElytra extends ModelBase
 {
-    private ModelRenderer rightWing;
-    private ModelRenderer leftWing = new ModelRenderer(this, 22, 0);
+    private final ModelRenderer rightWing;
+    private final ModelRenderer leftWing = new ModelRenderer(this, 22, 0);
 
     public ModelElytra()
     {
@@ -29,8 +29,21 @@ public class ModelElytra extends ModelBase
     {
         GlStateManager.disableRescaleNormal();
         GlStateManager.disableCull();
-        this.leftWing.render(scale);
-        this.rightWing.render(scale);
+
+        if (entityIn instanceof EntityLivingBase && ((EntityLivingBase)entityIn).isChild())
+        {
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
+            GlStateManager.translate(0.0F, 1.5F, -0.1F);
+            this.leftWing.render(scale);
+            this.rightWing.render(scale);
+            GlStateManager.popMatrix();
+        }
+        else
+        {
+            this.leftWing.render(scale);
+            this.rightWing.render(scale);
+        }
     }
 
     /**
@@ -53,7 +66,7 @@ public class ModelElytra extends ModelBase
             if (entityIn.motionY < 0.0D)
             {
                 Vec3d vec3d = (new Vec3d(entityIn.motionX, entityIn.motionY, entityIn.motionZ)).normalize();
-                f4 = 1.0F - (float)Math.pow(-vec3d.yCoord, 1.5D);
+                f4 = 1.0F - (float)Math.pow(-vec3d.y, 1.5D);
             }
 
             f = f4 * 0.34906584F + (1.0F - f4) * f;
@@ -92,14 +105,5 @@ public class ModelElytra extends ModelBase
         this.rightWing.rotationPointY = this.leftWing.rotationPointY;
         this.rightWing.rotateAngleX = this.leftWing.rotateAngleX;
         this.rightWing.rotateAngleZ = -this.leftWing.rotateAngleZ;
-    }
-
-    /**
-     * Used for easily adding entity-dependent animations. The second and third float params here are the same second
-     * and third as in the setRotationAngles method.
-     */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
-    {
-        super.setLivingAnimations(entitylivingbaseIn, p_78086_2_, p_78086_3_, partialTickTime);
     }
 }

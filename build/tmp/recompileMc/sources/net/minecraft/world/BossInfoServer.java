@@ -140,6 +140,9 @@ public class BossInfoServer extends BossInfo
         }
     }
 
+    /**
+     * The returned collection is unmodifiable
+     */
     public Collection<EntityPlayerMP> getPlayers()
     {
         return this.readOnlyPlayers;

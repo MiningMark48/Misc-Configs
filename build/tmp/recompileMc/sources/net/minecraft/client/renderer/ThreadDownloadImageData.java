@@ -87,7 +87,7 @@ public class ThreadDownloadImageData extends SimpleTexture
         {
             if (this.cacheFile != null && this.cacheFile.isFile())
             {
-                LOGGER.debug("Loading http texture from local cache ({})", new Object[] {this.cacheFile});
+                LOGGER.debug("Loading http texture from local cache ({})", (Object)this.cacheFile);
 
                 try
                 {
@@ -100,7 +100,7 @@ public class ThreadDownloadImageData extends SimpleTexture
                 }
                 catch (IOException ioexception)
                 {
-                    LOGGER.error((String)("Couldn\'t load skin " + this.cacheFile), (Throwable)ioexception);
+                    LOGGER.error("Couldn't load skin {}", this.cacheFile, ioexception);
                     this.loadTextureFromServer();
                 }
             }
@@ -118,7 +118,7 @@ public class ThreadDownloadImageData extends SimpleTexture
             public void run()
             {
                 HttpURLConnection httpurlconnection = null;
-                ThreadDownloadImageData.LOGGER.debug("Downloading http texture from {} to {}", new Object[] {ThreadDownloadImageData.this.imageUrl, ThreadDownloadImageData.this.cacheFile});
+                ThreadDownloadImageData.LOGGER.debug("Downloading http texture from {} to {}", ThreadDownloadImageData.this.imageUrl, ThreadDownloadImageData.this.cacheFile);
 
                 try
                 {
@@ -152,7 +152,7 @@ public class ThreadDownloadImageData extends SimpleTexture
                 }
                 catch (Exception exception)
                 {
-                    ThreadDownloadImageData.LOGGER.error((String)"Couldn\'t download http texture", (Throwable)exception);
+                    ThreadDownloadImageData.LOGGER.error("Couldn't download http texture", (Throwable)exception);
                     return;
                 }
                 finally

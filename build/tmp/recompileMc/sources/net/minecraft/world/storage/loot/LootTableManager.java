@@ -1,6 +1,5 @@
 package net.minecraft.world.storage.loot;
 
-import com.google.common.base.Charsets;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -12,7 +11,9 @@ import com.google.gson.JsonParseException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
 import net.minecraft.world.storage.loot.conditions.LootConditionManager;
@@ -28,7 +29,7 @@ public class LootTableManager
     private final LoadingCache<ResourceLocation, LootTable> registeredLootTables = CacheBuilder.newBuilder().<ResourceLocation, LootTable>build(new LootTableManager.Loader());
     private final File baseFolder;
 
-    public LootTableManager(File folder)
+    public LootTableManager(@Nullable File folder)
     {
         this.baseFolder = folder;
         this.reloadLootTables();
@@ -36,7 +37,7 @@ public class LootTableManager
 
     public LootTable getLootTableFromLocation(ResourceLocation ressources)
     {
-        return (LootTable)this.registeredLootTables.getUnchecked(ressources);
+        return this.registeredLootTables.getUnchecked(ressources);
     }
 
     public void reloadLootTables()
@@ -59,7 +60,7 @@ public class LootTableManager
         {
             if (p_load_1_.getResourcePath().contains("."))
             {
-                LootTableManager.LOGGER.debug("Invalid loot table name \'" + p_load_1_ + "\' (can\'t contain periods)");
+                LootTableManager.LOGGER.debug("Invalid loot table name '{}' (can't contain periods)", (Object)p_load_1_);
                 return LootTable.EMPTY_LOOT_TABLE;
             }
             else
@@ -74,7 +75,7 @@ public class LootTableManager
                 if (loottable == null)
                 {
                     loottable = LootTable.EMPTY_LOOT_TABLE;
-                    LootTableManager.LOGGER.warn("Couldn\'t find resource table {}", new Object[] {p_load_1_});
+                    LootTableManager.LOGGER.warn("Couldn't find resource table {}", (Object)p_load_1_);
                 }
 
                 return loottable;
@@ -84,43 +85,50 @@ public class LootTableManager
         @Nullable
         private LootTable loadLootTable(ResourceLocation resource)
         {
-            File file1 = new File(new File(LootTableManager.this.baseFolder, resource.getResourceDomain()), resource.getResourcePath() + ".json");
-
-            if (file1.exists())
+            if (LootTableManager.this.baseFolder == null)
             {
-                if (file1.isFile())
+                return null;
+            }
+            else
+            {
+                File file1 = new File(new File(LootTableManager.this.baseFolder, resource.getResourceDomain()), resource.getResourcePath() + ".json");
+
+                if (file1.exists())
                 {
-                    String s;
+                    if (file1.isFile())
+                    {
+                        String s;
 
-                    try
-                    {
-                        s = Files.toString(file1, Charsets.UTF_8);
-                    }
-                    catch (IOException ioexception)
-                    {
-                        LootTableManager.LOGGER.warn((String)("Couldn\'t load loot table " + resource + " from " + file1), (Throwable)ioexception);
-                        return LootTable.EMPTY_LOOT_TABLE;
-                    }
+                        try
+                        {
+                            s = Files.toString(file1, StandardCharsets.UTF_8);
+                        }
+                        catch (IOException ioexception)
+                        {
+                            LootTableManager.LOGGER.warn("Couldn't load loot table {} from {}", resource, file1, ioexception);
+                            return LootTable.EMPTY_LOOT_TABLE;
+                        }
 
-                    try
-                    {
-                        return net.minecraftforge.common.ForgeHooks.loadLootTable(LootTableManager.GSON_INSTANCE, resource, s, true);
+                        try
+                        {
+                            return net.minecraftforge.common.ForgeHooks.loadLootTable(LootTableManager.GSON_INSTANCE, resource, s, true, LootTableManager.this);
+                        }
+                        catch (IllegalArgumentException | JsonParseException jsonparseexception)
+                        {
+                            LootTableManager.LOGGER.error("Couldn't load loot table {} from {}", resource, file1, jsonparseexception);
+                            return LootTable.EMPTY_LOOT_TABLE;
+                        }
                     }
-                    catch (JsonParseException jsonparseexception)
+                    else
                     {
-                        LootTableManager.LOGGER.error((String)("Couldn\'t load loot table " + resource + " from " + file1), (Throwable)jsonparseexception);
+                        LootTableManager.LOGGER.warn("Expected to find loot table {} at {} but it was a folder.", resource, file1);
                         return LootTable.EMPTY_LOOT_TABLE;
                     }
                 }
                 else
                 {
-                    LootTableManager.LOGGER.warn("Expected to find loot table " + resource + " at " + file1 + " but it was a folder.");
-                    return LootTable.EMPTY_LOOT_TABLE;
+                    return null;
                 }
-            }
-            else
-            {
-                return null;
             }
         }
 
@@ -135,21 +143,21 @@ public class LootTableManager
 
                 try
                 {
-                    s = Resources.toString(url, Charsets.UTF_8);
+                    s = Resources.toString(url, StandardCharsets.UTF_8);
                 }
                 catch (IOException ioexception)
                 {
-                    LootTableManager.LOGGER.warn((String)("Couldn\'t load loot table " + resource + " from " + url), (Throwable)ioexception);
+                    LootTableManager.LOGGER.warn("Couldn't load loot table {} from {}", resource, url, ioexception);
                     return LootTable.EMPTY_LOOT_TABLE;
                 }
 
                 try
                 {
-                    return net.minecraftforge.common.ForgeHooks.loadLootTable(LootTableManager.GSON_INSTANCE, resource, s, false);
+                    return net.minecraftforge.common.ForgeHooks.loadLootTable(LootTableManager.GSON_INSTANCE, resource, s, false, LootTableManager.this);
                 }
                 catch (JsonParseException jsonparseexception)
                 {
-                    LootTableManager.LOGGER.error((String)("Couldn\'t load loot table " + resource + " from " + url), (Throwable)jsonparseexception);
+                    LootTableManager.LOGGER.error("Couldn't load loot table {} from {}", resource, url, jsonparseexception);
                     return LootTable.EMPTY_LOOT_TABLE;
                 }
             }

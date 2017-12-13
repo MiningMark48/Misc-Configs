@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common;
@@ -32,6 +39,8 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.event.FMLInterModComms.IMCEvent;
 import net.minecraftforge.fml.common.network.NetworkCheckHandler;
 import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.versioning.VersionRange;
+import net.minecraftforge.fml.relauncher.Side;
 
 /**
  * This defines a Mod to FML.
@@ -68,21 +77,64 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 public @interface Mod
 {
     /**
-     * The unique mod identifier for this mod
+     * The unique mod identifier for this mod.
+     * <b>Required to be lowercased in the english locale for compatibility. Will be truncated to 64 characters long.</b>
+     *
+     * This will be used to identify your mod for third parties (other mods), it will be used to identify your mod for registries such as block and item registries.
+     * By default, you will have a resource domain that matches the modid. All these uses require that constraints are imposed on the format of the modid.
      */
     String modid();
+
     /**
      * A user friendly name for the mod
      */
     String name() default "";
+
     /**
-     * A version string for this mod
+     * A version string for this mod.
+     *
+     * The version string here should be just numbers separated by dots,
+     * to make specifying {@link #dependencies()} simple for other mods.
      */
     String version() default "";
+
     /**
-     * A simple dependency string for this mod (see modloader's "priorities" string specification)
+     * A dependency string for this mod, which specifies which mod(s) it depends on in order to run.
+     *
+     * A dependency string must start with a combination of these prefixes, separated by "-":
+     *     [before, after], [required], [client, server]
+     *     At least one "before", "after", or "required" must be specified.
+     * Then ":" and the mod id.
+     * Then a version range should be specified for the mod by adding "@" and the version range.
+     *     The version range format is described in the javadoc here:
+     *     {@link VersionRange#createFromVersionSpec(java.lang.String)}
+     * Then a ";".
+     *
+     * If a "required" mod is missing, or a mod exists with a version outside the specified range,
+     * the game will not start and an error screen will tell the player which versions are required.
+     *
+     * Example:
+     *     Our example mod:
+     *      * depends on Forge and uses new features that were introduced in Forge version 14.21.1.2395
+     *         "required:forge@[14.21.1.2395,);"
+     *      * is a dedicated addon to mod1 and has to have its event handlers run after mod1's are run,
+     *         "required-after:mod1;"
+     *      * has optional integration with mod2 which depends on features introduced in mod2 version 4.7.0,
+     *         "after:mod2@[4.7.0,);"
+     *      * depends on a client-side-only rendering library called rendermod
+     *         "required-client:rendermod;"
+     *
+     *     The full dependencies string is all of those combined:
+     *         "required:forge@[14.21.1.2395,);required-after:mod1;after:mod2@[4.7.0,);required-client:rendermod;"
+     *
+     *     This will stop the game and display an error message if any of these is true:
+     *         The installed forge is too old,
+     *         mod1 is missing,
+     *         an old version of mod2 is present,
+     *         rendermod is missing on the client.
      */
     String dependencies() default "";
+
     /**
      * Whether to use the mcmod.info metadata by default for this mod.
      * If true, settings in the mcmod.info file will override settings in these annotations.
@@ -270,6 +322,12 @@ public @interface Mod
          * The mod object to inject into this field
          */
         String value() default "";
+
+        /**
+         * Optional owner modid, required if this annotation is on something that is not inside the main class of a mod container.
+         * This is required to prevent mods from classloading other, potentially disabled mods.
+         */
+        String owner() default "";
     }
     /**
      * Populate the annotated field with the mod's metadata.
@@ -283,6 +341,12 @@ public @interface Mod
          * The mod id specifying the metadata to load here
          */
         String value() default "";
+
+        /**
+         * Optional owner modid, required if this annotation is on something that is not inside the main class of a mod container.
+         * This is required to prevent mods from classloading other, potentially disabled mods.
+         */
+        String owner() default "";
     }
 
     /**
@@ -293,5 +357,21 @@ public @interface Mod
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface InstanceFactory {
+    }
+
+    /**
+     * A class which will be subscribed to {@link net.minecraftforge.common.MinecraftForge.EVENT_BUS} at mod construction time.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface EventBusSubscriber {
+        Side[] value() default { Side.CLIENT, Side.SERVER };
+
+        /**
+         * Optional value, only nessasary if tis annotation is not on the same class that has a @Mod annotation.
+         * Needed to prevent early classloading of classes not owned by your mod.
+         * @return
+         */
+        String modid() default "";
     }
 }

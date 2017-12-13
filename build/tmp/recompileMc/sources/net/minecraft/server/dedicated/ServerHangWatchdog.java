@@ -40,7 +40,7 @@ public class ServerHangWatchdog implements Runnable
 
             if (k > this.maxTickTime && !this.firstRun)
             {
-                LOGGER.fatal("A single server tick took " + String.format("%.2f", new Object[] {Float.valueOf((float)k / 1000.0F)}) + " seconds (should be max " + String.format("%.2f", new Object[] {Float.valueOf(0.05F)}) + ")");
+                LOGGER.fatal("A single server tick took {} seconds (should be max {})", String.format("%.2f", (float)k / 1000.0F), String.format("%.2f", 0.05F));
                 LOGGER.fatal("Considering it to be crashed, server will forcibly shutdown.");
                 ThreadMXBean threadmxbean = ManagementFactory.getThreadMXBean();
                 ThreadInfo[] athreadinfo = threadmxbean.dumpAllThreads(true, true);
@@ -66,7 +66,7 @@ public class ServerHangWatchdog implements Runnable
 
                 if (crashreport.saveToFile(file1))
                 {
-                    LOGGER.error("This crash report has been saved to: " + file1.getAbsolutePath());
+                    LOGGER.error("This crash report has been saved to: {}", (Object)file1.getAbsolutePath());
                 }
                 else
                 {

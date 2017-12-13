@@ -1,7 +1,6 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
@@ -13,17 +12,17 @@ public class SPacketSetSlot implements Packet<INetHandlerPlayClient>
 {
     private int windowId;
     private int slot;
-    private ItemStack item;
+    private ItemStack item = ItemStack.EMPTY;
 
     public SPacketSetSlot()
     {
     }
 
-    public SPacketSetSlot(int windowIdIn, int slotIn, @Nullable ItemStack itemIn)
+    public SPacketSetSlot(int windowIdIn, int slotIn, ItemStack itemIn)
     {
         this.windowId = windowIdIn;
         this.slot = slotIn;
-        this.item = itemIn == null ? null : itemIn.copy();
+        this.item = itemIn.copy();
     }
 
     /**
@@ -41,7 +40,7 @@ public class SPacketSetSlot implements Packet<INetHandlerPlayClient>
     {
         this.windowId = buf.readByte();
         this.slot = buf.readShort();
-        this.item = buf.readItemStackFromBuffer();
+        this.item = buf.readItemStack();
     }
 
     /**
@@ -51,7 +50,7 @@ public class SPacketSetSlot implements Packet<INetHandlerPlayClient>
     {
         buf.writeByte(this.windowId);
         buf.writeShort(this.slot);
-        buf.writeItemStackToBuffer(this.item);
+        buf.writeItemStack(this.item);
     }
 
     @SideOnly(Side.CLIENT)
@@ -66,7 +65,6 @@ public class SPacketSetSlot implements Packet<INetHandlerPlayClient>
         return this.slot;
     }
 
-    @Nullable
     @SideOnly(Side.CLIENT)
     public ItemStack getStack()
     {

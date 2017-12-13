@@ -10,7 +10,9 @@ import net.minecraft.util.IntIdentityHashBiMap;
 
 public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IObjectIntIterable<V>
 {
-    protected final IntIdentityHashBiMap<V> underlyingIntegerMap = new IntIdentityHashBiMap(256);
+    /** The backing store that maps Integers to objects. */
+    protected final IntIdentityHashBiMap<V> underlyingIntegerMap = new IntIdentityHashBiMap<V>(256);
+    /** A BiMap of objects (key) to their names (value). */
     protected final Map<V, K> inverseObjectRegistry;
 
     public RegistryNamespaced()
@@ -24,6 +26,9 @@ public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IO
         this.putObject(key, value);
     }
 
+    /**
+     * Creates the Map we will use to map keys to their registered values.
+     */
     protected Map<K, V> createUnderlyingMap()
     {
         return HashBiMap.<K, V>create();
@@ -32,7 +37,7 @@ public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IO
     @Nullable
     public V getObject(@Nullable K name)
     {
-        return super.getObject(name);
+        return (V)super.getObject(name);
     }
 
     /**
@@ -41,7 +46,7 @@ public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IO
     @Nullable
     public K getNameForObject(V value)
     {
-        return (K)this.inverseObjectRegistry.get(value);
+        return this.inverseObjectRegistry.get(value);
     }
 
     /**
@@ -55,7 +60,7 @@ public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IO
     /**
      * Gets the integer ID we use to identify the given object.
      */
-    public int getIDForObject(V value)
+    public int getIDForObject(@Nullable V value)
     {
         return this.underlyingIntegerMap.getId(value);
     }
@@ -66,7 +71,7 @@ public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IO
     @Nullable
     public V getObjectById(int id)
     {
-        return (V)this.underlyingIntegerMap.get(id);
+        return this.underlyingIntegerMap.get(id);
     }
 
     public Iterator<V> iterator()

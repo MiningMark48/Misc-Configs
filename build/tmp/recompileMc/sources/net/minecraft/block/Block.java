@@ -1,6 +1,7 @@
 package net.minecraft.block;
 
 import com.google.common.collect.Sets;
+import com.google.common.collect.UnmodifiableIterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -9,8 +10,10 @@ import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -18,7 +21,10 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Enchantments;
+import net.minecraft.init.Items;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -29,11 +35,13 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.Mirror;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ObjectIntIdentityMap;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.RegistryNamespacedDefaultedByKey;
@@ -44,14 +52,15 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistryEntry.Impl<Block>
+public class Block extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<Block>
 {
     /** ResourceLocation for the Air block */
     private static final ResourceLocation AIR_ID = new ResourceLocation("air");
-    public static final RegistryNamespacedDefaultedByKey<ResourceLocation, Block> REGISTRY = net.minecraftforge.fml.common.registry.GameData.getBlockRegistry();
+    public static final RegistryNamespacedDefaultedByKey<ResourceLocation, Block> REGISTRY = net.minecraftforge.registries.GameData.getWrapperDefaulted(Block.class);
     @Deprecated //Modders: DO NOT use this! Use GameRegistry
-    public static final ObjectIntIdentityMap<IBlockState> BLOCK_STATE_IDS = net.minecraftforge.fml.common.registry.GameData.getBlockStateIDMap();
+    public static final ObjectIntIdentityMap<IBlockState> BLOCK_STATE_IDS = net.minecraftforge.registries.GameData.getBlockStateIDMap();
     public static final AxisAlignedBB FULL_BLOCK_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+    @Nullable
     public static final AxisAlignedBB NULL_AABB = null;
     private CreativeTabs displayOnCreativeTab;
     protected boolean fullBlock;
@@ -73,7 +82,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     protected boolean needsRandomTick;
     /** true if the Block contains a Tile Entity */
-    protected boolean isBlockContainer;
+    protected boolean hasTileEntity;
     /** Sound of stepping on the block */
     protected SoundType blockSoundType;
     public float blockParticleGravity;
@@ -81,6 +90,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     /** The Block's MapColor */
     protected final MapColor blockMapColor;
     /** Determines how much velocity is maintained while moving on top of this block */
+    @Deprecated // Forge: State/world/pos/entity sensitive version below
     public float slipperiness;
     protected final BlockStateContainer blockState;
     private IBlockState defaultBlockState;
@@ -102,8 +112,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
 
     public static Block getBlockById(int id)
     {
-        Block ret = (Block)REGISTRY.getObjectById(id);
-        return ret == null ? net.minecraft.init.Blocks.AIR : ret;
+        return REGISTRY.getObjectById(id);
     }
 
     /**
@@ -116,9 +125,9 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return getBlockById(i).getStateFromMeta(j);
     }
 
-    public static Block getBlockFromItem(Item itemIn)
+    public static Block getBlockFromItem(@Nullable Item itemIn)
     {
-        return itemIn instanceof ItemBlock ? ((ItemBlock)itemIn).getBlock() : null;
+        return itemIn instanceof ItemBlock ? ((ItemBlock)itemIn).getBlock() : Blocks.AIR;
     }
 
     @Nullable
@@ -128,13 +137,13 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
 
         if (REGISTRY.containsKey(resourcelocation))
         {
-            return (Block)REGISTRY.getObject(resourcelocation);
+            return REGISTRY.getObject(resourcelocation);
         }
         else
         {
             try
             {
-                return (Block)REGISTRY.getObjectById(Integer.parseInt(name));
+                return REGISTRY.getObjectById(Integer.parseInt(name));
             }
             catch (NumberFormatException var3)
             {
@@ -144,18 +153,27 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Checks if an IBlockState represents a block that is opaque and a full cube.
+     * Determines if the block is solid enough on the top side to support other blocks, like redstone components.
      */
     @Deprecated
-    public boolean isFullyOpaque(IBlockState state)
+    public boolean isTopSolid(IBlockState state)
     {
         return state.getMaterial().isOpaque() && state.isFullCube();
     }
 
+    /**
+     * @return true if the state occupies all of its 1x1x1 cube
+     */
     @Deprecated
     public boolean isFullBlock(IBlockState state)
     {
         return this.fullBlock;
+    }
+
+    @Deprecated
+    public boolean canEntitySpawn(IBlockState state, Entity entityIn)
+    {
+        return true;
     }
 
     @Deprecated
@@ -202,7 +220,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * Get the MapColor for this Block and the given BlockState
      */
     @Deprecated
-    public MapColor getMapColor(IBlockState state)
+    public MapColor getMapColor(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
         return this.blockMapColor;
     }
@@ -221,13 +239,13 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public int getMetaFromState(IBlockState state)
     {
-        if (state != null && !state.getPropertyNames().isEmpty())
+        if (state.getPropertyKeys().isEmpty())
         {
-            throw new IllegalArgumentException("Don\'t know how to convert " + state + " back into data...");
+            return 0;
         }
         else
         {
-            return 0;
+            throw new IllegalArgumentException("Don't know how to convert " + state + " back into data...");
         }
     }
 
@@ -317,6 +335,16 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return this;
     }
 
+    protected static boolean isExceptionBlockForAttaching(Block attachBlock)
+    {
+        return attachBlock instanceof BlockShulkerBox || attachBlock instanceof BlockLeaves || attachBlock instanceof BlockTrapDoor || attachBlock == Blocks.BEACON || attachBlock == Blocks.CAULDRON || attachBlock == Blocks.GLASS || attachBlock == Blocks.GLOWSTONE || attachBlock == Blocks.ICE || attachBlock == Blocks.SEA_LANTERN || attachBlock == Blocks.STAINED_GLASS;
+    }
+
+    protected static boolean isExceptBlockForAttachWithPiston(Block attachBlock)
+    {
+        return isExceptionBlockForAttaching(attachBlock) || attachBlock == Blocks.PISTON || attachBlock == Blocks.STICKY_PISTON || attachBlock == Blocks.PISTON_HEAD;
+    }
+
     /**
      * Indicate if a material is a normal solid opaque cube
      */
@@ -336,7 +364,8 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return state.getMaterial().isOpaque() && state.isFullCube() && !state.canProvidePower();
     }
 
-    public boolean isVisuallyOpaque()
+    @Deprecated
+    public boolean causesSuffocation(IBlockState state)
     {
         return this.blockMaterial.blocksMovement() && this.getDefaultState().isFullCube();
     }
@@ -347,13 +376,24 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return true;
     }
 
+    @Deprecated
+    @SideOnly(Side.CLIENT)
+    public boolean hasCustomBreakingProgress(IBlockState state)
+    {
+        return false;
+    }
+
+    /**
+     * Determines if an entity can path through this block
+     */
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos)
     {
         return !this.blockMaterial.blocksMovement();
     }
 
     /**
-     * The type of render function called. 3 for standard block models, 2 for TESR's, 1 for liquids, -1 is no render
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
      */
     @Deprecated
     public EnumBlockRenderType getRenderType(IBlockState state)
@@ -424,40 +464,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
         return FULL_BLOCK_AABB;
-    }
-
-    /**
-     * Whether this Block is solid on the given Side
-     */
-    public boolean isBlockSolid(IBlockAccess worldIn, BlockPos pos, EnumFacing side)
-    {
-        return worldIn.getBlockState(pos).getMaterial().isSolid();
-    }
-
-    @Deprecated
-    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn)
-    {
-        addCollisionBoxToList(pos, entityBox, collidingBoxes, state.getCollisionBoundingBox(worldIn, pos));
-    }
-
-    protected static void addCollisionBoxToList(BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable AxisAlignedBB blockBox)
-    {
-        if (blockBox != NULL_AABB)
-        {
-            AxisAlignedBB axisalignedbb = blockBox.offset(pos);
-
-            if (entityBox.intersectsWith(axisalignedbb))
-            {
-                collidingBoxes.add(axisalignedbb);
-            }
-        }
-    }
-
-    @Deprecated
-    @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
-    {
-        return blockState.getBoundingBox(worldIn, pos);
     }
 
     @Deprecated
@@ -537,6 +543,50 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return !blockAccess.getBlockState(pos.offset(side)).doesSideBlockRendering(blockAccess, pos.offset(side), side.getOpposite());
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    @Deprecated
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.SOLID;
+    }
+
+    @Deprecated
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
+    {
+        addCollisionBoxToList(pos, entityBox, collidingBoxes, state.getCollisionBoundingBox(worldIn, pos));
+    }
+
+    protected static void addCollisionBoxToList(BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable AxisAlignedBB blockBox)
+    {
+        if (blockBox != NULL_AABB)
+        {
+            AxisAlignedBB axisalignedbb = blockBox.offset(pos);
+
+            if (entityBox.intersects(axisalignedbb))
+            {
+                collidingBoxes.add(axisalignedbb);
+            }
+        }
+    }
+
+    @Deprecated
+    @Nullable
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
+    {
+        return blockState.getBoundingBox(worldIn, pos);
+    }
+
+    /**
+     * Return an AABB (in world coords!) that should be highlighted when the player is targeting this Block
+     */
     @Deprecated
     @SideOnly(Side.CLIENT)
     public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World worldIn, BlockPos pos)
@@ -585,7 +635,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Called when a player destroys this Block
+     * Called after a player destroys this Block - the posiiton pos may no longer hold the state indicated.
      */
     public void onBlockDestroyedByPlayer(World worldIn, BlockPos pos, IBlockState state)
     {
@@ -597,7 +647,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * block, etc.
      */
     @Deprecated
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
     }
 
@@ -609,10 +659,16 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return 10;
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         if (hasTileEntity(state) && !(this instanceof BlockContainer))
@@ -632,7 +688,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Item.getItemFromBlock(this);
@@ -662,14 +717,14 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     {
         if (!worldIn.isRemote && !worldIn.restoringBlockSnapshots) // do not drop items while restoring blockstates, prevents item dupe
         {
-            java.util.List<ItemStack> items = getDrops(worldIn, pos, state, fortune);
-            chance = net.minecraftforge.event.ForgeEventFactory.fireBlockHarvesting(items, worldIn, pos, state, fortune, chance, false, harvesters.get());
+            List<ItemStack> drops = getDrops(worldIn, pos, state, fortune); // use the old method until it gets removed, for backward compatibility
+            chance = net.minecraftforge.event.ForgeEventFactory.fireBlockHarvesting(drops, worldIn, pos, state, fortune, chance, false, harvesters.get());
 
-            for (ItemStack item : items)
+            for (ItemStack drop : drops)
             {
                 if (worldIn.rand.nextFloat() <= chance)
                 {
-                    spawnAsEntity(worldIn, pos, item);
+                    spawnAsEntity(worldIn, pos, drop);
                 }
             }
         }
@@ -680,7 +735,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public static void spawnAsEntity(World worldIn, BlockPos pos, ItemStack stack)
     {
-        if (!worldIn.isRemote && worldIn.getGameRules().getBoolean("doTileDrops") && !worldIn.restoringBlockSnapshots) // do not drop items while restoring blockstates, prevents item dupe
+        if (!worldIn.isRemote && !stack.isEmpty() && worldIn.getGameRules().getBoolean("doTileDrops")&& !worldIn.restoringBlockSnapshots) // do not drop items while restoring blockstates, prevents item dupe
         {
             if (captureDrops.get())
             {
@@ -688,12 +743,12 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
                 return;
             }
             float f = 0.5F;
-            double d0 = (double)(worldIn.rand.nextFloat() * f) + (double)(1.0F - f) * 0.5D;
-            double d1 = (double)(worldIn.rand.nextFloat() * f) + (double)(1.0F - f) * 0.5D;
-            double d2 = (double)(worldIn.rand.nextFloat() * f) + (double)(1.0F - f) * 0.5D;
+            double d0 = (double)(worldIn.rand.nextFloat() * 0.5F) + 0.25D;
+            double d1 = (double)(worldIn.rand.nextFloat() * 0.5F) + 0.25D;
+            double d2 = (double)(worldIn.rand.nextFloat() * 0.5F) + 0.25D;
             EntityItem entityitem = new EntityItem(worldIn, (double)pos.getX() + d0, (double)pos.getY() + d1, (double)pos.getZ() + d2, stack);
             entityitem.setDefaultPickupDelay();
-            worldIn.spawnEntityInWorld(entityitem);
+            worldIn.spawnEntity(entityitem);
         }
     }
 
@@ -708,7 +763,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
             {
                 int i = EntityXPOrb.getXPSplit(amount);
                 amount -= i;
-                worldIn.spawnEntityInWorld(new EntityXPOrb(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, i));
+                worldIn.spawnEntity(new EntityXPOrb(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.5D, (double)pos.getZ() + 0.5D, i));
             }
         }
     }
@@ -725,6 +780,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     /**
      * Returns how much this block can resist explosions from the passed in entity.
      */
+    @Deprecated //Forge: State sensitive version
     public float getExplosionResistance(Entity exploder)
     {
         return this.blockResistance / 5.0F;
@@ -756,11 +812,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     {
     }
 
-    public boolean canReplace(World worldIn, BlockPos pos, EnumFacing side, @Nullable ItemStack stack)
-    {
-        return this.canPlaceBlockOnSide(worldIn, pos, side);
-    }
-
     @SideOnly(Side.CLIENT)
     public BlockRenderLayer getBlockLayer()
     {
@@ -768,7 +819,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Check whether this Block can be placed on the given side
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
      */
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
@@ -780,23 +831,28 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return worldIn.getBlockState(pos).getBlock().isReplaceable(worldIn, pos);
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         return false;
     }
 
     /**
-     * Triggered whenever an entity collides with this block (enters into the block)
+     * Called when the given entity walks on this Block
      */
     public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn)
     {
     }
 
+    // Forge: use getStateForPlacement
     /**
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    @Deprecated
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         return this.getStateFromMeta(meta);
     }
@@ -838,17 +894,21 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return 0;
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
         player.addStat(StatList.getBlockStats(this));
-        player.addExhaustion(0.025F);
+        player.addExhaustion(0.005F);
 
         if (this.canSilkHarvest(worldIn, pos, state, player) && EnchantmentHelper.getEnchantmentLevel(Enchantments.SILK_TOUCH, stack) > 0)
         {
             java.util.List<ItemStack> items = new java.util.ArrayList<ItemStack>();
-            ItemStack itemstack = this.createStackedBlock(state);
+            ItemStack itemstack = this.getSilkTouchDrop(state);
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 items.add(itemstack);
             }
@@ -874,26 +934,17 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return this.getDefaultState().isFullCube() && !this.hasTileEntity(silk_check_state.get());
     }
 
-    @Nullable
-    protected ItemStack createStackedBlock(IBlockState state)
+    protected ItemStack getSilkTouchDrop(IBlockState state)
     {
         Item item = Item.getItemFromBlock(this);
+        int i = 0;
 
-        if (item == null)
+        if (item.getHasSubtypes())
         {
-            return null;
+            i = this.getMetaFromState(state);
         }
-        else
-        {
-            int i = 0;
 
-            if (item.getHasSubtypes())
-            {
-                i = this.getMetaFromState(state);
-            }
-
-            return new ItemStack(item, 1, i);
-        }
+        return new ItemStack(item, 1, i);
     }
 
     /**
@@ -942,13 +993,9 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Called on both Client and Server when World#addBlockEvent is called. On the Server, this may perform additional
-     * changes to the world, like pistons replacing the block with an extended base. On the client, the update may
-     * involve replacing tile entities, playing sounds, or performing other visual actions to reflect the server side
-     * changes.
-     *  
-     * @param state The block state retrieved from the block position prior to this method being invoked
-     * @param pos The position of the block event. Can be used to retrieve tile entities.
+     * Called on server when World#addBlockEvent is called. If server returns true, then also called on the client. On
+     * the Server, this may perform additional changes to the world, like pistons replacing the block with an extended
+     * base. On the client, the update may involve replacing tile entities or effects such as sounds or particles
      */
     @Deprecated
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param)
@@ -1000,21 +1047,26 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         entityIn.motionY = 0.0D;
     }
 
-    @Nullable
     @Deprecated // Forge: Use more sensitive version below: getPickBlock
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
-        Item item = Item.getItemFromBlock(this);
-        return item == null ? null : new ItemStack(item, 1, this.damageDropped(state));
+        return new ItemStack(Item.getItemFromBlock(this), 1, this.damageDropped(state));
     }
 
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
-        list.add(new ItemStack(itemIn));
+        items.add(new ItemStack(this));
+    }
+
+    /**
+     * Returns the CreativeTab to display the given block on.
+     */
+    public CreativeTabs getCreativeTabToDisplayOn()
+    {
+        return this.displayOnCreativeTab;
     }
 
     public Block setCreativeTab(CreativeTabs tab)
@@ -1023,17 +1075,12 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return this;
     }
 
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
     public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player)
     {
-    }
-
-    /**
-     * Returns the CreativeTab to display the given block on.
-     */
-    @SideOnly(Side.CLIENT)
-    public CreativeTabs getCreativeTabToDisplayOn()
-    {
-        return this.displayOnCreativeTab;
     }
 
     /**
@@ -1063,7 +1110,14 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
 
     public static boolean isEqualTo(Block blockIn, Block other)
     {
-        return blockIn != null && other != null ? (blockIn == other ? true : blockIn.isAssociatedBlock(other)) : false;
+        if (blockIn != null && other != null)
+        {
+            return blockIn == other ? true : blockIn.isAssociatedBlock(other);
+        }
+        else
+        {
+            return false;
+        }
     }
 
     @Deprecated
@@ -1101,12 +1155,28 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     /**
      * Get the OffsetType for this Block. Determines if the model is rendered slightly offset.
      */
-    @SideOnly(Side.CLIENT)
     public Block.EnumOffsetType getOffsetType()
     {
         return Block.EnumOffsetType.NONE;
     }
 
+    @Deprecated
+    public Vec3d getOffset(IBlockState state, IBlockAccess worldIn, BlockPos pos)
+    {
+        Block.EnumOffsetType block$enumoffsettype = this.getOffsetType();
+
+        if (block$enumoffsettype == Block.EnumOffsetType.NONE)
+        {
+            return Vec3d.ZERO;
+        }
+        else
+        {
+            long i = MathHelper.getCoordinateRandom(pos.getX(), 0, pos.getZ());
+            return new Vec3d(((double)((float)(i >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D, block$enumoffsettype == Block.EnumOffsetType.XYZ ? ((double)((float)(i >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D : 0.0D, ((double)((float)(i >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D);
+        }
+    }
+
+    @Deprecated // Forge - World/state/pos/entity sensitive version below
     public SoundType getSoundType()
     {
         return this.blockSoundType;
@@ -1117,13 +1187,56 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         return "Block{" + REGISTRY.getNameForObject(this) + "}";
     }
 
+    @SideOnly(Side.CLIENT)
+    public void addInformation(ItemStack stack, @Nullable World player, List<String> tooltip, ITooltipFlag advanced)
+    {
+    }
+
     /* ======================================== FORGE START =====================================*/
     //For ForgeInternal use Only!
     protected ThreadLocal<EntityPlayer> harvesters = new ThreadLocal();
     private ThreadLocal<IBlockState> silk_check_state = new ThreadLocal();
     protected static java.util.Random RANDOM = new java.util.Random(); // Useful for random things without a seed.
+
     /**
-     * Get a light value for the block at the specified coordinates, normal ranges are between 0 and 15
+     * Gets the slipperiness at the given location at the given state. Normally
+     * between 0 and 1.
+     * <p>
+     * Note that entities may reduce slipperiness by a certain factor of their own;
+     * for {@link net.minecraft.entity.EntityLivingBase}, this is {@code .91}.
+     * {@link net.minecraft.entity.item.EntityItem} uses {@code .98}, and
+     * {@link net.minecraft.entity.projectile.EntityFishHook} uses {@code .92}.
+     *
+     * @param state state of the block
+     * @param world the world
+     * @param pos the position in the world
+     * @param entity the entity in question
+     * @return the factor by which the entity's motion should be multiplied
+     */
+    public float getSlipperiness(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable Entity entity)
+    {
+        /** Determines how much velocity is maintained while moving on top of this block */
+        return slipperiness;
+    }
+
+    /**
+     * Sets the base slipperiness level. Normally between 0 and 1.
+     * <p>
+     * <b>Calling this method may have no effect on the function of this block</b>,
+     * or may not have the expected result. This block is free to caclculate
+     * its slipperiness arbitrarily. This method is guaranteed to work on the
+     * base {@code Block} class.
+     *
+     * @param slipperiness the base slipperiness of this block
+     * @see #getSlipperiness(IBlockState, IBlockAccess, BlockPos, Entity)
+     */
+    public void setDefaultSlipperiness(float slipperiness)
+    {
+        this.slipperiness = slipperiness;
+    }
+
+    /**
+     * Get a light value for this block, taking into account the given state and coordinates, normal ranges are between 0 and 15
      *
      * @param state Block state
      * @param world The current world
@@ -1132,11 +1245,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        IBlockState other = world.getBlockState(pos);
-        if (other.getBlock() != this)
-        {
-            return other.getLightValue(world, pos);
-        }
         return state.getLightValue();
     }
 
@@ -1163,7 +1271,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public boolean isNormalCube(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return state.getMaterial().isOpaque() && state.isFullCube() && !state.canProvidePower();
+        return state.isNormalCube();
     }
 
     /**
@@ -1192,9 +1300,10 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param side The side to check
      * @return True if the block is solid on the specified side.
      */
+    @Deprecated //Use IBlockState.getBlockFaceShape
     public boolean isSideSolid(IBlockState base_state, IBlockAccess world, BlockPos pos, EnumFacing side)
     {
-        if (base_state.isFullyOpaque() && side == EnumFacing.UP) // Short circuit to vanilla function if its true
+        if (base_state.isTopSolid() && side == EnumFacing.UP) // Short circuit to vanilla function if its true
             return true;
 
         if (this instanceof BlockSlab)
@@ -1264,7 +1373,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * useful for creating pure logic-blocks that will be invisible
      * to the player and otherwise interact as air would.
      *
-     * @param sata The current state
+     * @param state The current state
      * @param world The current world
      * @param pos Block position in world
      * @return True if the block considered air
@@ -1277,8 +1386,8 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     /**
      * Determines if the player can harvest this block, obtaining it's drops when the block is destroyed.
      *
-     * @param player The player damaging the block, may be null
-     * @param meta The block's current metadata
+     * @param player The player damaging the block
+     * @param pos The block's current position
      * @return True to spawn the drops
      */
     public boolean canHarvestBlock(IBlockAccess world, BlockPos pos, EntityPlayer player)
@@ -1360,20 +1469,17 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      *
      * @param world The current world
      * @param pos Block position in world
-     * @param metadata The blocks current metadata
      * @param side The face that the fire is coming from
      * @return True if this block sustains fire, meaning it will never go out.
      */
     public boolean isFireSource(World world, BlockPos pos, EnumFacing side)
     {
-        if (this == net.minecraft.init.Blocks.NETHERRACK && side == EnumFacing.UP)
-        {
+        if (side != EnumFacing.UP)
+            return false;
+        if (this == Blocks.NETHERRACK || this == Blocks.MAGMA)
             return true;
-        }
-        if ((world.provider instanceof net.minecraft.world.WorldProviderEnd) && this == net.minecraft.init.Blocks.BEDROCK && side == EnumFacing.UP)
-        {
+        if ((world.provider instanceof net.minecraft.world.WorldProviderEnd) && this == Blocks.BEDROCK)
             return true;
-        }
         return false;
     }
 
@@ -1398,9 +1504,10 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * Return the same thing you would from that function.
      * This will fall back to ITileEntityProvider.createNewTileEntity(World) if this block is a ITileEntityProvider
      *
-     * @param metadata The Metadata of the current block
+     * @param state The state of the current block
      * @return A instance of a class extending TileEntity
      */
+    @Nullable
     public TileEntity createTileEntity(World world, IBlockState state)
     {
         if (isTileProvider)
@@ -1421,37 +1528,42 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public int quantityDropped(IBlockState state, int fortune, Random random)
     {
-        /**
-         * Get the quantity dropped based on the given fortune level
-         */
         return quantityDroppedWithBonus(fortune, random);
     }
 
     /**
-     * This returns a complete list of items dropped from this block.
+     * @deprecated use {@link #getDrops(NonNullList, IBlockAccess, BlockPos, IBlockState, int)}
+     */
+    @Deprecated
+    public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    {
+        NonNullList<ItemStack> ret = NonNullList.create();
+        getDrops(ret, world, pos, state, fortune);
+        return ret;
+    }
+
+    /**
+     * This gets a complete list of items dropped from this block.
      *
+     * @param drops add all items this block drops to this drops list
      * @param world The current world
      * @param pos Block position in world
      * @param state Current state
      * @param fortune Breakers fortune level
-     * @return A ArrayList containing all items this block drops
      */
-    public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
-
         Random rand = world instanceof World ? ((World)world).rand : RANDOM;
 
         int count = quantityDropped(state, fortune, rand);
-        for(int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++)
         {
             Item item = this.getItemDropped(state, rand, fortune);
-            if (item != null)
+            if (item != Items.AIR)
             {
-                ret.add(new ItemStack(item, 1, this.damageDropped(state)));
+                drops.add(new ItemStack(item, 1, this.damageDropped(state)));
             }
         }
-        return ret;
     }
 
     /**
@@ -1497,7 +1609,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param player The player or camera entity, null in some cases.
      * @return True to treat this as a bed
      */
-    public boolean isBed(IBlockState state, IBlockAccess world, BlockPos pos, Entity player)
+    public boolean isBed(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable Entity player)
     {
         return this == net.minecraft.init.Blocks.BED;
     }
@@ -1512,7 +1624,8 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param player The player or camera entity, null in some cases.
      * @return The spawn position
      */
-    public BlockPos getBedSpawnPosition(IBlockState state, IBlockAccess world, BlockPos pos, EntityPlayer player)
+    @Nullable
+    public BlockPos getBedSpawnPosition(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EntityPlayer player)
     {
         if (world instanceof World)
             return BlockBed.getSafeExitLocation((World)world, pos, 0);
@@ -1533,7 +1646,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         {
             IBlockState state = world.getBlockState(pos);
             state = state.getBlock().getActualState(state, world, pos);
-            state = state.withProperty(BlockBed.OCCUPIED, true);
+            state = state.withProperty(BlockBed.OCCUPIED, occupied);
             ((World)world).setBlockState(pos, state, 4);
         }
     }
@@ -1561,10 +1674,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public boolean isBedFoot(IBlockAccess world, BlockPos pos)
     {
-        /**
-         * Get the actual Block state of this Block at the given position. This applies properties not visible in the
-         * metadata, such as fence connections.
-         */
         return getActualState(world.getBlockState(pos), world, pos).getValue(BlockBed.PART) == BlockBed.EnumPartType.FOOT;
     }
 
@@ -1612,7 +1721,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public boolean canBeReplacedByLeaves(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        return !state.isFullBlock();
+        return isAir(state, world, pos) || isLeaves(state, world, pos); //!state.isFullBlock();
     }
 
     /**
@@ -1642,7 +1751,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Location sensitive version of getExplosionRestance
+     * Location sensitive version of getExplosionResistance
      *
      * @param world The current world
      * @param pos Block position in world
@@ -1650,11 +1759,8 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param explosion The explosion
      * @return The amount of the explosion absorbed.
      */
-    public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion)
+    public float getExplosionResistance(World world, BlockPos pos, @Nullable Entity exploder, Explosion explosion)
     {
-        /**
-         * Returns how much this block can resist explosions from the passed in entity.
-         */
         return getExplosionResistance(exploder);
     }
 
@@ -1665,7 +1771,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      *
      * @param world The current world
      * @param pos Block position in world
-     * @param Explosion The explosion instance affecting the block
+     * @param explosion The explosion instance affecting the block
      */
     public void onBlockExploded(World world, BlockPos pos, Explosion explosion)
     {
@@ -1683,7 +1789,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param side The side that is trying to make the connection, CAN BE NULL
      * @return True to make the connection
      */
-    public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side)
+    public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EnumFacing side)
     {
         return state.canProvidePower() && side != null;
     }
@@ -1699,34 +1805,21 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      */
     public boolean canPlaceTorchOnTop(IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        if (state.isSideSolid(world, pos, EnumFacing.UP))
+        if (state.isTopSolid() || state.getBlockFaceShape(world, pos, EnumFacing.UP) == BlockFaceShape.SOLID)
         {
-            return true;
+            return this != Blocks.END_GATEWAY && this != Blocks.LIT_PUMPKIN;
         }
         else
         {
-            return this instanceof BlockFence || this == net.minecraft.init.Blocks.GLASS || this == net.minecraft.init.Blocks.COBBLESTONE_WALL || this == net.minecraft.init.Blocks.STAINED_GLASS;
+            return this instanceof BlockFence || this == Blocks.GLASS || this == Blocks.COBBLESTONE_WALL || this == Blocks.STAINED_GLASS;
         }
     }
-
-    /** Dont think this exists in 1.8 anymore
-    /**
-     * Determines if this block should render in this pass.
-     *
-     * @param pass The pass in question
-     * @return True to render
-     * /
-    public boolean canRenderInPass(int pass)
-    {
-        return pass == func_149701_w();
-    }
-    */
 
     /**
      * Called when a user uses the creative pick block button on this block
      *
      * @param target The full target the player is looking at
-     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
+     * @return A ItemStack to add to the player's inventory, empty itemstack if nothing should be added.
      */
     public ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos, EntityPlayer player)
     {
@@ -1819,9 +1912,9 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         IBlockState plant = plantable.getPlant(world, pos.offset(direction));
         net.minecraftforge.common.EnumPlantType plantType = plantable.getPlantType(world, pos.offset(direction));
 
-        if (plant.getBlock() == net.minecraft.init.Blocks.CACTUS && this == net.minecraft.init.Blocks.CACTUS)
+        if (plant.getBlock() == net.minecraft.init.Blocks.CACTUS)
         {
-            return true;
+            return this == net.minecraft.init.Blocks.CACTUS || this == net.minecraft.init.Blocks.SAND;
         }
 
         if (plant.getBlock() == net.minecraft.init.Blocks.REEDS && this == net.minecraft.init.Blocks.REEDS)
@@ -1836,7 +1929,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
 
         switch (plantType)
         {
-            case Desert: return this == net.minecraft.init.Blocks.SAND || this == net.minecraft.init.Blocks.HARDENED_CLAY || this == net.minecraft.init.Blocks.STAINED_HARDENED_CLAY || this == net.minecraft.init.Blocks.DIRT;
+            case Desert: return this == net.minecraft.init.Blocks.SAND || this == net.minecraft.init.Blocks.HARDENED_CLAY || this == net.minecraft.init.Blocks.STAINED_HARDENED_CLAY;
             case Nether: return this == net.minecraft.init.Blocks.SOUL_SAND;
             case Crop:   return this == net.minecraft.init.Blocks.FARMLAND;
             case Cave:   return state.isSideSolid(world, pos, EnumFacing.UP);
@@ -1937,7 +2030,8 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
                    this != net.minecraft.init.Blocks.IRON_BARS &&
                    this != net.minecraft.init.Blocks.END_GATEWAY;
         }
-        else if (entity instanceof net.minecraft.entity.boss.EntityWither)
+        else if ((entity instanceof net.minecraft.entity.boss.EntityWither) ||
+                 (entity instanceof net.minecraft.entity.projectile.EntityWitherSkull))
         {
             return net.minecraft.entity.boss.EntityWither.canDestroyBlock(this);
         }
@@ -1974,10 +2068,39 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         IBlockState state = world.getBlockState(pos);
         for (IProperty<?> prop : state.getProperties().keySet())
         {
-            if (prop.getName().equals("facing") || prop.getName().equals("rotation"))
+            if ((prop.getName().equals("facing") || prop.getName().equals("rotation")) && prop.getValueClass() == EnumFacing.class)
             {
-                world.setBlockState(pos, state.cycleProperty(prop));
-                return true;
+                Block block = state.getBlock();
+                if (!(block instanceof BlockBed) && !(block instanceof BlockPistonExtension))
+                {
+                    IBlockState newState;
+                    //noinspection unchecked
+                    IProperty<EnumFacing> facingProperty = (IProperty<EnumFacing>) prop;
+                    EnumFacing facing = state.getValue(facingProperty);
+                    java.util.Collection<EnumFacing> validFacings = facingProperty.getAllowedValues();
+
+                    // rotate horizontal facings clockwise
+                    if (validFacings.size() == 4 && !validFacings.contains(EnumFacing.UP) && !validFacings.contains(EnumFacing.DOWN))
+                    {
+                        newState = state.withProperty(facingProperty, facing.rotateY());
+                    }
+                    else
+                    {
+                        // rotate other facings about the axis
+                        EnumFacing rotatedFacing = facing.rotateAround(axis.getAxis());
+                        if (validFacings.contains(rotatedFacing))
+                        {
+                            newState = state.withProperty(facingProperty, rotatedFacing);
+                        }
+                        else // abnormal facing property, just cycle it
+                        {
+                            newState = state.cycleProperty(facingProperty);
+                        }
+                    }
+
+                    world.setBlockState(pos, newState);
+                    return true;
+                }
             }
         }
         return false;
@@ -1990,12 +2113,13 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * @param pos Block position in world
      * @return An array of valid axes to rotate around, or null for none or unknown
      */
+    @Nullable
     public EnumFacing[] getValidRotations(World world, BlockPos pos)
     {
         IBlockState state = world.getBlockState(pos);
         for (IProperty<?> prop : state.getProperties().keySet())
         {
-            if (prop.getName().equals("facing") && prop.getValueClass() == EnumFacing.class)
+            if ((prop.getName().equals("facing") || prop.getName().equals("rotation")) && prop.getValueClass() == EnumFacing.class)
             {
                 @SuppressWarnings("unchecked")
                 java.util.Collection<EnumFacing> values = ((java.util.Collection<EnumFacing>)prop.getAllowedValues());
@@ -2066,6 +2190,17 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     public void onNeighborChange(IBlockAccess world, BlockPos pos, BlockPos neighbor){}
 
     /**
+     * Called on an Observer block whenever an update for an Observer is received.
+     *
+     * @param observerState The Observer block's state.
+     * @param world The current world.
+     * @param observerPos The Observer block's position.
+     * @param changedBlock The updated block.
+     * @param changedBlockPos The updated block's position.
+     */
+    public void observedNeighborChange(IBlockState observerState, World world, BlockPos observerPos, Block changedBlock, BlockPos changedBlockPos){}
+
+    /**
      * Called to determine whether to allow the a block to handle its own indirect power rather than using the default rules.
      * @param world The world
      * @param pos Block position in world
@@ -2084,7 +2219,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      *
      * @param world The current world
      * @param pos Block position in world
-     * @param side The side to check
      * @return true To be notified of changes
      */
     public boolean getWeakChanges(IBlockAccess world, BlockPos pos)
@@ -2137,7 +2271,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * Queries the class of tool required to harvest this block, if null is returned
      * we assume that anything can harvest this block.
      */
-    public String getHarvestTool(IBlockState state)
+    @Nullable public String getHarvestTool(IBlockState state)
     {
         return harvestTool[getMetaFromState(state)];
     }
@@ -2146,7 +2280,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
      * Queries the harvest level of this item stack for the specified tool class,
      * Returns -1 if this tool is not of the specified type
      *
-     * @param stack This item stack instance
      * @return Harvest level, or -1 if not the specified tool type.
      */
     public int getHarvestLevel(IBlockState state)
@@ -2186,10 +2319,11 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
       * @param testingHead when true, its testing the entities head for vision, breathing ect... otherwise its testing the body, for swimming and movement adjustment.
       * @return null for default behavior, true if the entity is within the material, false if it was not.
       */
-     public Boolean isEntityInsideMaterial(IBlockAccess world, BlockPos blockpos, IBlockState iblockstate, Entity entity, double yToTest, Material materialIn, boolean testingHead)
-     {
-         return null;
-     }
+    @Nullable
+    public Boolean isEntityInsideMaterial(IBlockAccess world, BlockPos blockpos, IBlockState iblockstate, Entity entity, double yToTest, Material materialIn, boolean testingHead)
+    {
+        return null;
+    }
 
      /**
       * Called when boats or fishing hooks are inside the block to check if they are inside
@@ -2201,6 +2335,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
       * @param materialIn to check for.
       * @return null for default behavior, true if the box is within the material, false if it was not.
       */
+     @Nullable
      public Boolean isAABBInsideMaterial(World world, BlockPos pos, AxisAlignedBB boundingBox, Material materialIn)
      {
          return null;
@@ -2208,40 +2343,22 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
 
      /**
      * Queries if this block should render in a given layer.
-     * ISmartBlockModel can use {@link MinecraftForgeClient#getRenderLayer()} to alter their model based on layer.
-     *
-     * @deprecated New method with state sensitivity: {@link #canRenderInLayer(IBlockState, BlockRenderLayer)}
-     */
-    @Deprecated
-    public boolean canRenderInLayer(BlockRenderLayer layer)
-    {
-        return getBlockLayer() == layer;
-    }
-
-     /**
-     * Queries if this block should render in a given layer.
-     * ISmartBlockModel can use {@link MinecraftForgeClient#getRenderLayer()} to alter their model based on layer.
+     * ISmartBlockModel can use {@link net.minecraftforge.client.MinecraftForgeClient#getRenderLayer()} to alter their model based on layer.
      */
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer)
     {
-        return canRenderInLayer(layer);
+        return getBlockLayer() == layer;
     }
     // For Internal use only to capture droped items inside getDrops
-    protected static ThreadLocal<Boolean> captureDrops = new ThreadLocal<Boolean>()
-    {
-        @Override protected Boolean initialValue() { return false; }
-    };
-    protected static ThreadLocal<List<ItemStack>> capturedDrops = new ThreadLocal<List<ItemStack>>()
-    {
-        @Override protected List<ItemStack> initialValue() { return new java.util.ArrayList<ItemStack>(); }
-    };
-    protected List<ItemStack> captureDrops(boolean start)
+    protected static ThreadLocal<Boolean> captureDrops = ThreadLocal.withInitial(() -> false);
+    protected static ThreadLocal<NonNullList<ItemStack>> capturedDrops = ThreadLocal.withInitial(NonNullList::create);
+    protected NonNullList<ItemStack> captureDrops(boolean start)
     {
         if (start)
         {
             captureDrops.set(true);
             capturedDrops.get().clear();
-            return null;
+            return NonNullList.create();
         }
         else
         {
@@ -2251,15 +2368,110 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
     }
 
     /**
-     * Add information to the blocks tooltip, called from the default implementation of {@link ItemBlock#addInformation(ItemStack, EntityPlayer, List, boolean)}
-     * @param stack The stack the tooltip is being retrieved for
-     * @param player The player retrieving the tooltip
-     * @param tooltip The lines to be displayed on the tooltip
-     * @param advanced If the client has advanced debug tooltips enabled
+     * Sensitive version of getSoundType
+     * @param state The state
+     * @param world The world
+     * @param pos The position. Note that the world may not necessarily have {@code state} here!
+     * @param entity The entity that is breaking/stepping on/placing/hitting/falling on this block, or null if no entity is in this context
+     * @return A SoundType to use
      */
-    public void addInformation(ItemStack stack, EntityPlayer player, List<String> tooltip, boolean advanced)
+    public SoundType getSoundType(IBlockState state, World world, BlockPos pos, @Nullable Entity entity)
     {
+        return getSoundType();
     }
+
+    /**
+     * @param state The state
+     * @param world The world
+     * @param pos The position of this state
+     * @param beaconPos The position of the beacon
+     * @return A float RGB [0.0, 1.0] array to be averaged with a beacon's existing beam color, or null to do nothing to the beam
+     */
+    @Nullable
+    public float[] getBeaconColorMultiplier(IBlockState state, World world, BlockPos pos, BlockPos beaconPos)
+    {
+        return null;
+    }
+
+    /**
+     * Use this to change the fog color used when the entity is "inside" a material.
+     * Vec3d is used here as "r/g/b" 0 - 1 values.
+     *
+     * @param world         The world.
+     * @param pos           The position at the entity viewport.
+     * @param state         The state at the entity viewport.
+     * @param entity        the entity
+     * @param originalColor The current fog color, You are not expected to use this, Return as the default if applicable.
+     * @return The new fog color.
+     */
+    @SideOnly (Side.CLIENT)
+    public Vec3d getFogColor(World world, BlockPos pos, IBlockState state, Entity entity, Vec3d originalColor, float partialTicks)
+    {
+        if (state.getMaterial() == Material.WATER)
+        {
+            float f12 = 0.0F;
+
+            if (entity instanceof net.minecraft.entity.EntityLivingBase)
+            {
+                net.minecraft.entity.EntityLivingBase ent = (net.minecraft.entity.EntityLivingBase)entity;
+                f12 = (float)net.minecraft.enchantment.EnchantmentHelper.getRespirationModifier(ent) * 0.2F;
+
+                if (ent.isPotionActive(net.minecraft.init.MobEffects.WATER_BREATHING))
+                {
+                    f12 = f12 * 0.3F + 0.6F;
+                }
+            }
+            return new Vec3d(0.02F + f12, 0.02F + f12, 0.2F + f12);
+        }
+        else if (state.getMaterial() == Material.LAVA)
+        {
+            return new Vec3d(0.6F, 0.1F, 0.0F);
+        }
+        return originalColor;
+    }
+
+    /**
+     * Gets the {@link IBlockState} to place
+     * @param world The world the block is being placed in
+     * @param pos The position the block is being placed at
+     * @param facing The side the block is being placed on
+     * @param hitX The X coordinate of the hit vector
+     * @param hitY The Y coordinate of the hit vector
+     * @param hitZ The Z coordinate of the hit vector
+     * @param meta The metadata of {@link ItemStack} as processed by {@link Item#getMetadata(int)}
+     * @param placer The entity placing the block
+     * @param hand The player hand used to place this block
+     * @return The state to be placed in the world
+     */
+    public IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer, EnumHand hand)
+    {
+        return getStateForPlacement(world, pos, facing, hitX, hitY, hitZ, meta, placer);
+    }
+
+    /**
+     * Determines if another block can connect to this block
+     *
+     * @param world The current world
+     * @param pos The position of this block
+     * @param facing The side the connecting block is on
+     * @return True to allow another block to connect to this block
+     */
+    public boolean canBeConnectedTo(IBlockAccess world, BlockPos pos, EnumFacing facing)
+    {
+        return false;
+    }
+
+    /**
+     * Get the {@code PathNodeType} for this block. Return {@code null} for vanilla behavior.
+     *
+     * @return the PathNodeType
+     */
+    @Nullable
+    public net.minecraft.pathfinding.PathNodeType getAiPathNodeType(IBlockState state, IBlockAccess world, BlockPos pos)
+    {
+        return isBurning(world, pos) ? net.minecraft.pathfinding.PathNodeType.DAMAGE_FIRE : null;
+    }
+
     /* ========================================= FORGE END ======================================*/
 
     public static void registerBlocks()
@@ -2435,7 +2647,7 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         registerBlock(156, "quartz_stairs", (new BlockStairs(block11.getDefaultState().withProperty(BlockQuartz.VARIANT, BlockQuartz.EnumType.DEFAULT))).setUnlocalizedName("stairsQuartz"));
         registerBlock(157, "activator_rail", (new BlockRailPowered()).setHardness(0.7F).setSoundType(SoundType.METAL).setUnlocalizedName("activatorRail"));
         registerBlock(158, "dropper", (new BlockDropper()).setHardness(3.5F).setSoundType(SoundType.STONE).setUnlocalizedName("dropper"));
-        registerBlock(159, "stained_hardened_clay", (new BlockColored(Material.ROCK)).setHardness(1.25F).setResistance(7.0F).setSoundType(SoundType.STONE).setUnlocalizedName("clayHardenedStained"));
+        registerBlock(159, "stained_hardened_clay", (new BlockStainedHardenedClay()).setHardness(1.25F).setResistance(7.0F).setSoundType(SoundType.STONE).setUnlocalizedName("clayHardenedStained"));
         registerBlock(160, "stained_glass_pane", (new BlockStainedGlassPane()).setHardness(0.3F).setSoundType(SoundType.GLASS).setUnlocalizedName("thinStainedGlass"));
         registerBlock(161, "leaves2", (new BlockNewLeaf()).setUnlocalizedName("leaves"));
         registerBlock(162, "log2", (new BlockNewLog()).setUnlocalizedName("log"));
@@ -2478,13 +2690,13 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         registerBlock(198, "end_rod", (new BlockEndRod()).setHardness(0.0F).setLightLevel(0.9375F).setSoundType(SoundType.WOOD).setUnlocalizedName("endRod"));
         registerBlock(199, "chorus_plant", (new BlockChorusPlant()).setHardness(0.4F).setSoundType(SoundType.WOOD).setUnlocalizedName("chorusPlant"));
         registerBlock(200, "chorus_flower", (new BlockChorusFlower()).setHardness(0.4F).setSoundType(SoundType.WOOD).setUnlocalizedName("chorusFlower"));
-        Block block13 = (new Block(Material.ROCK)).setHardness(1.5F).setResistance(10.0F).setSoundType(SoundType.STONE).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("purpurBlock");
+        Block block13 = (new Block(Material.ROCK, MapColor.MAGENTA)).setHardness(1.5F).setResistance(10.0F).setSoundType(SoundType.STONE).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("purpurBlock");
         registerBlock(201, "purpur_block", block13);
-        registerBlock(202, "purpur_pillar", (new BlockRotatedPillar(Material.ROCK)).setHardness(1.5F).setResistance(10.0F).setSoundType(SoundType.STONE).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("purpurPillar"));
+        registerBlock(202, "purpur_pillar", (new BlockRotatedPillar(Material.ROCK, MapColor.MAGENTA)).setHardness(1.5F).setResistance(10.0F).setSoundType(SoundType.STONE).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("purpurPillar"));
         registerBlock(203, "purpur_stairs", (new BlockStairs(block13.getDefaultState())).setUnlocalizedName("stairsPurpur"));
         registerBlock(204, "purpur_double_slab", (new BlockPurpurSlab.Double()).setHardness(2.0F).setResistance(10.0F).setSoundType(SoundType.STONE).setUnlocalizedName("purpurSlab"));
         registerBlock(205, "purpur_slab", (new BlockPurpurSlab.Half()).setHardness(2.0F).setResistance(10.0F).setSoundType(SoundType.STONE).setUnlocalizedName("purpurSlab"));
-        registerBlock(206, "end_bricks", (new Block(Material.ROCK)).setSoundType(SoundType.STONE).setHardness(0.8F).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("endBricks"));
+        registerBlock(206, "end_bricks", (new Block(Material.ROCK, MapColor.SAND)).setSoundType(SoundType.STONE).setHardness(0.8F).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setUnlocalizedName("endBricks"));
         registerBlock(207, "beetroots", (new BlockBeetroot()).setUnlocalizedName("beetroots"));
         Block block14 = (new BlockGrassPath()).setHardness(0.65F).setSoundType(SoundType.PLANT).setUnlocalizedName("grassPath").disableStats();
         registerBlock(208, "grass_path", block14);
@@ -2492,7 +2704,47 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         registerBlock(210, "repeating_command_block", (new BlockCommandBlock(MapColor.PURPLE)).setBlockUnbreakable().setResistance(6000000.0F).setUnlocalizedName("repeatingCommandBlock"));
         registerBlock(211, "chain_command_block", (new BlockCommandBlock(MapColor.GREEN)).setBlockUnbreakable().setResistance(6000000.0F).setUnlocalizedName("chainCommandBlock"));
         registerBlock(212, "frosted_ice", (new BlockFrostedIce()).setHardness(0.5F).setLightOpacity(3).setSoundType(SoundType.GLASS).setUnlocalizedName("frostedIce"));
-        registerBlock(255, "structure_block", (new BlockStructure()).setBlockUnbreakable().setResistance(6000000.0F).setUnlocalizedName("structureBlock").setLightLevel(1.0F));
+        registerBlock(213, "magma", (new BlockMagma()).setHardness(0.5F).setSoundType(SoundType.STONE).setUnlocalizedName("magma"));
+        registerBlock(214, "nether_wart_block", (new Block(Material.GRASS, MapColor.RED)).setCreativeTab(CreativeTabs.BUILDING_BLOCKS).setHardness(1.0F).setSoundType(SoundType.WOOD).setUnlocalizedName("netherWartBlock"));
+        registerBlock(215, "red_nether_brick", (new BlockNetherBrick()).setHardness(2.0F).setResistance(10.0F).setSoundType(SoundType.STONE).setUnlocalizedName("redNetherBrick").setCreativeTab(CreativeTabs.BUILDING_BLOCKS));
+        registerBlock(216, "bone_block", (new BlockBone()).setUnlocalizedName("boneBlock"));
+        registerBlock(217, "structure_void", (new BlockStructureVoid()).setUnlocalizedName("structureVoid"));
+        registerBlock(218, "observer", (new BlockObserver()).setHardness(3.0F).setUnlocalizedName("observer"));
+        registerBlock(219, "white_shulker_box", (new BlockShulkerBox(EnumDyeColor.WHITE)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxWhite"));
+        registerBlock(220, "orange_shulker_box", (new BlockShulkerBox(EnumDyeColor.ORANGE)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxOrange"));
+        registerBlock(221, "magenta_shulker_box", (new BlockShulkerBox(EnumDyeColor.MAGENTA)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxMagenta"));
+        registerBlock(222, "light_blue_shulker_box", (new BlockShulkerBox(EnumDyeColor.LIGHT_BLUE)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxLightBlue"));
+        registerBlock(223, "yellow_shulker_box", (new BlockShulkerBox(EnumDyeColor.YELLOW)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxYellow"));
+        registerBlock(224, "lime_shulker_box", (new BlockShulkerBox(EnumDyeColor.LIME)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxLime"));
+        registerBlock(225, "pink_shulker_box", (new BlockShulkerBox(EnumDyeColor.PINK)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxPink"));
+        registerBlock(226, "gray_shulker_box", (new BlockShulkerBox(EnumDyeColor.GRAY)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxGray"));
+        registerBlock(227, "silver_shulker_box", (new BlockShulkerBox(EnumDyeColor.SILVER)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxSilver"));
+        registerBlock(228, "cyan_shulker_box", (new BlockShulkerBox(EnumDyeColor.CYAN)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxCyan"));
+        registerBlock(229, "purple_shulker_box", (new BlockShulkerBox(EnumDyeColor.PURPLE)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxPurple"));
+        registerBlock(230, "blue_shulker_box", (new BlockShulkerBox(EnumDyeColor.BLUE)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxBlue"));
+        registerBlock(231, "brown_shulker_box", (new BlockShulkerBox(EnumDyeColor.BROWN)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxBrown"));
+        registerBlock(232, "green_shulker_box", (new BlockShulkerBox(EnumDyeColor.GREEN)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxGreen"));
+        registerBlock(233, "red_shulker_box", (new BlockShulkerBox(EnumDyeColor.RED)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxRed"));
+        registerBlock(234, "black_shulker_box", (new BlockShulkerBox(EnumDyeColor.BLACK)).setHardness(2.0F).setSoundType(SoundType.STONE).setUnlocalizedName("shulkerBoxBlack"));
+        registerBlock(235, "white_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.WHITE));
+        registerBlock(236, "orange_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.ORANGE));
+        registerBlock(237, "magenta_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.MAGENTA));
+        registerBlock(238, "light_blue_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.LIGHT_BLUE));
+        registerBlock(239, "yellow_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.YELLOW));
+        registerBlock(240, "lime_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.LIME));
+        registerBlock(241, "pink_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.PINK));
+        registerBlock(242, "gray_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.GRAY));
+        registerBlock(243, "silver_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.SILVER));
+        registerBlock(244, "cyan_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.CYAN));
+        registerBlock(245, "purple_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.PURPLE));
+        registerBlock(246, "blue_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.BLUE));
+        registerBlock(247, "brown_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.BROWN));
+        registerBlock(248, "green_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.GREEN));
+        registerBlock(249, "red_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.RED));
+        registerBlock(250, "black_glazed_terracotta", new BlockGlazedTerracotta(EnumDyeColor.BLACK));
+        registerBlock(251, "concrete", (new BlockColored(Material.ROCK)).setHardness(1.8F).setSoundType(SoundType.STONE).setUnlocalizedName("concrete"));
+        registerBlock(252, "concrete_powder", (new BlockConcretePowder()).setHardness(0.5F).setSoundType(SoundType.SAND).setUnlocalizedName("concretePowder"));
+        registerBlock(255, "structure_block", (new BlockStructure()).setBlockUnbreakable().setResistance(6000000.0F).setUnlocalizedName("structureBlock"));
         REGISTRY.validateKey();
 
         for (Block block15 : REGISTRY)
@@ -2518,28 +2770,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
                 block15.useNeighborBrightness = flag;
             }
         }
-
-        Set<Block> set = Sets.newHashSet(new Block[] {(Block)REGISTRY.getObject(new ResourceLocation("tripwire"))});
-
-        for (Block block16 : REGISTRY)
-        {
-            if (set.contains(block16))
-            {
-                for (int i = 0; i < 15; ++i)
-                {
-                    int j = REGISTRY.getIDForObject(block16) << 4 | i;
-                    BLOCK_STATE_IDS.put(block16.getStateFromMeta(i), j);
-                }
-            }
-            else
-            {
-                for (IBlockState iblockstate : block16.getBlockState().getValidStates())
-                {
-                    int k = REGISTRY.getIDForObject(block16) << 4 | block16.getMetaFromState(iblockstate);
-                    BLOCK_STATE_IDS.put(iblockstate, k);
-                }
-            }
-        }
     }
 
     private static void registerBlock(int id, ResourceLocation textualID, Block block_)
@@ -2552,7 +2782,6 @@ public class Block extends net.minecraftforge.fml.common.registry.IForgeRegistry
         registerBlock(id, new ResourceLocation(textualID), block_);
     }
 
-    @SideOnly(Side.CLIENT)
     public static enum EnumOffsetType
     {
         NONE,

@@ -23,9 +23,9 @@ public class ParticleSuspendedTown extends Particle
         this.particleMaxAge = (int)(20.0D / (Math.random() * 0.8D + 0.2D));
     }
 
-    public void moveEntity(double x, double y, double z)
+    public void move(double x, double y, double z)
     {
-        this.setEntityBoundingBox(this.getEntityBoundingBox().offset(x, y, z));
+        this.setBoundingBox(this.getBoundingBox().offset(x, y, z));
         this.resetPositionToBB();
     }
 
@@ -34,7 +34,7 @@ public class ParticleSuspendedTown extends Particle
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.99D;
         this.motionY *= 0.99D;
         this.motionZ *= 0.99D;
@@ -48,7 +48,7 @@ public class ParticleSuspendedTown extends Particle
     @SideOnly(Side.CLIENT)
     public static class Factory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 return new ParticleSuspendedTown(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
             }
@@ -57,7 +57,7 @@ public class ParticleSuspendedTown extends Particle
     @SideOnly(Side.CLIENT)
     public static class HappyVillagerFactory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 Particle particle = new ParticleSuspendedTown(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
                 particle.setParticleTextureIndex(82);

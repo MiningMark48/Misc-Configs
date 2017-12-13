@@ -9,7 +9,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 
 public class CommandExecuteAt extends CommandBase
@@ -17,7 +16,7 @@ public class CommandExecuteAt extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "execute";
     }
@@ -33,7 +32,7 @@ public class CommandExecuteAt extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.execute.usage";
     }
@@ -41,7 +40,7 @@ public class CommandExecuteAt extends CommandBase
     /**
      * Callback for when the command is executed
      */
-    public void execute(final MinecraftServer server, final ICommandSender sender, String[] args) throws CommandException
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
         if (args.length < 5)
         {
@@ -49,11 +48,11 @@ public class CommandExecuteAt extends CommandBase
         }
         else
         {
-            final Entity entity = getEntity(server, sender, args[0], Entity.class);
-            final double d0 = parseDouble(entity.posX, args[1], false);
-            final double d1 = parseDouble(entity.posY, args[2], false);
-            final double d2 = parseDouble(entity.posZ, args[3], false);
-            final BlockPos blockpos = new BlockPos(d0, d1, d2);
+            Entity entity = getEntity(server, sender, args[0], Entity.class);
+            double d0 = parseDouble(entity.posX, args[1], false);
+            double d1 = parseDouble(entity.posY, args[2], false);
+            double d2 = parseDouble(entity.posZ, args[3], false);
+            new BlockPos(d0, d1, d2);
             int i = 4;
 
             if ("detect".equals(args[4]) && args.length > 10)
@@ -63,11 +62,21 @@ public class CommandExecuteAt extends CommandBase
                 double d4 = parseDouble(d1, args[6], false);
                 double d5 = parseDouble(d2, args[7], false);
                 Block block = getBlockByText(sender, args[8]);
-                int k = parseInt(args[9], -1, 15);
-                BlockPos blockpos1 = new BlockPos(d3, d4, d5);
-                IBlockState iblockstate = world.getBlockState(blockpos1);
+                BlockPos blockpos = new BlockPos(d3, d4, d5);
 
-                if (iblockstate.getBlock() != block || k >= 0 && iblockstate.getBlock().getMetaFromState(iblockstate) != k)
+                if (!world.isBlockLoaded(blockpos))
+                {
+                    throw new CommandException("commands.execute.failed", new Object[] {"detect", entity.getName()});
+                }
+
+                IBlockState iblockstate = world.getBlockState(blockpos);
+
+                if (iblockstate.getBlock() != block)
+                {
+                    throw new CommandException("commands.execute.failed", new Object[] {"detect", entity.getName()});
+                }
+
+                if (!CommandBase.convertArgToBlockStatePredicate(block, args[9]).apply(iblockstate))
                 {
                     throw new CommandException("commands.execute.failed", new Object[] {"detect", entity.getName()});
                 }
@@ -76,86 +85,7 @@ public class CommandExecuteAt extends CommandBase
             }
 
             String s = buildString(args, i);
-            ICommandSender icommandsender = new ICommandSender()
-            {
-                /**
-                 * Get the name of this object. For players this returns their username
-                 */
-                public String getName()
-                {
-                    return entity.getName();
-                }
-                /**
-                 * Get the formatted ChatComponent that will be used for the sender's username in chat
-                 */
-                public ITextComponent getDisplayName()
-                {
-                    return entity.getDisplayName();
-                }
-                /**
-                 * Send a chat message to the CommandSender
-                 */
-                public void addChatMessage(ITextComponent component)
-                {
-                    sender.addChatMessage(component);
-                }
-                /**
-                 * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
-                 */
-                public boolean canCommandSenderUseCommand(int permLevel, String commandName)
-                {
-                    return sender.canCommandSenderUseCommand(permLevel, commandName);
-                }
-                /**
-                 * Get the position in the world. <b>{@code null} is not allowed!</b> If you are not an entity in the
-                 * world, return the coordinates 0, 0, 0
-                 */
-                public BlockPos getPosition()
-                {
-                    return blockpos;
-                }
-                /**
-                 * Get the position vector. <b>{@code null} is not allowed!</b> If you are not an entity in the world,
-                 * return 0.0D, 0.0D, 0.0D
-                 */
-                public Vec3d getPositionVector()
-                {
-                    return new Vec3d(d0, d1, d2);
-                }
-                /**
-                 * Get the world, if available. <b>{@code null} is not allowed!</b> If you are not an entity in the
-                 * world, return the overworld
-                 */
-                public World getEntityWorld()
-                {
-                    return entity.worldObj;
-                }
-                /**
-                 * Returns the entity associated with the command sender. MAY BE NULL!
-                 */
-                public Entity getCommandSenderEntity()
-                {
-                    return entity;
-                }
-                /**
-                 * Returns true if the command sender should be sent feedback about executed commands
-                 */
-                public boolean sendCommandFeedback()
-                {
-                    return server == null || server.worldServers[0].getGameRules().getBoolean("commandBlockOutput");
-                }
-                public void setCommandStat(CommandResultStats.Type type, int amount)
-                {
-                    entity.setCommandStat(type, amount);
-                }
-                /**
-                 * Get the Minecraft server instance
-                 */
-                public MinecraftServer getServer()
-                {
-                    return entity.getServer();
-                }
-            };
+            ICommandSender icommandsender = CommandSenderWrapper.create(sender).withEntity(entity, new Vec3d(d0, d1, d2)).withSendCommandFeedback(server.worlds[0].getGameRules().getBoolean("commandBlockOutput"));
             ICommandManager icommandmanager = server.getCommandManager();
 
             try
@@ -167,16 +97,34 @@ public class CommandExecuteAt extends CommandBase
                     throw new CommandException("commands.execute.allInvocationsFailed", new Object[] {s});
                 }
             }
-            catch (Throwable var24)
+            catch (Throwable var23)
             {
                 throw new CommandException("commands.execute.failed", new Object[] {s, entity.getName()});
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length > 1 && args.length <= 4 ? getTabCompletionCoordinate(args, 1, pos) : (args.length > 5 && args.length <= 8 && "detect".equals(args[4]) ? getTabCompletionCoordinate(args, 5, pos) : (args.length == 9 && "detect".equals(args[4]) ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.<String>emptyList())));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else if (args.length > 1 && args.length <= 4)
+        {
+            return getTabCompletionCoordinate(args, 1, targetPos);
+        }
+        else if (args.length > 5 && args.length <= 8 && "detect".equals(args[4]))
+        {
+            return getTabCompletionCoordinate(args, 5, targetPos);
+        }
+        else
+        {
+            return args.length == 9 && "detect".equals(args[4]) ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.emptyList();
+        }
     }
 
     /**

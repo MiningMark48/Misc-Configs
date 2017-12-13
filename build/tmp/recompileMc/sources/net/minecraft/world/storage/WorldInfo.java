@@ -6,13 +6,17 @@ import java.util.Map.Entry;
 import javax.annotation.Nullable;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ICrashReportDetail;
-import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.IDataFixer;
+import net.minecraft.util.datafix.IDataWalker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.fml.relauncher.Side;
@@ -58,7 +62,7 @@ public class WorldInfo
     /** Number of ticks untils next thunderbolt. */
     private int thunderTime;
     /** The Game Type. */
-    private WorldSettings.GameType theGameType;
+    private GameType gameType;
     /** Whether the map features (e.g. strongholds) generation is enabled or disabled. */
     private boolean mapFeaturesEnabled;
     /** Hardcore mode flag */
@@ -67,21 +71,43 @@ public class WorldInfo
     private boolean initialized;
     private EnumDifficulty difficulty;
     private boolean difficultyLocked;
-    private double borderCenterX = 0.0D;
-    private double borderCenterZ = 0.0D;
+    private double borderCenterX;
+    private double borderCenterZ;
     private double borderSize = 6.0E7D;
-    private long borderSizeLerpTime = 0L;
-    private double borderSizeLerpTarget = 0.0D;
+    private long borderSizeLerpTime;
+    private double borderSizeLerpTarget;
     private double borderSafeZone = 5.0D;
     private double borderDamagePerBlock = 0.2D;
     private int borderWarningDistance = 5;
     private int borderWarningTime = 15;
-    private final Map<DimensionType, NBTTagCompound> dimensionData = Maps.newEnumMap(DimensionType.class);
-    private GameRules theGameRules = new GameRules();
+    /**
+     * Mapping providing data between different dimensions.
+     *  
+     * MODDERS: <strong>DO NOT USE</strong>. This map will have a different type of key depending on whether forge is
+     * installed or not.
+     */
+    private final Map<Integer, NBTTagCompound> dimensionData = Maps.newHashMap();
+    private GameRules gameRules = new GameRules();
     private java.util.Map<String, net.minecraft.nbt.NBTBase> additionalProperties;
 
     protected WorldInfo()
     {
+    }
+
+    public static void registerFixes(DataFixer fixer)
+    {
+        fixer.registerWalker(FixTypes.LEVEL, new IDataWalker()
+        {
+            public NBTTagCompound process(IDataFixer fixer, NBTTagCompound compound, int versionIn)
+            {
+                if (compound.hasKey("Player", 10))
+                {
+                    compound.setTag("Player", fixer.process(FixTypes.PLAYER, compound.getCompoundTag("Player"), versionIn));
+                }
+
+                return compound;
+            }
+        });
     }
 
     public WorldInfo(NBTTagCompound nbt)
@@ -123,7 +149,7 @@ public class WorldInfo
             }
         }
 
-        this.theGameType = WorldSettings.GameType.getByID(nbt.getInteger("GameType"));
+        this.gameType = GameType.getByID(nbt.getInteger("GameType"));
 
         if (nbt.hasKey("MapFeatures", 99))
         {
@@ -174,7 +200,7 @@ public class WorldInfo
         }
         else
         {
-            this.allowCommands = this.theGameType == WorldSettings.GameType.CREATIVE;
+            this.allowCommands = this.gameType == GameType.CREATIVE;
         }
 
         if (nbt.hasKey("Player", 10))
@@ -185,7 +211,7 @@ public class WorldInfo
 
         if (nbt.hasKey("GameRules", 10))
         {
-            this.theGameRules.readFromNBT(nbt.getCompoundTag("GameRules"));
+            this.gameRules.readFromNBT(nbt.getCompoundTag("GameRules"));
         }
 
         if (nbt.hasKey("Difficulty", 99))
@@ -249,7 +275,7 @@ public class WorldInfo
 
             for (String s : nbttagcompound1.getKeySet())
             {
-                this.dimensionData.put(DimensionType.getById(Integer.parseInt(s)), nbttagcompound1.getCompoundTag(s));
+                this.dimensionData.put(Integer.parseInt(s), nbttagcompound1.getCompoundTag(s));
             }
         }
     }
@@ -265,7 +291,7 @@ public class WorldInfo
     public void populateFromWorldSettings(WorldSettings settings)
     {
         this.randomSeed = settings.getSeed();
-        this.theGameType = settings.getGameType();
+        this.gameType = settings.getGameType();
         this.mapFeaturesEnabled = settings.isMapFeaturesEnabled();
         this.hardcore = settings.getHardcoreEnabled();
         this.terrainType = settings.getTerrainType();
@@ -278,7 +304,7 @@ public class WorldInfo
         this.randomSeed = worldInformation.randomSeed;
         this.terrainType = worldInformation.terrainType;
         this.generatorOptions = worldInformation.generatorOptions;
-        this.theGameType = worldInformation.theGameType;
+        this.gameType = worldInformation.gameType;
         this.mapFeaturesEnabled = worldInformation.mapFeaturesEnabled;
         this.spawnX = worldInformation.spawnX;
         this.spawnY = worldInformation.spawnY;
@@ -298,7 +324,7 @@ public class WorldInfo
         this.hardcore = worldInformation.hardcore;
         this.allowCommands = worldInformation.allowCommands;
         this.initialized = worldInformation.initialized;
-        this.theGameRules = worldInformation.theGameRules;
+        this.gameRules = worldInformation.gameRules;
         this.difficulty = worldInformation.difficulty;
         this.difficultyLocked = worldInformation.difficultyLocked;
         this.borderCenterX = worldInformation.borderCenterX;
@@ -330,16 +356,16 @@ public class WorldInfo
     private void updateTagCompound(NBTTagCompound nbt, NBTTagCompound playerNbt)
     {
         NBTTagCompound nbttagcompound = new NBTTagCompound();
-        nbttagcompound.setString("Name", "1.9.4");
-        nbttagcompound.setInteger("Id", 184);
+        nbttagcompound.setString("Name", "1.12.2");
+        nbttagcompound.setInteger("Id", 1343);
         nbttagcompound.setBoolean("Snapshot", false);
         nbt.setTag("Version", nbttagcompound);
-        nbt.setInteger("DataVersion", 184);
+        nbt.setInteger("DataVersion", 1343);
         nbt.setLong("RandomSeed", this.randomSeed);
-        nbt.setString("generatorName", this.terrainType.getWorldTypeName());
-        nbt.setInteger("generatorVersion", this.terrainType.getGeneratorVersion());
+        nbt.setString("generatorName", this.terrainType.getName());
+        nbt.setInteger("generatorVersion", this.terrainType.getVersion());
         nbt.setString("generatorOptions", this.generatorOptions);
-        nbt.setInteger("GameType", this.theGameType.getID());
+        nbt.setInteger("GameType", this.gameType.getID());
         nbt.setBoolean("MapFeatures", this.mapFeaturesEnabled);
         nbt.setInteger("SpawnX", this.spawnX);
         nbt.setInteger("SpawnY", this.spawnY);
@@ -367,6 +393,7 @@ public class WorldInfo
         nbt.setDouble("BorderSizeLerpTarget", this.borderSizeLerpTarget);
         nbt.setDouble("BorderWarningBlocks", (double)this.borderWarningDistance);
         nbt.setDouble("BorderWarningTime", (double)this.borderWarningTime);
+        net.minecraftforge.fml.common.FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt);
 
         if (this.difficulty != null)
         {
@@ -374,12 +401,13 @@ public class WorldInfo
         }
 
         nbt.setBoolean("DifficultyLocked", this.difficultyLocked);
-        nbt.setTag("GameRules", this.theGameRules.writeToNBT());
+        nbt.setTag("GameRules", this.gameRules.writeToNBT());
         NBTTagCompound nbttagcompound1 = new NBTTagCompound();
 
-        for (Entry<DimensionType, NBTTagCompound> entry : this.dimensionData.entrySet())
+        for (Entry<Integer, NBTTagCompound> entry : this.dimensionData.entrySet())
         {
-            nbttagcompound1.setTag(String.valueOf(((DimensionType)entry.getKey()).getId()), (NBTBase)entry.getValue());
+            if (entry.getValue() != null || entry.getValue().hasNoTags()) continue;
+            nbttagcompound1.setTag(String.valueOf(entry.getKey()), entry.getValue());
         }
 
         nbt.setTag("DimensionData", nbttagcompound1);
@@ -611,9 +639,9 @@ public class WorldInfo
     /**
      * Gets the GameType.
      */
-    public WorldSettings.GameType getGameType()
+    public GameType getGameType()
     {
-        return this.theGameType;
+        return this.gameType;
     }
 
     /**
@@ -632,9 +660,9 @@ public class WorldInfo
     /**
      * Sets the GameType.
      */
-    public void setGameType(WorldSettings.GameType type)
+    public void setGameType(GameType type)
     {
-        this.theGameType = type;
+        this.gameType = type;
     }
 
     /**
@@ -699,7 +727,7 @@ public class WorldInfo
      */
     public GameRules getGameRulesInstance()
     {
-        return this.theGameRules;
+        return this.gameRules;
     }
 
     /**
@@ -850,6 +878,7 @@ public class WorldInfo
 
     public void setDifficulty(EnumDifficulty newDifficulty)
     {
+        net.minecraftforge.common.ForgeHooks.onDifficultyChange(newDifficulty, this.difficulty);
         this.difficulty = newDifficulty;
     }
 
@@ -868,49 +897,49 @@ public class WorldInfo
      */
     public void addToCrashReport(CrashReportCategory category)
     {
-        category.setDetail("Level seed", new ICrashReportDetail<String>()
+        category.addDetail("Level seed", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 return String.valueOf(WorldInfo.this.getSeed());
             }
         });
-        category.setDetail("Level generator", new ICrashReportDetail<String>()
+        category.addDetail("Level generator", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
-                return String.format("ID %02d - %s, ver %d. Features enabled: %b", new Object[] {Integer.valueOf(WorldInfo.this.terrainType.getWorldTypeID()), WorldInfo.this.terrainType.getWorldTypeName(), Integer.valueOf(WorldInfo.this.terrainType.getGeneratorVersion()), Boolean.valueOf(WorldInfo.this.mapFeaturesEnabled)});
+                return String.format("ID %02d - %s, ver %d. Features enabled: %b", WorldInfo.this.terrainType.getId(), WorldInfo.this.terrainType.getName(), WorldInfo.this.terrainType.getVersion(), WorldInfo.this.mapFeaturesEnabled);
             }
         });
-        category.setDetail("Level generator options", new ICrashReportDetail<String>()
+        category.addDetail("Level generator options", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 return WorldInfo.this.generatorOptions;
             }
         });
-        category.setDetail("Level spawn location", new ICrashReportDetail<String>()
+        category.addDetail("Level spawn location", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 return CrashReportCategory.getCoordinateInfo(WorldInfo.this.spawnX, WorldInfo.this.spawnY, WorldInfo.this.spawnZ);
             }
         });
-        category.setDetail("Level time", new ICrashReportDetail<String>()
+        category.addDetail("Level time", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
-                return String.format("%d game time, %d day time", new Object[] {Long.valueOf(WorldInfo.this.totalTime), Long.valueOf(WorldInfo.this.worldTime)});
+                return String.format("%d game time, %d day time", WorldInfo.this.totalTime, WorldInfo.this.worldTime);
             }
         });
-        category.setDetail("Level dimension", new ICrashReportDetail<String>()
+        category.addDetail("Level dimension", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
                 return String.valueOf(WorldInfo.this.dimension);
             }
         });
-        category.setDetail("Level storage version", new ICrashReportDetail<String>()
+        category.addDetail("Level storage version", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
@@ -932,25 +961,24 @@ public class WorldInfo
                     ;
                 }
 
-                return String.format("0x%05X - %s", new Object[] {Integer.valueOf(WorldInfo.this.saveVersion), s});
+                return String.format("0x%05X - %s", WorldInfo.this.saveVersion, s);
             }
         });
-        category.setDetail("Level weather", new ICrashReportDetail<String>()
+        category.addDetail("Level weather", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
-                return String.format("Rain time: %d (now: %b), thunder time: %d (now: %b)", new Object[] {Integer.valueOf(WorldInfo.this.rainTime), Boolean.valueOf(WorldInfo.this.raining), Integer.valueOf(WorldInfo.this.thunderTime), Boolean.valueOf(WorldInfo.this.thundering)});
+                return String.format("Rain time: %d (now: %b), thunder time: %d (now: %b)", WorldInfo.this.rainTime, WorldInfo.this.raining, WorldInfo.this.thunderTime, WorldInfo.this.thundering);
             }
         });
-        category.setDetail("Level game mode", new ICrashReportDetail<String>()
+        category.addDetail("Level game mode", new ICrashReportDetail<String>()
         {
             public String call() throws Exception
             {
-                return String.format("Game mode: %s (ID %d). Hardcore: %b. Cheats: %b", new Object[] {WorldInfo.this.theGameType.getName(), Integer.valueOf(WorldInfo.this.theGameType.getID()), Boolean.valueOf(WorldInfo.this.hardcore), Boolean.valueOf(WorldInfo.this.allowCommands)});
+                return String.format("Game mode: %s (ID %d). Hardcore: %b. Cheats: %b", WorldInfo.this.gameType.getName(), WorldInfo.this.gameType.getID(), WorldInfo.this.hardcore, WorldInfo.this.allowCommands);
             }
         });
     }
-
     /**
      * Allow access to additional mod specific world based properties
      * Used by FML to store mod list associated with a world, and maybe an id map
@@ -971,15 +999,27 @@ public class WorldInfo
         return this.additionalProperties!=null? this.additionalProperties.get(additionalProperty) : null;
     }
 
+    @Deprecated //Use the int version below, and pass in dimension id NOT TYPE id
     public NBTTagCompound getDimensionData(DimensionType dimensionIn)
     {
-        NBTTagCompound nbttagcompound = (NBTTagCompound)this.dimensionData.get(dimensionIn);
+        return getDimensionData(dimensionIn.getId());
+    }
+    public NBTTagCompound getDimensionData(int dimensionIn)
+    {
+        NBTTagCompound nbttagcompound = this.dimensionData.get(dimensionIn);
         return nbttagcompound == null ? new NBTTagCompound() : nbttagcompound;
     }
 
+    @Deprecated //Use the int version below, and pass in dimension id NOT TYPE id
     public void setDimensionData(DimensionType dimensionIn, NBTTagCompound compound)
     {
-        this.dimensionData.put(dimensionIn, compound);
+        this.setDimensionData(dimensionIn.getId(), compound);
+    }
+
+    //Dimension numerical ID version of setter, as two dimensions could in theory have the same DimensionType. ID should be grabbed from the world NOT the Type
+    public void setDimensionData(int dimensionID, NBTTagCompound compound)
+    {
+        this.dimensionData.put(dimensionID, compound);
     }
 
     @SideOnly(Side.CLIENT)

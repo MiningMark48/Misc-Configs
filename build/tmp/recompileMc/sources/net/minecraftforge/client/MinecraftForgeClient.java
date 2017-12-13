@@ -1,13 +1,29 @@
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.client;
 
 import java.util.BitSet;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
@@ -29,6 +45,15 @@ public class MinecraftForgeClient
     public static BlockRenderLayer getRenderLayer()
     {
         return ForgeHooksClient.renderLayer.get();
+    }
+
+    /**
+     * returns the Locale set by the player in Minecraft.
+     * Useful for creating string and number formatters.
+     */
+    public static Locale getLocale()
+    {
+        return Minecraft.getMinecraft().getLanguageManager().getCurrentLanguage().getJavaLocale();
     }
 
     private static BitSet stencilBits = new BitSet(8);
@@ -74,6 +99,7 @@ public class MinecraftForgeClient
         .expireAfterAccess(1, TimeUnit.SECONDS)
         .build(new CacheLoader<Pair<World, BlockPos>, ChunkCache>()
         {
+            @Override
             public ChunkCache load(Pair<World, BlockPos> key) throws Exception
             {
                 return new ChunkCache(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1);

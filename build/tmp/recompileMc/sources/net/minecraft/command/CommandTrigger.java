@@ -18,7 +18,7 @@ public class CommandTrigger extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "trigger";
     }
@@ -34,7 +34,7 @@ public class CommandTrigger extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.trigger.usage";
     }
@@ -68,7 +68,7 @@ public class CommandTrigger extends CommandBase
                 entityplayermp = (EntityPlayerMP)entity;
             }
 
-            Scoreboard scoreboard = server.worldServerForDimension(0).getScoreboard();
+            Scoreboard scoreboard = server.getWorld(0).getScoreboard();
             ScoreObjective scoreobjective = scoreboard.getObjective(args[0]);
 
             if (scoreobjective != null && scoreobjective.getCriteria() == IScoreCriteria.TRIGGER)
@@ -119,11 +119,14 @@ public class CommandTrigger extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
         if (args.length == 1)
         {
-            Scoreboard scoreboard = server.worldServerForDimension(0).getScoreboard();
+            Scoreboard scoreboard = server.getWorld(0).getScoreboard();
             List<String> list = Lists.<String>newArrayList();
 
             for (ScoreObjective scoreobjective : scoreboard.getScoreObjectives())
@@ -134,15 +137,11 @@ public class CommandTrigger extends CommandBase
                 }
             }
 
-            /**
-             * Returns a List of strings (chosen from the given strings) which the last word in the given string array
-             * is a beginning-match for. (Tab completion).
-             */
             return getListOfStringsMatchingLastWord(args, (String[])list.toArray(new String[list.size()]));
         }
         else
         {
-            return args.length == 2 ? getListOfStringsMatchingLastWord(args, new String[] {"add", "set"}): Collections.<String>emptyList();
+            return args.length == 2 ? getListOfStringsMatchingLastWord(args, new String[] {"add", "set"}) : Collections.emptyList();
         }
     }
 }

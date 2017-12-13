@@ -50,7 +50,7 @@ public class SoundEventAccessor implements ISoundEventAccessor<Sound>
 
                 if (j < 0)
                 {
-                    return (Sound)isoundeventaccessor.cloneEntry();
+                    return isoundeventaccessor.cloneEntry();
                 }
             }
 

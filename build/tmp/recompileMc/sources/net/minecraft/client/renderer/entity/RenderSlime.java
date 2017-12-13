@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.model.ModelSlime;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.layers.LayerSlimeGel;
 import net.minecraft.entity.monster.EntitySlime;
@@ -13,9 +13,9 @@ public class RenderSlime extends RenderLiving<EntitySlime>
 {
     private static final ResourceLocation SLIME_TEXTURES = new ResourceLocation("textures/entity/slime/slime.png");
 
-    public RenderSlime(RenderManager renderManagerIn, ModelBase modelBaseIn, float shadowSizeIn)
+    public RenderSlime(RenderManager p_i47193_1_)
     {
-        super(renderManagerIn, modelBaseIn, shadowSizeIn);
+        super(p_i47193_1_, new ModelSlime(16), 0.25F);
         this.addLayer(new LayerSlimeGel(this));
     }
 
@@ -34,7 +34,7 @@ public class RenderSlime extends RenderLiving<EntitySlime>
     protected void preRenderCallback(EntitySlime entitylivingbaseIn, float partialTickTime)
     {
         float f = 0.999F;
-        GlStateManager.scale(f, f, f);
+        GlStateManager.scale(0.999F, 0.999F, 0.999F);
         float f1 = (float)entitylivingbaseIn.getSlimeSize();
         float f2 = (entitylivingbaseIn.prevSquishFactor + (entitylivingbaseIn.squishFactor - entitylivingbaseIn.prevSquishFactor) * partialTickTime) / (f1 * 0.5F + 1.0F);
         float f3 = 1.0F / (f2 + 1.0F);

@@ -59,11 +59,11 @@ public class ShaderUniform
     {
         int i = -1;
 
-        if (typeName.equals("int"))
+        if ("int".equals(typeName))
         {
             i = 0;
         }
-        else if (typeName.equals("float"))
+        else if ("float".equals(typeName))
         {
             i = 4;
         }
@@ -189,7 +189,7 @@ public class ShaderUniform
     {
         if (p_148097_1_.length < this.uniformCount)
         {
-            LOGGER.warn("Uniform.set called with a too-small value array (expected " + this.uniformCount + ", got " + p_148097_1_.length + "). Ignoring.");
+            LOGGER.warn("Uniform.set called with a too-small value array (expected {}, got {}). Ignoring.", Integer.valueOf(this.uniformCount), Integer.valueOf(p_148097_1_.length));
         }
         else
         {
@@ -248,7 +248,7 @@ public class ShaderUniform
         {
             if (this.uniformType > 10)
             {
-                LOGGER.warn("Uniform.upload called, but type value (" + this.uniformType + ") is not " + "a valid type. Ignoring.");
+                LOGGER.warn("Uniform.upload called, but type value ({}) is not a valid type. Ignoring.", (int)this.uniformType);
                 return;
             }
 
@@ -273,7 +273,7 @@ public class ShaderUniform
                 OpenGlHelper.glUniform4(this.uniformLocation, this.uniformIntBuffer);
                 break;
             default:
-                LOGGER.warn("Uniform.upload called, but count value (" + this.uniformCount + ") is " + " not in the range of 1 to 4. Ignoring.");
+                LOGGER.warn("Uniform.upload called, but count value ({}) is  not in the range of 1 to 4. Ignoring.", (int)this.uniformCount);
         }
     }
 
@@ -294,7 +294,7 @@ public class ShaderUniform
                 OpenGlHelper.glUniform4(this.uniformLocation, this.uniformFloatBuffer);
                 break;
             default:
-                LOGGER.warn("Uniform.upload called, but count value (" + this.uniformCount + ") is " + "not in the range of 1 to 4. Ignoring.");
+                LOGGER.warn("Uniform.upload called, but count value ({}) is not in the range of 1 to 4. Ignoring.", (int)this.uniformCount);
         }
     }
 

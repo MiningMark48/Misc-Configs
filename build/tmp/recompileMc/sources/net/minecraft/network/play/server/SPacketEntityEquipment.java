@@ -1,7 +1,6 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
@@ -14,17 +13,17 @@ public class SPacketEntityEquipment implements Packet<INetHandlerPlayClient>
 {
     private int entityID;
     private EntityEquipmentSlot equipmentSlot;
-    private ItemStack itemStack;
+    private ItemStack itemStack = ItemStack.EMPTY;
 
     public SPacketEntityEquipment()
     {
     }
 
-    public SPacketEntityEquipment(int entityIdIn, EntityEquipmentSlot equipmentSlotIn, @Nullable ItemStack itemStackIn)
+    public SPacketEntityEquipment(int entityIdIn, EntityEquipmentSlot equipmentSlotIn, ItemStack itemStackIn)
     {
         this.entityID = entityIdIn;
         this.equipmentSlot = equipmentSlotIn;
-        this.itemStack = itemStackIn == null ? null : itemStackIn.copy();
+        this.itemStack = itemStackIn.copy();
     }
 
     /**
@@ -32,9 +31,9 @@ public class SPacketEntityEquipment implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.entityID = buf.readVarIntFromBuffer();
+        this.entityID = buf.readVarInt();
         this.equipmentSlot = (EntityEquipmentSlot)buf.readEnumValue(EntityEquipmentSlot.class);
-        this.itemStack = buf.readItemStackFromBuffer();
+        this.itemStack = buf.readItemStack();
     }
 
     /**
@@ -42,9 +41,9 @@ public class SPacketEntityEquipment implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.entityID);
+        buf.writeVarInt(this.entityID);
         buf.writeEnumValue(this.equipmentSlot);
-        buf.writeItemStackToBuffer(this.itemStack);
+        buf.writeItemStack(this.itemStack);
     }
 
     /**

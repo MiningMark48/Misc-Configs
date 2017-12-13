@@ -1,13 +1,14 @@
 package net.minecraft.item;
 
 import com.mojang.authlib.GameProfile;
-import java.util.List;
 import java.util.UUID;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSkull;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
@@ -16,12 +17,12 @@ import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.commons.lang3.StringUtils;
 
 public class ItemSkull extends Item
 {
@@ -37,7 +38,7 @@ public class ItemSkull extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (facing == EnumFacing.DOWN)
         {
@@ -64,7 +65,9 @@ public class ItemSkull extends Item
                 pos = pos.offset(facing);
             }
 
-            if (playerIn.canPlayerEdit(pos, facing, stack) && Blocks.SKULL.canPlaceBlockAt(worldIn, pos))
+            ItemStack itemstack = player.getHeldItem(hand);
+
+            if (player.canPlayerEdit(pos, facing, itemstack) && Blocks.SKULL.canPlaceBlockAt(worldIn, pos))
             {
                 if (worldIn.isRemote)
                 {
@@ -77,7 +80,7 @@ public class ItemSkull extends Item
 
                     if (facing == EnumFacing.UP)
                     {
-                        i = MathHelper.floor_double((double)(playerIn.rotationYaw * 16.0F / 360.0F) + 0.5D) & 15;
+                        i = MathHelper.floor((double)(player.rotationYaw * 16.0F / 360.0F) + 0.5D) & 15;
                     }
 
                     TileEntity tileentity = worldIn.getTileEntity(pos);
@@ -86,19 +89,19 @@ public class ItemSkull extends Item
                     {
                         TileEntitySkull tileentityskull = (TileEntitySkull)tileentity;
 
-                        if (stack.getMetadata() == 3)
+                        if (itemstack.getMetadata() == 3)
                         {
                             GameProfile gameprofile = null;
 
-                            if (stack.hasTagCompound())
+                            if (itemstack.hasTagCompound())
                             {
-                                NBTTagCompound nbttagcompound = stack.getTagCompound();
+                                NBTTagCompound nbttagcompound = itemstack.getTagCompound();
 
                                 if (nbttagcompound.hasKey("SkullOwner", 10))
                                 {
                                     gameprofile = NBTUtil.readGameProfileFromNBT(nbttagcompound.getCompoundTag("SkullOwner"));
                                 }
-                                else if (nbttagcompound.hasKey("SkullOwner", 8) && !nbttagcompound.getString("SkullOwner").isEmpty())
+                                else if (nbttagcompound.hasKey("SkullOwner", 8) && !StringUtils.isBlank(nbttagcompound.getString("SkullOwner")))
                                 {
                                     gameprofile = new GameProfile((UUID)null, nbttagcompound.getString("SkullOwner"));
                                 }
@@ -108,14 +111,19 @@ public class ItemSkull extends Item
                         }
                         else
                         {
-                            tileentityskull.setType(stack.getMetadata());
+                            tileentityskull.setType(itemstack.getMetadata());
                         }
 
                         tileentityskull.setSkullRotation(i);
                         Blocks.SKULL.checkWitherSpawn(worldIn, pos, tileentityskull);
                     }
 
-                    --stack.stackSize;
+                    if (player instanceof EntityPlayerMP)
+                    {
+                        CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+                    }
+
+                    itemstack.shrink(1);
                     return EnumActionResult.SUCCESS;
                 }
             }
@@ -129,12 +137,14 @@ public class ItemSkull extends Item
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (int i = 0; i < SKULL_TYPES.length; ++i)
+        if (this.isInCreativeTab(tab))
         {
-            subItems.add(new ItemStack(itemIn, 1, i));
+            for (int i = 0; i < SKULL_TYPES.length; ++i)
+            {
+                items.add(new ItemStack(this, 1, i));
+            }
         }
     }
 
@@ -169,7 +179,7 @@ public class ItemSkull extends Item
         {
             if (stack.getTagCompound().hasKey("SkullOwner", 8))
             {
-                return I18n.translateToLocalFormatted("item.skull.player.name", new Object[] {stack.getTagCompound().getString("SkullOwner")});
+                return I18n.translateToLocalFormatted("item.skull.player.name", stack.getTagCompound().getString("SkullOwner"));
             }
 
             if (stack.getTagCompound().hasKey("SkullOwner", 10))
@@ -178,7 +188,7 @@ public class ItemSkull extends Item
 
                 if (nbttagcompound.hasKey("Name", 8))
                 {
-                    return I18n.translateToLocalFormatted("item.skull.player.name", new Object[] {nbttagcompound.getString("Name")});
+                    return I18n.translateToLocalFormatted("item.skull.player.name", nbttagcompound.getString("Name"));
                 }
             }
         }
@@ -193,7 +203,7 @@ public class ItemSkull extends Item
     {
         super.updateItemStackNBT(nbt);
 
-        if (nbt.hasKey("SkullOwner", 8) && !nbt.getString("SkullOwner").isEmpty())
+        if (nbt.hasKey("SkullOwner", 8) && !StringUtils.isBlank(nbt.getString("SkullOwner")))
         {
             GameProfile gameprofile = new GameProfile((UUID)null, nbt.getString("SkullOwner"));
             gameprofile = TileEntitySkull.updateGameprofile(gameprofile);

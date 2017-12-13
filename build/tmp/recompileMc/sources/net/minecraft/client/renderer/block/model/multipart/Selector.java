@@ -120,15 +120,26 @@ public class Selector
                 {
                     throw new JsonParseException("No elements found in selector");
                 }
+                else if (set.size() == 1)
+                {
+                    if (json.has("OR"))
+                    {
+                        return new ConditionOr(Iterables.transform(JsonUtils.getJsonArray(json, "OR"), FUNCTION_OR_AND));
+                    }
+                    else
+                    {
+                        return (ICondition)(json.has("AND") ? new ConditionAnd(Iterables.transform(JsonUtils.getJsonArray(json, "AND"), FUNCTION_OR_AND)) : makePropertyValue(set.iterator().next()));
+                    }
+                }
                 else
                 {
-                    return (ICondition)(set.size() == 1 ? (json.has("OR") ? new ConditionOr(Iterables.transform(JsonUtils.getJsonArray(json, "OR"), FUNCTION_OR_AND)) : (json.has("AND") ? new ConditionAnd(Iterables.transform(JsonUtils.getJsonArray(json, "AND"), FUNCTION_OR_AND)) : makePropertyValue((Entry)set.iterator().next()))) : new ConditionAnd(Iterables.transform(set, FUNCTION_PROPERTY_VALUE)));
+                    return new ConditionAnd(Iterables.transform(set, FUNCTION_PROPERTY_VALUE));
                 }
             }
 
             private static ConditionPropertyValue makePropertyValue(Entry<String, JsonElement> entry)
             {
-                return new ConditionPropertyValue((String)entry.getKey(), ((JsonElement)entry.getValue()).getAsString());
+                return new ConditionPropertyValue(entry.getKey(), ((JsonElement)entry.getValue()).getAsString());
             }
         }
 }

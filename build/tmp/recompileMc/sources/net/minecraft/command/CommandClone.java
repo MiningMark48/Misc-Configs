@@ -1,8 +1,9 @@
 package net.minecraft.command;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
@@ -22,7 +23,7 @@ public class CommandClone extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "clone";
     }
@@ -38,7 +39,7 @@ public class CommandClone extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.clone.usage";
     }
@@ -64,21 +65,21 @@ public class CommandClone extends CommandBase
 
             if (i > 32768)
             {
-                throw new CommandException("commands.clone.tooManyBlocks", new Object[] {Integer.valueOf(i), Integer.valueOf(32768)});
+                throw new CommandException("commands.clone.tooManyBlocks", new Object[] {i, Integer.valueOf(32768)});
             }
             else
             {
                 boolean flag = false;
                 Block block = null;
-                int j = -1;
+                Predicate<IBlockState> predicate = null;
 
-                if ((args.length < 11 || !args[10].equals("force") && !args[10].equals("move")) && structureboundingbox.intersectsWith(structureboundingbox1))
+                if ((args.length < 11 || !"force".equals(args[10]) && !"move".equals(args[10])) && structureboundingbox.intersectsWith(structureboundingbox1))
                 {
                     throw new CommandException("commands.clone.noOverlap", new Object[0]);
                 }
                 else
                 {
-                    if (args.length >= 11 && args[10].equals("move"))
+                    if (args.length >= 11 && "move".equals(args[10]))
                     {
                         flag = true;
                     }
@@ -93,11 +94,11 @@ public class CommandClone extends CommandBase
 
                             if (args.length >= 10)
                             {
-                                if (args[9].equals("masked"))
+                                if ("masked".equals(args[9]))
                                 {
                                     flag1 = true;
                                 }
-                                else if (args[9].equals("filtered"))
+                                else if ("filtered".equals(args[9]))
                                 {
                                     if (args.length < 12)
                                     {
@@ -108,7 +109,7 @@ public class CommandClone extends CommandBase
 
                                     if (args.length >= 13)
                                     {
-                                        j = parseInt(args[12], 0, 15);
+                                        predicate = convertArgToBlockStatePredicate(block, args[12]);
                                     }
                                 }
                             }
@@ -116,20 +117,20 @@ public class CommandClone extends CommandBase
                             List<CommandClone.StaticCloneData> list = Lists.<CommandClone.StaticCloneData>newArrayList();
                             List<CommandClone.StaticCloneData> list1 = Lists.<CommandClone.StaticCloneData>newArrayList();
                             List<CommandClone.StaticCloneData> list2 = Lists.<CommandClone.StaticCloneData>newArrayList();
-                            LinkedList<BlockPos> linkedlist = Lists.<BlockPos>newLinkedList();
+                            Deque<BlockPos> deque = Lists.<BlockPos>newLinkedList();
                             BlockPos blockpos3 = new BlockPos(structureboundingbox1.minX - structureboundingbox.minX, structureboundingbox1.minY - structureboundingbox.minY, structureboundingbox1.minZ - structureboundingbox.minZ);
 
-                            for (int k = structureboundingbox.minZ; k <= structureboundingbox.maxZ; ++k)
+                            for (int j = structureboundingbox.minZ; j <= structureboundingbox.maxZ; ++j)
                             {
-                                for (int l = structureboundingbox.minY; l <= structureboundingbox.maxY; ++l)
+                                for (int k = structureboundingbox.minY; k <= structureboundingbox.maxY; ++k)
                                 {
-                                    for (int i1 = structureboundingbox.minX; i1 <= structureboundingbox.maxX; ++i1)
+                                    for (int l = structureboundingbox.minX; l <= structureboundingbox.maxX; ++l)
                                     {
-                                        BlockPos blockpos4 = new BlockPos(i1, l, k);
+                                        BlockPos blockpos4 = new BlockPos(l, k, j);
                                         BlockPos blockpos5 = blockpos4.add(blockpos3);
                                         IBlockState iblockstate = world.getBlockState(blockpos4);
 
-                                        if ((!flag1 || iblockstate.getBlock() != Blocks.AIR) && (block == null || iblockstate.getBlock() == block && (j < 0 || iblockstate.getBlock().getMetaFromState(iblockstate) == j)))
+                                        if ((!flag1 || iblockstate.getBlock() != Blocks.AIR) && (block == null || iblockstate.getBlock() == block && (predicate == null || predicate.apply(iblockstate))))
                                         {
                                             TileEntity tileentity = world.getTileEntity(blockpos4);
 
@@ -137,17 +138,17 @@ public class CommandClone extends CommandBase
                                             {
                                                 NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
                                                 list1.add(new CommandClone.StaticCloneData(blockpos5, iblockstate, nbttagcompound));
-                                                linkedlist.addLast(blockpos4);
+                                                deque.addLast(blockpos4);
                                             }
                                             else if (!iblockstate.isFullBlock() && !iblockstate.isFullCube())
                                             {
                                                 list2.add(new CommandClone.StaticCloneData(blockpos5, iblockstate, (NBTTagCompound)null));
-                                                linkedlist.addFirst(blockpos4);
+                                                deque.addFirst(blockpos4);
                                             }
                                             else
                                             {
                                                 list.add(new CommandClone.StaticCloneData(blockpos5, iblockstate, (NBTTagCompound)null));
-                                                linkedlist.addLast(blockpos4);
+                                                deque.addLast(blockpos4);
                                             }
                                         }
                                     }
@@ -156,7 +157,7 @@ public class CommandClone extends CommandBase
 
                             if (flag)
                             {
-                                for (BlockPos blockpos6 : linkedlist)
+                                for (BlockPos blockpos6 : deque)
                                 {
                                     TileEntity tileentity1 = world.getTileEntity(blockpos6);
 
@@ -168,7 +169,7 @@ public class CommandClone extends CommandBase
                                     world.setBlockState(blockpos6, Blocks.BARRIER.getDefaultState(), 2);
                                 }
 
-                                for (BlockPos blockpos7 : linkedlist)
+                                for (BlockPos blockpos7 : deque)
                                 {
                                     world.setBlockState(blockpos7, Blocks.AIR.getDefaultState(), 3);
                                 }
@@ -220,7 +221,7 @@ public class CommandClone extends CommandBase
 
                             for (CommandClone.StaticCloneData commandclone$staticclonedata3 : list4)
                             {
-                                world.notifyNeighborsRespectDebug(commandclone$staticclonedata3.pos, commandclone$staticclonedata3.blockState.getBlock());
+                                world.notifyNeighborsRespectDebug(commandclone$staticclonedata3.pos, commandclone$staticclonedata3.blockState.getBlock(), false);
                             }
 
                             List<NextTickListEntry> list5 = world.getPendingBlockUpdates(structureboundingbox, false);
@@ -244,7 +245,7 @@ public class CommandClone extends CommandBase
                             else
                             {
                                 sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, i);
-                                notifyCommandListener(sender, this, "commands.clone.success", new Object[] {Integer.valueOf(i)});
+                                notifyCommandListener(sender, this, "commands.clone.success", new Object[] {i});
                             }
                         }
                         else
@@ -261,9 +262,35 @@ public class CommandClone extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : (args.length > 3 && args.length <= 6 ? getTabCompletionCoordinate(args, 3, pos) : (args.length > 6 && args.length <= 9 ? getTabCompletionCoordinate(args, 6, pos) : (args.length == 10 ? getListOfStringsMatchingLastWord(args, new String[] {"replace", "masked", "filtered"}): (args.length == 11 ? getListOfStringsMatchingLastWord(args, new String[] {"normal", "force", "move"}): (args.length == 12 && "filtered".equals(args[9]) ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.<String>emptyList())))));
+        if (args.length > 0 && args.length <= 3)
+        {
+            return getTabCompletionCoordinate(args, 0, targetPos);
+        }
+        else if (args.length > 3 && args.length <= 6)
+        {
+            return getTabCompletionCoordinate(args, 3, targetPos);
+        }
+        else if (args.length > 6 && args.length <= 9)
+        {
+            return getTabCompletionCoordinate(args, 6, targetPos);
+        }
+        else if (args.length == 10)
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"replace", "masked", "filtered"});
+        }
+        else if (args.length == 11)
+        {
+            return getListOfStringsMatchingLastWord(args, new String[] {"normal", "force", "move"});
+        }
+        else
+        {
+            return args.length == 12 && "filtered".equals(args[9]) ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.emptyList();
+        }
     }
 
     static class StaticCloneData

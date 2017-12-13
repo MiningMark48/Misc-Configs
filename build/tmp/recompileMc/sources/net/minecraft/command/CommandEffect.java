@@ -15,7 +15,7 @@ public class CommandEffect extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "effect";
     }
@@ -31,7 +31,7 @@ public class CommandEffect extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.effect.usage";
     }
@@ -49,7 +49,7 @@ public class CommandEffect extends CommandBase
         {
             EntityLivingBase entitylivingbase = (EntityLivingBase)getEntity(server, sender, args[0], EntityLivingBase.class);
 
-            if (args[1].equals("clear"))
+            if ("clear".equals(args[1]))
             {
                 if (entitylivingbase.getActivePotionEffects().isEmpty())
                 {
@@ -118,7 +118,7 @@ public class CommandEffect extends CommandBase
                     {
                         PotionEffect potioneffect = new PotionEffect(potion, i, k, false, flag);
                         entitylivingbase.addPotionEffect(potioneffect);
-                        notifyCommandListener(sender, this, "commands.effect.success", new Object[] {new TextComponentTranslation(potioneffect.getEffectName(), new Object[0]), Integer.valueOf(Potion.getIdFromPotion(potion)), Integer.valueOf(k), entitylivingbase.getName(), Integer.valueOf(j)});
+                        notifyCommandListener(sender, this, "commands.effect.success", new Object[] {new TextComponentTranslation(potioneffect.getEffectName(), new Object[0]), Potion.getIdFromPotion(potion), k, entitylivingbase.getName(), j});
                     }
                     else if (entitylivingbase.isPotionActive(potion))
                     {
@@ -134,9 +134,23 @@ public class CommandEffect extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length == 2 ? getListOfStringsMatchingLastWord(args, Potion.REGISTRY.getKeys()) : (args.length == 5 ? getListOfStringsMatchingLastWord(args, new String[] {"true", "false"}): Collections.<String>emptyList()));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else if (args.length == 2)
+        {
+            return getListOfStringsMatchingLastWord(args, Potion.REGISTRY.getKeys());
+        }
+        else
+        {
+            return args.length == 5 ? getListOfStringsMatchingLastWord(args, new String[] {"true", "false"}) : Collections.emptyList();
+        }
     }
 
     /**

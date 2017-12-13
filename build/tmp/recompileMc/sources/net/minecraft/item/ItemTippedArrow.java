@@ -1,13 +1,16 @@
 package net.minecraft.item;
 
 import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityTippedArrow;
+import net.minecraft.init.PotionTypes;
 import net.minecraft.potion.PotionType;
 import net.minecraft.potion.PotionUtils;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,6 +18,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemTippedArrow extends ItemArrow
 {
+    @SideOnly(Side.CLIENT)
+    public ItemStack getDefaultInstance()
+    {
+        return PotionUtils.addPotionToItemStack(super.getDefaultInstance(), PotionTypes.POISON);
+    }
+
     public EntityArrow createArrow(World worldIn, ItemStack stack, EntityLivingBase shooter)
     {
         EntityTippedArrow entitytippedarrow = new EntityTippedArrow(worldIn, shooter);
@@ -25,12 +34,17 @@ public class ItemTippedArrow extends ItemArrow
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (PotionType potiontype : PotionType.REGISTRY)
+        if (this.isInCreativeTab(tab))
         {
-            subItems.add(PotionUtils.addPotionToItemStack(new ItemStack(itemIn), potiontype));
+            for (PotionType potiontype : PotionType.REGISTRY)
+            {
+                if (!potiontype.getEffects().isEmpty())
+                {
+                    items.add(PotionUtils.addPotionToItemStack(new ItemStack(this), potiontype));
+                }
+            }
         }
     }
 
@@ -38,7 +52,7 @@ public class ItemTippedArrow extends ItemArrow
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
         PotionUtils.addPotionTooltip(stack, tooltip, 0.125F);
     }

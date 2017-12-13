@@ -16,8 +16,9 @@ public class VertexFormat
     /** The next available offset in this vertex format */
     private int nextOffset;
     private int colorElementOffset;
-    private List<Integer> uvOffsetsById;
+    private final List<Integer> uvOffsetsById;
     private int normalElementOffset;
+    private int hashCode;
 
     public VertexFormat(VertexFormat vertexFormatIn)
     {
@@ -35,7 +36,6 @@ public class VertexFormat
     {
         this.elements = Lists.<VertexFormatElement>newArrayList();
         this.offsets = Lists.<Integer>newArrayList();
-        this.nextOffset = 0;
         this.colorElementOffset = -1;
         this.uvOffsetsById = Lists.<Integer>newArrayList();
         this.normalElementOffset = -1;
@@ -49,6 +49,7 @@ public class VertexFormat
         this.uvOffsetsById.clear();
         this.normalElementOffset = -1;
         this.nextOffset = 0;
+        this.hashCode = 0;
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -77,6 +78,7 @@ public class VertexFormat
             }
 
             this.nextOffset += element.getSize();
+            this.hashCode = 0;
             return this;
         }
     }
@@ -134,7 +136,7 @@ public class VertexFormat
 
         for (int j = this.elements.size(); i < j; ++i)
         {
-            VertexFormatElement vertexformatelement = (VertexFormatElement)this.elements.get(i);
+            VertexFormatElement vertexformatelement = this.elements.get(i);
 
             if (vertexformatelement.isPositionElement())
             {
@@ -167,7 +169,7 @@ public class VertexFormat
 
     public VertexFormatElement getElement(int index)
     {
-        return (VertexFormatElement)this.elements.get(index);
+        return this.elements.get(index);
     }
 
     public int getOffset(int index)
@@ -184,7 +186,19 @@ public class VertexFormat
         else if (p_equals_1_ != null && this.getClass() == p_equals_1_.getClass())
         {
             VertexFormat vertexformat = (VertexFormat)p_equals_1_;
-            return this.nextOffset != vertexformat.nextOffset ? false : (!this.elements.equals(vertexformat.elements) ? false : this.offsets.equals(vertexformat.offsets));
+
+            if (this.nextOffset != vertexformat.nextOffset)
+            {
+                return false;
+            }
+            else if (!this.elements.equals(vertexformat.elements))
+            {
+                return false;
+            }
+            else
+            {
+                return this.offsets.equals(vertexformat.offsets);
+            }
         }
         else
         {
@@ -194,9 +208,11 @@ public class VertexFormat
 
     public int hashCode()
     {
+        if (this.hashCode != 0) return this.hashCode;
         int i = this.elements.hashCode();
         i = 31 * i + this.offsets.hashCode();
         i = 31 * i + this.nextOffset;
+        this.hashCode = i;
         return i;
     }
 }

@@ -21,7 +21,7 @@ import org.lwjgl.input.Keyboard;
 public class GuiEditSign extends GuiScreen
 {
     /** Reference to the sign object. */
-    private TileEntitySign tileSign;
+    private final TileEntitySign tileSign;
     /** Counts the number of screen updates. */
     private int updateCounter;
     /** The index of the line that is being edited. */
@@ -42,7 +42,7 @@ public class GuiEditSign extends GuiScreen
     {
         this.buttonList.clear();
         Keyboard.enableRepeatEvents(true);
-        this.buttonList.add(this.doneBtn = new GuiButton(0, this.width / 2 - 100, this.height / 4 + 120, I18n.format("gui.done", new Object[0])));
+        this.doneBtn = this.addButton(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 120, I18n.format("gui.done")));
         this.tileSign.setEditable(false);
     }
 
@@ -108,7 +108,7 @@ public class GuiEditSign extends GuiScreen
             s = s.substring(0, s.length() - 1);
         }
 
-        if (ChatAllowedCharacters.isAllowedCharacter(typedChar) && this.fontRendererObj.getStringWidth(s + typedChar) <= 90)
+        if (ChatAllowedCharacters.isAllowedCharacter(typedChar) && this.fontRenderer.getStringWidth(s + typedChar) <= 90)
         {
             s = s + typedChar;
         }
@@ -127,12 +127,12 @@ public class GuiEditSign extends GuiScreen
     public void drawScreen(int mouseX, int mouseY, float partialTicks)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, I18n.format("sign.edit", new Object[0]), this.width / 2, 40, 16777215);
+        this.drawCenteredString(this.fontRenderer, I18n.format("sign.edit"), this.width / 2, 40, 16777215);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.pushMatrix();
         GlStateManager.translate((float)(this.width / 2), 0.0F, 50.0F);
         float f = 93.75F;
-        GlStateManager.scale(-f, -f, -f);
+        GlStateManager.scale(-93.75F, -93.75F, -93.75F);
         GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
         Block block = this.tileSign.getBlockType();
 
@@ -171,7 +171,7 @@ public class GuiEditSign extends GuiScreen
             this.tileSign.lineBeingEdited = this.editLine;
         }
 
-        TileEntityRendererDispatcher.instance.renderTileEntityAt(this.tileSign, -0.5D, -0.75D, -0.5D, 0.0F);
+        TileEntityRendererDispatcher.instance.render(this.tileSign, -0.5D, -0.75D, -0.5D, 0.0F);
         this.tileSign.lineBeingEdited = -1;
         GlStateManager.popMatrix();
         super.drawScreen(mouseX, mouseY, partialTicks);

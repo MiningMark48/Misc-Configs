@@ -4,6 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -34,7 +35,7 @@ public class EntityLargeFireball extends EntityFireball
      */
     protected void onImpact(RayTraceResult result)
     {
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
             if (result.entityHit != null)
             {
@@ -42,10 +43,15 @@ public class EntityLargeFireball extends EntityFireball
                 this.applyEnchantments(this.shootingEntity, result.entityHit);
             }
 
-            boolean flag = this.worldObj.getGameRules().getBoolean("mobGriefing");
-            this.worldObj.newExplosion((Entity)null, this.posX, this.posY, this.posZ, (float)this.explosionPower, flag, flag);
+            boolean flag = this.world.getGameRules().getBoolean("mobGriefing");
+            this.world.newExplosion((Entity)null, this.posX, this.posY, this.posZ, (float)this.explosionPower, flag, flag);
             this.setDead();
         }
+    }
+
+    public static void registerFixesLargeFireball(DataFixer fixer)
+    {
+        EntityFireball.registerFixesFireball(fixer, "Fireball");
     }
 
     /**

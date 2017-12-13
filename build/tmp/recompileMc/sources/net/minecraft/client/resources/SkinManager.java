@@ -45,7 +45,14 @@ public class SkinManager
         {
             public Map<Type, MinecraftProfileTexture> load(GameProfile p_load_1_) throws Exception
             {
-                return Minecraft.getMinecraft().getSessionService().getTextures(p_load_1_, false);
+                try
+                {
+                    return Minecraft.getMinecraft().getSessionService().getTextures(p_load_1_, false);
+                }
+                catch (Throwable var3)
+                {
+                    return Maps.<Type, MinecraftProfileTexture>newHashMap();
+                }
             }
         });
     }
@@ -138,12 +145,12 @@ public class SkinManager
                     {
                         if (map.containsKey(Type.SKIN))
                         {
-                            SkinManager.this.loadSkin((MinecraftProfileTexture)map.get(Type.SKIN), Type.SKIN, skinAvailableCallback);
+                            SkinManager.this.loadSkin(map.get(Type.SKIN), Type.SKIN, skinAvailableCallback);
                         }
 
                         if (map.containsKey(Type.CAPE))
                         {
-                            SkinManager.this.loadSkin((MinecraftProfileTexture)map.get(Type.CAPE), Type.CAPE, skinAvailableCallback);
+                            SkinManager.this.loadSkin(map.get(Type.CAPE), Type.CAPE, skinAvailableCallback);
                         }
                     }
                 });

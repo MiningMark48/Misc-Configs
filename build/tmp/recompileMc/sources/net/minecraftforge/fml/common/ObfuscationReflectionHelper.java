@@ -1,14 +1,20 @@
 /*
- * The FML Forge Mod Loader suite. Copyright (C) 2012 cpw
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
  *
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package net.minecraftforge.fml.common;
 
@@ -37,7 +43,7 @@ public class ObfuscationReflectionHelper
         }
         catch (UnableToAccessFieldException e)
         {
-            FMLLog.log(Level.ERROR, e, "There was a problem getting field index %d from %s", fieldIndex, classToAccess.getName());
+            FMLLog.log.error("There was a problem getting field index {} from {}", classToAccess.getName(), e);
             throw e;
         }
     }
@@ -62,12 +68,12 @@ public class ObfuscationReflectionHelper
         }
         catch (UnableToFindFieldException e)
         {
-            FMLLog.log(Level.ERROR,e,"Unable to locate any field %s on type %s", Arrays.toString(fieldNames), classToAccess.getName());
+            FMLLog.log.error("Unable to locate any field {} on type {}", Arrays.toString(fieldNames), classToAccess.getName(), e);
             throw e;
         }
         catch (UnableToAccessFieldException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to access any field %s on type %s", Arrays.toString(fieldNames), classToAccess.getName());
+            FMLLog.log.error("Unable to access any field {} on type {}", classToAccess.getName(), e);
             throw e;
         }
     }
@@ -80,7 +86,7 @@ public class ObfuscationReflectionHelper
         }
         catch (UnableToAccessFieldException e)
         {
-            FMLLog.log(Level.ERROR, e, "There was a problem setting field index %d on type %s", fieldIndex, classToAccess.getName());
+            FMLLog.log.error("There was a problem setting field index {} on type {}", classToAccess.getName(), e);
             throw e;
         }
     }
@@ -93,12 +99,12 @@ public class ObfuscationReflectionHelper
         }
         catch (UnableToFindFieldException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to locate any field %s on type %s", Arrays.toString(fieldNames), classToAccess.getName());
+            FMLLog.log.error("Unable to locate any field {} on type {}", classToAccess.getName(), e);
             throw e;
         }
         catch (UnableToAccessFieldException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to set any field %s on type %s", Arrays.toString(fieldNames), classToAccess.getName());
+            FMLLog.log.error("Unable to set any field {} on type {}", classToAccess.getName(), e);
             throw e;
         }
     }

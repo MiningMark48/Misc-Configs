@@ -34,7 +34,7 @@ public class CPacketTabComplete implements Packet<INetHandlerPlayServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.message = buf.readStringFromBuffer(32767);
+        this.message = buf.readString(32767);
         this.hasTargetBlock = buf.readBoolean();
         boolean flag = buf.readBoolean();
 

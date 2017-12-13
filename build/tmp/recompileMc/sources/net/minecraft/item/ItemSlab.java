@@ -1,11 +1,13 @@
 package net.minecraft.item;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSlab;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -51,11 +53,13 @@ public class ItemSlab extends ItemBlock
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        if (stack.stackSize != 0 && playerIn.canPlayerEdit(pos.offset(facing), facing, stack))
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (!itemstack.isEmpty() && player.canPlayerEdit(pos.offset(facing), facing, itemstack))
         {
-            Comparable<?> comparable = this.singleSlab.getTypeForItem(stack);
+            Comparable<?> comparable = this.singleSlab.getTypeForItem(itemstack);
             IBlockState iblockstate = worldIn.getBlockState(pos);
 
             if (iblockstate.getBlock() == this.singleSlab)
@@ -71,16 +75,21 @@ public class ItemSlab extends ItemBlock
 
                     if (axisalignedbb != Block.NULL_AABB && worldIn.checkNoEntityCollision(axisalignedbb.offset(pos)) && worldIn.setBlockState(pos, iblockstate1, 11))
                     {
-                        SoundType soundtype = this.doubleSlab.getSoundType();
-                        worldIn.playSound(playerIn, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-                        --stack.stackSize;
+                        SoundType soundtype = this.doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
+                        worldIn.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                        itemstack.shrink(1);
+
+                        if (player instanceof EntityPlayerMP)
+                        {
+                            CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+                        }
                     }
 
                     return EnumActionResult.SUCCESS;
                 }
             }
 
-            return this.tryPlace(playerIn, stack, worldIn, pos.offset(facing), comparable) ? EnumActionResult.SUCCESS : super.onItemUse(stack, playerIn, worldIn, pos, hand, facing, hitX, hitY, hitZ);
+            return this.tryPlace(player, itemstack, worldIn, pos.offset(facing), comparable) ? EnumActionResult.SUCCESS : super.onItemUse(player, worldIn, pos, hand, facing, hitX, hitY, hitZ);
         }
         else
         {
@@ -126,9 +135,9 @@ public class ItemSlab extends ItemBlock
 
                 if (axisalignedbb != Block.NULL_AABB && worldIn.checkNoEntityCollision(axisalignedbb.offset(pos)) && worldIn.setBlockState(pos, iblockstate1, 11))
                 {
-                    SoundType soundtype = this.doubleSlab.getSoundType();
+                    SoundType soundtype = this.doubleSlab.getSoundType(iblockstate1, worldIn, pos, player);
                     worldIn.playSound(player, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-                    --stack.stackSize;
+                    stack.shrink(1);
                 }
 
                 return true;

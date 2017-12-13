@@ -14,14 +14,16 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagShort;
-import net.minecraft.world.WorldSavedData;
 
 public class MapStorage
 {
-    private ISaveHandler saveHandler;
+    private final ISaveHandler saveHandler;
+    /** Map of item data String id to loaded MapDataBases */
     protected Map<String, WorldSavedData> loadedDataMap = Maps.<String, WorldSavedData>newHashMap();
-    private List<WorldSavedData> loadedDataList = Lists.<WorldSavedData>newArrayList();
-    private Map<String, Short> idCounts = Maps.<String, Short>newHashMap();
+    /** List of loaded MapDataBases. */
+    private final List<WorldSavedData> loadedDataList = Lists.<WorldSavedData>newArrayList();
+    /** Map of MapDataBase id String prefixes ('map' etc) to max known unique Short id (the 0 part etc) for that prefix */
+    private final Map<String, Short> idCounts = Maps.<String, Short>newHashMap();
 
     public MapStorage(ISaveHandler saveHandlerIn)
     {
@@ -36,7 +38,7 @@ public class MapStorage
     @Nullable
     public WorldSavedData getOrLoadData(Class <? extends WorldSavedData > clazz, String dataIdentifier)
     {
-        WorldSavedData worldsaveddata = (WorldSavedData)this.loadedDataMap.get(dataIdentifier);
+        WorldSavedData worldsaveddata = this.loadedDataMap.get(dataIdentifier);
 
         if (worldsaveddata != null)
         {
@@ -54,11 +56,11 @@ public class MapStorage
                     {
                         try
                         {
-                            worldsaveddata = (WorldSavedData)clazz.getConstructor(new Class[] {String.class}).newInstance(new Object[] {dataIdentifier});
+                            worldsaveddata = clazz.getConstructor(String.class).newInstance(dataIdentifier);
                         }
                         catch (Exception exception)
                         {
-                            throw new RuntimeException("Failed to instantiate " + clazz.toString(), exception);
+                            throw new RuntimeException("Failed to instantiate " + clazz, exception);
                         }
 
                         FileInputStream fileinputstream = new FileInputStream(file1);
@@ -104,7 +106,7 @@ public class MapStorage
     {
         for (int i = 0; i < this.loadedDataList.size(); ++i)
         {
-            WorldSavedData worldsaveddata = (WorldSavedData)this.loadedDataList.get(i);
+            WorldSavedData worldsaveddata = this.loadedDataList.get(i);
 
             if (worldsaveddata.isDirty())
             {
@@ -187,15 +189,15 @@ public class MapStorage
      */
     public int getUniqueDataId(String key)
     {
-        Short oshort = (Short)this.idCounts.get(key);
+        Short oshort = this.idCounts.get(key);
 
         if (oshort == null)
         {
-            oshort = Short.valueOf((short)0);
+            oshort = 0;
         }
         else
         {
-            oshort = Short.valueOf((short)(oshort.shortValue() + 1));
+            oshort = (short)(oshort.shortValue() + 1);
         }
 
         this.idCounts.put(key, oshort);

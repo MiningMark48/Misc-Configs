@@ -9,8 +9,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelWitch extends ModelVillager
 {
     public boolean holdingItem;
-    private ModelRenderer mole = (new ModelRenderer(this)).setTextureSize(64, 128);
-    private ModelRenderer witchHat;
+    private final ModelRenderer mole = (new ModelRenderer(this)).setTextureSize(64, 128);
+    private final ModelRenderer witchHat;
 
     public ModelWitch(float scale)
     {
@@ -50,7 +50,9 @@ public class ModelWitch extends ModelVillager
     public void setRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, Entity entityIn)
     {
         super.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entityIn);
-        this.villagerNose.offsetX = this.villagerNose.offsetY = this.villagerNose.offsetZ = 0.0F;
+        this.villagerNose.offsetX = 0.0F;
+        this.villagerNose.offsetY = 0.0F;
+        this.villagerNose.offsetZ = 0.0F;
         float f = 0.01F * (float)(entityIn.getEntityId() % 10);
         this.villagerNose.rotateAngleX = MathHelper.sin((float)entityIn.ticksExisted * f) * 4.5F * 0.017453292F;
         this.villagerNose.rotateAngleY = 0.0F;

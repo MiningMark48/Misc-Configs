@@ -2,6 +2,7 @@ package net.minecraft.world.storage;
 
 import java.io.File;
 import java.util.List;
+import javax.annotation.Nullable;
 import net.minecraft.client.AnvilConverterException;
 import net.minecraft.util.IProgressUpdate;
 import net.minecraftforge.fml.relauncher.Side;
@@ -34,6 +35,7 @@ public interface ISaveFormat
     /**
      * Returns the world's WorldInfo object
      */
+    @Nullable
     @SideOnly(Side.CLIENT)
     WorldInfo getWorldInfo(String saveName);
 

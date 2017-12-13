@@ -4,11 +4,10 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.IInteractionObject;
 import net.minecraft.world.ILockableContainer;
 import net.minecraft.world.LockCode;
 
-public abstract class TileEntityLockable extends TileEntity implements IInteractionObject, ILockableContainer
+public abstract class TileEntityLockable extends TileEntity implements ILockableContainer
 {
     private LockCode code = LockCode.EMPTY_CODE;
 
@@ -62,7 +61,8 @@ public abstract class TileEntityLockable extends TileEntity implements IInteract
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, net.minecraft.util.EnumFacing facing)
+    @javax.annotation.Nullable
+    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @javax.annotation.Nullable net.minecraft.util.EnumFacing facing)
     {
         if (capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
             return (T) (itemHandler == null ? (itemHandler = createUnSidedHandler()) : itemHandler);
@@ -70,7 +70,7 @@ public abstract class TileEntityLockable extends TileEntity implements IInteract
     }
 
     @Override
-    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, net.minecraft.util.EnumFacing facing)
+    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @javax.annotation.Nullable net.minecraft.util.EnumFacing facing)
     {
         return capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
     }

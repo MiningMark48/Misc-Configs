@@ -13,6 +13,7 @@ import net.minecraft.init.Biomes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -22,8 +23,8 @@ public class StructureOceanMonument extends MapGenStructure
 {
     private int spacing;
     private int separation;
-    public static final List<Biome> WATER_BIOMES = Arrays.<Biome>asList(new Biome[] {Biomes.OCEAN, Biomes.DEEP_OCEAN, Biomes.RIVER, Biomes.FROZEN_OCEAN, Biomes.FROZEN_RIVER});
-    public static final List<Biome> SPAWN_BIOMES = Arrays.<Biome>asList(new Biome[] {Biomes.DEEP_OCEAN});
+    public static final List<Biome> WATER_BIOMES = Arrays.<Biome>asList(Biomes.OCEAN, Biomes.DEEP_OCEAN, Biomes.RIVER, Biomes.FROZEN_OCEAN, Biomes.FROZEN_RIVER);
+    public static final List<Biome> SPAWN_BIOMES = Arrays.<Biome>asList(Biomes.DEEP_OCEAN);
     private static final List<Biome.SpawnListEntry> MONUMENT_ENEMIES = Lists.<Biome.SpawnListEntry>newArrayList();
 
     public StructureOceanMonument()
@@ -40,11 +41,11 @@ public class StructureOceanMonument extends MapGenStructure
         {
             if (((String)entry.getKey()).equals("spacing"))
             {
-                this.spacing = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.spacing, 1);
+                this.spacing = MathHelper.getInt(entry.getValue(), this.spacing, 1);
             }
             else if (((String)entry.getKey()).equals("separation"))
             {
-                this.separation = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.separation, 1);
+                this.separation = MathHelper.getInt(entry.getValue(), this.separation, 1);
             }
         }
     }
@@ -71,7 +72,7 @@ public class StructureOceanMonument extends MapGenStructure
 
         int k = chunkX / this.spacing;
         int l = chunkZ / this.spacing;
-        Random random = this.worldObj.setRandomSeed(k, l, 10387313);
+        Random random = this.world.setRandomSeed(k, l, 10387313);
         k = k * this.spacing;
         l = l * this.spacing;
         k = k + (random.nextInt(this.spacing - this.separation) + random.nextInt(this.spacing - this.separation)) / 2;
@@ -79,12 +80,12 @@ public class StructureOceanMonument extends MapGenStructure
 
         if (i == k && j == l)
         {
-            if (!this.worldObj.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 16, SPAWN_BIOMES))
+            if (!this.world.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 16, SPAWN_BIOMES))
             {
                 return false;
             }
 
-            boolean flag = this.worldObj.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 29, WATER_BIOMES);
+            boolean flag = this.world.getBiomeProvider().areBiomesViable(i * 16 + 8, j * 16 + 8, 29, WATER_BIOMES);
 
             if (flag)
             {
@@ -95,12 +96,21 @@ public class StructureOceanMonument extends MapGenStructure
         return false;
     }
 
-    protected StructureStart getStructureStart(int chunkX, int chunkZ)
+    public BlockPos getNearestStructurePos(World worldIn, BlockPos pos, boolean findUnexplored)
     {
-        return new StructureOceanMonument.StartMonument(this.worldObj, this.rand, chunkX, chunkZ);
+        this.world = worldIn;
+        return findNearestStructurePosBySpacing(worldIn, this, pos, this.spacing, this.separation, 10387313, true, 100, findUnexplored);
     }
 
-    public List<Biome.SpawnListEntry> getScatteredFeatureSpawnList()
+    protected StructureStart getStructureStart(int chunkX, int chunkZ)
+    {
+        return new StructureOceanMonument.StartMonument(this.world, this.rand, chunkX, chunkZ);
+    }
+
+    /**
+     * Gets the scattered feature spawn list
+     */
+    public List<Biome.SpawnListEntry> getMonsters()
     {
         return MONUMENT_ENEMIES;
     }
@@ -112,7 +122,7 @@ public class StructureOceanMonument extends MapGenStructure
 
     public static class StartMonument extends StructureStart
         {
-            private Set<ChunkPos> processed = Sets.<ChunkPos>newHashSet();
+            private final Set<ChunkPos> processed = Sets.<ChunkPos>newHashSet();
             private boolean wasCreated;
 
             public StartMonument()
@@ -174,8 +184,8 @@ public class StructureOceanMonument extends MapGenStructure
                 for (ChunkPos chunkpos : this.processed)
                 {
                     NBTTagCompound nbttagcompound = new NBTTagCompound();
-                    nbttagcompound.setInteger("X", chunkpos.chunkXPos);
-                    nbttagcompound.setInteger("Z", chunkpos.chunkZPos);
+                    nbttagcompound.setInteger("X", chunkpos.x);
+                    nbttagcompound.setInteger("Z", chunkpos.z);
                     nbttaglist.appendTag(nbttagcompound);
                 }
 

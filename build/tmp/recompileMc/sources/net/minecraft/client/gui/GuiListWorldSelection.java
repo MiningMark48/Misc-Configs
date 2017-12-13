@@ -6,6 +6,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.client.AnvilConverterException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.world.storage.ISaveFormat;
 import net.minecraft.world.storage.WorldSummary;
 import net.minecraftforge.fml.relauncher.Side;
@@ -17,15 +18,15 @@ import org.apache.logging.log4j.Logger;
 public class GuiListWorldSelection extends GuiListExtended
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    private final GuiWorldSelection worldSelectionObj;
+    private final GuiWorldSelection worldSelection;
     private final List<GuiListWorldSelectionEntry> entries = Lists.<GuiListWorldSelectionEntry>newArrayList();
     /** Index to the currently selected world */
     private int selectedIdx = -1;
 
-    public GuiListWorldSelection(GuiWorldSelection p_i46590_1_, Minecraft clientIn, int p_i46590_3_, int p_i46590_4_, int p_i46590_5_, int p_i46590_6_, int p_i46590_7_)
+    public GuiListWorldSelection(GuiWorldSelection p_i46590_1_, Minecraft clientIn, int widthIn, int heightIn, int topIn, int bottomIn, int slotHeightIn)
     {
-        super(clientIn, p_i46590_3_, p_i46590_4_, p_i46590_5_, p_i46590_6_, p_i46590_7_);
-        this.worldSelectionObj = p_i46590_1_;
+        super(clientIn, widthIn, heightIn, topIn, bottomIn, slotHeightIn);
+        this.worldSelection = p_i46590_1_;
         this.refreshList();
     }
 
@@ -40,8 +41,8 @@ public class GuiListWorldSelection extends GuiListExtended
         }
         catch (AnvilConverterException anvilconverterexception)
         {
-            LOGGER.error((String)"Couldn\'t load level list", (Throwable)anvilconverterexception);
-            this.mc.displayGuiScreen(new GuiErrorScreen("Unable to load worlds", anvilconverterexception.getMessage()));
+            LOGGER.error("Couldn't load level list", (Throwable)anvilconverterexception);
+            this.mc.displayGuiScreen(new GuiErrorScreen(I18n.format("selectWorld.unable_to_load"), anvilconverterexception.getMessage()));
             return;
         }
 
@@ -58,7 +59,7 @@ public class GuiListWorldSelection extends GuiListExtended
      */
     public GuiListWorldSelectionEntry getListEntry(int index)
     {
-        return (GuiListWorldSelectionEntry)this.entries.get(index);
+        return this.entries.get(index);
     }
 
     protected int getSize()
@@ -82,7 +83,7 @@ public class GuiListWorldSelection extends GuiListExtended
     public void selectWorld(int idx)
     {
         this.selectedIdx = idx;
-        this.worldSelectionObj.selectWorld(this.getSelectedWorld());
+        this.worldSelection.selectWorld(this.getSelectedWorld());
     }
 
     /**
@@ -101,6 +102,6 @@ public class GuiListWorldSelection extends GuiListExtended
 
     public GuiWorldSelection getGuiWorldSelection()
     {
-        return this.worldSelectionObj;
+        return this.worldSelection;
     }
 }

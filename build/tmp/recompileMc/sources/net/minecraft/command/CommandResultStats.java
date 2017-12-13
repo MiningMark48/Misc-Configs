@@ -53,14 +53,14 @@ public class CommandResultStats
                 /**
                  * Send a chat message to the CommandSender
                  */
-                public void addChatMessage(ITextComponent component)
+                public void sendMessage(ITextComponent component)
                 {
-                    sender.addChatMessage(component);
+                    sender.sendMessage(component);
                 }
                 /**
                  * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
                  */
-                public boolean canCommandSenderUseCommand(int permLevel, String commandName)
+                public boolean canUseCommand(int permLevel, String commandName)
                 {
                     return true;
                 }
@@ -120,7 +120,7 @@ public class CommandResultStats
             {
                 s1 = CommandBase.getEntityName(server, icommandsender, s);
             }
-            catch (EntityNotFoundException var12)
+            catch (CommandException var12)
             {
                 return;
             }

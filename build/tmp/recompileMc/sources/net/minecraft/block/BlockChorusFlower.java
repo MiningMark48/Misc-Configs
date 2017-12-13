@@ -2,20 +2,24 @@ package net.minecraft.block;
 
 import java.util.Random;
 import javax.annotation.Nullable;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -26,7 +30,7 @@ public class BlockChorusFlower extends Block
 
     protected BlockChorusFlower()
     {
-        super(Material.PLANTS);
+        super(Material.PLANTS, MapColor.PURPLE);
         this.setDefaultState(this.blockState.getBaseState().withProperty(AGE, Integer.valueOf(0)));
         this.setCreativeTab(CreativeTabs.DECORATIONS);
         this.setTickRandomly(true);
@@ -35,10 +39,9 @@ public class BlockChorusFlower extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
     public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand)
@@ -55,11 +58,12 @@ public class BlockChorusFlower extends Block
             {
                 int i = ((Integer)state.getValue(AGE)).intValue();
 
-                if (i < 5 && rand.nextInt(1) == 0)
+                if (i < 5 &&  net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, blockpos, state, rand.nextInt(1) == 0))
                 {
                     boolean flag = false;
                     boolean flag1 = false;
-                    Block block = worldIn.getBlockState(pos.down()).getBlock();
+                    IBlockState iblockstate = worldIn.getBlockState(pos.down());
+                    Block block = iblockstate.getBlock();
 
                     if (block == Blocks.END_STONE)
                     {
@@ -98,7 +102,7 @@ public class BlockChorusFlower extends Block
                             flag = true;
                         }
                     }
-                    else if (block == Blocks.AIR)
+                    else if (iblockstate.getMaterial() == Material.AIR)
                     {
                         flag = true;
                     }
@@ -143,28 +147,29 @@ public class BlockChorusFlower extends Block
                     {
                         this.placeDeadFlower(worldIn, pos);
                     }
+                    net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state, worldIn.getBlockState(pos));
                 }
             }
         }
     }
 
-    private void placeGrownFlower(World p_185602_1_, BlockPos p_185602_2_, int p_185602_3_)
+    private void placeGrownFlower(World worldIn, BlockPos pos, int age)
     {
-        p_185602_1_.setBlockState(p_185602_2_, this.getDefaultState().withProperty(AGE, Integer.valueOf(p_185602_3_)), 2);
-        p_185602_1_.playEvent(1033, p_185602_2_, 0);
+        worldIn.setBlockState(pos, this.getDefaultState().withProperty(AGE, Integer.valueOf(age)), 2);
+        worldIn.playEvent(1033, pos, 0);
     }
 
-    private void placeDeadFlower(World p_185605_1_, BlockPos p_185605_2_)
+    private void placeDeadFlower(World worldIn, BlockPos pos)
     {
-        p_185605_1_.setBlockState(p_185605_2_, this.getDefaultState().withProperty(AGE, Integer.valueOf(5)), 2);
-        p_185605_1_.playEvent(1034, p_185605_2_, 0);
+        worldIn.setBlockState(pos, this.getDefaultState().withProperty(AGE, Integer.valueOf(5)), 2);
+        worldIn.playEvent(1034, pos, 0);
     }
 
-    private static boolean areAllNeighborsEmpty(World p_185604_0_, BlockPos p_185604_1_, EnumFacing p_185604_2_)
+    private static boolean areAllNeighborsEmpty(World worldIn, BlockPos pos, EnumFacing excludingSide)
     {
         for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
         {
-            if (enumfacing != p_185604_2_ && !p_185604_0_.isAirBlock(p_185604_1_.offset(enumfacing)))
+            if (enumfacing != excludingSide && !worldIn.isAirBlock(pos.offset(enumfacing)))
             {
                 return false;
             }
@@ -196,7 +201,7 @@ public class BlockChorusFlower extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (!this.canSurvive(worldIn, pos))
         {
@@ -206,23 +211,25 @@ public class BlockChorusFlower extends Block
 
     public boolean canSurvive(World worldIn, BlockPos pos)
     {
-        Block block = worldIn.getBlockState(pos.down()).getBlock();
+        IBlockState iblockstate = worldIn.getBlockState(pos.down());
+        Block block = iblockstate.getBlock();
 
         if (block != Blocks.CHORUS_PLANT && block != Blocks.END_STONE)
         {
-            if (block == Blocks.AIR)
+            if (iblockstate.getMaterial() == Material.AIR)
             {
                 int i = 0;
 
                 for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
                 {
-                    Block block1 = worldIn.getBlockState(pos.offset(enumfacing)).getBlock();
+                    IBlockState iblockstate1 = worldIn.getBlockState(pos.offset(enumfacing));
+                    Block block1 = iblockstate1.getBlock();
 
                     if (block1 == Blocks.CHORUS_PLANT)
                     {
                         ++i;
                     }
-                    else if (block1 != Blocks.AIR)
+                    else if (iblockstate1.getMaterial() != Material.AIR)
                     {
                         return false;
                     }
@@ -241,15 +248,19 @@ public class BlockChorusFlower extends Block
         }
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
         super.harvestBlock(worldIn, player, pos, state, te, stack);
         spawnAsEntity(worldIn, pos, new ItemStack(Item.getItemFromBlock(this)));
     }
 
-    protected ItemStack createStackedBlock(IBlockState state)
+    protected ItemStack getSilkTouchDrop(IBlockState state)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     @SideOnly(Side.CLIENT)
@@ -277,11 +288,6 @@ public class BlockChorusFlower extends Block
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {AGE});
-    }
-
-    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
-    {
-        super.onBlockAdded(worldIn, pos, state);
     }
 
     public static void generatePlant(World worldIn, BlockPos pos, Random rand, int p_185603_3_)
@@ -340,5 +346,19 @@ public class BlockChorusFlower extends Block
         {
             worldIn.setBlockState(p_185601_1_.up(i), Blocks.CHORUS_FLOWER.getDefaultState().withProperty(AGE, Integer.valueOf(5)), 2);
         }
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 }

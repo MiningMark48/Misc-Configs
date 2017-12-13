@@ -24,9 +24,9 @@ public class GuiUtilRenderComponents
         List<ITextComponent> list = Lists.<ITextComponent>newArrayList();
         List<ITextComponent> list1 = Lists.newArrayList(textComponent);
 
-        for (int j = 0; j < ((List)list1).size(); ++j)
+        for (int j = 0; j < list1.size(); ++j)
         {
-            ITextComponent itextcomponent1 = (ITextComponent)list1.get(j);
+            ITextComponent itextcomponent1 = list1.get(j);
             String s = itextcomponent1.getUnformattedComponentText();
             boolean flag = false;
 
@@ -35,17 +35,17 @@ public class GuiUtilRenderComponents
                 int k = s.indexOf(10);
                 String s1 = s.substring(k + 1);
                 s = s.substring(0, k + 1);
-                TextComponentString textcomponentstring = new TextComponentString(s1);
-                textcomponentstring.setStyle(itextcomponent1.getStyle().createShallowCopy());
-                list1.add(j + 1, textcomponentstring);
+                ITextComponent itextcomponent2 = new TextComponentString(s1);
+                itextcomponent2.setStyle(itextcomponent1.getStyle().createShallowCopy());
+                list1.add(j + 1, itextcomponent2);
                 flag = true;
             }
 
             String s4 = removeTextColorsIfConfigured(itextcomponent1.getStyle().getFormattingCode() + s, forceTextColor);
             String s5 = s4.endsWith("\n") ? s4.substring(0, s4.length() - 1) : s4;
             int i1 = fontRendererIn.getStringWidth(s5);
-            TextComponentString textcomponentstring1 = new TextComponentString(s5);
-            textcomponentstring1.setStyle(itextcomponent1.getStyle().createShallowCopy());
+            TextComponentString textcomponentstring = new TextComponentString(s5);
+            textcomponentstring.setStyle(itextcomponent1.getStyle().createShallowCopy());
 
             if (i + i1 > maxTextLenght)
             {
@@ -54,7 +54,7 @@ public class GuiUtilRenderComponents
 
                 if (s3 != null && !s3.isEmpty())
                 {
-                    int l = s2.lastIndexOf(" ");
+                    int l = s2.lastIndexOf(32);
 
                     if (l >= 0 && fontRendererIn.getStringWidth(s4.substring(0, l)) > 0)
                     {
@@ -74,21 +74,22 @@ public class GuiUtilRenderComponents
                     }
 
                     s3 = FontRenderer.getFormatFromString(s2) + s3; //Forge: Fix chat formatting not surviving line wrapping.
-                    TextComponentString textcomponentstring2 = new TextComponentString(s3);
-                    textcomponentstring2.setStyle(itextcomponent1.getStyle().createShallowCopy());
-                    list1.add(j + 1, textcomponentstring2);
+
+                    TextComponentString textcomponentstring1 = new TextComponentString(s3);
+                    textcomponentstring1.setStyle(itextcomponent1.getStyle().createShallowCopy());
+                    list1.add(j + 1, textcomponentstring1);
                 }
 
                 i1 = fontRendererIn.getStringWidth(s2);
-                textcomponentstring1 = new TextComponentString(s2);
-                textcomponentstring1.setStyle(itextcomponent1.getStyle().createShallowCopy());
+                textcomponentstring = new TextComponentString(s2);
+                textcomponentstring.setStyle(itextcomponent1.getStyle().createShallowCopy());
                 flag = true;
             }
 
             if (i + i1 <= maxTextLenght)
             {
                 i += i1;
-                itextcomponent.appendSibling(textcomponentstring1);
+                itextcomponent.appendSibling(textcomponentstring);
             }
             else
             {

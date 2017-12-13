@@ -27,7 +27,7 @@ public class ItemArmorStand extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (facing == EnumFacing.DOWN)
         {
@@ -37,8 +37,9 @@ public class ItemArmorStand extends Item
         {
             boolean flag = worldIn.getBlockState(pos).getBlock().isReplaceable(worldIn, pos);
             BlockPos blockpos = flag ? pos : pos.offset(facing);
+            ItemStack itemstack = player.getHeldItem(hand);
 
-            if (!playerIn.canPlayerEdit(blockpos, facing, stack))
+            if (!player.canPlayerEdit(blockpos, facing, itemstack))
             {
                 return EnumActionResult.FAIL;
             }
@@ -70,15 +71,15 @@ public class ItemArmorStand extends Item
                             worldIn.setBlockToAir(blockpos);
                             worldIn.setBlockToAir(blockpos1);
                             EntityArmorStand entityarmorstand = new EntityArmorStand(worldIn, d0 + 0.5D, d1, d2 + 0.5D);
-                            float f = (float)MathHelper.floor_float((MathHelper.wrapDegrees(playerIn.rotationYaw - 180.0F) + 22.5F) / 45.0F) * 45.0F;
+                            float f = (float)MathHelper.floor((MathHelper.wrapDegrees(player.rotationYaw - 180.0F) + 22.5F) / 45.0F) * 45.0F;
                             entityarmorstand.setLocationAndAngles(d0 + 0.5D, d1, d2 + 0.5D, f, 0.0F);
                             this.applyRandomRotations(entityarmorstand, worldIn.rand);
-                            ItemMonsterPlacer.applyItemEntityDataToEntity(worldIn, playerIn, stack, entityarmorstand);
-                            worldIn.spawnEntityInWorld(entityarmorstand);
+                            ItemMonsterPlacer.applyItemEntityDataToEntity(worldIn, player, itemstack, entityarmorstand);
+                            worldIn.spawnEntity(entityarmorstand);
                             worldIn.playSound((EntityPlayer)null, entityarmorstand.posX, entityarmorstand.posY, entityarmorstand.posZ, SoundEvents.ENTITY_ARMORSTAND_PLACE, SoundCategory.BLOCKS, 0.75F, 0.8F);
                         }
 
-                        --stack.stackSize;
+                        itemstack.shrink(1);
                         return EnumActionResult.SUCCESS;
                     }
                 }

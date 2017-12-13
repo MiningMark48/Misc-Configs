@@ -13,14 +13,19 @@ import net.minecraft.util.text.TextFormatting;
 
 public class Scoreboard
 {
+    /** Map of objective names to ScoreObjective objects. */
     private final Map<String, ScoreObjective> scoreObjectives = Maps.<String, ScoreObjective>newHashMap();
+    /** Map of IScoreObjectiveCriteria objects to ScoreObjective objects. */
     private final Map<IScoreCriteria, List<ScoreObjective>> scoreObjectiveCriterias = Maps.<IScoreCriteria, List<ScoreObjective>>newHashMap();
+    /** Map of entities name to ScoreObjective objects. */
     private final Map<String, Map<ScoreObjective, Score>> entitiesScoreObjectives = Maps.<String, Map<ScoreObjective, Score>>newHashMap();
     /** Index 0 is tab menu, 1 is sidebar, and 2 is below name */
     private final ScoreObjective[] objectiveDisplaySlots = new ScoreObjective[19];
+    /** Map of teamnames to ScorePlayerTeam instances */
     private final Map<String, ScorePlayerTeam> teams = Maps.<String, ScorePlayerTeam>newHashMap();
+    /** Map of usernames to ScorePlayerTeam objects. */
     private final Map<String, ScorePlayerTeam> teamMemberships = Maps.<String, ScorePlayerTeam>newHashMap();
-    private static String[] displaySlots = null;
+    private static String[] displaySlots;
 
     /**
      * Returns a ScoreObjective for the objective name
@@ -28,7 +33,7 @@ public class Scoreboard
     @Nullable
     public ScoreObjective getObjective(String name)
     {
-        return (ScoreObjective)this.scoreObjectives.get(name);
+        return this.scoreObjectives.get(name);
     }
 
     /**
@@ -38,7 +43,7 @@ public class Scoreboard
     {
         if (name.length() > 16)
         {
-            throw new IllegalArgumentException("The objective name \'" + name + "\' is too long!");
+            throw new IllegalArgumentException("The objective name '" + name + "' is too long!");
         }
         else
         {
@@ -46,7 +51,7 @@ public class Scoreboard
 
             if (scoreobjective != null)
             {
-                throw new IllegalArgumentException("An objective with the name \'" + name + "\' already exists!");
+                throw new IllegalArgumentException("An objective with the name '" + name + "' already exists!");
             }
             else
             {
@@ -67,10 +72,13 @@ public class Scoreboard
         }
     }
 
+    /**
+     * Returns all the objectives for the given criteria
+     */
     public Collection<ScoreObjective> getObjectivesFromCriteria(IScoreCriteria criteria)
     {
         Collection<ScoreObjective> collection = (Collection)this.scoreObjectiveCriterias.get(criteria);
-        return collection == null ? Lists.<ScoreObjective>newArrayList() : Lists.newArrayList(collection);
+        return collection == null ? Lists.newArrayList() : Lists.newArrayList(collection);
     }
 
     /**
@@ -86,7 +94,7 @@ public class Scoreboard
         }
         else
         {
-            Score score = (Score)map.get(objective);
+            Score score = map.get(objective);
             return score != null;
         }
     }
@@ -98,7 +106,7 @@ public class Scoreboard
     {
         if (username.length() > 40)
         {
-            throw new IllegalArgumentException("The player name \'" + username + "\' is too long!");
+            throw new IllegalArgumentException("The player name '" + username + "' is too long!");
         }
         else
         {
@@ -110,7 +118,7 @@ public class Scoreboard
                 this.entitiesScoreObjectives.put(username, map);
             }
 
-            Score score = (Score)map.get(objective);
+            Score score = map.get(objective);
 
             if (score == null)
             {
@@ -122,13 +130,16 @@ public class Scoreboard
         }
     }
 
+    /**
+     * Returns an array of Score objects, sorting by Score.getScorePoints()
+     */
     public Collection<Score> getSortedScores(ScoreObjective objective)
     {
         List<Score> list = Lists.<Score>newArrayList();
 
         for (Map<ScoreObjective, Score> map : this.entitiesScoreObjectives.values())
         {
-            Score score = (Score)map.get(objective);
+            Score score = map.get(objective);
 
             if (score != null)
             {
@@ -170,7 +181,7 @@ public class Scoreboard
 
             if (map2 != null)
             {
-                Score score = (Score)map2.remove(objective);
+                Score score = map2.remove(objective);
 
                 if (map2.size() < 1)
                 {
@@ -202,6 +213,9 @@ public class Scoreboard
         return list;
     }
 
+    /**
+     * Returns all the objectives for the given entity
+     */
     public Map<ScoreObjective, Score> getObjectivesForEntity(String name)
     {
         Map<ScoreObjective, Score> map = (Map)this.entitiesScoreObjectives.get(name);
@@ -263,14 +277,14 @@ public class Scoreboard
      */
     public ScorePlayerTeam getTeam(String teamName)
     {
-        return (ScorePlayerTeam)this.teams.get(teamName);
+        return this.teams.get(teamName);
     }
 
     public ScorePlayerTeam createTeam(String name)
     {
         if (name.length() > 16)
         {
-            throw new IllegalArgumentException("The team name \'" + name + "\' is too long!");
+            throw new IllegalArgumentException("The team name '" + name + "' is too long!");
         }
         else
         {
@@ -278,7 +292,7 @@ public class Scoreboard
 
             if (scoreplayerteam != null)
             {
-                throw new IllegalArgumentException("A team with the name \'" + name + "\' already exists!");
+                throw new IllegalArgumentException("A team with the name '" + name + "' already exists!");
             }
             else
             {
@@ -295,7 +309,7 @@ public class Scoreboard
      */
     public void removeTeam(ScorePlayerTeam playerTeam)
     {
-        this.teams.remove(playerTeam.getRegisteredName());
+        this.teams.remove(playerTeam.getName());
 
         for (String s : playerTeam.getMembershipCollection())
         {
@@ -312,7 +326,7 @@ public class Scoreboard
     {
         if (player.length() > 40)
         {
-            throw new IllegalArgumentException("The player name \'" + player + "\' is too long!");
+            throw new IllegalArgumentException("The player name '" + player + "' is too long!");
         }
         else if (!this.teams.containsKey(newTeam))
         {
@@ -356,7 +370,7 @@ public class Scoreboard
     {
         if (this.getPlayersTeam(username) != playerTeam)
         {
-            throw new IllegalStateException("Player is either on another team or not on any team. Cannot remove from team \'" + playerTeam.getRegisteredName() + "\'.");
+            throw new IllegalStateException("Player is either on another team or not on any team. Cannot remove from team '" + playerTeam.getName() + "'.");
         }
         else
         {
@@ -365,11 +379,17 @@ public class Scoreboard
         }
     }
 
+    /**
+     * Retrieve all registered ScorePlayerTeam names
+     */
     public Collection<String> getTeamNames()
     {
         return this.teams.keySet();
     }
 
+    /**
+     * Retrieve all registered ScorePlayerTeam instances
+     */
     public Collection<ScorePlayerTeam> getTeams()
     {
         return this.teams.values();
@@ -381,7 +401,7 @@ public class Scoreboard
     @Nullable
     public ScorePlayerTeam getPlayersTeam(String username)
     {
-        return (ScorePlayerTeam)this.teamMemberships.get(username);
+        return this.teamMemberships.get(username);
     }
 
     /**
@@ -463,15 +483,15 @@ public class Scoreboard
      */
     public static int getObjectiveDisplaySlotNumber(String name)
     {
-        if (name.equalsIgnoreCase("list"))
+        if ("list".equalsIgnoreCase(name))
         {
             return 0;
         }
-        else if (name.equalsIgnoreCase("sidebar"))
+        else if ("sidebar".equalsIgnoreCase(name))
         {
             return 1;
         }
-        else if (name.equalsIgnoreCase("belowName"))
+        else if ("belowName".equalsIgnoreCase(name))
         {
             return 2;
         }

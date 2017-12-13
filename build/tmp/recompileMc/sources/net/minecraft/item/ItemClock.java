@@ -29,7 +29,7 @@ public class ItemClock extends Item
 
                 if (worldIn == null && entity != null)
                 {
-                    worldIn = entity.worldObj;
+                    worldIn = entity.world;
                 }
 
                 if (worldIn == null)
@@ -50,7 +50,7 @@ public class ItemClock extends Item
                     }
 
                     d0 = this.wobble(worldIn, d0);
-                    return MathHelper.positiveModulo((float)d0, 1.0F);
+                    return (float)d0;
                 }
             }
             @SideOnly(Side.CLIENT)
@@ -60,15 +60,10 @@ public class ItemClock extends Item
                 {
                     this.lastUpdateTick = p_185087_1_.getTotalWorldTime();
                     double d0 = p_185087_2_ - this.rotation;
-
-                    if (d0 < -0.5D)
-                    {
-                        ++d0;
-                    }
-
+                    d0 = MathHelper.positiveModulo(d0 + 0.5D, 1.0D) - 0.5D;
                     this.rota += d0 * 0.1D;
                     this.rota *= 0.9D;
-                    this.rotation += this.rota;
+                    this.rotation = MathHelper.positiveModulo(this.rotation + this.rota, 1.0D);
                 }
 
                 return this.rotation;

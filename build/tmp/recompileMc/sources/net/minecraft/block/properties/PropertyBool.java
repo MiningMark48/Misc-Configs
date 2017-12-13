@@ -3,8 +3,6 @@ package net.minecraft.block.properties;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PropertyBool extends PropertyHelper<Boolean>
 {
@@ -25,18 +23,17 @@ public class PropertyBool extends PropertyHelper<Boolean>
         return new PropertyBool(name);
     }
 
+    public Optional<Boolean> parseValue(String value)
+    {
+        return !"true".equals(value) && !"false".equals(value) ? Optional.absent() : Optional.of(Boolean.valueOf(value));
+    }
+
     /**
      * Get the name for the given value.
      */
     public String getName(Boolean value)
     {
         return value.toString();
-    }
-
-    @SideOnly(Side.CLIENT)
-    public Optional<Boolean> parseValue(String value)
-    {
-        return !"true".equals(value) && !"false".equals(value) ? Optional.<Boolean>absent() : Optional.of(Boolean.valueOf(value));
     }
 
     public boolean equals(Object p_equals_1_)

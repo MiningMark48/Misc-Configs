@@ -3,6 +3,8 @@ package net.minecraft.inventory;
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -10,7 +12,8 @@ import net.minecraft.util.text.TextComponentTranslation;
 public class InventoryCraftResult implements IInventory
 {
     /** A list of one item containing the result of the crafting formula */
-    private ItemStack[] stackResult = new ItemStack[1];
+    private final NonNullList<ItemStack> stackResult = NonNullList.<ItemStack>withSize(1, ItemStack.EMPTY);
+    private IRecipe recipeUsed;
 
     /**
      * Returns the number of slots in the inventory.
@@ -20,13 +23,25 @@ public class InventoryCraftResult implements IInventory
         return 1;
     }
 
+    public boolean isEmpty()
+    {
+        for (ItemStack itemstack : this.stackResult)
+        {
+            if (!itemstack.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * Returns the stack in the given slot.
      */
-    @Nullable
     public ItemStack getStackInSlot(int index)
     {
-        return this.stackResult[0];
+        return this.stackResult.get(0);
     }
 
     /**
@@ -56,7 +71,6 @@ public class InventoryCraftResult implements IInventory
     /**
      * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
      */
-    @Nullable
     public ItemStack decrStackSize(int index, int count)
     {
         return ItemStackHelper.getAndRemove(this.stackResult, 0);
@@ -65,7 +79,6 @@ public class InventoryCraftResult implements IInventory
     /**
      * Removes a stack from the given slot and returns it.
      */
-    @Nullable
     public ItemStack removeStackFromSlot(int index)
     {
         return ItemStackHelper.getAndRemove(this.stackResult, 0);
@@ -74,9 +87,9 @@ public class InventoryCraftResult implements IInventory
     /**
      * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
      */
-    public void setInventorySlotContents(int index, @Nullable ItemStack stack)
+    public void setInventorySlotContents(int index, ItemStack stack)
     {
-        this.stackResult[0] = stack;
+        this.stackResult.set(0, stack);
     }
 
     /**
@@ -96,9 +109,9 @@ public class InventoryCraftResult implements IInventory
     }
 
     /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
+     * Don't rename this method to canInteractWith due to conflicts with Container
      */
-    public boolean isUseableByPlayer(EntityPlayer player)
+    public boolean isUsableByPlayer(EntityPlayer player)
     {
         return true;
     }
@@ -112,7 +125,8 @@ public class InventoryCraftResult implements IInventory
     }
 
     /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
@@ -135,9 +149,17 @@ public class InventoryCraftResult implements IInventory
 
     public void clear()
     {
-        for (int i = 0; i < this.stackResult.length; ++i)
-        {
-            this.stackResult[i] = null;
-        }
+        this.stackResult.clear();
+    }
+
+    public void setRecipeUsed(@Nullable IRecipe p_193056_1_)
+    {
+        this.recipeUsed = p_193056_1_;
+    }
+
+    @Nullable
+    public IRecipe getRecipeUsed()
+    {
+        return this.recipeUsed;
     }
 }

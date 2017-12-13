@@ -4,6 +4,7 @@ import java.io.IOException;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
+import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -11,7 +12,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class SPacketChat implements Packet<INetHandlerPlayClient>
 {
     private ITextComponent chatComponent;
-    private byte type;
+    private ChatType type;
 
     public SPacketChat()
     {
@@ -19,13 +20,13 @@ public class SPacketChat implements Packet<INetHandlerPlayClient>
 
     public SPacketChat(ITextComponent componentIn)
     {
-        this(componentIn, (byte)1);
+        this(componentIn, ChatType.SYSTEM);
     }
 
-    public SPacketChat(ITextComponent componentIn, byte typeIn)
+    public SPacketChat(ITextComponent message, ChatType type)
     {
-        this.chatComponent = componentIn;
-        this.type = typeIn;
+        this.chatComponent = message;
+        this.type = type;
     }
 
     /**
@@ -34,7 +35,7 @@ public class SPacketChat implements Packet<INetHandlerPlayClient>
     public void readPacketData(PacketBuffer buf) throws IOException
     {
         this.chatComponent = buf.readTextComponent();
-        this.type = buf.readByte();
+        this.type = ChatType.byId(buf.readByte());
     }
 
     /**
@@ -43,7 +44,7 @@ public class SPacketChat implements Packet<INetHandlerPlayClient>
     public void writePacketData(PacketBuffer buf) throws IOException
     {
         buf.writeTextComponent(this.chatComponent);
-        buf.writeByte(this.type);
+        buf.writeByte(this.type.getId());
     }
 
     /**
@@ -65,15 +66,10 @@ public class SPacketChat implements Packet<INetHandlerPlayClient>
      */
     public boolean isSystem()
     {
-        return this.type == 1 || this.type == 2;
+        return this.type == ChatType.SYSTEM || this.type == ChatType.GAME_INFO;
     }
 
-    /**
-     * Returns the id of the area to display the text, 2 for above the action bar, anything else currently for the chat
-     * window
-     */
-    @SideOnly(Side.CLIENT)
-    public byte getType()
+    public ChatType getType()
     {
         return this.type;
     }

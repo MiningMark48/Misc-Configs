@@ -1,17 +1,15 @@
 package net.minecraft.item.crafting;
 
-import javax.annotation.Nullable;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.PotionUtils;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class RecipeTippedArrow implements IRecipe
+public class RecipeTippedArrow extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
 {
-    private static final ItemStack[] EMPTY_ITEMS = new ItemStack[9];
-
     /**
      * Used to check if a recipe matches current crafting inventory
      */
@@ -25,7 +23,7 @@ public class RecipeTippedArrow implements IRecipe
                 {
                     ItemStack itemstack = inv.getStackInRowAndColumn(i, j);
 
-                    if (itemstack == null)
+                    if (itemstack.isEmpty())
                     {
                         return false;
                     }
@@ -57,40 +55,43 @@ public class RecipeTippedArrow implements IRecipe
     /**
      * Returns an Item that is the result of this recipe
      */
-    @Nullable
     public ItemStack getCraftingResult(InventoryCrafting inv)
     {
         ItemStack itemstack = inv.getStackInRowAndColumn(1, 1);
 
-        if (itemstack != null && itemstack.getItem() == Items.LINGERING_POTION)
+        if (itemstack.getItem() != Items.LINGERING_POTION)
+        {
+            return ItemStack.EMPTY;
+        }
+        else
         {
             ItemStack itemstack1 = new ItemStack(Items.TIPPED_ARROW, 8);
             PotionUtils.addPotionToItemStack(itemstack1, PotionUtils.getPotionFromItem(itemstack));
             PotionUtils.appendEffects(itemstack1, PotionUtils.getFullEffectsFromItem(itemstack));
             return itemstack1;
         }
-        else
-        {
-            return null;
-        }
+    }
+
+    public ItemStack getRecipeOutput()
+    {
+        return ItemStack.EMPTY;
+    }
+
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv)
+    {
+        return NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+    }
+
+    public boolean isDynamic()
+    {
+        return true;
     }
 
     /**
-     * Returns the size of the recipe area
+     * Used to determine if this recipe can fit in a grid of the given width/height
      */
-    public int getRecipeSize()
+    public boolean canFit(int width, int height)
     {
-        return 9;
-    }
-
-    @Nullable
-    public ItemStack getRecipeOutput()
-    {
-        return null;
-    }
-
-    public ItemStack[] getRemainingItems(InventoryCrafting inv)
-    {
-        return EMPTY_ITEMS;
+        return width >= 2 && height >= 2;
     }
 }

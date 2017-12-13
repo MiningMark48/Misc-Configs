@@ -10,7 +10,7 @@ public class PhaseChargingPlayer extends PhaseBase
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private Vec3d targetLocation;
-    private int timeSinceCharge = 0;
+    private int timeSinceCharge;
 
     public PhaseChargingPlayer(EntityDragon dragonIn)
     {
@@ -36,7 +36,7 @@ public class PhaseChargingPlayer extends PhaseBase
         {
             double d0 = this.targetLocation.squareDistanceTo(this.dragon.posX, this.dragon.posY, this.dragon.posZ);
 
-            if (d0 < 100.0D || d0 > 22500.0D || this.dragon.isCollidedHorizontally || this.dragon.isCollidedVertically)
+            if (d0 < 100.0D || d0 > 22500.0D || this.dragon.collidedHorizontally || this.dragon.collidedVertically)
             {
                 ++this.timeSinceCharge;
             }
@@ -74,7 +74,7 @@ public class PhaseChargingPlayer extends PhaseBase
         return this.targetLocation;
     }
 
-    public PhaseList<PhaseChargingPlayer> getPhaseList()
+    public PhaseList<PhaseChargingPlayer> getType()
     {
         return PhaseList.CHARGING_PLAYER;
     }

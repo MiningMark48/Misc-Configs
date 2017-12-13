@@ -29,7 +29,7 @@ public class LayerArrow implements LayerRenderer<EntityLivingBase>
 
         if (i > 0)
         {
-            Entity entity = new EntityTippedArrow(entitylivingbaseIn.worldObj, entitylivingbaseIn.posX, entitylivingbaseIn.posY, entitylivingbaseIn.posZ);
+            Entity entity = new EntityTippedArrow(entitylivingbaseIn.world, entitylivingbaseIn.posX, entitylivingbaseIn.posY, entitylivingbaseIn.posZ);
             Random random = new Random((long)entitylivingbaseIn.getEntityId());
             RenderHelper.disableStandardItemLighting();
 
@@ -37,7 +37,7 @@ public class LayerArrow implements LayerRenderer<EntityLivingBase>
             {
                 GlStateManager.pushMatrix();
                 ModelRenderer modelrenderer = this.renderer.getMainModel().getRandomModelBox(random);
-                ModelBox modelbox = (ModelBox)modelrenderer.cubeList.get(random.nextInt(modelrenderer.cubeList.size()));
+                ModelBox modelbox = modelrenderer.cubeList.get(random.nextInt(modelrenderer.cubeList.size()));
                 modelrenderer.postRender(0.0625F);
                 float f = random.nextFloat();
                 float f1 = random.nextFloat();
@@ -52,13 +52,15 @@ public class LayerArrow implements LayerRenderer<EntityLivingBase>
                 f = f * -1.0F;
                 f1 = f1 * -1.0F;
                 f2 = f2 * -1.0F;
-                float f6 = MathHelper.sqrt_float(f * f + f2 * f2);
-                entity.prevRotationYaw = entity.rotationYaw = (float)(Math.atan2((double)f, (double)f2) * (180D / Math.PI));
-                entity.prevRotationPitch = entity.rotationPitch = (float)(Math.atan2((double)f1, (double)f6) * (180D / Math.PI));
+                float f6 = MathHelper.sqrt(f * f + f2 * f2);
+                entity.rotationYaw = (float)(Math.atan2((double)f, (double)f2) * (180D / Math.PI));
+                entity.rotationPitch = (float)(Math.atan2((double)f1, (double)f6) * (180D / Math.PI));
+                entity.prevRotationYaw = entity.rotationYaw;
+                entity.prevRotationPitch = entity.rotationPitch;
                 double d0 = 0.0D;
                 double d1 = 0.0D;
                 double d2 = 0.0D;
-                this.renderer.getRenderManager().doRenderEntity(entity, d0, d1, d2, 0.0F, partialTicks, false);
+                this.renderer.getRenderManager().renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks, false);
                 GlStateManager.popMatrix();
             }
 

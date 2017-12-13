@@ -1,19 +1,24 @@
 package net.minecraft.entity.item;
 
 import io.netty.buffer.ByteBuf;
-import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.CommandBlockBaseLogic;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityCommandBlock;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.IDataFixer;
+import net.minecraft.util.datafix.IDataWalker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
@@ -42,7 +47,7 @@ public class EntityMinecartCommandBlock extends EntityMinecart
             return 1;
         }
         /**
-         * Fills in information about the command block for the packet. X/Y/Z for the minecart version, and entityId for
+         * Fills in information about the command block for the packet. entityId for the minecart version, and X/Y/Z for
          * the traditional version
          */
         @SideOnly(Side.CLIENT)
@@ -72,7 +77,7 @@ public class EntityMinecartCommandBlock extends EntityMinecart
          */
         public World getEntityWorld()
         {
-            return EntityMinecartCommandBlock.this.worldObj;
+            return EntityMinecartCommandBlock.this.world;
         }
         /**
          * Returns the entity associated with the command sender. MAY BE NULL!
@@ -86,11 +91,11 @@ public class EntityMinecartCommandBlock extends EntityMinecart
          */
         public MinecraftServer getServer()
         {
-            return EntityMinecartCommandBlock.this.worldObj.getMinecraftServer();
+            return EntityMinecartCommandBlock.this.world.getMinecraftServer();
         }
     };
     /** Cooldown before command block logic runs again in ticks */
-    private int activatorRailCooldown = 0;
+    private int activatorRailCooldown;
 
     public EntityMinecartCommandBlock(World worldIn)
     {
@@ -100,6 +105,25 @@ public class EntityMinecartCommandBlock extends EntityMinecart
     public EntityMinecartCommandBlock(World worldIn, double x, double y, double z)
     {
         super(worldIn, x, y, z);
+    }
+
+    public static void registerFixesMinecartCommand(DataFixer fixer)
+    {
+        EntityMinecart.registerFixesMinecart(fixer, EntityMinecartCommandBlock.class);
+        fixer.registerWalker(FixTypes.ENTITY, new IDataWalker()
+        {
+            public NBTTagCompound process(IDataFixer fixer, NBTTagCompound compound, int versionIn)
+            {
+                if (TileEntity.getKey(TileEntityCommandBlock.class).equals(new ResourceLocation(compound.getString("id"))))
+                {
+                    compound.setString("id", "Control");
+                    fixer.process(FixTypes.BLOCK_ENTITY, compound, versionIn);
+                    compound.setString("id", "MinecartCommandBlock");
+                }
+
+                return compound;
+            }
+        });
     }
 
     protected void entityInit()
@@ -151,14 +175,14 @@ public class EntityMinecartCommandBlock extends EntityMinecart
     {
         if (receivingPower && this.ticksExisted - this.activatorRailCooldown >= 4)
         {
-            this.getCommandBlockLogic().trigger(this.worldObj);
+            this.getCommandBlockLogic().trigger(this.world);
             this.activatorRailCooldown = this.ticksExisted;
         }
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
     {
-        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, stack, hand))) return true;
+        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, hand))) return true;
         this.commandBlockLogic.tryOpenEditCommandBlock(player);
         return false;
     }

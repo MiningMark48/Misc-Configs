@@ -32,7 +32,7 @@ public class RenderTNTPrimed extends Render<EntityTNTPrimed>
         if ((float)entity.getFuse() - partialTicks + 1.0F < 10.0F)
         {
             float f = 1.0F - ((float)entity.getFuse() - partialTicks + 1.0F) / 10.0F;
-            f = MathHelper.clamp_float(f, 0.0F, 1.0F);
+            f = MathHelper.clamp(f, 0.0F, 1.0F);
             f = f * f;
             f = f * f;
             float f1 = 1.0F + f * 0.3F;
@@ -43,7 +43,7 @@ public class RenderTNTPrimed extends Render<EntityTNTPrimed>
         this.bindEntityTexture(entity);
         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.translate(-0.5F, -0.5F, 0.5F);
-        blockrendererdispatcher.renderBlockBrightness(Blocks.TNT.getDefaultState(), entity.getBrightness(partialTicks));
+        blockrendererdispatcher.renderBlockBrightness(Blocks.TNT.getDefaultState(), entity.getBrightness());
         GlStateManager.translate(0.0F, 0.0F, 1.0F);
 
         if (this.renderOutlines)

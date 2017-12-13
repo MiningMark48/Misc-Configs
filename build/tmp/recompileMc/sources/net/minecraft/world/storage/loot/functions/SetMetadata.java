@@ -26,13 +26,13 @@ public class SetMetadata extends LootFunction
 
     public ItemStack apply(ItemStack stack, Random rand, LootContext context)
     {
-        if (!stack.isItemStackDamageable())
+        if (stack.isItemStackDamageable())
         {
-            stack.setItemDamage(this.metaRange.generateInt(rand));
+            LOGGER.warn("Couldn't set data of loot item {}", (Object)stack);
         }
         else
         {
-            LOGGER.warn("Couldn\'t set data of loot item " + stack);
+            stack.setItemDamage(this.metaRange.generateInt(rand));
         }
 
         return stack;

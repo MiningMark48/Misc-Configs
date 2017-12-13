@@ -15,16 +15,16 @@ public class EntityAIEatGrass extends EntityAIBase
 {
     private static final Predicate<IBlockState> IS_TALL_GRASS = BlockStateMatcher.forBlock(Blocks.TALLGRASS).where(BlockTallGrass.TYPE, Predicates.equalTo(BlockTallGrass.EnumType.GRASS));
     /** The entity owner of this AITask */
-    private EntityLiving grassEaterEntity;
+    private final EntityLiving grassEaterEntity;
     /** The world the grass eater entity is eating from */
-    private World entityWorld;
+    private final World entityWorld;
     /** Number of ticks since the entity started to eat grass */
     int eatingGrassTimer;
 
     public EntityAIEatGrass(EntityLiving grassEaterEntityIn)
     {
         this.grassEaterEntity = grassEaterEntityIn;
-        this.entityWorld = grassEaterEntityIn.worldObj;
+        this.entityWorld = grassEaterEntityIn.world;
         this.setMutexBits(7);
     }
 
@@ -40,7 +40,15 @@ public class EntityAIEatGrass extends EntityAIBase
         else
         {
             BlockPos blockpos = new BlockPos(this.grassEaterEntity.posX, this.grassEaterEntity.posY, this.grassEaterEntity.posZ);
-            return IS_TALL_GRASS.apply(this.entityWorld.getBlockState(blockpos)) ? true : this.entityWorld.getBlockState(blockpos.down()).getBlock() == Blocks.GRASS;
+
+            if (IS_TALL_GRASS.apply(this.entityWorld.getBlockState(blockpos)))
+            {
+                return true;
+            }
+            else
+            {
+                return this.entityWorld.getBlockState(blockpos.down()).getBlock() == Blocks.GRASS;
+            }
         }
     }
 
@@ -51,11 +59,11 @@ public class EntityAIEatGrass extends EntityAIBase
     {
         this.eatingGrassTimer = 40;
         this.entityWorld.setEntityState(this.grassEaterEntity, (byte)10);
-        this.grassEaterEntity.getNavigator().clearPathEntity();
+        this.grassEaterEntity.getNavigator().clearPath();
     }
 
     /**
-     * Resets the task
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     public void resetTask()
     {
@@ -65,7 +73,7 @@ public class EntityAIEatGrass extends EntityAIBase
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
         return this.eatingGrassTimer > 0;
     }
@@ -79,7 +87,7 @@ public class EntityAIEatGrass extends EntityAIBase
     }
 
     /**
-     * Updates the task
+     * Keep ticking a continuous task that has already been started
      */
     public void updateTask()
     {

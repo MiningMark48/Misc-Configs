@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.pipeline;
 
 import javax.vecmath.Vector3f;
@@ -5,6 +24,7 @@ import javax.vecmath.Vector3f;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.EnumFacing;
@@ -15,6 +35,8 @@ import com.google.common.base.Objects;
 
 public class VertexLighterFlat extends QuadGatheringTransformer
 {
+    protected static final VertexFormatElement NORMAL_4F = new VertexFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.NORMAL, 4);
+
     protected final BlockInfo blockInfo;
     private int tint = -1;
     private boolean diffuse = true;
@@ -33,8 +55,9 @@ public class VertexLighterFlat extends QuadGatheringTransformer
     public void setParent(IVertexConsumer parent)
     {
         super.setParent(parent);
-        if(Objects.equal(getVertexFormat(), parent.getVertexFormat())) return;
-        setVertexFormat(getVertexFormat(parent));
+        VertexFormat format = getVertexFormat(parent);
+        if(Objects.equal(format, getVertexFormat())) return;
+        setVertexFormat(format);
         for(int i = 0; i < getVertexFormat().getElementCount(); i++)
         {
             switch(getVertexFormat().getElement(i).getUsage())
@@ -74,9 +97,9 @@ public class VertexLighterFlat extends QuadGatheringTransformer
     private static VertexFormat getVertexFormat(IVertexConsumer parent)
     {
         VertexFormat format = parent.getVertexFormat();
-        if(format.hasNormal()) return format;
+        if(format == null || format.hasNormal()) return format;
         format = new VertexFormat(format);
-        format.addElement(new VertexFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.NORMAL, 4));
+        format.addElement(NORMAL_4F);
         return format;
     }
 
@@ -88,10 +111,10 @@ public class VertexLighterFlat extends QuadGatheringTransformer
         float[][] lightmap = quadData[lightmapIndex];
         float[][] color = quadData[colorIndex];
 
-        if(normalIndex != -1 && (
-            quadData[normalIndex][0][0] != -1 ||
-            quadData[normalIndex][0][1] != -1 ||
-            quadData[normalIndex][0][2] != -1))
+        // If all three normal values are either -1 or 0, normals must be generated
+        if(quadData[normalIndex][0][0] != quadData[normalIndex][0][1] ||
+            quadData[normalIndex][0][1] != quadData[normalIndex][0][2] ||
+           (quadData[normalIndex][0][0] != -1 && quadData[normalIndex][0][0] != 0))
         {
             normal = quadData[normalIndex];
         }
@@ -208,20 +231,21 @@ public class VertexLighterFlat extends QuadGatheringTransformer
 
     protected void updateLightmap(float[] normal, float[] lightmap, float x, float y, float z)
     {
-        float e1 = 1 - 1e-2f;
-        float e2 = 0.95f;
-        BlockPos pos = blockInfo.getBlockPos();
+        final float e1 = 1f - 1e-2f;
+        final float e2 = 0.95f;
 
-        boolean full = blockInfo.getState().isFullCube();
+        boolean full = blockInfo.isFullCube();
+        EnumFacing side = null;
 
-        if((full || y < -e1) && normal[1] < -e2) pos = pos.down();
-        if((full || y >  e1) && normal[1] >  e2) pos = pos.up();
-        if((full || z < -e1) && normal[2] < -e2) pos = pos.north();
-        if((full || z >  e1) && normal[2] >  e2) pos = pos.south();
-        if((full || x < -e1) && normal[0] < -e2) pos = pos.west();
-        if((full || x >  e1) && normal[0] >  e2) pos = pos.east();
+             if((full || y < -e1) && normal[1] < -e2) side = EnumFacing.DOWN;
+        else if((full || y >  e1) && normal[1] >  e2) side = EnumFacing.UP;
+        else if((full || z < -e1) && normal[2] < -e2) side = EnumFacing.NORTH;
+        else if((full || z >  e1) && normal[2] >  e2) side = EnumFacing.SOUTH;
+        else if((full || x < -e1) && normal[0] < -e2) side = EnumFacing.WEST;
+        else if((full || x >  e1) && normal[0] >  e2) side = EnumFacing.EAST;
 
-        int brightness = blockInfo.getState().getPackedLightmapCoords(blockInfo.getWorld(), pos);
+        int i = side == null ? 0 : side.ordinal() + 1;
+        int brightness = blockInfo.getPackedLight()[i];
 
         lightmap[0] = ((float)((brightness >> 0x04) & 0xF) * 0x20) / 0xFFFF;
         lightmap[1] = ((float)((brightness >> 0x14) & 0xF) * 0x20) / 0xFFFF;
@@ -237,12 +261,17 @@ public class VertexLighterFlat extends QuadGatheringTransformer
         }
     }
 
+    @Override
     public void setQuadTint(int tint)
     {
         this.tint = tint;
     }
+    @Override
     public void setQuadOrientation(EnumFacing orientation) {}
     public void setQuadCulled() {}
+    @Override
+    public void setTexture(TextureAtlasSprite texture) {}
+    @Override
     public void setApplyDiffuseLighting(boolean diffuse)
     {
         this.diffuse = diffuse;
@@ -265,6 +294,7 @@ public class VertexLighterFlat extends QuadGatheringTransformer
 
     public void updateBlockInfo()
     {
-        blockInfo.updateShift(true);
+        blockInfo.updateShift();
+        blockInfo.updateFlatLighting();
     }
 }

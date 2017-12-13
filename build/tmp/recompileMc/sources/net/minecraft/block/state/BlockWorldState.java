@@ -22,6 +22,10 @@ public class BlockWorldState
         this.forceLoad = forceLoadIn;
     }
 
+    /**
+     * Gets the block state as currently held, or (if it has not gotten it from the world) loads it from the world.
+     *  This will only look up the state from the world if {@link #forceLoad} is true or the block position is loaded.
+     */
     public IBlockState getBlockState()
     {
         if (this.state == null && (this.forceLoad || this.world.isBlockLoaded(this.pos)))
@@ -32,6 +36,9 @@ public class BlockWorldState
         return this.state;
     }
 
+    /**
+     * Gets the tile entity as currently held, or (if it has not gotten it from the world) loads it from the world.
+     */
     @Nullable
     public TileEntity getTileEntity()
     {
@@ -49,6 +56,9 @@ public class BlockWorldState
         return this.pos;
     }
 
+    /**
+     * Creates a new {@link Predicate} that will match when the given {@link IBlockState} predicate matches.
+     */
     public static Predicate<BlockWorldState> hasState(final Predicate<IBlockState> predicatesIn)
     {
         return new Predicate<BlockWorldState>()
@@ -56,17 +66,6 @@ public class BlockWorldState
             public boolean apply(@Nullable BlockWorldState p_apply_1_)
             {
                 return p_apply_1_ != null && predicatesIn.apply(p_apply_1_.getBlockState());
-            }
-        };
-    }
-
-    public static Predicate<BlockWorldState> hasState(final IBlockState p_185925_0_)
-    {
-        return new Predicate<BlockWorldState>()
-        {
-            public boolean apply(@Nullable BlockWorldState p_apply_1_)
-            {
-                return p_apply_1_ != null && p_apply_1_.getBlockState().equals(p_185925_0_);
             }
         };
     }

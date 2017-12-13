@@ -4,17 +4,17 @@ import java.util.Random;
 
 public class NoiseGeneratorPerlin extends NoiseGenerator
 {
-    private NoiseGeneratorSimplex[] noiseLevels;
-    private int levels;
+    private final NoiseGeneratorSimplex[] noiseLevels;
+    private final int levels;
 
-    public NoiseGeneratorPerlin(Random p_i45470_1_, int p_i45470_2_)
+    public NoiseGeneratorPerlin(Random seed, int levelsIn)
     {
-        this.levels = p_i45470_2_;
-        this.noiseLevels = new NoiseGeneratorSimplex[p_i45470_2_];
+        this.levels = levelsIn;
+        this.noiseLevels = new NoiseGeneratorSimplex[levelsIn];
 
-        for (int i = 0; i < p_i45470_2_; ++i)
+        for (int i = 0; i < levelsIn; ++i)
         {
-            this.noiseLevels[i] = new NoiseGeneratorSimplex(p_i45470_1_);
+            this.noiseLevels[i] = new NoiseGeneratorSimplex(seed);
         }
     }
 

@@ -14,16 +14,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RenderEnderman extends RenderLiving<EntityEnderman>
 {
     private static final ResourceLocation ENDERMAN_TEXTURES = new ResourceLocation("textures/entity/enderman/enderman.png");
-    /** The model of the enderman */
-    private ModelEnderman endermanModel;
-    private Random rnd = new Random();
+    private final Random rnd = new Random();
 
     public RenderEnderman(RenderManager renderManagerIn)
     {
         super(renderManagerIn, new ModelEnderman(0.0F), 0.5F);
-        this.endermanModel = (ModelEnderman)super.mainModel;
         this.addLayer(new LayerEndermanEyes(this));
         this.addLayer(new LayerHeldBlock(this));
+    }
+
+    public ModelEnderman getMainModel()
+    {
+        return (ModelEnderman)super.getMainModel();
     }
 
     /**
@@ -32,14 +34,15 @@ public class RenderEnderman extends RenderLiving<EntityEnderman>
     public void doRender(EntityEnderman entity, double x, double y, double z, float entityYaw, float partialTicks)
     {
         IBlockState iblockstate = entity.getHeldBlockState();
-        this.endermanModel.isCarrying = iblockstate != null;
-        this.endermanModel.isAttacking = entity.isScreaming();
+        ModelEnderman modelenderman = this.getMainModel();
+        modelenderman.isCarrying = iblockstate != null;
+        modelenderman.isAttacking = entity.isScreaming();
 
         if (entity.isScreaming())
         {
             double d0 = 0.02D;
-            x += this.rnd.nextGaussian() * d0;
-            z += this.rnd.nextGaussian() * d0;
+            x += this.rnd.nextGaussian() * 0.02D;
+            z += this.rnd.nextGaussian() * 0.02D;
         }
 
         super.doRender(entity, x, y, z, entityYaw, partialTicks);

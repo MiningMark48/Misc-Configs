@@ -1,570 +1,456 @@
 package net.minecraft.nbt;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import java.util.Stack;
+import java.util.List;
 import java.util.regex.Pattern;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class JsonToNBT
 {
-    private static final Logger LOGGER = LogManager.getLogger();
-    private static final Pattern INT_ARRAY_MATCHER = Pattern.compile("\\[[-+\\d|,\\s]+\\]");
+    private static final Pattern DOUBLE_PATTERN_NOSUFFIX = Pattern.compile("[-+]?(?:[0-9]+[.]|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?", 2);
+    private static final Pattern DOUBLE_PATTERN = Pattern.compile("[-+]?(?:[0-9]+[.]?|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?d", 2);
+    private static final Pattern FLOAT_PATTERN = Pattern.compile("[-+]?(?:[0-9]+[.]?|[0-9]*[.][0-9]+)(?:e[-+]?[0-9]+)?f", 2);
+    private static final Pattern BYTE_PATTERN = Pattern.compile("[-+]?(?:0|[1-9][0-9]*)b", 2);
+    private static final Pattern LONG_PATTERN = Pattern.compile("[-+]?(?:0|[1-9][0-9]*)l", 2);
+    private static final Pattern SHORT_PATTERN = Pattern.compile("[-+]?(?:0|[1-9][0-9]*)s", 2);
+    private static final Pattern INT_PATTERN = Pattern.compile("[-+]?(?:0|[1-9][0-9]*)");
+    private final String string;
+    private int cursor;
 
     public static NBTTagCompound getTagFromJson(String jsonString) throws NBTException
     {
-        jsonString = jsonString.trim();
+        return (new JsonToNBT(jsonString)).readSingleStruct();
+    }
 
-        if (!jsonString.startsWith("{"))
+    @VisibleForTesting
+    NBTTagCompound readSingleStruct() throws NBTException
+    {
+        NBTTagCompound nbttagcompound = this.readStruct();
+        this.skipWhitespace();
+
+        if (this.canRead())
         {
-            throw new NBTException("Invalid tag encountered, expected \'{\' as first char.");
-        }
-        else if (topTagsCount(jsonString) != 1)
-        {
-            throw new NBTException("Encountered multiple top tags, only one expected");
+            ++this.cursor;
+            throw this.exception("Trailing data found");
         }
         else
         {
-            return (NBTTagCompound)nameValueToNBT("tag", jsonString).parse();
+            return nbttagcompound;
         }
     }
 
-    static int topTagsCount(String str) throws NBTException
+    @VisibleForTesting
+    JsonToNBT(String stringIn)
     {
-        int i = 0;
+        this.string = stringIn;
+    }
+
+    protected String readKey() throws NBTException
+    {
+        this.skipWhitespace();
+
+        if (!this.canRead())
+        {
+            throw this.exception("Expected key");
+        }
+        else
+        {
+            return this.peek() == '"' ? this.readQuotedString() : this.readString();
+        }
+    }
+
+    private NBTException exception(String message)
+    {
+        return new NBTException(message, this.string, this.cursor);
+    }
+
+    protected NBTBase readTypedValue() throws NBTException
+    {
+        this.skipWhitespace();
+
+        if (this.peek() == '"')
+        {
+            return new NBTTagString(this.readQuotedString());
+        }
+        else
+        {
+            String s = this.readString();
+
+            if (s.isEmpty())
+            {
+                throw this.exception("Expected value");
+            }
+            else
+            {
+                return this.type(s);
+            }
+        }
+    }
+
+    private NBTBase type(String stringIn)
+    {
+        try
+        {
+            if (FLOAT_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagFloat(Float.parseFloat(stringIn.substring(0, stringIn.length() - 1)));
+            }
+
+            if (BYTE_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagByte(Byte.parseByte(stringIn.substring(0, stringIn.length() - 1)));
+            }
+
+            if (LONG_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagLong(Long.parseLong(stringIn.substring(0, stringIn.length() - 1)));
+            }
+
+            if (SHORT_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagShort(Short.parseShort(stringIn.substring(0, stringIn.length() - 1)));
+            }
+
+            if (INT_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagInt(Integer.parseInt(stringIn));
+            }
+
+            if (DOUBLE_PATTERN.matcher(stringIn).matches())
+            {
+                return new NBTTagDouble(Double.parseDouble(stringIn.substring(0, stringIn.length() - 1)));
+            }
+
+            if (DOUBLE_PATTERN_NOSUFFIX.matcher(stringIn).matches())
+            {
+                return new NBTTagDouble(Double.parseDouble(stringIn));
+            }
+
+            if ("true".equalsIgnoreCase(stringIn))
+            {
+                return new NBTTagByte((byte)1);
+            }
+
+            if ("false".equalsIgnoreCase(stringIn))
+            {
+                return new NBTTagByte((byte)0);
+            }
+        }
+        catch (NumberFormatException var3)
+        {
+            ;
+        }
+
+        return new NBTTagString(stringIn);
+    }
+
+    private String readQuotedString() throws NBTException
+    {
+        int i = ++this.cursor;
+        StringBuilder stringbuilder = null;
         boolean flag = false;
-        Stack<Character> stack = new Stack();
 
-        for (int j = 0; j < str.length(); ++j)
+        while (this.canRead())
         {
-            char c0 = str.charAt(j);
+            char c0 = this.pop();
 
-            if (c0 == 34)
+            if (flag)
             {
-                if (isCharEscaped(str, j))
+                if (c0 != '\\' && c0 != '"')
                 {
-                    if (!flag)
-                    {
-                        throw new NBTException("Illegal use of \\\": " + str);
-                    }
+                    throw this.exception("Invalid escape of '" + c0 + "'");
                 }
-                else
+
+                flag = false;
+            }
+            else
+            {
+                if (c0 == '\\')
                 {
-                    flag = !flag;
+                    flag = true;
+
+                    if (stringbuilder == null)
+                    {
+                        stringbuilder = new StringBuilder(this.string.substring(i, this.cursor - 1));
+                    }
+
+                    continue;
+                }
+
+                if (c0 == '"')
+                {
+                    return stringbuilder == null ? this.string.substring(i, this.cursor - 1) : stringbuilder.toString();
                 }
             }
-            else if (!flag)
+
+            if (stringbuilder != null)
             {
-                if (c0 != 123 && c0 != 91)
-                {
-                    if (c0 == 125 && (stack.isEmpty() || ((Character)stack.pop()).charValue() != 123))
-                    {
-                        throw new NBTException("Unbalanced curly brackets {}: " + str);
-                    }
-
-                    if (c0 == 93 && (stack.isEmpty() || ((Character)stack.pop()).charValue() != 91))
-                    {
-                        throw new NBTException("Unbalanced square brackets []: " + str);
-                    }
-                }
-                else
-                {
-                    if (stack.isEmpty())
-                    {
-                        ++i;
-                    }
-
-                    stack.push(Character.valueOf(c0));
-                }
+                stringbuilder.append(c0);
             }
         }
 
-        if (flag)
+        throw this.exception("Missing termination quote");
+    }
+
+    private String readString()
+    {
+        int i;
+
+        for (i = this.cursor; this.canRead() && this.isAllowedInKey(this.peek()); ++this.cursor)
         {
-            throw new NBTException("Unbalanced quotation: " + str);
+            ;
         }
-        else if (!stack.isEmpty())
+
+        return this.string.substring(i, this.cursor);
+    }
+
+    protected NBTBase readValue() throws NBTException
+    {
+        this.skipWhitespace();
+
+        if (!this.canRead())
         {
-            throw new NBTException("Unbalanced brackets: " + str);
+            throw this.exception("Expected value");
         }
         else
         {
-            if (i == 0 && !str.isEmpty())
-            {
-                i = 1;
-            }
+            char c0 = this.peek();
 
-            return i;
+            if (c0 == '{')
+            {
+                return this.readStruct();
+            }
+            else
+            {
+                return c0 == '[' ? this.readList() : this.readTypedValue();
+            }
         }
     }
 
-    static JsonToNBT.Any joinStrToNBT(String... args) throws NBTException
+    protected NBTBase readList() throws NBTException
     {
-        return nameValueToNBT(args[0], args[1]);
+        return this.canRead(2) && this.peek(1) != '"' && this.peek(2) == ';' ? this.readArrayTag() : this.readListTag();
     }
 
-    static JsonToNBT.Any nameValueToNBT(String key, String value) throws NBTException
+    protected NBTTagCompound readStruct() throws NBTException
     {
-        value = value.trim();
+        this.expect('{');
+        NBTTagCompound nbttagcompound = new NBTTagCompound();
+        this.skipWhitespace();
 
-        if (value.startsWith("{"))
+        while (this.canRead() && this.peek() != '}')
         {
-            value = value.substring(1, value.length() - 1);
-            JsonToNBT.Compound jsontonbt$compound;
-            String s1;
+            String s = this.readKey();
 
-            for (jsontonbt$compound = new JsonToNBT.Compound(key); value.length() > 0; value = value.substring(s1.length() + 1))
+            if (s.isEmpty())
             {
-                s1 = nextNameValuePair(value, true);
+                throw this.exception("Expected non-empty key");
+            }
 
-                if (s1.length() > 0)
+            this.expect(':');
+            nbttagcompound.setTag(s, this.readValue());
+
+            if (!this.hasElementSeparator())
+            {
+                break;
+            }
+
+            if (!this.canRead())
+            {
+                throw this.exception("Expected key");
+            }
+        }
+
+        this.expect('}');
+        return nbttagcompound;
+    }
+
+    private NBTBase readListTag() throws NBTException
+    {
+        this.expect('[');
+        this.skipWhitespace();
+
+        if (!this.canRead())
+        {
+            throw this.exception("Expected value");
+        }
+        else
+        {
+            NBTTagList nbttaglist = new NBTTagList();
+            int i = -1;
+
+            while (this.peek() != ']')
+            {
+                NBTBase nbtbase = this.readValue();
+                int j = nbtbase.getId();
+
+                if (i < 0)
                 {
-                    boolean flag1 = false;
-                    jsontonbt$compound.tagList.add(getTagFromNameValue(s1, flag1));
+                    i = j;
+                }
+                else if (j != i)
+                {
+                    throw this.exception("Unable to insert " + NBTBase.getTagTypeName(j) + " into ListTag of type " + NBTBase.getTagTypeName(i));
                 }
 
-                if (value.length() < s1.length() + 1)
+                nbttaglist.appendTag(nbtbase);
+
+                if (!this.hasElementSeparator())
                 {
                     break;
                 }
 
-                char c1 = value.charAt(s1.length());
-
-                if (c1 != 44 && c1 != 123 && c1 != 125 && c1 != 91 && c1 != 93)
+                if (!this.canRead())
                 {
-                    throw new NBTException("Unexpected token \'" + c1 + "\' at: " + value.substring(s1.length()));
+                    throw this.exception("Expected value");
                 }
             }
 
-            return jsontonbt$compound;
+            this.expect(']');
+            return nbttaglist;
         }
-        else if (value.startsWith("[") && !INT_ARRAY_MATCHER.matcher(value).matches())
+    }
+
+    private NBTBase readArrayTag() throws NBTException
+    {
+        this.expect('[');
+        char c0 = this.pop();
+        this.pop();
+        this.skipWhitespace();
+
+        if (!this.canRead())
         {
-            value = value.substring(1, value.length() - 1);
-            JsonToNBT.List jsontonbt$list;
-            String s;
-
-            for (jsontonbt$list = new JsonToNBT.List(key); value.length() > 0; value = value.substring(s.length() + 1))
-            {
-                s = nextNameValuePair(value, false);
-
-                if (s.length() > 0)
-                {
-                    boolean flag = true;
-                    jsontonbt$list.tagList.add(getTagFromNameValue(s, flag));
-                }
-
-                if (value.length() < s.length() + 1)
-                {
-                    break;
-                }
-
-                char c0 = value.charAt(s.length());
-
-                if (c0 != 44 && c0 != 123 && c0 != 125 && c0 != 91 && c0 != 93)
-                {
-                    throw new NBTException("Unexpected token \'" + c0 + "\' at: " + value.substring(s.length()));
-                }
-            }
-
-            return jsontonbt$list;
+            throw this.exception("Expected value");
+        }
+        else if (c0 == 'B')
+        {
+            return new NBTTagByteArray(this.readArray((byte)7, (byte)1));
+        }
+        else if (c0 == 'L')
+        {
+            return new NBTTagLongArray(this.readArray((byte)12, (byte)4));
+        }
+        else if (c0 == 'I')
+        {
+            return new NBTTagIntArray(this.readArray((byte)11, (byte)3));
         }
         else
         {
-            return new JsonToNBT.Primitive(key, value);
+            throw this.exception("Invalid array type '" + c0 + "' found");
         }
     }
 
-    private static JsonToNBT.Any getTagFromNameValue(String str, boolean isArray) throws NBTException
+    private <T extends Number> List<T> readArray(byte p_193603_1_, byte p_193603_2_) throws NBTException
     {
-        String s = locateName(str, isArray);
-        String s1 = locateValue(str, isArray);
-        return joinStrToNBT(new String[] {s, s1});
-    }
+        List<T> list = Lists.<T>newArrayList();
 
-    private static String nextNameValuePair(String str, boolean isCompound) throws NBTException
-    {
-        int i = getNextCharIndex(str, ':');
-        int j = getNextCharIndex(str, ',');
-
-        if (isCompound)
+        while (true)
         {
-            if (i == -1)
+            if (this.peek() != ']')
             {
-                throw new NBTException("Unable to locate name/value separator for string: " + str);
-            }
+                NBTBase nbtbase = this.readValue();
+                int i = nbtbase.getId();
 
-            if (j != -1 && j < i)
-            {
-                throw new NBTException("Name error at: " + str);
-            }
-        }
-        else if (i == -1 || i > j)
-        {
-            i = -1;
-        }
-
-        return locateValueAt(str, i);
-    }
-
-    private static String locateValueAt(String str, int index) throws NBTException
-    {
-        Stack<Character> stack = new Stack();
-        int i = index + 1;
-        boolean flag = false;
-        boolean flag1 = false;
-        boolean flag2 = false;
-
-        for (int j = 0; i < str.length(); ++i)
-        {
-            char c0 = str.charAt(i);
-
-            if (c0 == 34)
-            {
-                if (isCharEscaped(str, i))
+                if (i != p_193603_2_)
                 {
-                    if (!flag)
-                    {
-                        throw new NBTException("Illegal use of \\\": " + str);
-                    }
+                    throw this.exception("Unable to insert " + NBTBase.getTagTypeName(i) + " into " + NBTBase.getTagTypeName(p_193603_1_));
+                }
+
+                if (p_193603_2_ == 1)
+                {
+                    list.add((T)Byte.valueOf(((NBTPrimitive)nbtbase).getByte()));
+                }
+                else if (p_193603_2_ == 4)
+                {
+                    list.add((T)Long.valueOf(((NBTPrimitive)nbtbase).getLong()));
                 }
                 else
                 {
-                    flag = !flag;
-
-                    if (flag && !flag2)
-                    {
-                        flag1 = true;
-                    }
-
-                    if (!flag)
-                    {
-                        j = i;
-                    }
+                    list.add((T)Integer.valueOf(((NBTPrimitive)nbtbase).getInt()));
                 }
-            }
-            else if (!flag)
-            {
-                if (c0 != 123 && c0 != 91)
+
+                if (this.hasElementSeparator())
                 {
-                    if (c0 == 125 && (stack.isEmpty() || ((Character)stack.pop()).charValue() != 123))
+                    if (!this.canRead())
                     {
-                        throw new NBTException("Unbalanced curly brackets {}: " + str);
+                        throw this.exception("Expected value");
                     }
 
-                    if (c0 == 93 && (stack.isEmpty() || ((Character)stack.pop()).charValue() != 91))
-                    {
-                        throw new NBTException("Unbalanced square brackets []: " + str);
-                    }
-
-                    if (c0 == 44 && stack.isEmpty())
-                    {
-                        return str.substring(0, i);
-                    }
-                }
-                else
-                {
-                    stack.push(Character.valueOf(c0));
+                    continue;
                 }
             }
 
-            if (!Character.isWhitespace(c0))
-            {
-                if (!flag && flag1 && j != i)
-                {
-                    return str.substring(0, j + 1);
-                }
-
-                flag2 = true;
-            }
+            this.expect(']');
+            return list;
         }
-
-        return str.substring(0, i);
     }
 
-    private static String locateName(String str, boolean isArray) throws NBTException
+    private void skipWhitespace()
     {
-        if (isArray)
+        while (this.canRead() && Character.isWhitespace(this.peek()))
         {
-            str = str.trim();
-
-            if (str.startsWith("{") || str.startsWith("["))
-            {
-                return "";
-            }
+            ++this.cursor;
         }
+    }
 
-        int i = getNextCharIndex(str, ':');
+    private boolean hasElementSeparator()
+    {
+        this.skipWhitespace();
 
-        if (i == -1)
+        if (this.canRead() && this.peek() == ',')
         {
-            if (isArray)
-            {
-                return "";
-            }
-            else
-            {
-                throw new NBTException("Unable to locate name/value separator for string: " + str);
-            }
+            ++this.cursor;
+            this.skipWhitespace();
+            return true;
         }
         else
         {
-            return str.substring(0, i).trim();
+            return false;
         }
     }
 
-    private static String locateValue(String str, boolean isArray) throws NBTException
+    private void expect(char expected) throws NBTException
     {
-        if (isArray)
+        this.skipWhitespace();
+        boolean flag = this.canRead();
+
+        if (flag && this.peek() == expected)
         {
-            str = str.trim();
-
-            if (str.startsWith("{") || str.startsWith("["))
-            {
-                return str;
-            }
-        }
-
-        int i = getNextCharIndex(str, ':');
-
-        if (i == -1)
-        {
-            if (isArray)
-            {
-                return str;
-            }
-            else
-            {
-                throw new NBTException("Unable to locate name/value separator for string: " + str);
-            }
+            ++this.cursor;
         }
         else
         {
-            return str.substring(i + 1).trim();
+            throw new NBTException("Expected '" + expected + "' but got '" + (flag ? this.peek() : "<EOF>") + "'", this.string, this.cursor + 1);
         }
     }
 
-    private static int getNextCharIndex(String str, char targetChar)
+    protected boolean isAllowedInKey(char charIn)
     {
-        int i = 0;
-
-        for (boolean flag = true; i < str.length(); ++i)
-        {
-            char c0 = str.charAt(i);
-
-            if (c0 == 34)
-            {
-                if (!isCharEscaped(str, i))
-                {
-                    flag = !flag;
-                }
-            }
-            else if (flag)
-            {
-                if (c0 == targetChar)
-                {
-                    return i;
-                }
-
-                if (c0 == 123 || c0 == 91)
-                {
-                    return -1;
-                }
-            }
-        }
-
-        return -1;
+        return charIn >= '0' && charIn <= '9' || charIn >= 'A' && charIn <= 'Z' || charIn >= 'a' && charIn <= 'z' || charIn == '_' || charIn == '-' || charIn == '.' || charIn == '+';
     }
 
-    private static boolean isCharEscaped(String str, int index)
+    private boolean canRead(int p_193608_1_)
     {
-        return index > 0 && str.charAt(index - 1) == 92 && !isCharEscaped(str, index - 1);
+        return this.cursor + p_193608_1_ < this.string.length();
     }
 
-    abstract static class Any
-        {
-            protected String json;
+    boolean canRead()
+    {
+        return this.canRead(0);
+    }
 
-            /**
-             * Parses the JSON string contained in this object.
-             * @return an {@link NBTBase} which can be safely cast to the type represented by this class.
-             */
-            public abstract NBTBase parse() throws NBTException;
-        }
+    private char peek(int p_193597_1_)
+    {
+        return this.string.charAt(this.cursor + p_193597_1_);
+    }
 
-    static class Compound extends JsonToNBT.Any
-        {
-            protected java.util.List<JsonToNBT.Any> tagList = Lists.<JsonToNBT.Any>newArrayList();
+    private char peek()
+    {
+        return this.peek(0);
+    }
 
-            public Compound(String jsonIn)
-            {
-                this.json = jsonIn;
-            }
-
-            /**
-             * Parses the JSON string contained in this object.
-             * @return an {@link NBTBase} which can be safely cast to the type represented by this class.
-             */
-            public NBTBase parse() throws NBTException
-            {
-                NBTTagCompound nbttagcompound = new NBTTagCompound();
-
-                for (JsonToNBT.Any jsontonbt$any : this.tagList)
-                {
-                    nbttagcompound.setTag(jsontonbt$any.json, jsontonbt$any.parse());
-                }
-
-                return nbttagcompound;
-            }
-        }
-
-    static class List extends JsonToNBT.Any
-        {
-            protected java.util.List<JsonToNBT.Any> tagList = Lists.<JsonToNBT.Any>newArrayList();
-
-            public List(String json)
-            {
-                this.json = json;
-            }
-
-            /**
-             * Parses the JSON string contained in this object.
-             * @return an {@link NBTBase} which can be safely cast to the type represented by this class.
-             */
-            public NBTBase parse() throws NBTException
-            {
-                NBTTagList nbttaglist = new NBTTagList();
-
-                for (JsonToNBT.Any jsontonbt$any : this.tagList)
-                {
-                    nbttaglist.appendTag(jsontonbt$any.parse());
-                }
-
-                return nbttaglist;
-            }
-        }
-
-    static class Primitive extends JsonToNBT.Any
-        {
-            private static final Pattern DOUBLE = Pattern.compile("[-+]?[0-9]*\\.?[0-9]+[d|D]");
-            private static final Pattern FLOAT = Pattern.compile("[-+]?[0-9]*\\.?[0-9]+[f|F]");
-            private static final Pattern BYTE = Pattern.compile("[-+]?[0-9]+[b|B]");
-            private static final Pattern LONG = Pattern.compile("[-+]?[0-9]+[l|L]");
-            private static final Pattern SHORT = Pattern.compile("[-+]?[0-9]+[s|S]");
-            private static final Pattern INTEGER = Pattern.compile("[-+]?[0-9]+");
-            private static final Pattern DOUBLE_UNTYPED = Pattern.compile("[-+]?[0-9]*\\.?[0-9]+");
-            private static final Splitter SPLITTER = Splitter.on(',').omitEmptyStrings();
-            /** The value to be parsed into a tag. */
-            protected String jsonValue;
-
-            public Primitive(String jsonIn, String valueIn)
-            {
-                this.json = jsonIn;
-                this.jsonValue = valueIn;
-            }
-
-            /**
-             * Parses the JSON string contained in this object.
-             * @return an {@link NBTBase} which can be safely cast to the type represented by this class.
-             */
-            public NBTBase parse() throws NBTException
-            {
-                try
-                {
-                    if (DOUBLE.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagDouble(Double.parseDouble(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-                    }
-
-                    if (FLOAT.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagFloat(Float.parseFloat(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-                    }
-
-                    if (BYTE.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagByte(Byte.parseByte(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-                    }
-
-                    if (LONG.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagLong(Long.parseLong(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-                    }
-
-                    if (SHORT.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagShort(Short.parseShort(this.jsonValue.substring(0, this.jsonValue.length() - 1)));
-                    }
-
-                    if (INTEGER.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagInt(Integer.parseInt(this.jsonValue));
-                    }
-
-                    if (DOUBLE_UNTYPED.matcher(this.jsonValue).matches())
-                    {
-                        return new NBTTagDouble(Double.parseDouble(this.jsonValue));
-                    }
-
-                    if (this.jsonValue.equalsIgnoreCase("true") || this.jsonValue.equalsIgnoreCase("false"))
-                    {
-                        return new NBTTagByte((byte)(Boolean.parseBoolean(this.jsonValue) ? 1 : 0));
-                    }
-                }
-                catch (NumberFormatException var6)
-                {
-                    this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
-                    return new NBTTagString(this.jsonValue);
-                }
-
-                if (this.jsonValue.startsWith("[") && this.jsonValue.endsWith("]"))
-                {
-                    String s = this.jsonValue.substring(1, this.jsonValue.length() - 1);
-                    String[] astring = (String[])Iterables.toArray(SPLITTER.split(s), String.class);
-
-                    try
-                    {
-                        int[] aint = new int[astring.length];
-
-                        for (int j = 0; j < astring.length; ++j)
-                        {
-                            aint[j] = Integer.parseInt(astring[j].trim());
-                        }
-
-                        return new NBTTagIntArray(aint);
-                    }
-                    catch (NumberFormatException var5)
-                    {
-                        return new NBTTagString(this.jsonValue);
-                    }
-                }
-                else
-                {
-                    if (this.jsonValue.startsWith("\"") && this.jsonValue.endsWith("\""))
-                    {
-                        this.jsonValue = this.jsonValue.substring(1, this.jsonValue.length() - 1);
-                    }
-
-                    this.jsonValue = this.jsonValue.replaceAll("\\\\\"", "\"");
-                    StringBuilder stringbuilder = new StringBuilder();
-
-                    for (int i = 0; i < this.jsonValue.length(); ++i)
-                    {
-                        if (i < this.jsonValue.length() - 1 && this.jsonValue.charAt(i) == 92 && this.jsonValue.charAt(i + 1) == 92)
-                        {
-                            stringbuilder.append('\\');
-                            ++i;
-                        }
-                        else
-                        {
-                            stringbuilder.append(this.jsonValue.charAt(i));
-                        }
-                    }
-
-                    return new NBTTagString(stringbuilder.toString());
-                }
-            }
-        }
+    private char pop()
+    {
+        return this.string.charAt(this.cursor++);
+    }
 }

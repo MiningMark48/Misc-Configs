@@ -26,7 +26,7 @@ public class PathWorldListener implements IWorldEventListener
 
             for (int j = this.navigations.size(); i < j; ++i)
             {
-                PathNavigate pathnavigate = (PathNavigate)this.navigations.get(i);
+                PathNavigate pathnavigate = this.navigations.get(i);
 
                 if (pathnavigate != null && !pathnavigate.canUpdatePathOnTimeout())
                 {
@@ -35,7 +35,7 @@ public class PathWorldListener implements IWorldEventListener
                     if (path != null && !path.isFinished() && path.getCurrentPathLength() != 0)
                     {
                         PathPoint pathpoint = pathnavigate.currentPath.getFinalPathPoint();
-                        double d0 = pos.distanceSq(((double)pathpoint.xCoord + pathnavigate.theEntity.posX) / 2.0D, ((double)pathpoint.yCoord + pathnavigate.theEntity.posY) / 2.0D, ((double)pathpoint.zCoord + pathnavigate.theEntity.posZ) / 2.0D);
+                        double d0 = pos.distanceSq(((double)pathpoint.x + pathnavigate.entity.posX) / 2.0D, ((double)pathpoint.y + pathnavigate.entity.posY) / 2.0D, ((double)pathpoint.z + pathnavigate.entity.posZ) / 2.0D);
                         int k = (path.getCurrentPathLength() - path.getCurrentPathIndex()) * (path.getCurrentPathLength() - path.getCurrentPathIndex());
 
                         if (d0 < (double)k)
@@ -71,6 +71,10 @@ public class PathWorldListener implements IWorldEventListener
     }
 
     public void spawnParticle(int particleID, boolean ignoreRange, double xCoord, double yCoord, double zCoord, double xSpeed, double ySpeed, double zSpeed, int... parameters)
+    {
+    }
+
+    public void spawnParticle(int id, boolean ignoreRange, boolean p_190570_3_, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, int... parameters)
     {
     }
 

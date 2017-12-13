@@ -7,9 +7,7 @@ import net.minecraft.scoreboard.IScoreCriteria;
 import net.minecraft.scoreboard.ScoreCriteriaStat;
 import net.minecraft.util.IJsonSerializable;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.HoverEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -23,7 +21,7 @@ public class StatBase
     private final IStatType formatter;
     private final IScoreCriteria objectiveCriteria;
     private Class <? extends IJsonSerializable > serializableClazz;
-    private static NumberFormat numberFormat = NumberFormat.getIntegerInstance(Locale.US);
+    private static final NumberFormat numberFormat = NumberFormat.getIntegerInstance(Locale.US);
     public static IStatType simpleStatType = new IStatType()
     {
         /**
@@ -35,7 +33,7 @@ public class StatBase
             return StatBase.numberFormat.format((long)number);
         }
     };
-    private static DecimalFormat decimalFormat = new DecimalFormat("########0.00");
+    private static final DecimalFormat decimalFormat = new DecimalFormat("########0.00");
     public static IStatType timeStatType = new IStatType()
     {
         /**
@@ -49,7 +47,23 @@ public class StatBase
             double d2 = d1 / 60.0D;
             double d3 = d2 / 24.0D;
             double d4 = d3 / 365.0D;
-            return d4 > 0.5D ? StatBase.decimalFormat.format(d4) + " y" : (d3 > 0.5D ? StatBase.decimalFormat.format(d3) + " d" : (d2 > 0.5D ? StatBase.decimalFormat.format(d2) + " h" : (d1 > 0.5D ? StatBase.decimalFormat.format(d1) + " m" : d0 + " s")));
+
+            if (d4 > 0.5D)
+            {
+                return StatBase.decimalFormat.format(d4) + " y";
+            }
+            else if (d3 > 0.5D)
+            {
+                return StatBase.decimalFormat.format(d3) + " d";
+            }
+            else if (d2 > 0.5D)
+            {
+                return StatBase.decimalFormat.format(d2) + " h";
+            }
+            else
+            {
+                return d1 > 0.5D ? StatBase.decimalFormat.format(d1) + " m" : d0 + " s";
+            }
         }
     };
     public static IStatType distanceStatType = new IStatType()
@@ -62,7 +76,15 @@ public class StatBase
         {
             double d0 = (double)number / 100.0D;
             double d1 = d0 / 1000.0D;
-            return d1 > 0.5D ? StatBase.decimalFormat.format(d1) + " km" : (d0 > 0.5D ? StatBase.decimalFormat.format(d0) + " m" : number + " cm");
+
+            if (d1 > 0.5D)
+            {
+                return StatBase.decimalFormat.format(d1) + " km";
+            }
+            else
+            {
+                return d0 > 0.5D ? StatBase.decimalFormat.format(d0) + " m" : number + " cm";
+            }
         }
     };
     public static IStatType divideByTen = new IStatType()
@@ -108,7 +130,7 @@ public class StatBase
     {
         if (StatList.ID_TO_STAT_MAP.containsKey(this.statId))
         {
-            throw new RuntimeException("Duplicate stat id: \"" + ((StatBase)StatList.ID_TO_STAT_MAP.get(this.statId)).statName + "\" and \"" + this.statName + "\" at id " + this.statId);
+            throw new RuntimeException("Duplicate stat id: \"" + (StatList.ID_TO_STAT_MAP.get(this.statId)).statName + "\" and \"" + this.statName + "\" at id " + this.statId);
         }
         else
         {
@@ -116,14 +138,6 @@ public class StatBase
             StatList.ID_TO_STAT_MAP.put(this.statId, this);
             return this;
         }
-    }
-
-    /**
-     * Returns whether or not the StatBase-derived class is a statistic (running counter) or an achievement (one-shot).
-     */
-    public boolean isAchievement()
-    {
-        return false;
     }
 
     @SideOnly(Side.CLIENT)
@@ -136,19 +150,7 @@ public class StatBase
     {
         ITextComponent itextcomponent = this.statName.createCopy();
         itextcomponent.getStyle().setColor(TextFormatting.GRAY);
-        itextcomponent.getStyle().setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ACHIEVEMENT, new TextComponentString(this.statId)));
         return itextcomponent;
-    }
-
-    /**
-     * 1.8.9
-     */
-    public ITextComponent createChatComponent()
-    {
-        ITextComponent itextcomponent = this.getStatName();
-        ITextComponent itextcomponent1 = (new TextComponentString("[")).appendSibling(itextcomponent).appendText("]");
-        itextcomponent1.setStyle(itextcomponent.getStyle());
-        return itextcomponent1;
     }
 
     public boolean equals(Object p_equals_1_)
@@ -189,11 +191,5 @@ public class StatBase
     public Class <? extends IJsonSerializable > getSerializableClazz()
     {
         return this.serializableClazz;
-    }
-
-    public StatBase setSerializableClazz(Class <? extends IJsonSerializable > clazz)
-    {
-        this.serializableClazz = clazz;
-        return this;
     }
 }

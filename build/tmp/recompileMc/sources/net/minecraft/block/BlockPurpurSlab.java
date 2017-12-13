@@ -1,7 +1,7 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
@@ -21,7 +21,7 @@ public abstract class BlockPurpurSlab extends BlockSlab
 
     public BlockPurpurSlab()
     {
-        super(Material.ROCK);
+        super(Material.ROCK, MapColor.MAGENTA);
         IBlockState iblockstate = this.blockState.getBaseState();
 
         if (!this.isDouble())
@@ -36,7 +36,6 @@ public abstract class BlockPurpurSlab extends BlockSlab
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Item.getItemFromBlock(Blocks.PURPUR_SLAB);
@@ -79,7 +78,7 @@ public abstract class BlockPurpurSlab extends BlockSlab
 
     protected BlockStateContainer createBlockState()
     {
-        return this.isDouble() ? new BlockStateContainer(this, new IProperty[] {VARIANT}): new BlockStateContainer(this, new IProperty[] {HALF, VARIANT});
+        return this.isDouble() ? new BlockStateContainer(this, new IProperty[] {VARIANT}) : new BlockStateContainer(this, new IProperty[] {HALF, VARIANT});
     }
 
     /**

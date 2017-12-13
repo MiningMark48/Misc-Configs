@@ -19,13 +19,14 @@ public class RConThreadMain extends RConThreadBase
     /** Port RCon is running on */
     private int rconPort;
     /** Port the server is running on */
-    private int serverPort;
+    private final int serverPort;
     /** Hostname RCon is running on */
     private String hostname;
     /** The RCon ServerSocket. */
     private ServerSocket serverSocket;
     /** The RCon password */
-    private String rconPassword;
+    private final String rconPassword;
+    /** A map of client addresses to their running Threads */
     private Map<SocketAddress, RConThreadClient> clientThreads;
 
     public RConThreadMain(IServer p_i1538_1_)
@@ -125,7 +126,7 @@ public class RConThreadMain extends RConThreadBase
     {
         if (this.rconPassword.isEmpty())
         {
-            this.logWarning("No rcon password set in \'" + this.server.getSettingsFilename() + "\', rcon disabled!");
+            this.logWarning("No rcon password set in '" + this.server.getSettingsFilename() + "', rcon disabled!");
         }
         else if (0 < this.rconPort && 65535 >= this.rconPort)
         {
@@ -145,7 +146,7 @@ public class RConThreadMain extends RConThreadBase
         }
         else
         {
-            this.logWarning("Invalid rcon port " + this.rconPort + " found in \'" + this.server.getSettingsFilename() + "\', rcon disabled!");
+            this.logWarning("Invalid rcon port " + this.rconPort + " found in '" + this.server.getSettingsFilename() + "', rcon disabled!");
         }
     }
 }

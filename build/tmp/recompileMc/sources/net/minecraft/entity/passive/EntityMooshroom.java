@@ -2,6 +2,7 @@ package net.minecraft.entity.passive;
 
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -11,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTableList;
 
@@ -23,12 +25,20 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
         this.spawnableBlock = Blocks.MYCELIUM;
     }
 
-    @SuppressWarnings("unused")
-    public boolean processInteract(EntityPlayer player, EnumHand hand, @Nullable ItemStack stack)
+    public static void registerFixesMooshroom(DataFixer fixer)
     {
-        if (stack != null && stack.getItem() == Items.BOWL && this.getGrowingAge() >= 0 && !player.capabilities.isCreativeMode)
+        EntityLiving.registerFixesMob(fixer, EntityMooshroom.class);
+    }
+
+    public boolean processInteract(EntityPlayer player, EnumHand hand)
+    {
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (itemstack.getItem() == Items.BOWL && this.getGrowingAge() >= 0 && !player.capabilities.isCreativeMode)
         {
-            if (--stack.stackSize == 0)
+            itemstack.shrink(1);
+
+            if (itemstack.isEmpty())
             {
                 player.setHeldItem(hand, new ItemStack(Items.MUSHROOM_STEW));
             }
@@ -39,14 +49,14 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
 
             return true;
         }
-        else if (false && stack != null && stack.getItem() == Items.SHEARS && this.getGrowingAge() >= 0) //Forge Disable, Moved to onSheared
+        else if (false && itemstack.getItem() == Items.SHEARS && this.getGrowingAge() >= 0) //Forge Disable, Moved to onSheared
         {
             this.setDead();
-            this.worldObj.spawnParticle(EnumParticleTypes.EXPLOSION_LARGE, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+            this.world.spawnParticle(EnumParticleTypes.EXPLOSION_LARGE, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 0.0D, 0.0D, 0.0D);
 
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
-                EntityCow entitycow = new EntityCow(this.worldObj);
+                EntityCow entitycow = new EntityCow(this.world);
                 entitycow.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
                 entitycow.setHealth(this.getHealth());
                 entitycow.renderYawOffset = this.renderYawOffset;
@@ -56,14 +66,14 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
                     entitycow.setCustomNameTag(this.getCustomNameTag());
                 }
 
-                this.worldObj.spawnEntityInWorld(entitycow);
+                this.world.spawnEntity(entitycow);
 
                 for (int i = 0; i < 5; ++i)
                 {
-                    this.worldObj.spawnEntityInWorld(new EntityItem(this.worldObj, this.posX, this.posY + (double)this.height, this.posZ, new ItemStack(Blocks.RED_MUSHROOM)));
+                    this.world.spawnEntity(new EntityItem(this.world, this.posX, this.posY + (double)this.height, this.posZ, new ItemStack(Blocks.RED_MUSHROOM)));
                 }
 
-                stack.damageItem(1, player);
+                itemstack.damageItem(1, player);
                 this.playSound(SoundEvents.ENTITY_MOOSHROOM_SHEAR, 1.0F, 1.0F);
             }
 
@@ -71,13 +81,13 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
         }
         else
         {
-            return super.processInteract(player, hand, stack);
+            return super.processInteract(player, hand);
         }
     }
 
     public EntityMooshroom createChild(EntityAgeable ageable)
     {
-        return new EntityMooshroom(this.worldObj);
+        return new EntityMooshroom(this.world);
     }
 
     @Override public boolean isShearable(ItemStack item, net.minecraft.world.IBlockAccess world, net.minecraft.util.math.BlockPos pos){ return getGrowingAge() >= 0; }
@@ -85,9 +95,9 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
     public java.util.List<ItemStack> onSheared(ItemStack item, net.minecraft.world.IBlockAccess world, net.minecraft.util.math.BlockPos pos, int fortune)
     {
         this.setDead();
-        this.worldObj.spawnParticle(EnumParticleTypes.EXPLOSION_LARGE, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+        ((net.minecraft.world.WorldServer)this.world).spawnParticle(EnumParticleTypes.EXPLOSION_LARGE, false, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 1, 0.0D, 0.0D, 0.0D, 0.0D);
 
-        EntityCow entitycow = new EntityCow(this.worldObj);
+        EntityCow entitycow = new EntityCow(this.world);
         entitycow.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
         entitycow.setHealth(this.getHealth());
         entitycow.renderYawOffset = this.renderYawOffset;
@@ -97,7 +107,7 @@ public class EntityMooshroom extends EntityCow implements net.minecraftforge.com
             entitycow.setCustomNameTag(this.getCustomNameTag());
         }
 
-        this.worldObj.spawnEntityInWorld(entitycow);
+        this.world.spawnEntity(entitycow);
 
         java.util.List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
         for (int i = 0; i < 5; ++i)

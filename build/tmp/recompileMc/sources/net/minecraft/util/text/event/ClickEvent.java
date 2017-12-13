@@ -70,7 +70,7 @@ public class ClickEvent
 
     public String toString()
     {
-        return "ClickEvent{action=" + this.action + ", value=\'" + this.value + '\'' + '}';
+        return "ClickEvent{action=" + this.action + ", value='" + this.value + '\'' + '}';
     }
 
     public int hashCode()
@@ -120,7 +120,7 @@ public class ClickEvent
          */
         public static ClickEvent.Action getValueByCanonicalName(String canonicalNameIn)
         {
-            return (ClickEvent.Action)NAME_MAPPING.get(canonicalNameIn);
+            return NAME_MAPPING.get(canonicalNameIn);
         }
 
         static

@@ -77,14 +77,14 @@ public class BlockStem extends BlockBush implements IGrowable
         {
             float f = BlockCrops.getGrowthChance(this, worldIn, pos);
 
-            if (rand.nextInt((int)(25.0F / f) + 1) == 0)
+            if(net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, rand.nextInt((int)(25.0F / f) + 1) == 0))
             {
                 int i = ((Integer)state.getValue(AGE)).intValue();
 
                 if (i < 7)
                 {
-                    state = state.withProperty(AGE, Integer.valueOf(i + 1));
-                    worldIn.setBlockState(pos, state, 2);
+                    IBlockState newState = state.withProperty(AGE, Integer.valueOf(i + 1));
+                    worldIn.setBlockState(pos, newState, 2);
                 }
                 else
                 {
@@ -105,13 +105,14 @@ public class BlockStem extends BlockBush implements IGrowable
                         worldIn.setBlockState(pos, this.crop.getDefaultState());
                     }
                 }
+                net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state, worldIn.getBlockState(pos));
             }
         }
     }
 
     public void growStem(World worldIn, BlockPos pos, IBlockState state)
     {
-        int i = ((Integer)state.getValue(AGE)).intValue() + MathHelper.getRandomIntegerInRange(worldIn.rand, 2, 5);
+        int i = ((Integer)state.getValue(AGE)).intValue() + MathHelper.getInt(worldIn.rand, 2, 5);
         worldIn.setBlockState(pos, state.withProperty(AGE, Integer.valueOf(Math.min(7, i))), 2);
     }
 
@@ -124,9 +125,8 @@ public class BlockStem extends BlockBush implements IGrowable
     }
 
     @Override
-    public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        java.util.List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
         {
             Item item = this.getSeedItem();
 
@@ -138,34 +138,38 @@ public class BlockStem extends BlockBush implements IGrowable
                 {
                     if (RANDOM.nextInt(15) <= i)
                     {
-                        ret.add(new ItemStack(item));
+                        drops.add(new ItemStack(item));
                     }
                 }
             }
         }
-        return ret;
     }
 
     @Nullable
     protected Item getSeedItem()
     {
-        return this.crop == Blocks.PUMPKIN ? Items.PUMPKIN_SEEDS : (this.crop == Blocks.MELON_BLOCK ? Items.MELON_SEEDS : null);
+        if (this.crop == Blocks.PUMPKIN)
+        {
+            return Items.PUMPKIN_SEEDS;
+        }
+        else
+        {
+            return this.crop == Blocks.MELON_BLOCK ? Items.MELON_SEEDS : null;
+        }
     }
 
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
-    @Nullable
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
         Item item = this.getSeedItem();
-        return item == null ? null : new ItemStack(item);
+        return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
     /**

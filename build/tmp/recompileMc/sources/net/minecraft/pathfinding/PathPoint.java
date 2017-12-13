@@ -8,11 +8,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class PathPoint
 {
     /** The x coordinate of this point */
-    public final int xCoord;
+    public final int x;
     /** The y coordinate of this point */
-    public final int yCoord;
+    public final int y;
     /** The z coordinate of this point */
-    public final int zCoord;
+    public final int z;
     /** A hash of the coordinates used to identify this point */
     private final int hash;
     /** The index of this point in its assigned path */
@@ -27,16 +27,16 @@ public class PathPoint
     public PathPoint previous;
     /** True if the pathfinder has already visited this point */
     public boolean visited;
-    public float distanceFromOrigin = 0.0F;
-    public float cost = 0.0F;
-    public float costMalus = 0.0F;
+    public float distanceFromOrigin;
+    public float cost;
+    public float costMalus;
     public PathNodeType nodeType = PathNodeType.BLOCKED;
 
     public PathPoint(int x, int y, int z)
     {
-        this.xCoord = x;
-        this.yCoord = y;
-        this.zCoord = z;
+        this.x = x;
+        this.y = y;
+        this.z = z;
         this.hash = makeHash(x, y, z);
     }
 
@@ -66,10 +66,10 @@ public class PathPoint
      */
     public float distanceTo(PathPoint pathpointIn)
     {
-        float f = (float)(pathpointIn.xCoord - this.xCoord);
-        float f1 = (float)(pathpointIn.yCoord - this.yCoord);
-        float f2 = (float)(pathpointIn.zCoord - this.zCoord);
-        return MathHelper.sqrt_float(f * f + f1 * f1 + f2 * f2);
+        float f = (float)(pathpointIn.x - this.x);
+        float f1 = (float)(pathpointIn.y - this.y);
+        float f2 = (float)(pathpointIn.z - this.z);
+        return MathHelper.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
     /**
@@ -77,17 +77,17 @@ public class PathPoint
      */
     public float distanceToSquared(PathPoint pathpointIn)
     {
-        float f = (float)(pathpointIn.xCoord - this.xCoord);
-        float f1 = (float)(pathpointIn.yCoord - this.yCoord);
-        float f2 = (float)(pathpointIn.zCoord - this.zCoord);
+        float f = (float)(pathpointIn.x - this.x);
+        float f1 = (float)(pathpointIn.y - this.y);
+        float f2 = (float)(pathpointIn.z - this.z);
         return f * f + f1 * f1 + f2 * f2;
     }
 
     public float distanceManhattan(PathPoint p_186281_1_)
     {
-        float f = (float)Math.abs(p_186281_1_.xCoord - this.xCoord);
-        float f1 = (float)Math.abs(p_186281_1_.yCoord - this.yCoord);
-        float f2 = (float)Math.abs(p_186281_1_.zCoord - this.zCoord);
+        float f = (float)Math.abs(p_186281_1_.x - this.x);
+        float f1 = (float)Math.abs(p_186281_1_.y - this.y);
+        float f2 = (float)Math.abs(p_186281_1_.z - this.z);
         return f + f1 + f2;
     }
 
@@ -100,7 +100,7 @@ public class PathPoint
         else
         {
             PathPoint pathpoint = (PathPoint)p_equals_1_;
-            return this.hash == pathpoint.hash && this.xCoord == pathpoint.xCoord && this.yCoord == pathpoint.yCoord && this.zCoord == pathpoint.zCoord;
+            return this.hash == pathpoint.hash && this.x == pathpoint.x && this.y == pathpoint.y && this.z == pathpoint.z;
         }
     }
 
@@ -119,7 +119,7 @@ public class PathPoint
 
     public String toString()
     {
-        return this.xCoord + ", " + this.yCoord + ", " + this.zCoord;
+        return this.x + ", " + this.y + ", " + this.z;
     }
 
     @SideOnly(Side.CLIENT)

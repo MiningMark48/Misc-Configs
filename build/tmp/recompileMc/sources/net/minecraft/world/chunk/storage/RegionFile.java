@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
+import javax.annotation.Nullable;
 import net.minecraft.server.MinecraftServer;
 
 public class RegionFile
@@ -95,38 +96,13 @@ public class RegionFile
         }
     }
 
-    // This is a copy (sort of) of the method below it, make sure they stay in sync
+    @Deprecated // TODO: remove (1.13)
     public synchronized boolean chunkExists(int x, int z)
     {
-        if (this.outOfBounds(x, z)) return false;
-
-        try
-        {
-            int offset = this.getOffset(x, z);
-
-            if (offset == 0) return false;
-
-            int sectorNumber = offset >> 8;
-            int numSectors = offset & 255;
-
-            if (sectorNumber + numSectors > this.sectorFree.size()) return false;
-
-            this.dataFile.seek((long)(sectorNumber * 4096));
-            int length = this.dataFile.readInt();
-
-            if (length > 4096 * numSectors || length <= 0) return false;
-
-            byte version = this.dataFile.readByte();
-
-            if (version == 1 || version == 2) return true;
-        }
-        catch (IOException ioexception)
-        {
-            return false;
-        }
-
-        return false;
+        return isChunkSaved(x, z);
     }
+
+    @Nullable
 
     /**
      * Returns an uncompressed chunk stream from the region file.
@@ -203,6 +179,7 @@ public class RegionFile
     /**
      * Returns an output stream used to write chunk data. Data is on disk when the returned stream is closed.
      */
+    @Nullable
     public DataOutputStream getChunkDataOutputStream(int x, int z)
     {
         return this.outOfBounds(x, z) ? null : new DataOutputStream(new BufferedOutputStream(new DeflaterOutputStream(new RegionFile.ChunkBuffer(x, z))));
@@ -372,8 +349,8 @@ public class RegionFile
 
     class ChunkBuffer extends ByteArrayOutputStream
     {
-        private int chunkX;
-        private int chunkZ;
+        private final int chunkX;
+        private final int chunkZ;
 
         public ChunkBuffer(int x, int z)
         {

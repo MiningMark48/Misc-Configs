@@ -11,11 +11,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public abstract class TextComponentBase implements ITextComponent
 {
+    /**
+     * The later siblings of this component.  If this component turns the text bold, that will apply to all the siblings
+     * until a later sibling turns the text something else.
+     */
     protected List<ITextComponent> siblings = Lists.<ITextComponent>newArrayList();
     private Style style;
 
     /**
-     * Appends the given component to the end of this one.
+     * Adds a new component to the end of the sibling list, setting that component's style's parent style to this
+     * component's style.
+     *  
+     * @return This component, for chaining (and not the newly added component)
      */
     public ITextComponent appendSibling(ITextComponent component)
     {
@@ -24,19 +31,28 @@ public abstract class TextComponentBase implements ITextComponent
         return this;
     }
 
+    /**
+     * Gets the sibling components of this one.
+     */
     public List<ITextComponent> getSiblings()
     {
         return this.siblings;
     }
 
     /**
-     * Appends the given text to the end of this component.
+     * Adds a new component to the end of the sibling list, with the specified text. Same as calling {@link
+     * #appendSibling(ITextComponent)} with a new {@link TextComponentString}.
+     *  
+     * @return This component, for chaining (and not the newly added component)
      */
     public ITextComponent appendText(String text)
     {
         return this.appendSibling(new TextComponentString(text));
     }
 
+    /**
+     * Sets the style of this component and updates the parent style of all of the sibling components.
+     */
     public ITextComponent setStyle(Style style)
     {
         this.style = style;
@@ -49,6 +65,16 @@ public abstract class TextComponentBase implements ITextComponent
         return this;
     }
 
+    /**
+     * Gets the style of this component. Returns a direct reference; changes to this style will modify the style of this
+     * component (IE, there is no need to call {@link #setStyle(Style)} again after modifying it).
+     *  
+     * If this component's style is currently <code>null</code>, it will be initialized to the default style, and the
+     * parent style of all sibling components will be set to that style. (IE, changes to this style will also be
+     * reflected in sibling components.)
+     *  
+     * This method never returns <code>null</code>.
+     */
     public Style getStyle()
     {
         if (this.style == null)
@@ -66,11 +92,11 @@ public abstract class TextComponentBase implements ITextComponent
 
     public Iterator<ITextComponent> iterator()
     {
-        return Iterators.<ITextComponent>concat(Iterators.<ITextComponent>forArray(new TextComponentBase[] {this}), createDeepCopyIterator(this.siblings));
+        return Iterators.<ITextComponent>concat(Iterators.forArray(this), createDeepCopyIterator(this.siblings));
     }
 
     /**
-     * Get the text of this component, <em>and all child components</em>, with all special formatting codes removed.
+     * Gets the text of this component <em>and all sibling components</em>, without any formatting codes.
      */
     public final String getUnformattedText()
     {
@@ -85,7 +111,7 @@ public abstract class TextComponentBase implements ITextComponent
     }
 
     /**
-     * Gets the text of this component, with formatting codes added for rendering.
+     * Gets the text of this component <em>and all sibling components</em>, with formatting codes added for rendering.
      */
     public final String getFormattedText()
     {
@@ -93,14 +119,23 @@ public abstract class TextComponentBase implements ITextComponent
 
         for (ITextComponent itextcomponent : this)
         {
-            stringbuilder.append(itextcomponent.getStyle().getFormattingCode());
-            stringbuilder.append(itextcomponent.getUnformattedComponentText());
-            stringbuilder.append((Object)TextFormatting.RESET);
+            String s = itextcomponent.getUnformattedComponentText();
+
+            if (!s.isEmpty())
+            {
+                stringbuilder.append(itextcomponent.getStyle().getFormattingCode());
+                stringbuilder.append(s);
+                stringbuilder.append((Object)TextFormatting.RESET);
+            }
         }
 
         return stringbuilder.toString();
     }
 
+    /**
+     * Creates an iterator that iterates over the given components, returning deep copies of each component in turn so
+     * that the properties of the returned objects will remain externally consistent after being returned.
+     */
     public static Iterator<ITextComponent> createDeepCopyIterator(Iterable<ITextComponent> components)
     {
         Iterator<ITextComponent> iterator = Iterators.concat(Iterators.transform(components.iterator(), new Function<ITextComponent, Iterator<ITextComponent>>()

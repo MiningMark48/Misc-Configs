@@ -11,15 +11,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.RegistryNamespaced;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.translation.I18n;
 
-public abstract class Enchantment extends net.minecraftforge.fml.common.registry.IForgeRegistryEntry.Impl<Enchantment>
+public abstract class Enchantment extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<Enchantment>
 {
-    public static final RegistryNamespaced<ResourceLocation, Enchantment> REGISTRY = net.minecraftforge.fml.common.registry.GameData.getEnchantmentRegistry();
+    public static final RegistryNamespaced<ResourceLocation, Enchantment> REGISTRY = net.minecraftforge.registries.GameData.getWrapper(Enchantment.class);
     /** Where this enchantment has an effect, e.g. offhand, pants */
     private final EntityEquipmentSlot[] applicableEquipmentTypes;
     private final Enchantment.Rarity rarity;
     /** The EnumEnchantmentType given to this Enchantment. */
+    @Nullable
     public EnumEnchantmentType type;
     /** Used in localisation and stats. */
     protected String name;
@@ -30,7 +32,7 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
     @Nullable
     public static Enchantment getEnchantmentByID(int id)
     {
-        return (Enchantment)REGISTRY.getObjectById(id);
+        return REGISTRY.getObjectById(id);
     }
 
     /**
@@ -47,7 +49,7 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
     @Nullable
     public static Enchantment getEnchantmentByLocation(String location)
     {
-        return (Enchantment)REGISTRY.getObject(new ResourceLocation(location));
+        return REGISTRY.getObject(new ResourceLocation(location));
     }
 
     protected Enchantment(Enchantment.Rarity rarityIn, EnumEnchantmentType typeIn, EntityEquipmentSlot[] slots)
@@ -57,8 +59,10 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         this.applicableEquipmentTypes = slots;
     }
 
-    @Nullable
-    public Iterable<ItemStack> getEntityEquipment(EntityLivingBase entityIn)
+    /**
+     * Gets list of all the entity's currently equipped gear that this enchantment can go on
+     */
+    public List<ItemStack> getEntityEquipment(EntityLivingBase entityIn)
     {
         List<ItemStack> list = Lists.<ItemStack>newArrayList();
 
@@ -66,13 +70,13 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         {
             ItemStack itemstack = entityIn.getItemStackFromSlot(entityequipmentslot);
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 list.add(itemstack);
             }
         }
 
-        return list.size() > 0 ? list : null;
+        return list;
     }
 
     /**
@@ -133,10 +137,15 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         return 0.0F;
     }
 
+    public final boolean isCompatibleWith(Enchantment p_191560_1_)
+    {
+        return this.canApplyTogether(p_191560_1_) && p_191560_1_.canApplyTogether(this);
+    }
+
     /**
      * Determines if the enchantment passed can be applyied together with this enchantment.
      */
-    public boolean canApplyTogether(Enchantment ench)
+    protected boolean canApplyTogether(Enchantment ench)
     {
         return this != ench;
     }
@@ -164,6 +173,12 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
     public String getTranslatedName(int level)
     {
         String s = I18n.translateToLocal(this.getName());
+
+        if (this.isCurse())
+        {
+            s = TextFormatting.RED + s;
+        }
+
         return level == 1 && this.getMaxLevel() == 1 ? s : s + " " + I18n.translateToLocal("enchantment.level." + level);
     }
 
@@ -195,6 +210,11 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         return false;
     }
 
+    public boolean isCurse()
+    {
+        return false;
+    }
+
     /**
      * This applies specifically to applying at the enchanting table. The other method {@link #canApply(ItemStack)}
      * applies for <i>all possible</i> enchantments.
@@ -203,7 +223,7 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
      */
     public boolean canApplyAtEnchantingTable(ItemStack stack)
     {
-        return this.type.canEnchantItem(stack.getItem());
+        return stack.getItem().canApplyAtEnchantingTable(stack, this);
     }
 
     /**
@@ -231,12 +251,14 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         REGISTRY.register(7, new ResourceLocation("thorns"), new EnchantmentThorns(Enchantment.Rarity.VERY_RARE, aentityequipmentslot));
         REGISTRY.register(8, new ResourceLocation("depth_strider"), new EnchantmentWaterWalker(Enchantment.Rarity.RARE, aentityequipmentslot));
         REGISTRY.register(9, new ResourceLocation("frost_walker"), new EnchantmentFrostWalker(Enchantment.Rarity.RARE, new EntityEquipmentSlot[] {EntityEquipmentSlot.FEET}));
+        REGISTRY.register(10, new ResourceLocation("binding_curse"), new EnchantmentBindingCurse(Enchantment.Rarity.VERY_RARE, aentityequipmentslot));
         REGISTRY.register(16, new ResourceLocation("sharpness"), new EnchantmentDamage(Enchantment.Rarity.COMMON, 0, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(17, new ResourceLocation("smite"), new EnchantmentDamage(Enchantment.Rarity.UNCOMMON, 1, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(18, new ResourceLocation("bane_of_arthropods"), new EnchantmentDamage(Enchantment.Rarity.UNCOMMON, 2, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(19, new ResourceLocation("knockback"), new EnchantmentKnockback(Enchantment.Rarity.UNCOMMON, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(20, new ResourceLocation("fire_aspect"), new EnchantmentFireAspect(Enchantment.Rarity.RARE, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(21, new ResourceLocation("looting"), new EnchantmentLootBonus(Enchantment.Rarity.RARE, EnumEnchantmentType.WEAPON, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
+        REGISTRY.register(22, new ResourceLocation("sweeping"), new EnchantmentSweepingEdge(Enchantment.Rarity.RARE, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(32, new ResourceLocation("efficiency"), new EnchantmentDigging(Enchantment.Rarity.COMMON, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(33, new ResourceLocation("silk_touch"), new EnchantmentUntouching(Enchantment.Rarity.VERY_RARE, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(34, new ResourceLocation("unbreaking"), new EnchantmentDurability(Enchantment.Rarity.UNCOMMON, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
@@ -248,6 +270,7 @@ public abstract class Enchantment extends net.minecraftforge.fml.common.registry
         REGISTRY.register(61, new ResourceLocation("luck_of_the_sea"), new EnchantmentLootBonus(Enchantment.Rarity.RARE, EnumEnchantmentType.FISHING_ROD, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(62, new ResourceLocation("lure"), new EnchantmentFishingSpeed(Enchantment.Rarity.RARE, EnumEnchantmentType.FISHING_ROD, new EntityEquipmentSlot[] {EntityEquipmentSlot.MAINHAND}));
         REGISTRY.register(70, new ResourceLocation("mending"), new EnchantmentMending(Enchantment.Rarity.RARE, EntityEquipmentSlot.values()));
+        REGISTRY.register(71, new ResourceLocation("vanishing_curse"), new EnchantmentVanishingCurse(Enchantment.Rarity.VERY_RARE, EntityEquipmentSlot.values()));
     }
 
     public static enum Rarity

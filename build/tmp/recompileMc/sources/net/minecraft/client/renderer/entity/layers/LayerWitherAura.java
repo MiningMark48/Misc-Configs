@@ -1,5 +1,6 @@
 package net.minecraft.client.renderer.entity.layers;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelWither;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderWither;
@@ -36,12 +37,14 @@ public class LayerWitherAura implements LayerRenderer<EntityWither>
             GlStateManager.matrixMode(5888);
             GlStateManager.enableBlend();
             float f3 = 0.5F;
-            GlStateManager.color(f3, f3, f3, 1.0F);
+            GlStateManager.color(0.5F, 0.5F, 0.5F, 1.0F);
             GlStateManager.disableLighting();
             GlStateManager.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
             this.witherModel.setLivingAnimations(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTicks);
             this.witherModel.setModelAttributes(this.witherRenderer.getMainModel());
+            Minecraft.getMinecraft().entityRenderer.setupFogColor(true);
             this.witherModel.render(entitylivingbaseIn, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
+            Minecraft.getMinecraft().entityRenderer.setupFogColor(false);
             GlStateManager.matrixMode(5890);
             GlStateManager.loadIdentity();
             GlStateManager.matrixMode(5888);

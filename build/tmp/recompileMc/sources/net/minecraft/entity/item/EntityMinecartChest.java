@@ -10,6 +10,7 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.World;
 
 public class EntityMinecartChest extends EntityMinecartContainer
@@ -24,11 +25,16 @@ public class EntityMinecartChest extends EntityMinecartContainer
         super(worldIn, x, y, z);
     }
 
+    public static void registerFixesMinecartChest(DataFixer fixer)
+    {
+        EntityMinecartContainer.addDataFixers(fixer, EntityMinecartChest.class);
+    }
+
     public void killMinecart(DamageSource source)
     {
         super.killMinecart(source);
 
-        if (this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+        if (this.world.getGameRules().getBoolean("doEntityDrops"))
         {
             this.dropItemWithOffset(Item.getItemFromBlock(Blocks.CHEST), 1, 0.0F);
         }

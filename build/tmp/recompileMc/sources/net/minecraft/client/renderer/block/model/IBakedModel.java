@@ -22,7 +22,15 @@ public interface IBakedModel
     TextureAtlasSprite getParticleTexture();
 
     @Deprecated
-    ItemCameraTransforms getItemCameraTransforms();
+    default ItemCameraTransforms getItemCameraTransforms() { return ItemCameraTransforms.DEFAULT; }
 
     ItemOverrideList getOverrides();
+
+    /*
+     * Returns the pair of the model for the given perspective, and the matrix
+     * that should be applied to the GL state before rendering it (matrix may be null).
+     */
+    default org.apache.commons.lang3.tuple.Pair<? extends IBakedModel, javax.vecmath.Matrix4f> handlePerspective(ItemCameraTransforms.TransformType cameraTransformType) {
+        return net.minecraftforge.client.ForgeHooksClient.handlePerspective(this, cameraTransformType);
+    }
 }

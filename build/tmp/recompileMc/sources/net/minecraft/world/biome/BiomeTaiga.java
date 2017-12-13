@@ -25,7 +25,7 @@ public class BiomeTaiga extends Biome
     private static final WorldGenMegaPineTree MEGA_PINE_GENERATOR = new WorldGenMegaPineTree(false, false);
     private static final WorldGenMegaPineTree MEGA_SPRUCE_GENERATOR = new WorldGenMegaPineTree(false, true);
     private static final WorldGenBlockBlob FOREST_ROCK_GENERATOR = new WorldGenBlockBlob(Blocks.MOSSY_COBBLESTONE, 0);
-    private BiomeTaiga.Type type;
+    private final BiomeTaiga.Type type;
 
     public BiomeTaiga(BiomeTaiga.Type typeIn, Biome.BiomeProperties properties)
     {
@@ -33,24 +33,31 @@ public class BiomeTaiga extends Biome
         this.type = typeIn;
         this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityWolf.class, 8, 4, 4));
         this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityRabbit.class, 4, 2, 3));
-        this.theBiomeDecorator.treesPerChunk = 10;
+        this.decorator.treesPerChunk = 10;
 
         if (typeIn != BiomeTaiga.Type.MEGA && typeIn != BiomeTaiga.Type.MEGA_SPRUCE)
         {
-            this.theBiomeDecorator.grassPerChunk = 1;
-            this.theBiomeDecorator.mushroomsPerChunk = 1;
+            this.decorator.grassPerChunk = 1;
+            this.decorator.mushroomsPerChunk = 1;
         }
         else
         {
-            this.theBiomeDecorator.grassPerChunk = 7;
-            this.theBiomeDecorator.deadBushPerChunk = 1;
-            this.theBiomeDecorator.mushroomsPerChunk = 3;
+            this.decorator.grassPerChunk = 7;
+            this.decorator.deadBushPerChunk = 1;
+            this.decorator.mushroomsPerChunk = 3;
         }
     }
 
-    public WorldGenAbstractTree genBigTreeChance(Random rand)
+    public WorldGenAbstractTree getRandomTreeFeature(Random rand)
     {
-        return (WorldGenAbstractTree)((this.type == BiomeTaiga.Type.MEGA || this.type == BiomeTaiga.Type.MEGA_SPRUCE) && rand.nextInt(3) == 0 ? (this.type != BiomeTaiga.Type.MEGA_SPRUCE && rand.nextInt(13) != 0 ? MEGA_PINE_GENERATOR : MEGA_SPRUCE_GENERATOR) : (rand.nextInt(3) == 0 ? PINE_GENERATOR : SPRUCE_GENERATOR));
+        if ((this.type == BiomeTaiga.Type.MEGA || this.type == BiomeTaiga.Type.MEGA_SPRUCE) && rand.nextInt(3) == 0)
+        {
+            return this.type != BiomeTaiga.Type.MEGA_SPRUCE && rand.nextInt(13) != 0 ? MEGA_PINE_GENERATOR : MEGA_SPRUCE_GENERATOR;
+        }
+        else
+        {
+            return (WorldGenAbstractTree)(rand.nextInt(3) == 0 ? PINE_GENERATOR : SPRUCE_GENERATOR);
+        }
     }
 
     /**
@@ -63,7 +70,7 @@ public class BiomeTaiga extends Biome
 
     public void decorate(World worldIn, Random rand, BlockPos pos)
     {
-        if (this.type == BiomeTaiga.Type.MEGA || this.type == BiomeTaiga.Type.MEGA_SPRUCE)
+        if ((this.type == BiomeTaiga.Type.MEGA || this.type == BiomeTaiga.Type.MEGA_SPRUCE) && net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.ROCK))
         {
             int i = rand.nextInt(3);
 
@@ -78,6 +85,7 @@ public class BiomeTaiga extends Biome
 
         DOUBLE_PLANT_GENERATOR.setPlantType(BlockDoublePlant.EnumPlantType.FERN);
 
+        if(net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.FLOWERS))
         for (int i1 = 0; i1 < 7; ++i1)
         {
             int j1 = rand.nextInt(16) + 8;

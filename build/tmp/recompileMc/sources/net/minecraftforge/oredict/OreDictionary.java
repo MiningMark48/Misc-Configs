@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.oredict;
 
 import java.util.ArrayList;
@@ -6,10 +25,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import net.minecraft.block.BlockPrismarine;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.ModContainer;
 import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
@@ -19,6 +41,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraftforge.common.MinecraftForge;
@@ -30,17 +53,21 @@ import com.google.common.collect.Maps;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.registry.GameData;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.GameData;
+
+import javax.annotation.Nonnull;
 
 public class OreDictionary
 {
+    private static final boolean DEBUG = false;
     private static boolean hasInit = false;
     private static List<String>          idToName = new ArrayList<String>();
     private static Map<String, Integer>  nameToId = new HashMap<String, Integer>(128);
-    private static List<List<ItemStack>> idToStack = Lists.newArrayList();
-    private static List<List<ItemStack>> idToStackUn = Lists.newArrayList();
+    private static List<NonNullList<ItemStack>> idToStack = Lists.newArrayList();
+    private static List<NonNullList<ItemStack>> idToStackUn = Lists.newArrayList();
     private static Map<Integer, List<Integer>> stackToId = Maps.newHashMapWithExpectedSize((int)(128 * 0.75));
-    public static final ImmutableList<ItemStack> EMPTY_LIST = ImmutableList.of();
+    public static final NonNullList<ItemStack> EMPTY_LIST = NonNullList.create();
 
     /**
      * Minecraft changed from -1 to Short.MAX_VALUE in 1.5 release for the "block wildcard". Use this in case it
@@ -89,6 +116,7 @@ public class OreDictionary
             registerOre("ingotBrick",    Items.BRICK);
             registerOre("ingotBrickNether", Items.NETHERBRICK);
             registerOre("nuggetGold",  Items.GOLD_NUGGET);
+            registerOre("nuggetIron",  Items.IRON_NUGGET);
 
             // gems and dusts
             registerOre("gemDiamond",  Items.DIAMOND);
@@ -195,7 +223,12 @@ public class OreDictionary
 
         // wood-related things
         replacements.put(new ItemStack(Items.STICK), "stickWood");
-        replacements.put(new ItemStack(Blocks.PLANKS), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 0), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 1), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 2), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 3), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 4), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 5), "plankWood");
         replacements.put(new ItemStack(Blocks.PLANKS, 1, WILDCARD_VALUE), "plankWood");
         replacements.put(new ItemStack(Blocks.WOODEN_SLAB, 1, WILDCARD_VALUE), "slabWood");
 
@@ -303,8 +336,8 @@ public class OreDictionary
             new ItemStack(Blocks.SPRUCE_FENCE),
             new ItemStack(Blocks.SPRUCE_FENCE_GATE),
             new ItemStack(Blocks.SPRUCE_STAIRS),
-            new ItemStack(Blocks.BIRCH_STAIRS),
             new ItemStack(Blocks.BIRCH_FENCE_GATE),
+            new ItemStack(Blocks.BIRCH_FENCE),
             new ItemStack(Blocks.BIRCH_STAIRS),
             new ItemStack(Blocks.JUNGLE_FENCE),
             new ItemStack(Blocks.JUNGLE_FENCE_GATE),
@@ -315,57 +348,92 @@ public class OreDictionary
             new ItemStack(Blocks.DARK_OAK_FENCE),
             new ItemStack(Blocks.DARK_OAK_FENCE_GATE),
             new ItemStack(Blocks.DARK_OAK_STAIRS),
-            new ItemStack(Blocks.WOODEN_SLAB),
+            new ItemStack(Blocks.WOODEN_SLAB, 1, WILDCARD_VALUE),
             new ItemStack(Blocks.GLASS_PANE),
-            null //So the above can have a comma and we don't have to keep editing extra lines.
+            new ItemStack(Blocks.BONE_BLOCK), // Bone Block, to prevent conversion of dyes into bone meal.
+            new ItemStack(Items.BOAT),
+            new ItemStack(Items.SPRUCE_BOAT),
+            new ItemStack(Items.BIRCH_BOAT),
+            new ItemStack(Items.JUNGLE_BOAT),
+            new ItemStack(Items.ACACIA_BOAT),
+            new ItemStack(Items.DARK_OAK_BOAT),
+            new ItemStack(Items.OAK_DOOR),
+            new ItemStack(Items.SPRUCE_DOOR),
+            new ItemStack(Items.BIRCH_DOOR),
+            new ItemStack(Items.JUNGLE_DOOR),
+            new ItemStack(Items.ACACIA_DOOR),
+            new ItemStack(Items.DARK_OAK_DOOR),
+            ItemStack.EMPTY //So the above can have a comma and we don't have to keep editing extra lines.
         };
 
-        List<IRecipe> recipes = CraftingManager.getInstance().getRecipeList();
-        List<IRecipe> recipesToRemove = new ArrayList<IRecipe>();
-        List<IRecipe> recipesToAdd = new ArrayList<IRecipe>();
-
+        FMLLog.log.info("Starts to replace vanilla recipe ingredients with ore ingredients.");
+        int replaced = 0;
         // Search vanilla recipes for recipes to replace
-        for(Object obj : recipes)
+        for(IRecipe obj : CraftingManager.REGISTRY)
         {
-            if(obj.getClass() == ShapedRecipes.class)
+            if(obj.getClass() == ShapedRecipes.class || obj.getClass() == ShapelessRecipes.class)
             {
-                ShapedRecipes recipe = (ShapedRecipes)obj;
-                ItemStack output = recipe.getRecipeOutput();
-                if (output != null && containsMatch(false, exclusions, output))
+                ItemStack output = obj.getRecipeOutput();
+                if (!output.isEmpty() && containsMatch(false, new ItemStack[]{ output }, exclusions))
                 {
                     continue;
                 }
 
-                if(containsMatch(true, recipe.recipeItems, replaceStacks))
+                Set<Ingredient> replacedIngs = new HashSet<>();
+                NonNullList<Ingredient> lst = obj.getIngredients();
+                for (int x = 0; x < lst.size(); x++)
                 {
-                    recipesToRemove.add(recipe);
-                    recipesToAdd.add(new ShapedOreRecipe(recipe, replacements));
-                }
-            }
-            else if(obj.getClass() == ShapelessRecipes.class)
-            {
-                ShapelessRecipes recipe = (ShapelessRecipes)obj;
-                ItemStack output = recipe.getRecipeOutput();
-                if (output != null && containsMatch(false, exclusions, output))
-                {
-                    continue;
-                }
+                    Ingredient ing = lst.get(x);
+                    ItemStack[] ingredients = ing.getMatchingStacks();
+                    String oreName = null;
+                    boolean skip = false;
 
-                if(containsMatch(true, recipe.recipeItems.toArray(new ItemStack[recipe.recipeItems.size()]), replaceStacks))
-                {
-                    recipesToRemove.add((IRecipe)obj);
-                    IRecipe newRecipe = new ShapelessOreRecipe(recipe, replacements);
-                    recipesToAdd.add(newRecipe);
+                    for (ItemStack stack : ingredients)
+                    {
+                        boolean matches = false;
+                        for (Entry<ItemStack, String> ent : replacements.entrySet())
+                        {
+                            if (itemMatches(ent.getKey(), stack, true))
+                            {
+                                matches = true;
+                                if (oreName != null && !oreName.equals(ent.getValue()))
+                                {
+                                    FMLLog.log.info("Invalid recipe found with multiple oredict ingredients in the same ingredient..."); //TODO: Write a dumper?
+                                    skip = true;
+                                    break;
+                                }
+                                else if (oreName == null)
+                                {
+                                    oreName = ent.getValue();
+                                    break;
+                                }
+                            }
+                        }
+                        if (!matches && oreName != null)
+                        {
+                            //TODO: Properly fix this, Broken recipe example: Beds
+                            //FMLLog.info("Invalid recipe found with ingredient that partially matches ore entries..."); //TODO: Write a dumper?
+                            skip = true;
+                        }
+                        if (skip)
+                            break;
+                    }
+                    if (!skip && oreName != null)
+                    {
+                        //Replace!
+                        lst.set(x, new OreIngredient(oreName));
+                        replaced++;
+                        if(DEBUG && replacedIngs.add(ing))
+                        {
+                            String recipeName = obj.getRegistryName().getResourcePath();
+                            FMLLog.log.debug("Replaced {} of the recipe \'{}\' with \"{}\".", ing.getMatchingStacks(), recipeName, oreName);
+                        }
+                    }
                 }
             }
         }
 
-        recipes.removeAll(recipesToRemove);
-        recipes.addAll(recipesToAdd);
-        if (recipesToRemove.size() > 0)
-        {
-            FMLLog.info("Replaced %d ore recipes", recipesToRemove.size());
-        }
+        FMLLog.log.info("Replaced {} ore ingredients", replaced);
     }
 
     /**
@@ -383,9 +451,9 @@ public class OreDictionary
             idToName.add(name);
             val = idToName.size() - 1; //0 indexed
             nameToId.put(name, val);
-            List<ItemStack> back = Lists.newArrayList();
+            NonNullList<ItemStack> back = NonNullList.create();
             idToStack.add(back);
-            idToStackUn.add(Collections.unmodifiableList(back));
+            idToStackUn.add(back);
         }
         return val;
     }
@@ -408,9 +476,9 @@ public class OreDictionary
      * @param stack The item stack of the ore.
      * @return An array of ids that this ore is registered as.
      */
-    public static int[] getOreIDs(ItemStack stack)
+    public static int[] getOreIDs(@Nonnull ItemStack stack)
     {
-        if (stack == null || stack.getItem() == null) throw new IllegalArgumentException("Stack can not be null!");
+        if (stack.isEmpty()) throw new IllegalArgumentException("Stack can not be invalid!");
 
         Set<Integer> set = new HashSet<Integer>();
 
@@ -421,12 +489,12 @@ public class OreDictionary
         int id;
         if (registryName == null)
         {
-            FMLLog.log(Level.DEBUG, "Attempted to find the oreIDs for an unregistered object (%s). This won't work very well.", stack);
+            FMLLog.log.debug("Attempted to find the oreIDs for an unregistered object ({}). This won't work very well.", stack);
             return new int[0];
         }
         else
         {
-            id = GameData.getItemRegistry().getId(registryName);
+            id = Item.REGISTRY.getIDForObject(stack.getItem().delegate.get());
         }
         List<Integer> ids = stackToId.get(id);
         if (ids != null) set.addAll(ids);
@@ -450,7 +518,7 @@ public class OreDictionary
      * @param name The ore name, directly calls getOreID
      * @return An arrayList containing ItemStacks registered for this ore
      */
-    public static List<ItemStack> getOres(String name)
+    public static NonNullList<ItemStack> getOres(String name)
     {
         return getOres(getOreID(name));
     }
@@ -470,7 +538,7 @@ public class OreDictionary
      * @param alwaysCreateEntry Flag - should a new entry be created if empty
      * @return An arraylist containing ItemStacks registered for this ore
      */
-    public static List<ItemStack> getOres(String name, boolean alwaysCreateEntry)
+    public static NonNullList<ItemStack> getOres(String name, boolean alwaysCreateEntry)
     {
         if (alwaysCreateEntry) {
             return getOres(getOreID(name));
@@ -510,12 +578,12 @@ public class OreDictionary
      * @param id The ore ID, see getOreID
      * @return An List containing ItemStacks registered for this ore
      */
-    private static List<ItemStack> getOres(int id)
+    private static NonNullList<ItemStack> getOres(int id)
     {
         return idToStackUn.size() > id ? idToStackUn.get(id) : EMPTY_LIST;
     }
 
-    private static boolean containsMatch(boolean strict, ItemStack[] inputs, ItemStack... targets)
+    private static boolean containsMatch(boolean strict, ItemStack[] inputs, @Nonnull ItemStack... targets)
     {
         for (ItemStack input : inputs)
         {
@@ -530,7 +598,7 @@ public class OreDictionary
         return false;
     }
 
-    public static boolean containsMatch(boolean strict, List<ItemStack> inputs, ItemStack... targets)
+    public static boolean containsMatch(boolean strict, NonNullList<ItemStack> inputs, @Nonnull ItemStack... targets)
     {
         for (ItemStack input : inputs)
         {
@@ -545,19 +613,19 @@ public class OreDictionary
         return false;
     }
 
-    public static boolean itemMatches(ItemStack target, ItemStack input, boolean strict)
+    public static boolean itemMatches(@Nonnull ItemStack target, @Nonnull ItemStack input, boolean strict)
     {
-        if (input == null && target != null || input != null && target == null)
+        if (input.isEmpty() && !target.isEmpty() || !input.isEmpty() && target.isEmpty())
         {
             return false;
         }
-        return (target.getItem() == input.getItem() && ((target.getItemDamage() == WILDCARD_VALUE && !strict) || target.getItemDamage() == input.getItemDamage()));
+        return (target.getItem() == input.getItem() && ((target.getMetadata() == WILDCARD_VALUE && !strict) || target.getMetadata() == input.getMetadata()));
     }
 
     //Convenience functions that make for cleaner code mod side. They all drill down to registerOre(String, int, ItemStack)
     public static void registerOre(String name, Item      ore){ registerOre(name, new ItemStack(ore));  }
     public static void registerOre(String name, Block     ore){ registerOre(name, new ItemStack(ore));  }
-    public static void registerOre(String name, ItemStack ore){ registerOreImpl(name, ore);             }
+    public static void registerOre(String name, @Nonnull ItemStack ore){ registerOreImpl(name, ore);             }
 
     /**
      * Registers a ore item into the dictionary.
@@ -566,12 +634,12 @@ public class OreDictionary
      * @param name The name of the ore
      * @param ore The ore's ItemStack
      */
-    private static void registerOreImpl(String name, ItemStack ore)
+    private static void registerOreImpl(String name, @Nonnull ItemStack ore)
     {
         if ("Unknown".equals(name)) return; //prevent bad IDs.
-        if (ore == null || ore.getItem() == null)
+        if (ore.isEmpty())
         {
-            FMLLog.bigWarning("Invalid registration attempt for an Ore Dictionary item with name %s has occurred. The registration has been denied to prevent crashes. The mod responsible for the registration needs to correct this.", name);
+            FMLLog.bigWarning("Invalid registration attempt for an Ore Dictionary item with name {} has occurred. The registration has been denied to prevent crashes. The mod responsible for the registration needs to correct this.", name);
             return; //prevent bad ItemStacks.
         }
 
@@ -583,14 +651,16 @@ public class OreDictionary
         int hash;
         if (registryName == null)
         {
-            FMLLog.bigWarning("A broken ore dictionary registration with name %s has occurred. It adds an item (type: %s) which is currently unknown to the game registry. This dictionary item can only support a single value when"
+            ModContainer modContainer = Loader.instance().activeModContainer();
+            String modContainerName = modContainer == null ? null : modContainer.getName();
+            FMLLog.bigWarning("A broken ore dictionary registration with name {} has occurred. It adds an item (type: {}) which is currently unknown to the game registry. This dictionary item can only support a single value when"
                     + " registered with ores like this, and NO I am not going to turn this spam off. Just register your ore dictionary entries after the GameRegistry.\n"
-                    + "TO USERS: YES this is a BUG in the mod "+Loader.instance().activeModContainer().getName()+" report it to them!", name, ore.getItem().getClass());
+                    + "TO USERS: YES this is a BUG in the mod " + modContainerName + " report it to them!", name, ore.getItem().getClass());
             hash = -1;
         }
         else
         {
-            hash = GameData.getItemRegistry().getId(registryName);
+            hash = Item.REGISTRY.getIDForObject(ore.getItem().delegate.get());
         }
         if (ore.getItemDamage() != WILDCARD_VALUE)
         {
@@ -618,7 +688,7 @@ public class OreDictionary
         private final String Name;
         private final ItemStack Ore;
 
-        public OreRegisterEvent(String name, ItemStack ore)
+        public OreRegisterEvent(String name, @Nonnull ItemStack ore)
         {
             this.Name = name;
             this.Ore = ore;
@@ -629,6 +699,7 @@ public class OreDictionary
             return Name;
         }
 
+        @Nonnull
         public ItemStack getOre()
         {
             return Ore;
@@ -641,7 +712,7 @@ public class OreDictionary
         stackToId.clear();
         for (int id = 0; id < idToStack.size(); id++)
         {
-            List<ItemStack> ores = idToStack.get(id);
+            NonNullList<ItemStack> ores = idToStack.get(id);
             if (ores == null) continue;
             for (ItemStack ore : ores)
             {
@@ -650,23 +721,18 @@ public class OreDictionary
                 int hash;
                 if (name == null)
                 {
-                    FMLLog.log(Level.DEBUG, "Defaulting unregistered ore dictionary entry for ore dictionary %s: type %s to -1", getOreName(id), ore.getItem().getClass());
+                    FMLLog.log.debug("Defaulting unregistered ore dictionary entry for ore dictionary {}: type {} to -1", getOreName(id), ore.getItem().getClass());
                     hash = -1;
                 }
                 else
                 {
-                    hash = GameData.getItemRegistry().getId(name);
+                    hash = Item.REGISTRY.getIDForObject(ore.getItem().delegate.get());
                 }
                 if (ore.getItemDamage() != WILDCARD_VALUE)
                 {
                     hash |= ((ore.getItemDamage() + 1) << 16); // +1 so meta 0 is significant
                 }
-                List<Integer> ids = stackToId.get(hash);
-                if (ids == null)
-                {
-                    ids = Lists.newArrayList();
-                    stackToId.put(hash, ids);
-                }
+                List<Integer> ids = stackToId.computeIfAbsent(hash, k -> Lists.newArrayList());
                 ids.add(id);
                 //System.out.println(id + " " + getOreName(id) + " " + Integer.toHexString(hash) + " " + ore);
             }

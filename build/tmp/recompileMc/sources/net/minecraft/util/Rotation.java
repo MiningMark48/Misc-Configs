@@ -8,7 +8,7 @@ public enum Rotation
     COUNTERCLOCKWISE_90("rotate_270");
 
     private final String name;
-    private static String[] rotationNames = new String[values().length];
+    private static final String[] rotationNames = new String[values().length];
 
     private Rotation(String nameIn)
     {

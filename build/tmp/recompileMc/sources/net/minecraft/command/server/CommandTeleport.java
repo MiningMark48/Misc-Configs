@@ -10,20 +10,22 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 public class CommandTeleport extends CommandBase
 {
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
-        return "tp";
+        return "teleport";
     }
 
     /**
@@ -37,9 +39,9 @@ public class CommandTeleport extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
-        return "commands.tp.usage";
+        return "commands.teleport.usage";
     }
 
     /**
@@ -47,129 +49,97 @@ public class CommandTeleport extends CommandBase
      */
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
-        if (args.length < 1)
+        if (args.length < 4)
         {
-            throw new WrongUsageException("commands.tp.usage", new Object[0]);
+            throw new WrongUsageException("commands.teleport.usage", new Object[0]);
         }
         else
         {
-            int i = 0;
-            Entity entity;
+            Entity entity = getEntity(server, sender, args[0]);
 
-            if (args.length != 2 && args.length != 4 && args.length != 6)
+            if (entity.world != null)
             {
-                entity = getCommandSenderAsPlayer(sender);
-            }
-            else
-            {
-                entity = getEntity(server, sender, args[0]);
-                i = 1;
-            }
-
-            if (args.length != 1 && args.length != 2)
-            {
-                if (args.length < i + 3)
-                {
-                    throw new WrongUsageException("commands.tp.usage", new Object[0]);
-                }
-                else if (entity.worldObj != null)
-                {
-                    int lvt_6_2_ = i + 1;
-                    CommandBase.CoordinateArg commandbase$coordinatearg = parseCoordinate(entity.posX, args[i], true);
-                    CommandBase.CoordinateArg commandbase$coordinatearg1 = parseCoordinate(entity.posY, args[lvt_6_2_++], -512, 512, false);
-                    CommandBase.CoordinateArg commandbase$coordinatearg2 = parseCoordinate(entity.posZ, args[lvt_6_2_++], true);
-                    CommandBase.CoordinateArg commandbase$coordinatearg3 = parseCoordinate((double)entity.rotationYaw, args.length > lvt_6_2_ ? args[lvt_6_2_++] : "~", false);
-                    CommandBase.CoordinateArg commandbase$coordinatearg4 = parseCoordinate((double)entity.rotationPitch, args.length > lvt_6_2_ ? args[lvt_6_2_] : "~", false);
-
-                    if (entity instanceof EntityPlayerMP)
-                    {
-                        Set<SPacketPlayerPosLook.EnumFlags> set = EnumSet.<SPacketPlayerPosLook.EnumFlags>noneOf(SPacketPlayerPosLook.EnumFlags.class);
-
-                        if (commandbase$coordinatearg.isRelative())
-                        {
-                            set.add(SPacketPlayerPosLook.EnumFlags.X);
-                        }
-
-                        if (commandbase$coordinatearg1.isRelative())
-                        {
-                            set.add(SPacketPlayerPosLook.EnumFlags.Y);
-                        }
-
-                        if (commandbase$coordinatearg2.isRelative())
-                        {
-                            set.add(SPacketPlayerPosLook.EnumFlags.Z);
-                        }
-
-                        if (commandbase$coordinatearg4.isRelative())
-                        {
-                            set.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
-                        }
-
-                        if (commandbase$coordinatearg3.isRelative())
-                        {
-                            set.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
-                        }
-
-                        float f = (float)commandbase$coordinatearg3.getAmount();
-
-                        if (!commandbase$coordinatearg3.isRelative())
-                        {
-                            f = MathHelper.wrapDegrees(f);
-                        }
-
-                        float f1 = (float)commandbase$coordinatearg4.getAmount();
-
-                        if (!commandbase$coordinatearg4.isRelative())
-                        {
-                            f1 = MathHelper.wrapDegrees(f1);
-                        }
-
-                        entity.dismountRidingEntity();
-                        ((EntityPlayerMP)entity).connection.setPlayerLocation(commandbase$coordinatearg.getAmount(), commandbase$coordinatearg1.getAmount(), commandbase$coordinatearg2.getAmount(), f, f1, set);
-                        entity.setRotationYawHead(f);
-                    }
-                    else
-                    {
-                        float f2 = (float)MathHelper.wrapDegrees(commandbase$coordinatearg3.getResult());
-                        float f3 = (float)MathHelper.wrapDegrees(commandbase$coordinatearg4.getResult());
-                        f3 = MathHelper.clamp_float(f3, -90.0F, 90.0F);
-                        entity.setLocationAndAngles(commandbase$coordinatearg.getResult(), commandbase$coordinatearg1.getResult(), commandbase$coordinatearg2.getResult(), f2, f3);
-                        entity.setRotationYawHead(f2);
-                    }
-
-                    notifyCommandListener(sender, this, "commands.tp.success.coordinates", new Object[] {entity.getName(), Double.valueOf(commandbase$coordinatearg.getResult()), Double.valueOf(commandbase$coordinatearg1.getResult()), Double.valueOf(commandbase$coordinatearg2.getResult())});
-                }
-            }
-            else
-            {
-                Entity entity1 = getEntity(server, sender, args[args.length - 1]);
-
-                if (entity1.worldObj != entity.worldObj)
-                {
-                    throw new CommandException("commands.tp.notSameDimension", new Object[0]);
-                }
-                else
-                {
-                    entity.dismountRidingEntity();
-
-                    if (entity instanceof EntityPlayerMP)
-                    {
-                        ((EntityPlayerMP)entity).connection.setPlayerLocation(entity1.posX, entity1.posY, entity1.posZ, entity1.rotationYaw, entity1.rotationPitch);
-                    }
-                    else
-                    {
-                        entity.setLocationAndAngles(entity1.posX, entity1.posY, entity1.posZ, entity1.rotationYaw, entity1.rotationPitch);
-                    }
-
-                    notifyCommandListener(sender, this, "commands.tp.success", new Object[] {entity.getName(), entity1.getName()});
-                }
+                int i = 4096;
+                Vec3d vec3d = sender.getPositionVector();
+                int j = 1;
+                CommandBase.CoordinateArg commandbase$coordinatearg = parseCoordinate(vec3d.x, args[j++], true);
+                CommandBase.CoordinateArg commandbase$coordinatearg1 = parseCoordinate(vec3d.y, args[j++], -4096, 4096, false);
+                CommandBase.CoordinateArg commandbase$coordinatearg2 = parseCoordinate(vec3d.z, args[j++], true);
+                Entity entity1 = sender.getCommandSenderEntity() == null ? entity : sender.getCommandSenderEntity();
+                CommandBase.CoordinateArg commandbase$coordinatearg3 = parseCoordinate(args.length > j ? (double)entity1.rotationYaw : (double)entity.rotationYaw, args.length > j ? args[j] : "~", false);
+                ++j;
+                CommandBase.CoordinateArg commandbase$coordinatearg4 = parseCoordinate(args.length > j ? (double)entity1.rotationPitch : (double)entity.rotationPitch, args.length > j ? args[j] : "~", false);
+                doTeleport(entity, commandbase$coordinatearg, commandbase$coordinatearg1, commandbase$coordinatearg2, commandbase$coordinatearg3, commandbase$coordinatearg4);
+                notifyCommandListener(sender, this, "commands.teleport.success.coordinates", new Object[] {entity.getName(), commandbase$coordinatearg.getResult(), commandbase$coordinatearg1.getResult(), commandbase$coordinatearg2.getResult()});
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Perform the actual teleport
+     *  
+     * @param teleportingEntity the entity being teleported
+     */
+    private static void doTeleport(Entity teleportingEntity, CommandBase.CoordinateArg argX, CommandBase.CoordinateArg argY, CommandBase.CoordinateArg argZ, CommandBase.CoordinateArg argYaw, CommandBase.CoordinateArg argPitch)
     {
-        return args.length != 1 && args.length != 2 ? Collections.<String>emptyList() : getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+        if (teleportingEntity instanceof EntityPlayerMP)
+        {
+            Set<SPacketPlayerPosLook.EnumFlags> set = EnumSet.<SPacketPlayerPosLook.EnumFlags>noneOf(SPacketPlayerPosLook.EnumFlags.class);
+            float f = (float)argYaw.getAmount();
+
+            if (argYaw.isRelative())
+            {
+                set.add(SPacketPlayerPosLook.EnumFlags.Y_ROT);
+            }
+            else
+            {
+                f = MathHelper.wrapDegrees(f);
+            }
+
+            float f1 = (float)argPitch.getAmount();
+
+            if (argPitch.isRelative())
+            {
+                set.add(SPacketPlayerPosLook.EnumFlags.X_ROT);
+            }
+            else
+            {
+                f1 = MathHelper.wrapDegrees(f1);
+            }
+
+            teleportingEntity.dismountRidingEntity();
+            ((EntityPlayerMP)teleportingEntity).connection.setPlayerLocation(argX.getResult(), argY.getResult(), argZ.getResult(), f, f1, set);
+            teleportingEntity.setRotationYawHead(f);
+        }
+        else
+        {
+            float f2 = (float)MathHelper.wrapDegrees(argYaw.getResult());
+            float f3 = (float)MathHelper.wrapDegrees(argPitch.getResult());
+            f3 = MathHelper.clamp(f3, -90.0F, 90.0F);
+            teleportingEntity.setLocationAndAngles(argX.getResult(), argY.getResult(), argZ.getResult(), f2, f3);
+            teleportingEntity.setRotationYawHead(f2);
+        }
+
+        if (!(teleportingEntity instanceof EntityLivingBase) || !((EntityLivingBase)teleportingEntity).isElytraFlying())
+        {
+            teleportingEntity.motionY = 0.0D;
+            teleportingEntity.onGround = true;
+        }
+    }
+
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
+    {
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else
+        {
+            return args.length > 1 && args.length <= 4 ? getTabCompletionCoordinate(args, 1, targetPos) : Collections.emptyList();
+        }
     }
 
     /**

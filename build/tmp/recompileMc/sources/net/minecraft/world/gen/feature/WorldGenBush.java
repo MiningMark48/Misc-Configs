@@ -7,7 +7,7 @@ import net.minecraft.world.World;
 
 public class WorldGenBush extends WorldGenerator
 {
-    private BlockBush block;
+    private final BlockBush block;
 
     public WorldGenBush(BlockBush blockIn)
     {
@@ -20,7 +20,7 @@ public class WorldGenBush extends WorldGenerator
         {
             BlockPos blockpos = position.add(rand.nextInt(8) - rand.nextInt(8), rand.nextInt(4) - rand.nextInt(4), rand.nextInt(8) - rand.nextInt(8));
 
-            if (worldIn.isAirBlock(blockpos) && (!worldIn.provider.getHasNoSky() || blockpos.getY() < worldIn.getHeight() - 1) && this.block.canBlockStay(worldIn, blockpos, this.block.getDefaultState()))
+            if (worldIn.isAirBlock(blockpos) && (!worldIn.provider.isNether() || blockpos.getY() < worldIn.getHeight() - 1) && this.block.canBlockStay(worldIn, blockpos, this.block.getDefaultState()))
             {
                 worldIn.setBlockState(blockpos, this.block.getDefaultState(), 2);
             }

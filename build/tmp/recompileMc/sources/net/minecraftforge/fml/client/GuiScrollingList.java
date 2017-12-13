@@ -1,31 +1,37 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.client;
-
-import java.io.IOException;
-import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+
+import java.io.IOException;
+import java.util.List;
 
 public abstract class GuiScrollingList
 {
@@ -270,7 +276,7 @@ public abstract class GuiScrollingList
         this.applyScrollLimits();
 
         Tessellator tess = Tessellator.getInstance();
-        VertexBuffer worldr = tess.getBuffer();
+        BufferBuilder worldr = tess.getBuffer();
 
         ScaledResolution res = new ScaledResolution(client);
         double scaleW = client.displayWidth / res.getScaledWidth_double();
@@ -279,7 +285,7 @@ public abstract class GuiScrollingList
         GL11.glScissor((int)(left      * scaleW), (int)(client.displayHeight - (bottom * scaleH)),
                        (int)(listWidth * scaleW), (int)(viewHeight * scaleH));
 
-        if (this.client.theWorld != null)
+        if (this.client.world != null)
         {
             this.drawGradientRect(this.left, this.top, this.right, this.bottom, 0xC0101010, 0xD0101010);
         }
@@ -397,12 +403,12 @@ public abstract class GuiScrollingList
         GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer VertexBuffer = tessellator.getBuffer();
-        VertexBuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        VertexBuffer.pos(right, top, 0.0D).color(r1, g1, b1, a1).endVertex();
-        VertexBuffer.pos(left,  top, 0.0D).color(r1, g1, b1, a1).endVertex();
-        VertexBuffer.pos(left,  bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
-        VertexBuffer.pos(right, bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(right, top, 0.0D).color(r1, g1, b1, a1).endVertex();
+        buffer.pos(left,  top, 0.0D).color(r1, g1, b1, a1).endVertex();
+        buffer.pos(left,  bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
+        buffer.pos(right, bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
         tessellator.draw();
         GlStateManager.shadeModel(GL11.GL_FLAT);
         GlStateManager.disableBlend();

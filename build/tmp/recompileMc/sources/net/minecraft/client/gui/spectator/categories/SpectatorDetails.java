@@ -1,6 +1,6 @@
 package net.minecraft.client.gui.spectator.categories;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import java.util.List;
 import net.minecraft.client.gui.spectator.ISpectatorMenuObject;
 import net.minecraft.client.gui.spectator.ISpectatorMenuView;
@@ -15,16 +15,16 @@ public class SpectatorDetails
     private final List<ISpectatorMenuObject> items;
     private final int selectedSlot;
 
-    public SpectatorDetails(ISpectatorMenuView p_i45494_1_, List<ISpectatorMenuObject> p_i45494_2_, int p_i45494_3_)
+    public SpectatorDetails(ISpectatorMenuView categoryIn, List<ISpectatorMenuObject> itemsIn, int selectedIndex)
     {
-        this.category = p_i45494_1_;
-        this.items = p_i45494_2_;
-        this.selectedSlot = p_i45494_3_;
+        this.category = categoryIn;
+        this.items = itemsIn;
+        this.selectedSlot = selectedIndex;
     }
 
-    public ISpectatorMenuObject getObject(int p_178680_1_)
+    public ISpectatorMenuObject getObject(int index)
     {
-        return p_178680_1_ >= 0 && p_178680_1_ < this.items.size() ? (ISpectatorMenuObject)Objects.firstNonNull(this.items.get(p_178680_1_), SpectatorMenu.EMPTY_SLOT) : SpectatorMenu.EMPTY_SLOT;
+        return index >= 0 && index < this.items.size() ? (ISpectatorMenuObject)MoreObjects.firstNonNull(this.items.get(index), SpectatorMenu.EMPTY_SLOT) : SpectatorMenu.EMPTY_SLOT;
     }
 
     public int getSelectedSlot()

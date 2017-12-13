@@ -33,7 +33,7 @@ public class SPacketCustomPayload implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.channel = buf.readStringFromBuffer(20);
+        this.channel = buf.readString(20);
         int i = buf.readableBytes();
 
         if (i >= 0 && i <= 1048576)
@@ -65,6 +65,8 @@ public class SPacketCustomPayload implements Packet<INetHandlerPlayClient>
     public void processPacket(INetHandlerPlayClient handler)
     {
         handler.handleCustomPayload(this);
+        // Forge: fix network buffer leaks (MC-121884)
+        if (this.data != null) this.data.release();
     }
 
     @SideOnly(Side.CLIENT)

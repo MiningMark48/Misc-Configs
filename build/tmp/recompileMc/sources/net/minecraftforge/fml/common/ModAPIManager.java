@@ -1,16 +1,36 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import net.minecraftforge.fml.common.asm.transformers.ModAPITransformer;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.discovery.ModCandidate;
 import net.minecraftforge.fml.common.discovery.ModDiscoverer;
 import net.minecraftforge.fml.common.discovery.ASMDataTable.ASMData;
-import net.minecraftforge.fml.common.functions.ModIdFunction;
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
 import net.minecraftforge.fml.common.versioning.VersionParser;
@@ -91,7 +111,7 @@ public class ModAPIManager {
         public void validate(String providedAPI, String apiOwner, String apiVersion)
         {
             if (Loader.instance().getModClassLoader().containsSource(this.getSource())) {
-                FMLLog.bigWarning("The API %s from source %s is loaded from an incompatible classloader. THIS WILL NOT WORK!", providedAPI, this.getSource().getAbsolutePath());
+                FMLLog.bigWarning("The API {} from source {} is loaded from an incompatible classloader. THIS WILL NOT WORK!", providedAPI, this.getSource().getAbsolutePath());
             }
             // TODO Compare this annotation data to the one we first found. Maybe barf if there is inconsistency?
         }
@@ -161,7 +181,7 @@ public class ModAPIManager {
                 {
                     continue;
                 }
-                FMLLog.fine("Found API %s (owned by %s providing %s) embedded in %s",apiPackage, apiOwner, providedAPI, embeddedIn);
+                FMLLog.log.debug("Found API {} (owned by {} providing {}) embedded in {}",apiPackage, apiOwner, providedAPI, embeddedIn);
                 if (!embeddedIn.equals(apiOwner))
                 {
                     container.addAPIReference(embeddedIn);
@@ -176,10 +196,10 @@ public class ModAPIManager {
                 Set<ModCandidate> candidates = dataTable.getCandidatesFor(pkg);
                 for (ModCandidate candidate : candidates)
                 {
-                    List<String> candidateIds = Lists.transform(candidate.getContainedMods(), new ModIdFunction());
+                    List<String> candidateIds = candidate.getContainedMods().stream().map(ModContainer::getModId).collect(Collectors.toCollection(ArrayList::new));
                     if (!candidateIds.contains(container.ownerMod.getLabel()) && !container.currentReferents.containsAll(candidateIds))
                     {
-                        FMLLog.info("Found mod(s) %s containing declared API package %s (owned by %s) without associated API reference",candidateIds, pkg, container.ownerMod);
+                        FMLLog.log.info("Found mod(s) {} containing declared API package {} (owned by {}) without associated API reference",candidateIds, pkg, container.ownerMod);
                         container.addAPIReferences(candidateIds);
                     }
                 }
@@ -192,18 +212,18 @@ public class ModAPIManager {
                     APIContainer parent = apiContainers.get(owner.getLabel());
                     if (parent == container)
                     {
-                        FMLLog.finer("APIContainer %s is it's own parent. skipping", owner);
+                        FMLLog.log.trace("APIContainer {} is it's own parent. skipping", owner);
                         container.markSelfReferenced();
                         break;
                     }
-                    FMLLog.finer("Removing upstream parent %s from %s", parent.ownerMod.getLabel(), container);
+                    FMLLog.log.trace("Removing upstream parent {} from {}", parent.ownerMod.getLabel(), container);
                     container.currentReferents.remove(parent.ownerMod.getLabel());
                     container.referredMods.remove(parent.ownerMod);
                     owner = parent.ownerMod;
                 }
                 while (apiContainers.containsKey(owner.getLabel()));
             }
-            FMLLog.fine("Creating API container dummy for API %s: owner: %s, dependents: %s", container.providedAPI, container.ownerMod, container.referredMods);
+            FMLLog.log.debug("Creating API container dummy for API {}: owner: {}, dependents: {}", container.providedAPI, container.ownerMod, container.referredMods);
         }
     }
 

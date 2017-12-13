@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.pipeline;
 
 import net.minecraft.client.renderer.color.BlockColors;
@@ -21,12 +40,7 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
     @Override
     protected void updateColor(float[] normal, float[] color, float x, float y, float z, float tint, int multiplier)
     {
-        if(tint != -1)
-        {
-            color[0] *= (float)(multiplier >> 0x10 & 0xFF) / 0xFF;
-            color[1] *= (float)(multiplier >> 0x8 & 0xFF) / 0xFF;
-            color[2] *= (float)(multiplier & 0xFF) / 0xFF;
-        }
+        super.updateColor(normal, color, x, y, z, tint, multiplier);
         float a = getAo(x, y, z);
         color[0] *= a;
         color[1] *= a;
@@ -52,18 +66,15 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
         float e1 = 1 + 1e-4f;
         if(ax > 2 - 1e-4f && ay <= e1 && az <= e1)
         {
-            if(x > -2 + 1e-4f) x = -2 + 1e-4f;
-            if(x <  2 - 1e-4f) x =  2 - 1e-4f;
+            x = x < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         else if(ay > 2 - 1e-4f && az <= e1 && ax <= e1)
         {
-            if(y > -2 + 1e-4f) y = -2 + 1e-4f;
-            if(y <  2 - 1e-4f) y =  2 - 1e-4f;
+            y = y < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         else if(az > 2 - 1e-4f && ax <= e1 && ay <= e1)
         {
-            if(z > -2 + 1e-4f) z = -2 + 1e-4f;
-            if(z <  2 - 1e-4f) z =  2 - 1e-4f;
+            z = z < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         ax = x > 0 ? x : -x;
         ay = y > 0 ? y : -y;
@@ -156,14 +167,14 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
         a += ao[sx - 0][sy - 0][sz - 1] * (0 + x) * (0 + y) * (1 - z);
         a += ao[sx - 0][sy - 0][sz - 0] * (0 + x) * (0 + y) * (0 + z);
 
-        a = MathHelper.clamp_float(a, 0, 1);
+        a = MathHelper.clamp(a, 0, 1);
         return a;
     }
 
     @Override
     public void updateBlockInfo()
     {
-        blockInfo.updateShift(false);
+        blockInfo.updateShift();
         blockInfo.updateLightMatrix();
     }
 }

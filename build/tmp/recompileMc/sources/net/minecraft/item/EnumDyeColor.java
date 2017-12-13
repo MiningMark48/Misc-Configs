@@ -1,27 +1,28 @@
 package net.minecraft.item;
 
-import net.minecraft.block.material.MapColor;
 import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public enum EnumDyeColor implements IStringSerializable
 {
-    WHITE(0, 15, "white", "white", MapColor.SNOW, TextFormatting.WHITE),
-    ORANGE(1, 14, "orange", "orange", MapColor.ADOBE, TextFormatting.GOLD),
-    MAGENTA(2, 13, "magenta", "magenta", MapColor.MAGENTA, TextFormatting.AQUA),
-    LIGHT_BLUE(3, 12, "light_blue", "lightBlue", MapColor.LIGHT_BLUE, TextFormatting.BLUE),
-    YELLOW(4, 11, "yellow", "yellow", MapColor.YELLOW, TextFormatting.YELLOW),
-    LIME(5, 10, "lime", "lime", MapColor.LIME, TextFormatting.GREEN),
-    PINK(6, 9, "pink", "pink", MapColor.PINK, TextFormatting.LIGHT_PURPLE),
-    GRAY(7, 8, "gray", "gray", MapColor.GRAY, TextFormatting.DARK_GRAY),
-    SILVER(8, 7, "silver", "silver", MapColor.SILVER, TextFormatting.GRAY),
-    CYAN(9, 6, "cyan", "cyan", MapColor.CYAN, TextFormatting.DARK_AQUA),
-    PURPLE(10, 5, "purple", "purple", MapColor.PURPLE, TextFormatting.DARK_PURPLE),
-    BLUE(11, 4, "blue", "blue", MapColor.BLUE, TextFormatting.DARK_BLUE),
-    BROWN(12, 3, "brown", "brown", MapColor.BROWN, TextFormatting.GOLD),
-    GREEN(13, 2, "green", "green", MapColor.GREEN, TextFormatting.DARK_GREEN),
-    RED(14, 1, "red", "red", MapColor.RED, TextFormatting.DARK_RED),
-    BLACK(15, 0, "black", "black", MapColor.BLACK, TextFormatting.BLACK);
+    WHITE(0, 15, "white", "white", 16383998, TextFormatting.WHITE),
+    ORANGE(1, 14, "orange", "orange", 16351261, TextFormatting.GOLD),
+    MAGENTA(2, 13, "magenta", "magenta", 13061821, TextFormatting.AQUA),
+    LIGHT_BLUE(3, 12, "light_blue", "lightBlue", 3847130, TextFormatting.BLUE),
+    YELLOW(4, 11, "yellow", "yellow", 16701501, TextFormatting.YELLOW),
+    LIME(5, 10, "lime", "lime", 8439583, TextFormatting.GREEN),
+    PINK(6, 9, "pink", "pink", 15961002, TextFormatting.LIGHT_PURPLE),
+    GRAY(7, 8, "gray", "gray", 4673362, TextFormatting.DARK_GRAY),
+    SILVER(8, 7, "silver", "silver", 10329495, TextFormatting.GRAY),
+    CYAN(9, 6, "cyan", "cyan", 1481884, TextFormatting.DARK_AQUA),
+    PURPLE(10, 5, "purple", "purple", 8991416, TextFormatting.DARK_PURPLE),
+    BLUE(11, 4, "blue", "blue", 3949738, TextFormatting.DARK_BLUE),
+    BROWN(12, 3, "brown", "brown", 8606770, TextFormatting.GOLD),
+    GREEN(13, 2, "green", "green", 6192150, TextFormatting.DARK_GREEN),
+    RED(14, 1, "red", "red", 11546150, TextFormatting.DARK_RED),
+    BLACK(15, 0, "black", "black", 1908001, TextFormatting.BLACK);
 
     private static final EnumDyeColor[] META_LOOKUP = new EnumDyeColor[values().length];
     private static final EnumDyeColor[] DYE_DMG_LOOKUP = new EnumDyeColor[values().length];
@@ -29,17 +30,22 @@ public enum EnumDyeColor implements IStringSerializable
     private final int dyeDamage;
     private final String name;
     private final String unlocalizedName;
-    private final MapColor mapColor;
+    private final int colorValue;
+    private final float[] colorComponentValues;
     private final TextFormatting chatColor;
 
-    private EnumDyeColor(int meta, int dyeDamage, String name, String unlocalizedName, MapColor mapColorIn, TextFormatting chatColor)
+    private EnumDyeColor(int metaIn, int dyeDamageIn, String nameIn, String unlocalizedNameIn, int colorValueIn, TextFormatting chatColorIn)
     {
-        this.meta = meta;
-        this.dyeDamage = dyeDamage;
-        this.name = name;
-        this.unlocalizedName = unlocalizedName;
-        this.mapColor = mapColorIn;
-        this.chatColor = chatColor;
+        this.meta = metaIn;
+        this.dyeDamage = dyeDamageIn;
+        this.name = nameIn;
+        this.unlocalizedName = unlocalizedNameIn;
+        this.colorValue = colorValueIn;
+        this.chatColor = chatColorIn;
+        int i = (colorValueIn & 16711680) >> 16;
+        int j = (colorValueIn & 65280) >> 8;
+        int k = (colorValueIn & 255) >> 0;
+        this.colorComponentValues = new float[] {(float)i / 255.0F, (float)j / 255.0F, (float)k / 255.0F};
     }
 
     public int getMetadata()
@@ -52,14 +58,26 @@ public enum EnumDyeColor implements IStringSerializable
         return this.dyeDamage;
     }
 
+    @SideOnly(Side.CLIENT)
+    public String getDyeColorName()
+    {
+        return this.name;
+    }
+
     public String getUnlocalizedName()
     {
         return this.unlocalizedName;
     }
 
-    public MapColor getMapColor()
+    @SideOnly(Side.CLIENT)
+    public int getColorValue()
     {
-        return this.mapColor;
+        return this.colorValue;
+    }
+
+    public float[] getColorComponentValues()
+    {
+        return this.colorComponentValues;
     }
 
     public static EnumDyeColor byDyeDamage(int damage)

@@ -15,7 +15,7 @@ public class CommandGameRule extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "gamerule";
     }
@@ -31,7 +31,7 @@ public class CommandGameRule extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.gamerule.usage";
     }
@@ -48,7 +48,7 @@ public class CommandGameRule extends CommandBase
         switch (args.length)
         {
             case 0:
-                sender.addChatMessage(new TextComponentString(joinNiceString(gamerules.getRules())));
+                sender.sendMessage(new TextComponentString(joinNiceString(gamerules.getRules())));
                 break;
             case 1:
 
@@ -58,7 +58,7 @@ public class CommandGameRule extends CommandBase
                 }
 
                 String s2 = gamerules.getString(s);
-                sender.addChatMessage((new TextComponentString(s)).appendText(" = ").appendText(s2));
+                sender.sendMessage((new TextComponentString(s)).appendText(" = ").appendText(s2));
                 sender.setCommandStat(CommandResultStats.Type.QUERY_RESULT, gamerules.getInt(s));
                 break;
             default:
@@ -80,21 +80,20 @@ public class CommandGameRule extends CommandBase
         {
             byte b0 = (byte)(rules.getBoolean(p_184898_1_) ? 22 : 23);
 
-            for (EntityPlayerMP entityplayermp : server.getPlayerList().getPlayerList())
+            for (EntityPlayerMP entityplayermp : server.getPlayerList().getPlayers())
             {
                 entityplayermp.connection.sendPacket(new SPacketEntityStatus(entityplayermp, b0));
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
         if (args.length == 1)
         {
-            /**
-             * Returns a List of strings (chosen from the given strings) which the last word in the given string array
-             * is a beginning-match for. (Tab completion).
-             */
             return getListOfStringsMatchingLastWord(args, this.getOverWorldGameRules(server).getRules());
         }
         else
@@ -105,11 +104,12 @@ public class CommandGameRule extends CommandBase
 
                 if (gamerules.areSameType(args[0], GameRules.ValueType.BOOLEAN_VALUE))
                 {
-                    /**
-                     * Returns a List of strings (chosen from the given strings) which the last word in the given string
-                     * array is a beginning-match for. (Tab completion).
-                     */
                     return getListOfStringsMatchingLastWord(args, new String[] {"true", "false"});
+                }
+
+                if (gamerules.areSameType(args[0], GameRules.ValueType.FUNCTION))
+                {
+                    return getListOfStringsMatchingLastWord(args, server.getFunctionManager().getFunctions().keySet());
                 }
             }
 
@@ -122,6 +122,6 @@ public class CommandGameRule extends CommandBase
      */
     private GameRules getOverWorldGameRules(MinecraftServer server)
     {
-        return server.worldServerForDimension(0).getGameRules();
+        return server.getWorld(0).getGameRules();
     }
 }

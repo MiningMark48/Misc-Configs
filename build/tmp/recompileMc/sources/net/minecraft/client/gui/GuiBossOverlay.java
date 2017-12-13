@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.network.play.server.SPacketUpdateBossInfo;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.BossInfo;
-import net.minecraft.world.BossInfoLerping;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -17,7 +16,7 @@ public class GuiBossOverlay extends Gui
 {
     private static final ResourceLocation GUI_BARS_TEXTURES = new ResourceLocation("textures/gui/bars.png");
     private final Minecraft client;
-    private final Map<UUID, BossInfoLerping> mapBossInfos = Maps.<UUID, BossInfoLerping>newLinkedHashMap();
+    private final Map<UUID, BossInfoClient> mapBossInfos = Maps.<UUID, BossInfoClient>newLinkedHashMap();
 
     public GuiBossOverlay(Minecraft clientIn)
     {
@@ -32,17 +31,17 @@ public class GuiBossOverlay extends Gui
             int i = scaledresolution.getScaledWidth();
             int j = 12;
 
-            for (BossInfoLerping bossinfolerping : this.mapBossInfos.values())
+            for (BossInfoClient bossinfoclient : this.mapBossInfos.values())
             {
                 int k = i / 2 - 91;
                 net.minecraftforge.client.event.RenderGameOverlayEvent.BossInfo event =
-                        net.minecraftforge.client.ForgeHooksClient.bossBarRenderPre(scaledresolution, bossinfolerping, k, j, 10 + this.client.fontRendererObj.FONT_HEIGHT);
+                        net.minecraftforge.client.ForgeHooksClient.bossBarRenderPre(scaledresolution, bossinfoclient, k, j, 10 + this.client.fontRenderer.FONT_HEIGHT);
                 if (!event.isCanceled()) {
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 this.client.getTextureManager().bindTexture(GUI_BARS_TEXTURES);
-                this.render(k, j, bossinfolerping);
-                String s = bossinfolerping.getName().getFormattedText();
-                this.client.fontRendererObj.drawStringWithShadow(s, (float)(i / 2 - this.client.fontRendererObj.getStringWidth(s) / 2), (float)(j - 9), 16777215);
+                this.render(k, j, bossinfoclient);
+                String s = bossinfoclient.getName().getFormattedText();
+                this.client.fontRenderer.drawStringWithShadow(s, (float)(i / 2 - this.client.fontRenderer.getStringWidth(s) / 2), (float)(j - 9), 16777215);
                 }
                 j += event.getIncrement();
 
@@ -81,7 +80,7 @@ public class GuiBossOverlay extends Gui
     {
         if (packetIn.getOperation() == SPacketUpdateBossInfo.Operation.ADD)
         {
-            this.mapBossInfos.put(packetIn.getUniqueId(), new BossInfoLerping(packetIn));
+            this.mapBossInfos.put(packetIn.getUniqueId(), new BossInfoClient(packetIn));
         }
         else if (packetIn.getOperation() == SPacketUpdateBossInfo.Operation.REMOVE)
         {
@@ -89,7 +88,7 @@ public class GuiBossOverlay extends Gui
         }
         else
         {
-            ((BossInfoLerping)this.mapBossInfos.get(packetIn.getUniqueId())).updateFromPacket(packetIn);
+            ((BossInfoClient)this.mapBossInfos.get(packetIn.getUniqueId())).updateFromPacket(packetIn);
         }
     }
 

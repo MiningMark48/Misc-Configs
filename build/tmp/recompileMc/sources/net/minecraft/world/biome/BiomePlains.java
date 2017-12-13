@@ -3,9 +3,11 @@ package net.minecraft.world.biome;
 import java.util.Random;
 import net.minecraft.block.BlockDoublePlant;
 import net.minecraft.block.BlockFlower;
+import net.minecraft.entity.passive.EntityDonkey;
 import net.minecraft.entity.passive.EntityHorse;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.feature.WorldGenAbstractTree;
 
 public class BiomePlains extends Biome
 {
@@ -16,9 +18,11 @@ public class BiomePlains extends Biome
         super(properties);
         this.sunflowers = p_i46699_1_;
         this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityHorse.class, 5, 2, 6));
-        this.theBiomeDecorator.treesPerChunk = -999;
-        this.theBiomeDecorator.flowersPerChunk = 4;
-        this.theBiomeDecorator.grassPerChunk = 10;
+        this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityDonkey.class, 1, 1, 3));
+        this.decorator.treesPerChunk = 0;
+        this.decorator.extraTreeChance = 0.05F;
+        this.decorator.flowersPerChunk = 4;
+        this.decorator.grassPerChunk = 10;
     }
 
     public BlockFlower.EnumFlowerType pickRandomFlower(Random rand, BlockPos pos)
@@ -45,7 +49,15 @@ public class BiomePlains extends Biome
         else if (rand.nextInt(3) > 0)
         {
             int i = rand.nextInt(3);
-            return i == 0 ? BlockFlower.EnumFlowerType.POPPY : (i == 1 ? BlockFlower.EnumFlowerType.HOUSTONIA : BlockFlower.EnumFlowerType.OXEYE_DAISY);
+
+            if (i == 0)
+            {
+                return BlockFlower.EnumFlowerType.POPPY;
+            }
+            else
+            {
+                return i == 1 ? BlockFlower.EnumFlowerType.HOUSTONIA : BlockFlower.EnumFlowerType.OXEYE_DAISY;
+            }
         }
         else
         {
@@ -59,15 +71,16 @@ public class BiomePlains extends Biome
 
         if (d0 < -0.8D)
         {
-            this.theBiomeDecorator.flowersPerChunk = 15;
-            this.theBiomeDecorator.grassPerChunk = 5;
+            this.decorator.flowersPerChunk = 15;
+            this.decorator.grassPerChunk = 5;
         }
         else
         {
-            this.theBiomeDecorator.flowersPerChunk = 4;
-            this.theBiomeDecorator.grassPerChunk = 10;
+            this.decorator.flowersPerChunk = 4;
+            this.decorator.grassPerChunk = 10;
             DOUBLE_PLANT_GENERATOR.setPlantType(BlockDoublePlant.EnumPlantType.GRASS);
 
+            if(net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.GRASS))
             for (int i = 0; i < 7; ++i)
             {
                 int j = rand.nextInt(16) + 8;
@@ -77,7 +90,7 @@ public class BiomePlains extends Biome
             }
         }
 
-        if (this.sunflowers)
+        if (this.sunflowers && net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.FLOWERS))
         {
             DOUBLE_PLANT_GENERATOR.setPlantType(BlockDoublePlant.EnumPlantType.SUNFLOWER);
 
@@ -106,5 +119,10 @@ public class BiomePlains extends Biome
         addFlower(red.getDefaultState().withProperty(red.getTypeProperty(), BlockFlower.EnumFlowerType.HOUSTONIA), 20);
         addFlower(red.getDefaultState().withProperty(red.getTypeProperty(), BlockFlower.EnumFlowerType.OXEYE_DAISY), 20);
         addFlower(yel.getDefaultState().withProperty(yel.getTypeProperty(), BlockFlower.EnumFlowerType.DANDELION), 30);
+    }
+
+    public WorldGenAbstractTree getRandomTreeFeature(Random rand)
+    {
+        return (WorldGenAbstractTree)(rand.nextInt(3) == 0 ? BIG_TREE_FEATURE : TREE_FEATURE);
     }
 }

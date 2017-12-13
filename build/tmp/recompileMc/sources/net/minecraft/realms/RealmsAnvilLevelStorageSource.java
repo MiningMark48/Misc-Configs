@@ -12,7 +12,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class RealmsAnvilLevelStorageSource
 {
-    private ISaveFormat levelStorageSource;
+    private final ISaveFormat levelStorageSource;
 
     public RealmsAnvilLevelStorageSource(ISaveFormat levelStorageSourceIn)
     {

@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2014 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors (this class):
- *     bspkrs - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.client.config;
@@ -26,6 +33,7 @@ import net.minecraft.util.text.TextFormatting;
 import static net.minecraftforge.fml.client.config.GuiUtils.RESET_CHAR;
 import static net.minecraftforge.fml.client.config.GuiUtils.UNDO_CHAR;
 
+import net.minecraftforge.fml.common.FMLLog;
 import org.lwjgl.input.Keyboard;
 
 /**
@@ -99,13 +107,13 @@ public class GuiEditArray extends GuiScreen
     @Override
     public void initGui()
     {
-        this.entryList = new GuiEditArrayEntries(this, this.mc, this.configElement, this.beforeValues, this.currentValues);
+        this.entryList = createEditArrayEntries();
 
-        int undoGlyphWidth = mc.fontRendererObj.getStringWidth(UNDO_CHAR) * 2;
-        int resetGlyphWidth = mc.fontRendererObj.getStringWidth(RESET_CHAR) * 2;
-        int doneWidth = Math.max(mc.fontRendererObj.getStringWidth(I18n.format("gui.done")) + 20, 100);
-        int undoWidth = mc.fontRendererObj.getStringWidth(" " + I18n.format("fml.configgui.tooltip.undoChanges")) + undoGlyphWidth + 20;
-        int resetWidth = mc.fontRendererObj.getStringWidth(" " + I18n.format("fml.configgui.tooltip.resetToDefault")) + resetGlyphWidth + 20;
+        int undoGlyphWidth = mc.fontRenderer.getStringWidth(UNDO_CHAR) * 2;
+        int resetGlyphWidth = mc.fontRenderer.getStringWidth(RESET_CHAR) * 2;
+        int doneWidth = Math.max(mc.fontRenderer.getStringWidth(I18n.format("gui.done")) + 20, 100);
+        int undoWidth = mc.fontRenderer.getStringWidth(" " + I18n.format("fml.configgui.tooltip.undoChanges")) + undoGlyphWidth + 20;
+        int resetWidth = mc.fontRenderer.getStringWidth(" " + I18n.format("fml.configgui.tooltip.resetToDefault")) + resetGlyphWidth + 20;
         int buttonWidthHalf = (doneWidth + 5 + undoWidth + 5 + resetWidth) / 2;
         this.buttonList.add(btnDone = new GuiButtonExt(2000, this.width / 2 - buttonWidthHalf, this.height - 29, doneWidth, 20, I18n.format("gui.done")));
         this.buttonList.add(btnDefault = new GuiUnicodeGlyphButton(2001, this.width / 2 - buttonWidthHalf + doneWidth + 5 + undoWidth + 5,
@@ -128,25 +136,31 @@ public class GuiEditArray extends GuiScreen
             }
             catch (Throwable e)
             {
-                e.printStackTrace();
+                FMLLog.log.error("Error performing GuiEditArray action:", e);
             }
             this.mc.displayGuiScreen(this.parentScreen);
         }
         else if (button.id == 2001)
         {
             this.currentValues = configElement.getDefaults();
-            this.entryList = new GuiEditArrayEntries(this, this.mc, this.configElement, this.beforeValues, this.currentValues);
+            this.entryList = createEditArrayEntries();
         }
         else if (button.id == 2002)
         {
             this.currentValues = Arrays.copyOf(beforeValues, beforeValues.length);
-            this.entryList = new GuiEditArrayEntries(this, this.mc, this.configElement, this.beforeValues, this.currentValues);
+            this.entryList = createEditArrayEntries();
         }
+    }
+
+    protected GuiEditArrayEntries createEditArrayEntries()
+    {
+        return new GuiEditArrayEntries(this, this.mc, this.configElement, this.beforeValues, this.currentValues);
     }
 
     /**
      * Handles mouse input.
      */
+    @Override
     public void handleMouseInput() throws IOException
     {
         super.handleMouseInput();
@@ -209,13 +223,13 @@ public class GuiEditArray extends GuiScreen
     {
         this.drawDefaultBackground();
         this.entryList.drawScreen(par1, par2, par3);
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, 8, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, 8, 16777215);
 
         if (this.titleLine2 != null)
-            this.drawCenteredString(this.fontRendererObj, this.titleLine2, this.width / 2, 18, 16777215);
+            this.drawCenteredString(this.fontRenderer, this.titleLine2, this.width / 2, 18, 16777215);
 
         if (this.titleLine3 != null)
-            this.drawCenteredString(this.fontRendererObj, this.titleLine3, this.width / 2, 28, 16777215);
+            this.drawCenteredString(this.fontRenderer, this.titleLine3, this.width / 2, 28, 16777215);
 
         this.btnDone.enabled = this.entryList.isListSavable();
         this.btnDefault.enabled = enabled && !this.entryList.isDefault();
@@ -229,6 +243,6 @@ public class GuiEditArray extends GuiScreen
 
     public void drawToolTip(List<String> stringList, int x, int y)
     {
-        GuiUtils.drawHoveringText(stringList, x, y, width, height, 300, fontRendererObj);
+        GuiUtils.drawHoveringText(stringList, x, y, width, height, 300, fontRenderer);
     }
 }

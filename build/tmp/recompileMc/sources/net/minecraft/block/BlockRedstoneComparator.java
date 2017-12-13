@@ -42,7 +42,7 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
     {
         super(powered);
         this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(POWERED, Boolean.valueOf(false)).withProperty(MODE, BlockRedstoneComparator.Mode.COMPARE));
-        this.isBlockContainer = true;
+        this.hasTileEntity = true;
     }
 
     /**
@@ -56,7 +56,6 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.COMPARATOR;
@@ -119,7 +118,15 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
         else
         {
             int j = this.getPowerOnSides(worldIn, pos, state);
-            return j == 0 ? true : i >= j;
+
+            if (j == 0)
+            {
+                return true;
+            }
+            else
+            {
+                return i >= j;
+            }
         }
     }
 
@@ -129,7 +136,6 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
         EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
         BlockPos blockpos = pos.offset(enumfacing);
         IBlockState iblockstate = worldIn.getBlockState(blockpos);
-        Block block = iblockstate.getBlock();
 
         if (iblockstate.hasComparatorInputOverride())
         {
@@ -171,7 +177,10 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
         return list.size() == 1 ? (EntityItemFrame)list.get(0) : null;
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (!playerIn.capabilities.allowEdit)
         {
@@ -251,12 +260,18 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
         this.onStateChange(worldIn, pos, state);
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         super.onBlockAdded(worldIn, pos, state);
         worldIn.setTileEntity(pos, this.createNewTileEntity(worldIn, 0));
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         super.breakBlock(worldIn, pos, state);
@@ -265,13 +280,9 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
     }
 
     /**
-     * Called on both Client and Server when World#addBlockEvent is called. On the Server, this may perform additional
-     * changes to the world, like pistons replacing the block with an extended base. On the client, the update may
-     * involve replacing tile entities, playing sounds, or performing other visual actions to reflect the server side
-     * changes.
-     *  
-     * @param state The block state retrieved from the block position prior to this method being invoked
-     * @param pos The position of the block event. Can be used to retrieve tile entities.
+     * Called on server when World#addBlockEvent is called. If server returns true, then also called on the client. On
+     * the Server, this may perform additional changes to the world, like pistons replacing the block with an extended
+     * base. On the client, the update may involve replacing tile entities or effects such as sounds or particles
      */
     public boolean eventReceived(IBlockState state, World worldIn, BlockPos pos, int id, int param)
     {
@@ -344,7 +355,7 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         return this.getDefaultState().withProperty(FACING, placer.getHorizontalFacing().getOpposite()).withProperty(POWERED, Boolean.valueOf(false)).withProperty(MODE, BlockRedstoneComparator.Mode.COMPARE);
     }
@@ -352,9 +363,9 @@ public class BlockRedstoneComparator extends BlockRedstoneDiode implements ITile
     @Override
     public void onNeighborChange(IBlockAccess world, BlockPos pos, BlockPos neighbor)
     {
-        if (pos.getY() == neighbor.getY() && world instanceof World)
+        if (pos.getY() == neighbor.getY() && world instanceof World && !((World) world).isRemote)
         {
-            neighborChanged(world.getBlockState(pos), (World)world, pos, world.getBlockState(neighbor).getBlock());
+            neighborChanged(world.getBlockState(pos), (World)world, pos, world.getBlockState(neighbor).getBlock(), neighbor);
         }
     }
 

@@ -17,7 +17,7 @@ public class CommandEmote extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "me";
     }
@@ -33,7 +33,7 @@ public class CommandEmote extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.me.usage";
     }
@@ -50,16 +50,15 @@ public class CommandEmote extends CommandBase
         else
         {
             ITextComponent itextcomponent = getChatComponentFromNthArg(sender, args, 0, !(sender instanceof EntityPlayer));
-            server.getPlayerList().sendChatMsg(new TextComponentTranslation("chat.type.emote", new Object[] {sender.getDisplayName(), itextcomponent}));
+            server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.emote", new Object[] {sender.getDisplayName(), itextcomponent}));
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        /**
-         * Returns a List of strings (chosen from the given strings) which the last word in the given string array is a
-         * beginning-match for. (Tab completion).
-         */
-        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
     }
 }

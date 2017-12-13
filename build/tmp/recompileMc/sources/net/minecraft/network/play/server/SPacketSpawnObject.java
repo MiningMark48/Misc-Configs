@@ -42,14 +42,14 @@ public class SPacketSpawnObject implements Packet<INetHandlerPlayClient>
         this.x = entityIn.posX;
         this.y = entityIn.posY;
         this.z = entityIn.posZ;
-        this.pitch = MathHelper.floor_float(entityIn.rotationPitch * 256.0F / 360.0F);
-        this.yaw = MathHelper.floor_float(entityIn.rotationYaw * 256.0F / 360.0F);
+        this.pitch = MathHelper.floor(entityIn.rotationPitch * 256.0F / 360.0F);
+        this.yaw = MathHelper.floor(entityIn.rotationYaw * 256.0F / 360.0F);
         this.type = typeIn;
         this.data = dataIn;
         double d0 = 3.9D;
-        this.speedX = (int)(MathHelper.clamp_double(entityIn.motionX, -3.9D, 3.9D) * 8000.0D);
-        this.speedY = (int)(MathHelper.clamp_double(entityIn.motionY, -3.9D, 3.9D) * 8000.0D);
-        this.speedZ = (int)(MathHelper.clamp_double(entityIn.motionZ, -3.9D, 3.9D) * 8000.0D);
+        this.speedX = (int)(MathHelper.clamp(entityIn.motionX, -3.9D, 3.9D) * 8000.0D);
+        this.speedY = (int)(MathHelper.clamp(entityIn.motionY, -3.9D, 3.9D) * 8000.0D);
+        this.speedZ = (int)(MathHelper.clamp(entityIn.motionZ, -3.9D, 3.9D) * 8000.0D);
     }
 
     public SPacketSpawnObject(Entity entityIn, int typeIn, int dataIn, BlockPos pos)
@@ -65,8 +65,8 @@ public class SPacketSpawnObject implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.entityId = buf.readVarIntFromBuffer();
-        this.uniqueId = buf.readUuid();
+        this.entityId = buf.readVarInt();
+        this.uniqueId = buf.readUniqueId();
         this.type = buf.readByte();
         this.x = buf.readDouble();
         this.y = buf.readDouble();
@@ -84,8 +84,8 @@ public class SPacketSpawnObject implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.entityId);
-        buf.writeUuid(this.uniqueId);
+        buf.writeVarInt(this.entityId);
+        buf.writeUniqueId(this.uniqueId);
         buf.writeByte(this.type);
         buf.writeDouble(this.x);
         buf.writeDouble(this.y);

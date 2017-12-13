@@ -31,11 +31,11 @@ public class MovingSoundMinecartRiding extends MovingSound
     {
         if (!this.minecart.isDead && this.player.isRiding() && this.player.getRidingEntity() == this.minecart)
         {
-            float f = MathHelper.sqrt_double(this.minecart.motionX * this.minecart.motionX + this.minecart.motionZ * this.minecart.motionZ);
+            float f = MathHelper.sqrt(this.minecart.motionX * this.minecart.motionX + this.minecart.motionZ * this.minecart.motionZ);
 
             if ((double)f >= 0.01D)
             {
-                this.volume = 0.0F + MathHelper.clamp_float(f, 0.0F, 1.0F) * 0.75F;
+                this.volume = 0.0F + MathHelper.clamp(f, 0.0F, 1.0F) * 0.75F;
             }
             else
             {

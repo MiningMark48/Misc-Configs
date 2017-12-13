@@ -1,9 +1,9 @@
 package net.minecraft.inventory;
 
-import javax.annotation.Nullable;
 import net.minecraft.entity.IMerchant;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
@@ -12,16 +12,16 @@ import net.minecraft.village.MerchantRecipeList;
 
 public class InventoryMerchant implements IInventory
 {
-    private final IMerchant theMerchant;
-    private ItemStack[] theInventory = new ItemStack[3];
-    private final EntityPlayer thePlayer;
+    private final IMerchant merchant;
+    private final NonNullList<ItemStack> slots = NonNullList.<ItemStack>withSize(3, ItemStack.EMPTY);
+    private final EntityPlayer player;
     private MerchantRecipe currentRecipe;
     private int currentRecipeIndex;
 
     public InventoryMerchant(EntityPlayer thePlayerIn, IMerchant theMerchantIn)
     {
-        this.thePlayer = thePlayerIn;
-        this.theMerchant = theMerchantIn;
+        this.player = thePlayerIn;
+        this.merchant = theMerchantIn;
     }
 
     /**
@@ -29,38 +29,51 @@ public class InventoryMerchant implements IInventory
      */
     public int getSizeInventory()
     {
-        return this.theInventory.length;
+        return this.slots.size();
+    }
+
+    public boolean isEmpty()
+    {
+        for (ItemStack itemstack : this.slots)
+        {
+            if (!itemstack.isEmpty())
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * Returns the stack in the given slot.
      */
-    @Nullable
     public ItemStack getStackInSlot(int index)
     {
-        return this.theInventory[index];
+        return this.slots.get(index);
     }
 
     /**
      * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
      */
-    @Nullable
     public ItemStack decrStackSize(int index, int count)
     {
-        if (index == 2 && this.theInventory[index] != null)
+        ItemStack itemstack = this.slots.get(index);
+
+        if (index == 2 && !itemstack.isEmpty())
         {
-            return ItemStackHelper.getAndSplit(this.theInventory, index, this.theInventory[index].stackSize);
+            return ItemStackHelper.getAndSplit(this.slots, index, itemstack.getCount());
         }
         else
         {
-            ItemStack itemstack = ItemStackHelper.getAndSplit(this.theInventory, index, count);
+            ItemStack itemstack1 = ItemStackHelper.getAndSplit(this.slots, index, count);
 
-            if (itemstack != null && this.inventoryResetNeededOnSlotChange(index))
+            if (!itemstack1.isEmpty() && this.inventoryResetNeededOnSlotChange(index))
             {
                 this.resetRecipeAndSlots();
             }
 
-            return itemstack;
+            return itemstack1;
         }
     }
 
@@ -75,22 +88,21 @@ public class InventoryMerchant implements IInventory
     /**
      * Removes a stack from the given slot and returns it.
      */
-    @Nullable
     public ItemStack removeStackFromSlot(int index)
     {
-        return ItemStackHelper.getAndRemove(this.theInventory, index);
+        return ItemStackHelper.getAndRemove(this.slots, index);
     }
 
     /**
      * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
      */
-    public void setInventorySlotContents(int index, @Nullable ItemStack stack)
+    public void setInventorySlotContents(int index, ItemStack stack)
     {
-        this.theInventory[index] = stack;
+        this.slots.set(index, stack);
 
-        if (stack != null && stack.stackSize > this.getInventoryStackLimit())
+        if (!stack.isEmpty() && stack.getCount() > this.getInventoryStackLimit())
         {
-            stack.stackSize = this.getInventoryStackLimit();
+            stack.setCount(this.getInventoryStackLimit());
         }
 
         if (this.inventoryResetNeededOnSlotChange(index))
@@ -132,11 +144,11 @@ public class InventoryMerchant implements IInventory
     }
 
     /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
+     * Don't rename this method to canInteractWith due to conflicts with Container
      */
-    public boolean isUseableByPlayer(EntityPlayer player)
+    public boolean isUsableByPlayer(EntityPlayer player)
     {
-        return this.theMerchant.getCustomer() == player;
+        return this.merchant.getCustomer() == player;
     }
 
     public void openInventory(EntityPlayer player)
@@ -148,7 +160,8 @@ public class InventoryMerchant implements IInventory
     }
 
     /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
@@ -167,22 +180,22 @@ public class InventoryMerchant implements IInventory
     public void resetRecipeAndSlots()
     {
         this.currentRecipe = null;
-        ItemStack itemstack = this.theInventory[0];
-        ItemStack itemstack1 = this.theInventory[1];
+        ItemStack itemstack = this.slots.get(0);
+        ItemStack itemstack1 = this.slots.get(1);
 
-        if (itemstack == null)
+        if (itemstack.isEmpty())
         {
             itemstack = itemstack1;
-            itemstack1 = null;
+            itemstack1 = ItemStack.EMPTY;
         }
 
-        if (itemstack == null)
+        if (itemstack.isEmpty())
         {
-            this.setInventorySlotContents(2, (ItemStack)null);
+            this.setInventorySlotContents(2, ItemStack.EMPTY);
         }
         else
         {
-            MerchantRecipeList merchantrecipelist = this.theMerchant.getRecipes(this.thePlayer);
+            MerchantRecipeList merchantrecipelist = this.merchant.getRecipes(this.player);
 
             if (merchantrecipelist != null)
             {
@@ -193,7 +206,7 @@ public class InventoryMerchant implements IInventory
                     this.currentRecipe = merchantrecipe;
                     this.setInventorySlotContents(2, merchantrecipe.getItemToSell().copy());
                 }
-                else if (itemstack1 != null)
+                else if (!itemstack1.isEmpty())
                 {
                     merchantrecipe = merchantrecipelist.canRecipeBeUsed(itemstack1, itemstack, this.currentRecipeIndex);
 
@@ -204,17 +217,17 @@ public class InventoryMerchant implements IInventory
                     }
                     else
                     {
-                        this.setInventorySlotContents(2, (ItemStack)null);
+                        this.setInventorySlotContents(2, ItemStack.EMPTY);
                     }
                 }
                 else
                 {
-                    this.setInventorySlotContents(2, (ItemStack)null);
+                    this.setInventorySlotContents(2, ItemStack.EMPTY);
                 }
             }
-        }
 
-        this.theMerchant.verifySellingItem(this.getStackInSlot(2));
+            this.merchant.verifySellingItem(this.getStackInSlot(2));
+        }
     }
 
     public MerchantRecipe getCurrentRecipe()
@@ -244,9 +257,6 @@ public class InventoryMerchant implements IInventory
 
     public void clear()
     {
-        for (int i = 0; i < this.theInventory.length; ++i)
-        {
-            this.theInventory[i] = null;
-        }
+        this.slots.clear();
     }
 }

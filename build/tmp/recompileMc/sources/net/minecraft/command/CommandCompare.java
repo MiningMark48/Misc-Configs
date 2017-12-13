@@ -17,7 +17,7 @@ public class CommandCompare extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "testforblocks";
     }
@@ -33,7 +33,7 @@ public class CommandCompare extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.compare.usage";
     }
@@ -59,7 +59,7 @@ public class CommandCompare extends CommandBase
 
             if (i > 524288)
             {
-                throw new CommandException("commands.compare.tooManyBlocks", new Object[] {Integer.valueOf(i), Integer.valueOf(524288)});
+                throw new CommandException("commands.compare.tooManyBlocks", new Object[] {i, 524288});
             }
             else if (structureboundingbox.minY >= 0 && structureboundingbox.maxY < 256 && structureboundingbox1.minY >= 0 && structureboundingbox1.maxY < 256)
             {
@@ -69,7 +69,7 @@ public class CommandCompare extends CommandBase
                 {
                     boolean flag = false;
 
-                    if (args.length > 9 && args[9].equals("masked"))
+                    if (args.length > 9 && "masked".equals(args[9]))
                     {
                         flag = true;
                     }
@@ -135,7 +135,7 @@ public class CommandCompare extends CommandBase
                     }
 
                     sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, i);
-                    notifyCommandListener(sender, this, "commands.compare.success", new Object[] {Integer.valueOf(i)});
+                    notifyCommandListener(sender, this, "commands.compare.success", new Object[] {i});
                 }
                 else
                 {
@@ -149,8 +149,26 @@ public class CommandCompare extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : (args.length > 3 && args.length <= 6 ? getTabCompletionCoordinate(args, 3, pos) : (args.length > 6 && args.length <= 9 ? getTabCompletionCoordinate(args, 6, pos) : (args.length == 10 ? getListOfStringsMatchingLastWord(args, new String[] {"masked", "all"}): Collections.<String>emptyList())));
+        if (args.length > 0 && args.length <= 3)
+        {
+            return getTabCompletionCoordinate(args, 0, targetPos);
+        }
+        else if (args.length > 3 && args.length <= 6)
+        {
+            return getTabCompletionCoordinate(args, 3, targetPos);
+        }
+        else if (args.length > 6 && args.length <= 9)
+        {
+            return getTabCompletionCoordinate(args, 6, targetPos);
+        }
+        else
+        {
+            return args.length == 10 ? getListOfStringsMatchingLastWord(args, new String[] {"masked", "all"}) : Collections.emptyList();
+        }
     }
 }

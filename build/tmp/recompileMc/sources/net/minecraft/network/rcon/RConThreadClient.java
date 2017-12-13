@@ -20,9 +20,9 @@ public class RConThreadClient extends RConThreadBase
     /** The client's Socket connection */
     private Socket clientSocket;
     /** A buffer for incoming Socket data */
-    private byte[] buffer = new byte[1460];
+    private final byte[] buffer = new byte[1460];
     /** The RCon password */
-    private String rconPassword;
+    private final String rconPassword;
 
     RConThreadClient(IServer p_i1537_1_, Socket socket)
     {
@@ -109,7 +109,7 @@ public class RConThreadClient extends RConThreadBase
                             this.sendLoginFailedResponse();
                             continue;
                         default:
-                            this.sendMultipacketResponse(l, String.format("Unknown request %s", new Object[] {Integer.toHexString(i1)}));
+                            this.sendMultipacketResponse(l, String.format("Unknown request %s", Integer.toHexString(i1)));
                             continue;
                     }
                 }
@@ -124,7 +124,7 @@ public class RConThreadClient extends RConThreadBase
             }
             catch (Exception exception1)
             {
-                LOGGER.error((String)"Exception whilst parsing RCON input", (Throwable)exception1);
+                LOGGER.error("Exception whilst parsing RCON input", (Throwable)exception1);
                 return;
             }
             finally

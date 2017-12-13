@@ -1,22 +1,48 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fluids;
 
 import java.util.Map;
 import java.util.Random;
+
+import javax.annotation.Nonnull;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -26,9 +52,6 @@ import net.minecraftforge.common.property.IUnlistedProperty;
 import net.minecraftforge.common.property.PropertyFloat;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 
 /**
  * This is a base implementation for Fluid blocks.
@@ -142,6 +165,7 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
     }
 
     @Override
+    @Nonnull
     protected BlockStateContainer createBlockState()
     {
         return new ExtendedBlockState(this, new IProperty[] { LEVEL }, FLUID_RENDER_PROPS.toArray(new IUnlistedProperty<?>[0]));
@@ -151,10 +175,21 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
      * Convert the BlockState into the correct metadata value
      */
     @Override
-    public int getMetaFromState(IBlockState state)
+    public int getMetaFromState(@Nonnull IBlockState state)
     {
         return state.getValue(LEVEL);
     }
+    /**
+     * Convert the given metadata into a BlockState for this Block
+     */
+    @Override
+    @Deprecated
+    @Nonnull
+    public IBlockState getStateFromMeta(int meta)
+    {
+        return this.getDefaultState().withProperty(LEVEL, meta);
+    }
+
     public BlockFluidBase setQuantaPerBlock(int quantaPerBlock)
     {
         if (quantaPerBlock > 16 || quantaPerBlock < 1) quantaPerBlock = 8;
@@ -258,7 +293,8 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         {
             if (displacements.get(block))
             {
-                block.dropBlockAsItem(world, pos, state, 0);
+                if (state.getBlock() != Blocks.SNOW_LAYER) //Forge: Vanilla has a 'bug' where snowballs don't drop like every other block. So special case because ewww...
+                    block.dropBlockAsItem(world, pos, state, 0);
                 return true;
             }
             return false;
@@ -290,13 +326,16 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
     public abstract int getQuantaValue(IBlockAccess world, BlockPos pos);
 
     @Override
-    public abstract boolean canCollideCheck(IBlockState state, boolean fullHit);
+    public abstract boolean canCollideCheck(@Nonnull IBlockState state, boolean fullHit);
 
     public abstract int getMaxRenderHeightMeta();
 
     /* BLOCK FUNCTIONS */
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     @Override
-    public void onBlockAdded(World world, BlockPos pos, IBlockState state)
+    public void onBlockAdded(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state)
     {
         world.scheduleUpdate(pos, this, tickRate);
     }
@@ -307,7 +346,7 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
      * block, etc.
      */
     @Override
-    public void neighborChanged(IBlockState state, World world, BlockPos pos, Block neighborBlock)
+    public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block neighborBlock, @Nonnull BlockPos neighbourPos)
     {
         world.scheduleUpdate(pos, this, tickRate);
     }
@@ -319,8 +358,11 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         return false;
     }
 
+    /**
+     * Determines if an entity can path through this block
+     */
     @Override
-    public boolean isPassable(IBlockAccess world, BlockPos pos)
+    public boolean isPassable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos)
     {
         return true;
     }
@@ -329,16 +371,17 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
      * Get the Item that this Block should drop when harvested.
      */
     @Override
-    public Item getItemDropped(IBlockState state, Random rand, int fortune)
+    @Nonnull
+    public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
     /**
      * Returns the quantity of items to drop on block destruction.
      */
     @Override
-    public int quantityDropped(Random par1Random)
+    public int quantityDropped(@Nonnull Random par1Random)
     {
         return 0;
     }
@@ -347,24 +390,25 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
      * How many world ticks before ticking
      */
     @Override
-    public int tickRate(World world)
+    public int tickRate(@Nonnull World world)
     {
         return tickRate;
     }
 
     @Override
-    public Vec3d modifyAcceleration(World world, BlockPos pos, Entity entity, Vec3d vec)
+    @Nonnull
+    public Vec3d modifyAcceleration(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull Vec3d vec)
     {
         if (densityDir > 0) return vec;
         Vec3d vec_flow = this.getFlowVector(world, pos);
         return vec.addVector(
-                vec_flow.xCoord * (quantaPerBlock * 4),
-                vec_flow.yCoord * (quantaPerBlock * 4),
-                vec_flow.zCoord * (quantaPerBlock * 4));
+                vec_flow.x * (quantaPerBlock * 4),
+                vec_flow.y * (quantaPerBlock * 4),
+                vec_flow.z * (quantaPerBlock * 4));
     }
 
     @Override
-    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
+    public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos)
     {
         if (maxScaledLight == 0)
         {
@@ -378,13 +422,13 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
      * Used to determine ambient occlusion and culling when rebuilding chunks for render
      */
     @Override
-    public boolean isOpaqueCube(IBlockState state)
+    public boolean isOpaqueCube(@Nonnull IBlockState state)
     {
         return false;
     }
 
     @Override
-    public boolean isFullCube(IBlockState state)
+    public boolean isFullCube(@Nonnull IBlockState state)
     {
         return false;
     }
@@ -400,7 +444,7 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
     */
 
     @Override
-    public int getPackedLightmapCoords(IBlockState state, IBlockAccess world, BlockPos pos)
+    public int getPackedLightmapCoords(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos)
     {
         int lightThis     = world.getCombinedLight(pos, 0);
         int lightUp       = world.getCombinedLight(pos.up(), 0);
@@ -414,13 +458,14 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
 
     @Override
     @SideOnly(Side.CLIENT)
+    @Nonnull
     public BlockRenderLayer getBlockLayer()
     {
         return this.renderLayer;
     }
 
     @Override
-    public boolean shouldSideBeRendered(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side)
+    public boolean shouldSideBeRendered(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing side)
     {
         IBlockState neighbor = world.getBlockState(pos.offset(side));
         if (neighbor.getMaterial() == state.getMaterial())
@@ -438,19 +483,27 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         return super.shouldSideBeRendered(state, world, pos, side);
     }
 
+    private boolean isFluid(@Nonnull IBlockState blockstate)
+    {
+        return blockstate.getMaterial().isLiquid() || blockstate.getBlock() instanceof IFluidBlock;
+    }
+
     @Override
-    public IBlockState getExtendedState(IBlockState oldState, IBlockAccess worldIn, BlockPos pos)
+    @Nonnull
+    public IBlockState getExtendedState(@Nonnull IBlockState oldState, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos)
     {
         IExtendedBlockState state = (IExtendedBlockState)oldState;
         state = state.withProperty(FLOW_DIRECTION, (float)getFlowDirection(worldIn, pos));
+        IBlockState[][] upBlockState = new IBlockState[3][3];
         float[][] height = new float[3][3];
         float[][] corner = new float[2][2];
-        height[1][1] = getFluidHeightForRender(worldIn, pos);
-        if(height[1][1] == 1)
+        upBlockState[1][1] = worldIn.getBlockState(pos.down(densityDir));
+        height[1][1] = getFluidHeightForRender(worldIn, pos, upBlockState[1][1]);
+        if (height[1][1] == 1)
         {
-            for(int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; i++)
             {
-                for(int j = 0; j < 2; j++)
+                for (int j = 0; j < 2; j++)
                 {
                     corner[i][j] = 1;
                 }
@@ -458,24 +511,51 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         }
         else
         {
-            for(int i = 0; i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
-                for(int j = 0; j < 3; j++)
+                for (int j = 0; j < 3; j++)
                 {
-                    if(i != 1 || j != 1)
+                    if (i != 1 || j != 1)
                     {
-                        height[i][j] = getFluidHeightForRender(worldIn, pos.add(i - 1, 0, j - 1));
+                        upBlockState[i][j] = worldIn.getBlockState(pos.add(i - 1, 0, j - 1).down(densityDir));
+                        height[i][j] = getFluidHeightForRender(worldIn, pos.add(i - 1, 0, j - 1), upBlockState[i][j]);
                     }
                 }
             }
-            for(int i = 0; i < 2; i++)
+            for (int i = 0; i < 2; i++)
             {
-                for(int j = 0; j < 2; j++)
+                for (int j = 0; j < 2; j++)
                 {
                     corner[i][j] = getFluidHeightAverage(height[i][j], height[i][j + 1], height[i + 1][j], height[i + 1][j + 1]);
                 }
             }
+            //check for downflow above corners
+            boolean n =  isFluid(upBlockState[0][1]);
+            boolean s =  isFluid(upBlockState[2][1]);
+            boolean w =  isFluid(upBlockState[1][0]);
+            boolean e =  isFluid(upBlockState[1][2]);
+            boolean nw = isFluid(upBlockState[0][0]);
+            boolean ne = isFluid(upBlockState[0][2]);
+            boolean sw = isFluid(upBlockState[2][0]);
+            boolean se = isFluid(upBlockState[2][2]);
+            if (nw || n || w)
+            {
+                corner[0][0] = 1;
+            }
+            if (ne || n || e)
+            {
+                corner[0][1] = 1;
+            }
+            if (sw || s || w)
+            {
+                corner[1][0] = 1;
+            }
+            if (se || s || e)
+            {
+                corner[1][1] = 1;
+            }
         }
+
         state = state.withProperty(LEVEL_CORNERS[0], corner[0][0]);
         state = state.withProperty(LEVEL_CORNERS[1], corner[0][1]);
         state = state.withProperty(LEVEL_CORNERS[2], corner[1][1]);
@@ -512,7 +592,7 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
             return -1000.0;
         }
         Vec3d vec = ((BlockFluidBase)state.getBlock()).getFlowVector(world, pos);
-        return vec.xCoord == 0.0D && vec.zCoord == 0.0D ? -1000.0D : Math.atan2(vec.zCoord, vec.xCoord) - Math.PI / 2D;
+        return vec.x == 0.0D && vec.z == 0.0D ? -1000.0D : Math.atan2(vec.z, vec.x) - Math.PI / 2D;
     }
 
     public final int getQuantaValueBelow(IBlockAccess world, BlockPos pos, int belowThis)
@@ -569,10 +649,9 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         return end;
     }
 
-    public float getFluidHeightForRender(IBlockAccess world, BlockPos pos)
+    public float getFluidHeightForRender(IBlockAccess world, BlockPos pos, @Nonnull IBlockState up)
     {
         IBlockState here = world.getBlockState(pos);
-        IBlockState up = world.getBlockState(pos.down(densityDir));
         if (here.getBlock() == this)
         {
             if (up.getMaterial().isLiquid() || up.getBlock() instanceof IFluidBlock)
@@ -652,6 +731,11 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
         return vec;
     }
 
+    private boolean isBlockSolid(IBlockAccess world, BlockPos pos, EnumFacing face)
+    {
+        return world.getBlockState(pos).getBlockFaceShape(world, pos, face) == BlockFaceShape.SOLID;
+    }
+
     /* IFluidBlock */
     @Override
     public Fluid getFluid()
@@ -669,8 +753,26 @@ public abstract class BlockFluidBase extends Block implements IFluidBlock
     }
 
     @Override
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState blockState, @Nonnull IBlockAccess worldIn, @Nonnull BlockPos pos)
     {
         return NULL_AABB;
+    }
+    
+    @Override
+    @SideOnly (Side.CLIENT)
+    public Vec3d getFogColor(World world, BlockPos pos, IBlockState state, Entity entity, Vec3d originalColor, float partialTicks)
+    {
+        if (getFluid() != null)
+        {
+            int color = getFluid().getColor();
+            float red = (color >> 16 & 0xFF) / 255.0F;
+            float green = (color >> 8 & 0xFF) / 255.0F;
+            float blue = (color & 0xFF) / 255.0F;
+            return new Vec3d(red, green, blue);
+        }
+        else
+        {
+            return super.getFogColor(world, pos, state, entity, originalColor, partialTicks);
+        }
     }
 }

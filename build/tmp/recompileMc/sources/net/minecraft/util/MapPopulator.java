@@ -7,14 +7,17 @@ import java.util.NoSuchElementException;
 
 public class MapPopulator
 {
+    /**
+     * Create a Map from the given keys and values. This method creates a LinkedHashMap.
+     */
     public static <K, V> Map<K, V> createMap(Iterable<K> keys, Iterable<V> values)
     {
-        /**
-         * Populate the given Map with the given keys and values.
-         */
-        return populateMap(keys, values, Maps.<K, V>newLinkedHashMap());
+        return populateMap(keys, values, Maps.newLinkedHashMap());
     }
 
+    /**
+     * Populate the given Map with the given keys and values.
+     */
     public static <K, V> Map<K, V> populateMap(Iterable<K> keys, Iterable<V> values, Map<K, V> map)
     {
         Iterator<V> iterator = values.iterator();

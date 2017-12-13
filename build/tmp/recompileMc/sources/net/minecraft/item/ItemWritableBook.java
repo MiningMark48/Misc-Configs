@@ -16,11 +16,15 @@ public class ItemWritableBook extends Item
         this.setMaxStackSize(1);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        playerIn.openBook(itemStackIn, hand);
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        playerIn.openBook(itemstack, handIn);
         playerIn.addStat(StatList.getObjectUseStats(this));
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
     }
 
     /**
@@ -43,11 +47,6 @@ public class ItemWritableBook extends Item
             for (int i = 0; i < nbttaglist.tagCount(); ++i)
             {
                 String s = nbttaglist.getStringTagAt(i);
-
-                if (s == null)
-                {
-                    return false;
-                }
 
                 if (s.length() > 32767)
                 {

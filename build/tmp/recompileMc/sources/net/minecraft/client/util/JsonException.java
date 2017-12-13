@@ -27,38 +27,38 @@ public class JsonException extends IOException
         this.message = messageIn;
     }
 
-    public void prependJsonKey(String p_151380_1_)
+    public void prependJsonKey(String key)
     {
-        ((JsonException.Entry)this.entries.get(0)).addJsonKey(p_151380_1_);
+        ((JsonException.Entry)this.entries.get(0)).addJsonKey(key);
     }
 
-    public void setFilenameAndFlush(String p_151381_1_)
+    public void setFilenameAndFlush(String filenameIn)
     {
-        ((JsonException.Entry)this.entries.get(0)).filename = p_151381_1_;
+        (this.entries.get(0)).filename = filenameIn;
         this.entries.add(0, new JsonException.Entry());
     }
 
     public String getMessage()
     {
-        return "Invalid " + ((JsonException.Entry)this.entries.get(this.entries.size() - 1)).toString() + ": " + this.message;
+        return "Invalid " + this.entries.get(this.entries.size() - 1) + ": " + this.message;
     }
 
-    public static JsonException forException(Exception p_151379_0_)
+    public static JsonException forException(Exception exception)
     {
-        if (p_151379_0_ instanceof JsonException)
+        if (exception instanceof JsonException)
         {
-            return (JsonException)p_151379_0_;
+            return (JsonException)exception;
         }
         else
         {
-            String s = p_151379_0_.getMessage();
+            String s = exception.getMessage();
 
-            if (p_151379_0_ instanceof FileNotFoundException)
+            if (exception instanceof FileNotFoundException)
             {
                 s = "File not found";
             }
 
-            return new JsonException(s, p_151379_0_);
+            return new JsonException(s, exception);
         }
     }
 
@@ -70,13 +70,12 @@ public class JsonException extends IOException
 
             private Entry()
             {
-                this.filename = null;
                 this.jsonKeys = Lists.<String>newArrayList();
             }
 
-            private void addJsonKey(String p_151373_1_)
+            private void addJsonKey(String key)
             {
-                this.jsonKeys.add(0, p_151373_1_);
+                this.jsonKeys.add(0, key);
             }
 
             public String getJsonKeys()
@@ -86,7 +85,14 @@ public class JsonException extends IOException
 
             public String toString()
             {
-                return this.filename != null ? (!this.jsonKeys.isEmpty() ? this.filename + " " + this.getJsonKeys() : this.filename) : (!this.jsonKeys.isEmpty() ? "(Unknown file) " + this.getJsonKeys() : "(Unknown file)");
+                if (this.filename != null)
+                {
+                    return this.jsonKeys.isEmpty() ? this.filename : this.filename + " " + this.getJsonKeys();
+                }
+                else
+                {
+                    return this.jsonKeys.isEmpty() ? "(Unknown file)" : "(Unknown file) " + this.getJsonKeys();
+                }
             }
         }
 }

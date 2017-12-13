@@ -6,11 +6,11 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockCommandBlock;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandResultStats;
-import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -59,7 +59,7 @@ public class TileEntityCommandBlock extends TileEntity
         }
         public void updateCommand()
         {
-            IBlockState iblockstate = TileEntityCommandBlock.this.worldObj.getBlockState(TileEntityCommandBlock.this.pos);
+            IBlockState iblockstate = TileEntityCommandBlock.this.world.getBlockState(TileEntityCommandBlock.this.pos);
             TileEntityCommandBlock.this.getWorld().notifyBlockUpdate(TileEntityCommandBlock.this.pos, iblockstate, iblockstate, 3);
         }
         /**
@@ -71,7 +71,7 @@ public class TileEntityCommandBlock extends TileEntity
             return 0;
         }
         /**
-         * Fills in information about the command block for the packet. X/Y/Z for the minecart version, and entityId for
+         * Fills in information about the command block for the packet. entityId for the minecart version, and X/Y/Z for
          * the traditional version
          */
         @SideOnly(Side.CLIENT)
@@ -82,18 +82,11 @@ public class TileEntityCommandBlock extends TileEntity
             buf.writeInt(TileEntityCommandBlock.this.pos.getZ());
         }
         /**
-         * Returns the entity associated with the command sender. MAY BE NULL!
-         */
-        public Entity getCommandSenderEntity()
-        {
-            return null;
-        }
-        /**
          * Get the Minecraft server instance
          */
         public MinecraftServer getServer()
         {
-            return TileEntityCommandBlock.this.worldObj.getMinecraftServer();
+            return TileEntityCommandBlock.this.world.getMinecraftServer();
         }
     };
 
@@ -111,8 +104,8 @@ public class TileEntityCommandBlock extends TileEntity
     {
         super.readFromNBT(compound);
         this.commandBlockLogic.readDataFromNBT(compound);
-        this.setPowered(compound.getBoolean("powered"));
-        this.setConditionMet(compound.getBoolean("conditionMet"));
+        this.powered = compound.getBoolean("powered");
+        this.conditionMet = compound.getBoolean("conditionMet");
         this.setAuto(compound.getBoolean("auto"));
     }
 
@@ -166,21 +159,14 @@ public class TileEntityCommandBlock extends TileEntity
         boolean flag = this.auto;
         this.auto = autoIn;
 
-        if (!flag && autoIn && !this.powered && this.worldObj != null && this.getMode() != TileEntityCommandBlock.Mode.SEQUENCE)
+        if (!flag && autoIn && !this.powered && this.world != null && this.getMode() != TileEntityCommandBlock.Mode.SEQUENCE)
         {
             Block block = this.getBlockType();
 
             if (block instanceof BlockCommandBlock)
             {
-                BlockPos blockpos = this.getPos();
-                BlockCommandBlock blockcommandblock = (BlockCommandBlock)block;
-                this.conditionMet = !this.isConditional() || blockcommandblock.isNextToSuccessfulCommandBlock(this.worldObj, blockpos, this.worldObj.getBlockState(blockpos));
-                this.worldObj.scheduleUpdate(blockpos, block, block.tickRate(this.worldObj));
-
-                if (this.conditionMet)
-                {
-                    blockcommandblock.propagateUpdate(this.worldObj, blockpos);
-                }
+                this.setConditionMet();
+                this.world.scheduleUpdate(this.pos, block, block.tickRate(this.world));
             }
         }
     }
@@ -190,9 +176,26 @@ public class TileEntityCommandBlock extends TileEntity
         return this.conditionMet;
     }
 
-    public void setConditionMet(boolean conditionMetIn)
+    public boolean setConditionMet()
     {
-        this.conditionMet = conditionMetIn;
+        this.conditionMet = true;
+
+        if (this.isConditional())
+        {
+            BlockPos blockpos = this.pos.offset(((EnumFacing)this.world.getBlockState(this.pos).getValue(BlockCommandBlock.FACING)).getOpposite());
+
+            if (this.world.getBlockState(blockpos).getBlock() instanceof BlockCommandBlock)
+            {
+                TileEntity tileentity = this.world.getTileEntity(blockpos);
+                this.conditionMet = tileentity instanceof TileEntityCommandBlock && ((TileEntityCommandBlock)tileentity).getCommandBlockLogic().getSuccessCount() > 0;
+            }
+            else
+            {
+                this.conditionMet = false;
+            }
+        }
+
+        return this.conditionMet;
     }
 
     public boolean isSendToClient()
@@ -208,12 +211,24 @@ public class TileEntityCommandBlock extends TileEntity
     public TileEntityCommandBlock.Mode getMode()
     {
         Block block = this.getBlockType();
-        return block == Blocks.COMMAND_BLOCK ? TileEntityCommandBlock.Mode.REDSTONE : (block == Blocks.REPEATING_COMMAND_BLOCK ? TileEntityCommandBlock.Mode.AUTO : (block == Blocks.CHAIN_COMMAND_BLOCK ? TileEntityCommandBlock.Mode.SEQUENCE : TileEntityCommandBlock.Mode.REDSTONE));
+
+        if (block == Blocks.COMMAND_BLOCK)
+        {
+            return TileEntityCommandBlock.Mode.REDSTONE;
+        }
+        else if (block == Blocks.REPEATING_COMMAND_BLOCK)
+        {
+            return TileEntityCommandBlock.Mode.AUTO;
+        }
+        else
+        {
+            return block == Blocks.CHAIN_COMMAND_BLOCK ? TileEntityCommandBlock.Mode.SEQUENCE : TileEntityCommandBlock.Mode.REDSTONE;
+        }
     }
 
     public boolean isConditional()
     {
-        IBlockState iblockstate = this.worldObj.getBlockState(this.getPos());
+        IBlockState iblockstate = this.world.getBlockState(this.getPos());
         return iblockstate.getBlock() instanceof BlockCommandBlock ? ((Boolean)iblockstate.getValue(BlockCommandBlock.CONDITIONAL)).booleanValue() : false;
     }
 

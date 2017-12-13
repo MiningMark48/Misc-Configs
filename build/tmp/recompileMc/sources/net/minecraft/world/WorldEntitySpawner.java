@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.Set;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRailBase;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntitySpawnPlacementRegistry;
@@ -24,6 +25,7 @@ import net.minecraft.world.chunk.Chunk;
 public final class WorldEntitySpawner
 {
     private static final int MOB_COUNT_DIV = (int)Math.pow(17.0D, 2.0D);
+    /** The 17x17 area around the player where mobs can spawn */
     private final Set<ChunkPos> eligibleChunksForSpawning = Sets.<ChunkPos>newHashSet();
 
     /**
@@ -45,15 +47,15 @@ public final class WorldEntitySpawner
             {
                 if (!entityplayer.isSpectator())
                 {
-                    int j = MathHelper.floor_double(entityplayer.posX / 16.0D);
-                    int k = MathHelper.floor_double(entityplayer.posZ / 16.0D);
+                    int j = MathHelper.floor(entityplayer.posX / 16.0D);
+                    int k = MathHelper.floor(entityplayer.posZ / 16.0D);
                     int l = 8;
 
-                    for (int i1 = -l; i1 <= l; ++i1)
+                    for (int i1 = -8; i1 <= 8; ++i1)
                     {
-                        for (int j1 = -l; j1 <= l; ++j1)
+                        for (int j1 = -8; j1 <= 8; ++j1)
                         {
-                            boolean flag = i1 == -l || i1 == l || j1 == -l || j1 == l;
+                            boolean flag = i1 == -8 || i1 == 8 || j1 == -8 || j1 == 8;
                             ChunkPos chunkpos = new ChunkPos(i1 + j, j1 + k);
 
                             if (!this.eligibleChunksForSpawning.contains(chunkpos))
@@ -62,7 +64,7 @@ public final class WorldEntitySpawner
 
                                 if (!flag && worldServerIn.getWorldBorder().contains(chunkpos))
                                 {
-                                    PlayerChunkMapEntry playerchunkmapentry = worldServerIn.getPlayerChunkMap().getEntry(chunkpos.chunkXPos, chunkpos.chunkZPos);
+                                    PlayerChunkMapEntry playerchunkmapentry = worldServerIn.getPlayerChunkMap().getEntry(chunkpos.x, chunkpos.z);
 
                                     if (playerchunkmapentry != null && playerchunkmapentry.isSentToPlayers())
                                     {
@@ -90,11 +92,11 @@ public final class WorldEntitySpawner
                         java.util.ArrayList<ChunkPos> shuffled = com.google.common.collect.Lists.newArrayList(this.eligibleChunksForSpawning);
                         java.util.Collections.shuffle(shuffled);
                         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-                        label415:
+                        label134:
 
                         for (ChunkPos chunkpos1 : shuffled)
                         {
-                            BlockPos blockpos = getRandomChunkPosition(worldServerIn, chunkpos1.chunkXPos, chunkpos1.chunkZPos);
+                            BlockPos blockpos = getRandomChunkPosition(worldServerIn, chunkpos1.x, chunkpos1.z);
                             int k1 = blockpos.getX();
                             int l1 = blockpos.getY();
                             int i2 = blockpos.getZ();
@@ -112,13 +114,13 @@ public final class WorldEntitySpawner
                                     int k3 = 6;
                                     Biome.SpawnListEntry biome$spawnlistentry = null;
                                     IEntityLivingData ientitylivingdata = null;
-                                    int l3 = MathHelper.ceiling_double_int(Math.random() * 4.0D);
+                                    int l3 = MathHelper.ceil(Math.random() * 4.0D);
 
                                     for (int i4 = 0; i4 < l3; ++i4)
                                     {
-                                        l2 += worldServerIn.rand.nextInt(k3) - worldServerIn.rand.nextInt(k3);
+                                        l2 += worldServerIn.rand.nextInt(6) - worldServerIn.rand.nextInt(6);
                                         i3 += worldServerIn.rand.nextInt(1) - worldServerIn.rand.nextInt(1);
-                                        j3 += worldServerIn.rand.nextInt(k3) - worldServerIn.rand.nextInt(k3);
+                                        j3 += worldServerIn.rand.nextInt(6) - worldServerIn.rand.nextInt(6);
                                         blockpos$mutableblockpos.setPos(l2, i3, j3);
                                         float f = (float)l2 + 0.5F;
                                         float f1 = (float)j3 + 0.5F;
@@ -141,7 +143,7 @@ public final class WorldEntitySpawner
 
                                                 try
                                                 {
-                                                    entityliving = (EntityLiving)biome$spawnlistentry.entityClass.getConstructor(new Class[] {World.class}).newInstance(new Object[] {worldServerIn});
+                                                    entityliving = biome$spawnlistentry.newInstance(worldServerIn);
                                                 }
                                                 catch (Exception exception)
                                                 {
@@ -151,25 +153,25 @@ public final class WorldEntitySpawner
 
                                                 entityliving.setLocationAndAngles((double)f, (double)i3, (double)f1, worldServerIn.rand.nextFloat() * 360.0F, 0.0F);
 
-                                                net.minecraftforge.fml.common.eventhandler.Event.Result canSpawn = net.minecraftforge.event.ForgeEventFactory.canEntitySpawn(entityliving, worldServerIn, f, i3, f1);
+                                                net.minecraftforge.fml.common.eventhandler.Event.Result canSpawn = net.minecraftforge.event.ForgeEventFactory.canEntitySpawn(entityliving, worldServerIn, f, i3, f1, false);
                                                 if (canSpawn == net.minecraftforge.fml.common.eventhandler.Event.Result.ALLOW || (canSpawn == net.minecraftforge.fml.common.eventhandler.Event.Result.DEFAULT && (entityliving.getCanSpawnHere() && entityliving.isNotColliding())))
                                                 {
-                                                    if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(entityliving, worldServerIn, f, l3, f1))
+                                                    if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(entityliving, worldServerIn, f, i3, f1))
                                                     ientitylivingdata = entityliving.onInitialSpawn(worldServerIn.getDifficultyForLocation(new BlockPos(entityliving)), ientitylivingdata);
 
                                                     if (entityliving.isNotColliding())
                                                     {
                                                         ++j2;
-                                                        worldServerIn.spawnEntityInWorld(entityliving);
+                                                        worldServerIn.spawnEntity(entityliving);
                                                     }
                                                     else
                                                     {
                                                         entityliving.setDead();
                                                     }
 
-                                                    if (i2 >= net.minecraftforge.event.ForgeEventFactory.getMaxSpawnPackSize(entityliving))
+                                                    if (j2 >= net.minecraftforge.event.ForgeEventFactory.getMaxSpawnPackSize(entityliving))
                                                     {
-                                                        continue label415;
+                                                        continue label134;
                                                     }
                                                 }
 
@@ -188,7 +190,7 @@ public final class WorldEntitySpawner
         }
     }
 
-    protected static BlockPos getRandomChunkPosition(World worldIn, int x, int z)
+    private static BlockPos getRandomChunkPosition(World worldIn, int x, int z)
     {
         Chunk chunk = worldIn.getChunkFromChunkCoords(x, z);
         int i = x * 16 + worldIn.rand.nextInt(16);
@@ -200,7 +202,22 @@ public final class WorldEntitySpawner
 
     public static boolean isValidEmptySpawnBlock(IBlockState state)
     {
-        return state.isBlockNormalCube() ? false : (state.canProvidePower() ? false : (state.getMaterial().isLiquid() ? false : !BlockRailBase.isRailBlock(state)));
+        if (state.isBlockNormalCube())
+        {
+            return false;
+        }
+        else if (state.canProvidePower())
+        {
+            return false;
+        }
+        else if (state.getMaterial().isLiquid())
+        {
+            return false;
+        }
+        else
+        {
+            return !BlockRailBase.isRailBlock(state);
+        }
     }
 
     public static boolean canCreatureTypeSpawnAtLocation(EntityLiving.SpawnPlacementType spawnPlacementTypeIn, World worldIn, BlockPos pos)
@@ -215,7 +232,7 @@ public final class WorldEntitySpawner
 
             if (spawnPlacementTypeIn == EntityLiving.SpawnPlacementType.IN_WATER)
             {
-                return iblockstate.getMaterial().isLiquid() && worldIn.getBlockState(pos.down()).getMaterial().isLiquid() && !worldIn.getBlockState(pos.up()).isNormalCube();
+                return iblockstate.getMaterial() == Material.WATER && worldIn.getBlockState(pos.down()).getMaterial() == Material.WATER && !worldIn.getBlockState(pos.up()).isNormalCube();
             }
             else
             {
@@ -238,8 +255,13 @@ public final class WorldEntitySpawner
 
     /**
      * Called during chunk generation to spawn initial creatures.
+     *  
+     * @param centerX The X coordinate of the point to spawn mobs arround.
+     * @param centerZ The Z coordinate of the point to spawn mobs arround.
+     * @param diameterX The X diameter of the rectangle to spawn mobs in
+     * @param diameterZ The Z diameter of the rectangle to spawn mobs in
      */
-    public static void performWorldGenSpawning(World worldIn, Biome biomeIn, int p_77191_2_, int p_77191_3_, int p_77191_4_, int p_77191_5_, Random randomIn)
+    public static void performWorldGenSpawning(World worldIn, Biome biomeIn, int centerX, int centerZ, int diameterX, int diameterZ, Random randomIn)
     {
         List<Biome.SpawnListEntry> list = biomeIn.getSpawnableList(EnumCreatureType.CREATURE);
 
@@ -250,8 +272,8 @@ public final class WorldEntitySpawner
                 Biome.SpawnListEntry biome$spawnlistentry = (Biome.SpawnListEntry)WeightedRandom.getRandomItem(worldIn.rand, list);
                 int i = biome$spawnlistentry.minGroupCount + randomIn.nextInt(1 + biome$spawnlistentry.maxGroupCount - biome$spawnlistentry.minGroupCount);
                 IEntityLivingData ientitylivingdata = null;
-                int j = p_77191_2_ + randomIn.nextInt(p_77191_4_);
-                int k = p_77191_3_ + randomIn.nextInt(p_77191_5_);
+                int j = centerX + randomIn.nextInt(diameterX);
+                int k = centerZ + randomIn.nextInt(diameterZ);
                 int l = j;
                 int i1 = k;
 
@@ -269,7 +291,7 @@ public final class WorldEntitySpawner
 
                             try
                             {
-                                entityliving = (EntityLiving)biome$spawnlistentry.entityClass.getConstructor(new Class[] {World.class}).newInstance(new Object[] {worldIn});
+                                entityliving = biome$spawnlistentry.newInstance(worldIn);
                             }
                             catch (Exception exception)
                             {
@@ -277,15 +299,16 @@ public final class WorldEntitySpawner
                                 continue;
                             }
 
+                            if (net.minecraftforge.event.ForgeEventFactory.canEntitySpawn(entityliving, worldIn, j + 0.5f, (float) blockpos.getY(), k +0.5f, false) == net.minecraftforge.fml.common.eventhandler.Event.Result.DENY) continue;
                             entityliving.setLocationAndAngles((double)((float)j + 0.5F), (double)blockpos.getY(), (double)((float)k + 0.5F), randomIn.nextFloat() * 360.0F, 0.0F);
-                            worldIn.spawnEntityInWorld(entityliving);
+                            worldIn.spawnEntity(entityliving);
                             ientitylivingdata = entityliving.onInitialSpawn(worldIn.getDifficultyForLocation(new BlockPos(entityliving)), ientitylivingdata);
                             flag = true;
                         }
 
                         j += randomIn.nextInt(5) - randomIn.nextInt(5);
 
-                        for (k += randomIn.nextInt(5) - randomIn.nextInt(5); j < p_77191_2_ || j >= p_77191_2_ + p_77191_4_ || k < p_77191_3_ || k >= p_77191_3_ + p_77191_4_; k = i1 + randomIn.nextInt(5) - randomIn.nextInt(5))
+                        for (k += randomIn.nextInt(5) - randomIn.nextInt(5); j < centerX || j >= centerX + diameterX || k < centerZ || k >= centerZ + diameterX; k = i1 + randomIn.nextInt(5) - randomIn.nextInt(5))
                         {
                             j = l + randomIn.nextInt(5) - randomIn.nextInt(5);
                         }

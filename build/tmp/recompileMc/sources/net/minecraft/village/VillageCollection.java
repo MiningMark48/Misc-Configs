@@ -3,6 +3,7 @@ package net.minecraft.village;
 import com.google.common.collect.Lists;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.material.Material;
@@ -13,11 +14,15 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
-import net.minecraft.world.WorldSavedData;
+import net.minecraft.world.storage.WorldSavedData;
 
 public class VillageCollection extends WorldSavedData
 {
-    private World worldObj;
+    private World world;
+    /**
+     * This is a black hole. You can add data to this list through a public interface, but you can't query that
+     * information in any way and it's not used internally either.
+     */
     private final List<BlockPos> villagerPositionsList = Lists.<BlockPos>newArrayList();
     private final List<VillageDoorInfo> newDoors = Lists.<VillageDoorInfo>newArrayList();
     private final List<Village> villageList = Lists.<Village>newArrayList();
@@ -31,13 +36,13 @@ public class VillageCollection extends WorldSavedData
     public VillageCollection(World worldIn)
     {
         super(fileNameForProvider(worldIn.provider));
-        this.worldObj = worldIn;
+        this.world = worldIn;
         this.markDirty();
     }
 
     public void setWorldsForAll(World worldIn)
     {
-        this.worldObj = worldIn;
+        this.world = worldIn;
 
         for (Village village : this.villageList)
         {
@@ -84,7 +89,7 @@ public class VillageCollection extends WorldSavedData
 
         while (iterator.hasNext())
         {
-            Village village = (Village)iterator.next();
+            Village village = iterator.next();
 
             if (village.isAnnihilated())
             {
@@ -94,6 +99,9 @@ public class VillageCollection extends WorldSavedData
         }
     }
 
+    /**
+     * Get a list of villages.
+     */
     public List<Village> getVillageList()
     {
         return this.villageList;
@@ -127,7 +135,7 @@ public class VillageCollection extends WorldSavedData
     {
         if (!this.villagerPositionsList.isEmpty())
         {
-            this.addDoorsAround((BlockPos)this.villagerPositionsList.remove(0));
+            this.addDoorsAround(this.villagerPositionsList.remove(0));
         }
     }
 
@@ -135,12 +143,12 @@ public class VillageCollection extends WorldSavedData
     {
         for (int i = 0; i < this.newDoors.size(); ++i)
         {
-            VillageDoorInfo villagedoorinfo = (VillageDoorInfo)this.newDoors.get(i);
+            VillageDoorInfo villagedoorinfo = this.newDoors.get(i);
             Village village = this.getNearestVillage(villagedoorinfo.getDoorBlockPos(), 32);
 
             if (village == null)
             {
-                village = new Village(this.worldObj);
+                village = new Village(this.world);
                 this.villageList.add(village);
                 this.markDirty();
             }
@@ -157,11 +165,11 @@ public class VillageCollection extends WorldSavedData
         int j = 4;
         int k = 16;
 
-        for (int l = -i; l < i; ++l)
+        for (int l = -16; l < 16; ++l)
         {
-            for (int i1 = -j; i1 < j; ++i1)
+            for (int i1 = -4; i1 < 4; ++i1)
             {
-                for (int j1 = -k; j1 < k; ++j1)
+                for (int j1 = -16; j1 < 16; ++j1)
                 {
                     BlockPos blockpos = central.add(l, i1, j1);
 
@@ -186,6 +194,7 @@ public class VillageCollection extends WorldSavedData
     /**
      * returns the VillageDoorInfo if it exists in any village or in the newDoor list, otherwise returns null
      */
+    @Nullable
     private VillageDoorInfo checkDoorExistence(BlockPos doorBlock)
     {
         for (VillageDoorInfo villagedoorinfo : this.newDoors)
@@ -211,7 +220,7 @@ public class VillageCollection extends WorldSavedData
 
     private void addToNewDoorsList(BlockPos doorBlock)
     {
-        EnumFacing enumfacing = BlockDoor.getFacing(this.worldObj, doorBlock);
+        EnumFacing enumfacing = BlockDoor.getFacing(this.world, doorBlock);
         EnumFacing enumfacing1 = enumfacing.getOpposite();
         int i = this.countBlocksCanSeeSky(doorBlock, enumfacing, 5);
         int j = this.countBlocksCanSeeSky(doorBlock, enumfacing1, i + 1);
@@ -231,7 +240,7 @@ public class VillageCollection extends WorldSavedData
 
         for (int j = 1; j <= 5; ++j)
         {
-            if (this.worldObj.canSeeSky(centerPos.offset(direction, j)))
+            if (this.world.canSeeSky(centerPos.offset(direction, j)))
             {
                 ++i;
 
@@ -260,9 +269,17 @@ public class VillageCollection extends WorldSavedData
 
     private boolean isWoodDoor(BlockPos doorPos)
     {
-        IBlockState iblockstate = this.worldObj.getBlockState(doorPos);
+        IBlockState iblockstate = this.world.getBlockState(doorPos);
         Block block = iblockstate.getBlock();
-        return block instanceof BlockDoor ? iblockstate.getMaterial() == Material.WOOD : false;
+
+        if (block instanceof BlockDoor)
+        {
+            return iblockstate.getMaterial() == Material.WOOD;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
@@ -282,9 +299,9 @@ public class VillageCollection extends WorldSavedData
         }
     }
 
-    public NBTTagCompound writeToNBT(NBTTagCompound p_189551_1_)
+    public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        p_189551_1_.setInteger("Tick", this.tickCounter);
+        compound.setInteger("Tick", this.tickCounter);
         NBTTagList nbttaglist = new NBTTagList();
 
         for (Village village : this.villageList)
@@ -294,8 +311,8 @@ public class VillageCollection extends WorldSavedData
             nbttaglist.appendTag(nbttagcompound);
         }
 
-        p_189551_1_.setTag("Villages", nbttaglist);
-        return p_189551_1_;
+        compound.setTag("Villages", nbttaglist);
+        return compound;
     }
 
     public static String fileNameForProvider(WorldProvider provider)

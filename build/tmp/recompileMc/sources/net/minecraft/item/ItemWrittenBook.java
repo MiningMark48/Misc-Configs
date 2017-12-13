@@ -1,6 +1,8 @@
 package net.minecraft.item;
 
 import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Slot;
@@ -74,7 +76,7 @@ public class ItemWrittenBook extends Item
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
         if (stack.hasTagCompound())
         {
@@ -83,28 +85,33 @@ public class ItemWrittenBook extends Item
 
             if (!StringUtils.isNullOrEmpty(s))
             {
-                tooltip.add(TextFormatting.GRAY + I18n.translateToLocalFormatted("book.byAuthor", new Object[] {s}));
+                tooltip.add(TextFormatting.GRAY + I18n.translateToLocalFormatted("book.byAuthor", s));
             }
 
             tooltip.add(TextFormatting.GRAY + I18n.translateToLocal("book.generation." + nbttagcompound.getInteger("generation")));
         }
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+
         if (!worldIn.isRemote)
         {
-            this.resolveContents(itemStackIn, playerIn);
+            this.resolveContents(itemstack, playerIn);
         }
 
-        playerIn.openBook(itemStackIn, hand);
+        playerIn.openBook(itemstack, handIn);
         playerIn.addStat(StatList.getObjectUseStats(this));
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
     }
 
     private void resolveContents(ItemStack stack, EntityPlayer player)
     {
-        if (stack != null && stack.getTagCompound() != null)
+        if (stack.getTagCompound() != null)
         {
             NBTTagCompound nbttagcompound = stack.getTagCompound();
 
@@ -119,19 +126,19 @@ public class ItemWrittenBook extends Item
                     for (int i = 0; i < nbttaglist.tagCount(); ++i)
                     {
                         String s = nbttaglist.getStringTagAt(i);
-                        ITextComponent lvt_7_1_;
+                        ITextComponent itextcomponent;
 
                         try
                         {
-                            lvt_7_1_ = ITextComponent.Serializer.fromJsonLenient(s);
-                            lvt_7_1_ = TextComponentUtils.processComponent(player, lvt_7_1_, player);
+                            itextcomponent = ITextComponent.Serializer.fromJsonLenient(s);
+                            itextcomponent = TextComponentUtils.processComponent(player, itextcomponent, player);
                         }
                         catch (Exception var9)
                         {
-                            lvt_7_1_ = new TextComponentString(s);
+                            itextcomponent = new TextComponentString(s);
                         }
 
-                        nbttaglist.set(i, new NBTTagString(ITextComponent.Serializer.componentToJson(lvt_7_1_)));
+                        nbttaglist.set(i, new NBTTagString(ITextComponent.Serializer.componentToJson(itextcomponent)));
                     }
 
                     nbttagcompound.setTag("pages", nbttaglist);
@@ -146,6 +153,14 @@ public class ItemWrittenBook extends Item
         }
     }
 
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
     @SideOnly(Side.CLIENT)
     public boolean hasEffect(ItemStack stack)
     {

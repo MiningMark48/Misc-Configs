@@ -1,10 +1,10 @@
 package net.minecraft.client.renderer.entity;
 
 import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
@@ -32,9 +32,9 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
         {
             return true;
         }
-        else if (livingEntity.getLeashed() && livingEntity.getLeashedToEntity() != null)
+        else if (livingEntity.getLeashed() && livingEntity.getLeashHolder() != null)
         {
-            Entity entity = livingEntity.getLeashedToEntity();
+            Entity entity = livingEntity.getLeashHolder();
             return camera.isBoundingBoxInFrustum(entity.getRenderBoundingBox());
         }
         else
@@ -56,9 +56,9 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
         }
     }
 
-    public void setLightmap(T entityLivingIn, float partialTicks)
+    public void setLightmap(T entityLivingIn)
     {
-        int i = entityLivingIn.getBrightnessForRender(partialTicks);
+        int i = entityLivingIn.getBrightnessForRender();
         int j = i % 65536;
         int k = i / 65536;
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)j, (float)k);
@@ -74,13 +74,13 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
 
     protected void renderLeash(T entityLivingIn, double x, double y, double z, float entityYaw, float partialTicks)
     {
-        Entity entity = entityLivingIn.getLeashedToEntity();
+        Entity entity = entityLivingIn.getLeashHolder();
 
         if (entity != null)
         {
             y = y - (1.6D - (double)entityLivingIn.height) * 0.5D;
             Tessellator tessellator = Tessellator.getInstance();
-            VertexBuffer vertexbuffer = tessellator.getBuffer();
+            BufferBuilder bufferbuilder = tessellator.getBuffer();
             double d0 = this.interpolateValue((double)entity.prevRotationYaw, (double)entity.rotationYaw, (double)(partialTicks * 0.5F)) * 0.01745329238474369D;
             double d1 = this.interpolateValue((double)entity.prevRotationPitch, (double)entity.rotationPitch, (double)(partialTicks * 0.5F)) * 0.01745329238474369D;
             double d2 = Math.cos(d0);
@@ -114,7 +114,7 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
             GlStateManager.disableCull();
             int i = 24;
             double d16 = 0.025D;
-            vertexbuffer.begin(5, DefaultVertexFormats.POSITION_COLOR);
+            bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
 
             for (int j = 0; j <= 24; ++j)
             {
@@ -130,12 +130,12 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
                 }
 
                 float f3 = (float)j / 24.0F;
-                vertexbuffer.pos(x + d13 * (double)f3 + 0.0D, y + d14 * (double)(f3 * f3 + f3) * 0.5D + (double)((24.0F - (float)j) / 18.0F + 0.125F), z + d15 * (double)f3).color(f, f1, f2, 1.0F).endVertex();
-                vertexbuffer.pos(x + d13 * (double)f3 + 0.025D, y + d14 * (double)(f3 * f3 + f3) * 0.5D + (double)((24.0F - (float)j) / 18.0F + 0.125F) + 0.025D, z + d15 * (double)f3).color(f, f1, f2, 1.0F).endVertex();
+                bufferbuilder.pos(x + d13 * (double)f3 + 0.0D, y + d14 * (double)(f3 * f3 + f3) * 0.5D + (double)((24.0F - (float)j) / 18.0F + 0.125F), z + d15 * (double)f3).color(f, f1, f2, 1.0F).endVertex();
+                bufferbuilder.pos(x + d13 * (double)f3 + 0.025D, y + d14 * (double)(f3 * f3 + f3) * 0.5D + (double)((24.0F - (float)j) / 18.0F + 0.125F) + 0.025D, z + d15 * (double)f3).color(f, f1, f2, 1.0F).endVertex();
             }
 
             tessellator.draw();
-            vertexbuffer.begin(5, DefaultVertexFormats.POSITION_COLOR);
+            bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
 
             for (int k = 0; k <= 24; ++k)
             {
@@ -151,8 +151,8 @@ public abstract class RenderLiving<T extends EntityLiving> extends RenderLivingB
                 }
 
                 float f7 = (float)k / 24.0F;
-                vertexbuffer.pos(x + d13 * (double)f7 + 0.0D, y + d14 * (double)(f7 * f7 + f7) * 0.5D + (double)((24.0F - (float)k) / 18.0F + 0.125F) + 0.025D, z + d15 * (double)f7).color(f4, f5, f6, 1.0F).endVertex();
-                vertexbuffer.pos(x + d13 * (double)f7 + 0.025D, y + d14 * (double)(f7 * f7 + f7) * 0.5D + (double)((24.0F - (float)k) / 18.0F + 0.125F), z + d15 * (double)f7 + 0.025D).color(f4, f5, f6, 1.0F).endVertex();
+                bufferbuilder.pos(x + d13 * (double)f7 + 0.0D, y + d14 * (double)(f7 * f7 + f7) * 0.5D + (double)((24.0F - (float)k) / 18.0F + 0.125F) + 0.025D, z + d15 * (double)f7).color(f4, f5, f6, 1.0F).endVertex();
+                bufferbuilder.pos(x + d13 * (double)f7 + 0.025D, y + d14 * (double)(f7 * f7 + f7) * 0.5D + (double)((24.0F - (float)k) / 18.0F + 0.125F), z + d15 * (double)f7 + 0.025D).color(f4, f5, f6, 1.0F).endVertex();
             }
 
             tessellator.draw();

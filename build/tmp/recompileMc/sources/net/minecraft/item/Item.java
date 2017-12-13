@@ -1,6 +1,5 @@
 package net.minecraft.item;
 
-import com.google.common.base.Function;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -23,6 +22,7 @@ import net.minecraft.block.BlockStone;
 import net.minecraft.block.BlockStoneBrick;
 import net.minecraft.block.BlockWall;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -44,6 +44,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -57,10 +58,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryEntry.Impl<Item>
+public class Item extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<Item>
 {
-    public static final RegistryNamespaced<ResourceLocation, Item> REGISTRY = net.minecraftforge.fml.common.registry.GameData.getItemRegistry();;
-    private static final Map<Block, Item> BLOCK_TO_ITEM = net.minecraftforge.fml.common.registry.GameData.getBlockItemMap();
+    public static final RegistryNamespaced<ResourceLocation, Item> REGISTRY = net.minecraftforge.registries.GameData.getWrapper(Item.class);
+    private static final Map<Block, Item> BLOCK_TO_ITEM = net.minecraftforge.registries.GameData.getBlockItemMap();
     private static final IItemPropertyGetter DAMAGED_GETTER = new IItemPropertyGetter()
     {
         @SideOnly(Side.CLIENT)
@@ -74,7 +75,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         @SideOnly(Side.CLIENT)
         public float apply(ItemStack stack, @Nullable World worldIn, @Nullable EntityLivingBase entityIn)
         {
-            return MathHelper.clamp_float((float)stack.getItemDamage() / (float)stack.getMaxDamage(), 0.0F, 1.0F);
+            return MathHelper.clamp((float)stack.getItemDamage() / (float)stack.getMaxDamage(), 0.0F, 1.0F);
         }
     };
     private static final IItemPropertyGetter LEFTHANDED_GETTER = new IItemPropertyGetter()
@@ -93,7 +94,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
             return entityIn instanceof EntityPlayer ? ((EntityPlayer)entityIn).getCooldownTracker().getCooldown(stack.getItem(), 0.0F) : 0.0F;
         }
     };
-    private final IRegistry<ResourceLocation, IItemPropertyGetter> properties = new RegistrySimple();
+    private final IRegistry<ResourceLocation, IItemPropertyGetter> properties = new RegistrySimple<ResourceLocation, IItemPropertyGetter>();
     protected static final UUID ATTACK_DAMAGE_MODIFIER = UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF");
     protected static final UUID ATTACK_SPEED_MODIFIER = UUID.fromString("FA233E1C-4180-4865-B01B-BCCE9785ACA3");
     private CreativeTabs tabToDisplayOn;
@@ -118,22 +119,23 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
 
     public static Item getItemById(int id)
     {
-        return (Item)REGISTRY.getObjectById(id);
+        return REGISTRY.getObjectById(id);
     }
 
-    @Nullable
     public static Item getItemFromBlock(Block blockIn)
     {
-        return (Item)BLOCK_TO_ITEM.get(blockIn);
+        Item item = BLOCK_TO_ITEM.get(blockIn);
+        return item == null ? Items.AIR : item;
     }
 
     /**
      * Tries to get an Item by it's name (e.g. minecraft:apple) or a String representation of a numerical ID. If both
      * fail, null is returned.
      */
+    @Nullable
     public static Item getByNameOrId(String id)
     {
-        Item item = (Item)REGISTRY.getObject(new ResourceLocation(id));
+        Item item = REGISTRY.getObject(new ResourceLocation(id));
 
         if (item == null)
         {
@@ -162,7 +164,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     @SideOnly(Side.CLIENT)
     public IItemPropertyGetter getPropertyGetter(ResourceLocation key)
     {
-        return (IItemPropertyGetter)this.properties.getObject(key);
+        return this.properties.getObject(key);
     }
 
     /**
@@ -194,26 +196,28 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         return EnumActionResult.PASS;
     }
 
-    public float getStrVsBlock(ItemStack stack, IBlockState state)
+    public float getDestroySpeed(ItemStack stack, IBlockState state)
     {
         return 1.0F;
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        return new ActionResult(EnumActionResult.PASS, itemStackIn);
+        return new ActionResult<ItemStack>(EnumActionResult.PASS, playerIn.getHeldItem(handIn));
     }
 
     /**
      * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
      * the Item before the action is complete.
      */
-    @Nullable
     public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving)
     {
         return stack;
@@ -251,6 +255,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     /**
      * Returns the maximum damage an item can take.
      */
+    @Deprecated
     public int getMaxDamage()
     {
         return this.maxDamage;
@@ -353,8 +358,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     public String getUnlocalizedNameInefficiently(ItemStack stack)
     {
-        String s = this.getUnlocalizedName(stack);
-        return s == null ? "" : I18n.translateToLocal(s);
+        return I18n.translateToLocal(this.getUnlocalizedName(stack));
     }
 
     /**
@@ -388,6 +392,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         return true;
     }
 
+    @Nullable
     public Item getContainerItem()
     {
         return this.containerItem;
@@ -452,15 +457,23 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
     }
 
     public String getItemStackDisplayName(ItemStack stack)
     {
-        return ("" + I18n.translateToLocal(this.getUnlocalizedNameInefficiently(stack) + ".name")).trim();
+        return I18n.translateToLocal(this.getUnlocalizedNameInefficiently(stack) + ".name").trim();
     }
 
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
     @SideOnly(Side.CLIENT)
     public boolean hasEffect(ItemStack stack)
     {
@@ -478,7 +491,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     /**
      * Checks isDamagable and if it cannot be stacked
      */
-    public boolean isItemTool(ItemStack stack)
+    public boolean isEnchantable(ItemStack stack)
     {
         return this.getItemStackLimit(stack) == 1 && this.isDamageable();
     }
@@ -497,11 +510,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         float f5 = MathHelper.sin(-f * 0.017453292F);
         float f6 = f3 * f4;
         float f7 = f2 * f4;
-        double d3 = 5.0D;
-        if (playerIn instanceof net.minecraft.entity.player.EntityPlayerMP)
-        {
-            d3 = ((net.minecraft.entity.player.EntityPlayerMP)playerIn).interactionManager.getBlockReachDistance();
-        }
+        double d3 = playerIn.getEntityAttribute(EntityPlayer.REACH_DISTANCE).getAttributeValue();
         Vec3d vec3d1 = vec3d.addVector((double)f6 * d3, (double)f5 * d3, (double)f7 * d3);
         return worldIn.rayTraceBlocks(vec3d, vec3d1, useLiquids, !useLiquids, false);
     }
@@ -517,10 +526,30 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        subItems.add(new ItemStack(itemIn));
+        if (this.isInCreativeTab(tab))
+        {
+            items.add(new ItemStack(this));
+        }
+    }
+
+    protected boolean isInCreativeTab(CreativeTabs targetTab)
+    {
+        for (CreativeTabs tab : this.getCreativeTabs())
+            if (tab == targetTab)
+                return true;
+        CreativeTabs creativetabs = this.getCreativeTab();
+        return creativetabs != null && (targetTab == CreativeTabs.SEARCH || targetTab == creativetabs);
+    }
+
+    /**
+     * gets the CreativeTab this item is displayed on
+     */
+    @Nullable
+    public CreativeTabs getCreativeTab()
+    {
+        return this.tabToDisplayOn;
     }
 
     /**
@@ -533,17 +562,11 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     }
 
     /**
-     * gets the CreativeTab this item is displayed on
-     */
-    @SideOnly(Side.CLIENT)
-    public CreativeTabs getCreativeTab()
-    {
-        return this.tabToDisplayOn;
-    }
-
-    /**
-     * Returns true if players can use this item to affect the world (e.g. placing blocks, placing ender eyes in portal)
-     * when not in creative
+     * Returns whether this item is always allowed to edit the world. Forces {@link
+     * net.minecraft.entity.player.EntityPlayer#canPlayerEdit EntityPlayer#canPlayerEdit} to return {@code true}.
+     * 
+     * @return whether this item ignores other restrictions on how a player can modify the world.
+     * @see ItemStack#canEditBlocks
      */
     public boolean canItemEditBlocks()
     {
@@ -552,12 +575,18 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
 
     /**
      * Return whether this item is repairable in an anvil.
+     *  
+     * @param toRepair the {@code ItemStack} being repaired
+     * @param repair the {@code ItemStack} being used to perform the repair
      */
     public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
     {
         return false;
     }
 
+    /**
+     * Gets a map of item attribute modifiers, used by ItemSword to increase hit damage.
+     */
     @Deprecated // Use ItemStack sensitive version below.
     public Multimap<String, AttributeModifier> getItemAttributeModifiers(EntityEquipmentSlot equipmentSlot)
     {
@@ -610,7 +639,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @param hand Which hand the item is being held in.
      * @return Return PASS to allow vanilla handling, any other to skip normal code.
      */
-    public EnumActionResult onItemUseFirst(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, EnumHand hand)
+    public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, EnumHand hand)
     {
         return EnumActionResult.PASS;
     }
@@ -633,6 +662,26 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     {
         canRepair = false;
         return this;
+    }
+
+    /**
+     * Override this method to change the NBT data being sent to the client.
+     * You should ONLY override this when you have no other choice, as this might change behavior client side!
+     *
+     * Note that this will sometimes be applied multiple times, the following MUST be supported:
+     * Item item = stack.getItem();
+     * NBTTagCompound nbtShare1 = item.getNBTShareTag(stack);
+     * stack.setTagCompound(nbtShare1);
+     * NBTTagCompound nbtShare2 = item.getNBTShareTag(stack);
+     * assert nbtShare1.equals(nbtShare2);
+     *
+     * @param stack The stack to send the NBT tag for
+     * @return The NBT tag
+     */
+    @Nullable
+    public NBTTagCompound getNBTShareTag(ItemStack stack)
+    {
+        return stack.getTagCompound();
     }
 
     /**
@@ -686,7 +735,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     {
         if (!hasContainerItem(itemStack))
         {
-            return null;
+            return ItemStack.EMPTY;
         }
         return new ItemStack(getContainerItem());
     }
@@ -698,9 +747,6 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     public boolean hasContainerItem(ItemStack stack)
     {
-        /**
-         * True if this Item has a container item (a.k.a. crafting result)
-         */
         return hasContainerItem();
     }
 
@@ -740,6 +786,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @param itemstack The current item stack
      * @return A new Entity object to spawn or null
      */
+    @Nullable
     public Entity createEntity(World world, Entity location, ItemStack itemstack)
     {
         return null;
@@ -802,16 +849,33 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack){}
 
     /**
-     * Determines if the specific ItemStack can be placed in the specified armor slot.
+     * Determines if the specific ItemStack can be placed in the specified armor slot, for the entity.
+     *
+     * TODO: Change name to canEquip in 1.13?
      *
      * @param stack The ItemStack
-     * @param armorType Armor slot ID: 0: Helmet, 1: Chest, 2: Legs, 3: Boots
+     * @param armorType Armor slot to be verified.
      * @param entity The entity trying to equip the armor
      * @return True if the given ItemStack can be inserted in the slot
      */
     public boolean isValidArmor(ItemStack stack, EntityEquipmentSlot armorType, Entity entity)
     {
         return net.minecraft.entity.EntityLiving.getSlotForItemStack(stack) == armorType;
+    }
+
+    /**
+     * Override this to set a non-default armor slot for an ItemStack, but
+     * <em>do not use this to get the armor slot of said stack; for that, use
+     * {@link net.minecraft.entity.EntityLiving#getSlotForItemStack(ItemStack)}.</em>
+     *
+     * @param stack the ItemStack
+     * @return the armor slot of the ItemStack, or {@code null} to let the default
+     * vanilla logic as per {@code EntityLiving.getSlotForItemStack(stack)} decide
+     */
+    @Nullable
+    public EntityEquipmentSlot getEquipmentSlot(ItemStack stack)
+    {
+        return null;
     }
 
     /**
@@ -839,6 +903,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @param type The subtype, can be null or "overlay"
      * @return Path of texture to bind, or null to use default
      */
+    @Nullable
     public String getArmorTexture(ItemStack stack, Entity entity, EntityEquipmentSlot slot, String type)
     {
         return null;
@@ -852,6 +917,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @return A instance of FontRenderer or null to use default
      */
     @SideOnly(Side.CLIENT)
+    @Nullable
     public net.minecraft.client.gui.FontRenderer getFontRenderer(ItemStack stack)
     {
         return null;
@@ -867,6 +933,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @return  A ModelBiped to render instead of the default
      */
     @SideOnly(Side.CLIENT)
+    @Nullable
     public net.minecraft.client.model.ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, EntityEquipmentSlot armorSlot, net.minecraft.client.model.ModelBiped _default)
     {
         return null;
@@ -934,13 +1001,24 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * Queries the percentage of the 'Durability' bar that should be drawn.
      *
      * @param stack The current ItemStack
-     * @return 1.0 for 100% 0 for 0%
+     * @return 0.0 for 100% (no damage / full bar), 1.0 for 0% (fully damaged / empty bar)
      */
     public double getDurabilityForDisplay(ItemStack stack)
     {
         return (double)stack.getItemDamage() / (double)stack.getMaxDamage();
     }
 
+    /**
+     * Returns the packed int RGB value used to render the durability bar in the GUI.
+     * Defaults to a value based on the hue scaled based on {@link #getDurabilityForDisplay}, but can be overriden.
+     *
+     * @param stack Stack to get durability from
+     * @return A packed RGB value for the durability colour (0x00RRGGBB)
+     */
+    public int getRGBDurabilityForDisplay(ItemStack stack)
+    {
+        return MathHelper.hsvToRGB(Math.max(0.0F, (float) (1.0F - getDurabilityForDisplay(stack))) / 3.0F, 1.0F, 1.0F);
+    }
     /**
      * Return the maxDamage for this ItemStack. Defaults to the maxDamage field in this item,
      * but can be overridden here for other sources such as NBT.
@@ -950,9 +1028,6 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     public int getMaxDamage(ItemStack stack)
     {
-        /**
-         * Returns the maximum damage an item can take.
-         */
         return getMaxDamage();
     }
 
@@ -982,6 +1057,18 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     }
 
     /**
+     * Checked from {@link net.minecraft.client.multiplayer.PlayerControllerMP#onPlayerDestroyBlock(BlockPos pos) PlayerControllerMP.onPlayerDestroyBlock()}
+     * when a creative player left-clicks a block with this item.
+     * Also checked from {@link net.minecraftforge.common.ForgeHooks#onBlockBreakEvent(World, GameType, EntityPlayerMP, BlockPos)  ForgeHooks.onBlockBreakEvent()}
+     * to prevent sending an event.
+     * @return true if the given player can destroy specified block in creative mode with this item
+     */
+    public boolean canDestroyBlockInCreative(World world, BlockPos pos, ItemStack stack, EntityPlayer player)
+    {
+        return !(this instanceof ItemSword);
+    }
+
+    /**
      * ItemStack sensitive version of {@link #canHarvestBlock(IBlockState)}
      * @param state The block trying to harvest
      * @param stack The itemstack used to harvest the block
@@ -989,9 +1076,6 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     public boolean canHarvestBlock(IBlockState state, ItemStack stack)
     {
-        /**
-         * Check whether this Item can harvest the given Block
-         */
         return canHarvestBlock(state);
     }
 
@@ -1033,14 +1117,16 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     }
 
     /**
-     * Queries the harvest level of this item stack for the specifred tool class,
+     * Queries the harvest level of this item stack for the specified tool class,
      * Returns -1 if this tool is not of the specified type
      *
      * @param stack This item stack instance
      * @param toolClass Tool Class
+     * @param player The player trying to harvest the given blockstate
+     * @param blockState The block to harvest
      * @return Harvest level, or -1 if not the specified tool type.
      */
-    public int getHarvestLevel(ItemStack stack, String toolClass)
+    public int getHarvestLevel(ItemStack stack, String toolClass, @Nullable EntityPlayer player, @Nullable IBlockState blockState)
     {
         Integer ret = toolClasses.get(toolClass);
         return ret == null ? -1 : ret;
@@ -1054,10 +1140,20 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     public int getItemEnchantability(ItemStack stack)
     {
-        /**
-         * Return the enchantability factor of the item, most of the time is based on material.
-         */
         return getItemEnchantability();
+    }
+
+    /**
+     * Checks whether an item can be enchanted with a certain enchantment. This applies specifically to enchanting an item in the enchanting table and is called when retrieving the list of possible enchantments for an item.
+     * Enchantments may additionally (or exclusively) be doing their own checks in {@link net.minecraft.enchantment.Enchantment#canApplyAtEnchantingTable(ItemStack)}; check the individual implementation for reference.
+     * By default this will check if the enchantment type is valid for this item type.
+     * @param stack the item stack to be enchanted
+     * @param enchantment the enchantment to be applied
+     * @return true if the enchantment can be applied to this item
+     */
+    public boolean canApplyAtEnchantingTable(ItemStack stack, net.minecraft.enchantment.Enchantment enchantment)
+    {
+        return enchantment.type.canEnchantItem(stack.getItem());
     }
 
     /**
@@ -1085,6 +1181,39 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     }
 
     /**
+     * Called when the player is mining a block and the item in his hand changes.
+     * Allows to not reset blockbreaking if only NBT or similar changes.
+     * @param oldStack The old stack that was used for mining. Item in players main hand
+     * @param newStack The new stack
+     * @return True to reset block break progress
+     */
+    public boolean shouldCauseBlockBreakReset(ItemStack oldStack, ItemStack newStack)
+    {
+        return !(newStack.getItem() == oldStack.getItem() && ItemStack.areItemStackTagsEqual(newStack, oldStack) && (newStack.isItemStackDamageable() || newStack.getMetadata() == oldStack.getMetadata()));
+    }
+
+    /**
+     * Called to get the Mod ID of the mod that *created* the ItemStack,
+     * instead of the real Mod ID that *registered* it.
+     *
+     * For example the Forge Universal Bucket creates a subitem for each modded fluid,
+     * and it returns the modded fluid's Mod ID here.
+     *
+     * Mods that register subitems for other mods can override this.
+     * Informational mods can call it to show the mod that created the item.
+     *
+     * @param itemStack the ItemStack to check
+     * @return the Mod ID for the ItemStack, or
+     *         null when there is no specially associated mod and {@link #getRegistryName()} would return null.
+     */
+    @Nullable
+    public String getCreatorModId(ItemStack itemStack)
+    {
+        ResourceLocation registryName = getRegistryName();
+        return registryName == null ? null : registryName.getResourceDomain();
+    }
+
+    /**
      * Called from ItemStack.setItem, will hold extra data for the life of this ItemStack.
      * Can be retrieved from stack.getCapabilities()
      * The NBT can be null if this is not called from readNBT or if the item the stack is
@@ -1097,7 +1226,8 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      * @param nbt NBT of this item serialized, or null.
      * @return A holder instance associated with this ItemStack where you can hold capabilities for the life of this item.
      */
-    public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, NBTTagCompound nbt)
+    @Nullable
+    public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt)
     {
         return null;
     }
@@ -1119,49 +1249,79 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         return builder.build();
     }
 
+    /**
+     * Can this Item disable a shield
+     * @param stack The ItemStack
+     * @param shield The shield in question
+     * @param entity The EntityLivingBase holding the shield
+     * @param attacker The EntityLivingBase holding the ItemStack
+     * @retrun True if this ItemStack can disable the shield in question.
+     */
+    public boolean canDisableShield(ItemStack stack, ItemStack shield, EntityLivingBase entity, EntityLivingBase attacker)
+    {
+        return this instanceof ItemAxe;
+    }
+
+    /**
+     * Is this Item a shield
+     * @param stack The ItemStack
+     * @param entity The Entity holding the ItemStack
+     * @return True if the ItemStack is considered a shield
+     */
+    public boolean isShield(ItemStack stack, @Nullable EntityLivingBase entity)
+    {
+        return stack.getItem() == Items.SHIELD;
+    }
+
+    /**
+     * @return the fuel burn time for this itemStack in a furnace.
+     * Return 0 to make it not act as a fuel.
+     * Return -1 to let the default vanilla logic decide.
+     */
+    public int getItemBurnTime(ItemStack itemStack)
+    {
+        return -1;
+    }
+
     /* ======================================== FORGE END   =====================================*/
 
     public static void registerItems()
     {
-        registerItemBlock(Blocks.STONE, (new ItemMultiTexture(Blocks.STONE, Blocks.STONE, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.AIR, new ItemAir(Blocks.AIR));
+        registerItemBlock(Blocks.STONE, (new ItemMultiTexture(Blocks.STONE, Blocks.STONE, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockStone.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("stone"));
         registerItemBlock(Blocks.GRASS, new ItemColored(Blocks.GRASS, false));
-        registerItemBlock(Blocks.DIRT, (new ItemMultiTexture(Blocks.DIRT, Blocks.DIRT, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.DIRT, (new ItemMultiTexture(Blocks.DIRT, Blocks.DIRT, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockDirt.DirtType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("dirt"));
         registerItemBlock(Blocks.COBBLESTONE);
-        registerItemBlock(Blocks.PLANKS, (new ItemMultiTexture(Blocks.PLANKS, Blocks.PLANKS, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.PLANKS, (new ItemMultiTexture(Blocks.PLANKS, Blocks.PLANKS, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockPlanks.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("wood"));
-        registerItemBlock(Blocks.SAPLING, (new ItemMultiTexture(Blocks.SAPLING, Blocks.SAPLING, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.SAPLING, (new ItemMultiTexture(Blocks.SAPLING, Blocks.SAPLING, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockPlanks.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("sapling"));
         registerItemBlock(Blocks.BEDROCK);
-        registerItemBlock(Blocks.SAND, (new ItemMultiTexture(Blocks.SAND, Blocks.SAND, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.SAND, (new ItemMultiTexture(Blocks.SAND, Blocks.SAND, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockSand.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1170,28 +1330,25 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.GOLD_ORE);
         registerItemBlock(Blocks.IRON_ORE);
         registerItemBlock(Blocks.COAL_ORE);
-        registerItemBlock(Blocks.LOG, (new ItemMultiTexture(Blocks.LOG, Blocks.LOG, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.LOG, (new ItemMultiTexture(Blocks.LOG, Blocks.LOG, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockPlanks.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("log"));
-        registerItemBlock(Blocks.LOG2, (new ItemMultiTexture(Blocks.LOG2, Blocks.LOG2, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.LOG2, (new ItemMultiTexture(Blocks.LOG2, Blocks.LOG2, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockPlanks.EnumType.byMetadata(p_apply_1_.getMetadata() + 4).getUnlocalizedName();
             }
         })).setUnlocalizedName("log"));
         registerItemBlock(Blocks.LEAVES, (new ItemLeaves(Blocks.LEAVES)).setUnlocalizedName("leaves"));
         registerItemBlock(Blocks.LEAVES2, (new ItemLeaves(Blocks.LEAVES2)).setUnlocalizedName("leaves"));
-        registerItemBlock(Blocks.SPONGE, (new ItemMultiTexture(Blocks.SPONGE, Blocks.SPONGE, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.SPONGE, (new ItemMultiTexture(Blocks.SPONGE, Blocks.SPONGE, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return (p_apply_1_.getMetadata() & 1) == 1 ? "wet" : "dry";
             }
@@ -1200,10 +1357,9 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.LAPIS_ORE);
         registerItemBlock(Blocks.LAPIS_BLOCK);
         registerItemBlock(Blocks.DISPENSER);
-        registerItemBlock(Blocks.SANDSTONE, (new ItemMultiTexture(Blocks.SANDSTONE, Blocks.SANDSTONE, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.SANDSTONE, (new ItemMultiTexture(Blocks.SANDSTONE, Blocks.SANDSTONE, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockSandStone.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1217,18 +1373,16 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.DEADBUSH);
         registerItemBlock(Blocks.PISTON, new ItemPiston(Blocks.PISTON));
         registerItemBlock(Blocks.WOOL, (new ItemCloth(Blocks.WOOL)).setUnlocalizedName("cloth"));
-        registerItemBlock(Blocks.YELLOW_FLOWER, (new ItemMultiTexture(Blocks.YELLOW_FLOWER, Blocks.YELLOW_FLOWER, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.YELLOW_FLOWER, (new ItemMultiTexture(Blocks.YELLOW_FLOWER, Blocks.YELLOW_FLOWER, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockFlower.EnumFlowerType.getType(BlockFlower.EnumFlowerColor.YELLOW, p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("flower"));
-        registerItemBlock(Blocks.RED_FLOWER, (new ItemMultiTexture(Blocks.RED_FLOWER, Blocks.RED_FLOWER, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.RED_FLOWER, (new ItemMultiTexture(Blocks.RED_FLOWER, Blocks.RED_FLOWER, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockFlower.EnumFlowerType.getType(BlockFlower.EnumFlowerColor.RED, p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1286,18 +1440,16 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.GLOWSTONE);
         registerItemBlock(Blocks.LIT_PUMPKIN);
         registerItemBlock(Blocks.TRAPDOOR);
-        registerItemBlock(Blocks.MONSTER_EGG, (new ItemMultiTexture(Blocks.MONSTER_EGG, Blocks.MONSTER_EGG, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.MONSTER_EGG, (new ItemMultiTexture(Blocks.MONSTER_EGG, Blocks.MONSTER_EGG, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockSilverfish.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("monsterStoneEgg"));
-        registerItemBlock(Blocks.STONEBRICK, (new ItemMultiTexture(Blocks.STONEBRICK, Blocks.STONEBRICK, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.STONEBRICK, (new ItemMultiTexture(Blocks.STONEBRICK, Blocks.STONEBRICK, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockStoneBrick.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1338,10 +1490,9 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.JUNGLE_STAIRS);
         registerItemBlock(Blocks.COMMAND_BLOCK);
         registerItemBlock(Blocks.BEACON);
-        registerItemBlock(Blocks.COBBLESTONE_WALL, (new ItemMultiTexture(Blocks.COBBLESTONE_WALL, Blocks.COBBLESTONE_WALL, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.COBBLESTONE_WALL, (new ItemMultiTexture(Blocks.COBBLESTONE_WALL, Blocks.COBBLESTONE_WALL, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockWall.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1371,29 +1522,26 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.DARK_OAK_STAIRS);
         registerItemBlock(Blocks.SLIME_BLOCK);
         registerItemBlock(Blocks.GRASS_PATH);
-        registerItemBlock(Blocks.DOUBLE_PLANT, (new ItemMultiTexture(Blocks.DOUBLE_PLANT, Blocks.DOUBLE_PLANT, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.DOUBLE_PLANT, (new ItemMultiTexture(Blocks.DOUBLE_PLANT, Blocks.DOUBLE_PLANT, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockDoublePlant.EnumPlantType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("doublePlant"));
         registerItemBlock(Blocks.STAINED_GLASS, (new ItemCloth(Blocks.STAINED_GLASS)).setUnlocalizedName("stainedGlass"));
         registerItemBlock(Blocks.STAINED_GLASS_PANE, (new ItemCloth(Blocks.STAINED_GLASS_PANE)).setUnlocalizedName("stainedGlassPane"));
-        registerItemBlock(Blocks.PRISMARINE, (new ItemMultiTexture(Blocks.PRISMARINE, Blocks.PRISMARINE, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.PRISMARINE, (new ItemMultiTexture(Blocks.PRISMARINE, Blocks.PRISMARINE, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockPrismarine.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
         })).setUnlocalizedName("prismarine"));
         registerItemBlock(Blocks.SEA_LANTERN);
-        registerItemBlock(Blocks.RED_SANDSTONE, (new ItemMultiTexture(Blocks.RED_SANDSTONE, Blocks.RED_SANDSTONE, new Function<ItemStack, String>()
+        registerItemBlock(Blocks.RED_SANDSTONE, (new ItemMultiTexture(Blocks.RED_SANDSTONE, Blocks.RED_SANDSTONE, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 return BlockRedSandstone.EnumType.byMetadata(p_apply_1_.getMetadata()).getUnlocalizedName();
             }
@@ -1402,6 +1550,47 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItemBlock(Blocks.STONE_SLAB2, (new ItemSlab(Blocks.STONE_SLAB2, Blocks.STONE_SLAB2, Blocks.DOUBLE_STONE_SLAB2)).setUnlocalizedName("stoneSlab2"));
         registerItemBlock(Blocks.REPEATING_COMMAND_BLOCK);
         registerItemBlock(Blocks.CHAIN_COMMAND_BLOCK);
+        registerItemBlock(Blocks.MAGMA);
+        registerItemBlock(Blocks.NETHER_WART_BLOCK);
+        registerItemBlock(Blocks.RED_NETHER_BRICK);
+        registerItemBlock(Blocks.BONE_BLOCK);
+        registerItemBlock(Blocks.STRUCTURE_VOID);
+        registerItemBlock(Blocks.OBSERVER);
+        registerItemBlock(Blocks.WHITE_SHULKER_BOX, new ItemShulkerBox(Blocks.WHITE_SHULKER_BOX));
+        registerItemBlock(Blocks.ORANGE_SHULKER_BOX, new ItemShulkerBox(Blocks.ORANGE_SHULKER_BOX));
+        registerItemBlock(Blocks.MAGENTA_SHULKER_BOX, new ItemShulkerBox(Blocks.MAGENTA_SHULKER_BOX));
+        registerItemBlock(Blocks.LIGHT_BLUE_SHULKER_BOX, new ItemShulkerBox(Blocks.LIGHT_BLUE_SHULKER_BOX));
+        registerItemBlock(Blocks.YELLOW_SHULKER_BOX, new ItemShulkerBox(Blocks.YELLOW_SHULKER_BOX));
+        registerItemBlock(Blocks.LIME_SHULKER_BOX, new ItemShulkerBox(Blocks.LIME_SHULKER_BOX));
+        registerItemBlock(Blocks.PINK_SHULKER_BOX, new ItemShulkerBox(Blocks.PINK_SHULKER_BOX));
+        registerItemBlock(Blocks.GRAY_SHULKER_BOX, new ItemShulkerBox(Blocks.GRAY_SHULKER_BOX));
+        registerItemBlock(Blocks.SILVER_SHULKER_BOX, new ItemShulkerBox(Blocks.SILVER_SHULKER_BOX));
+        registerItemBlock(Blocks.CYAN_SHULKER_BOX, new ItemShulkerBox(Blocks.CYAN_SHULKER_BOX));
+        registerItemBlock(Blocks.PURPLE_SHULKER_BOX, new ItemShulkerBox(Blocks.PURPLE_SHULKER_BOX));
+        registerItemBlock(Blocks.BLUE_SHULKER_BOX, new ItemShulkerBox(Blocks.BLUE_SHULKER_BOX));
+        registerItemBlock(Blocks.BROWN_SHULKER_BOX, new ItemShulkerBox(Blocks.BROWN_SHULKER_BOX));
+        registerItemBlock(Blocks.GREEN_SHULKER_BOX, new ItemShulkerBox(Blocks.GREEN_SHULKER_BOX));
+        registerItemBlock(Blocks.RED_SHULKER_BOX, new ItemShulkerBox(Blocks.RED_SHULKER_BOX));
+        registerItemBlock(Blocks.BLACK_SHULKER_BOX, new ItemShulkerBox(Blocks.BLACK_SHULKER_BOX));
+        registerItemBlock(Blocks.WHITE_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.ORANGE_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.MAGENTA_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.LIGHT_BLUE_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.YELLOW_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.LIME_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.PINK_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.GRAY_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.SILVER_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.CYAN_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.PURPLE_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.BLUE_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.BROWN_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.GREEN_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.RED_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.BLACK_GLAZED_TERRACOTTA);
+        registerItemBlock(Blocks.CONCRETE, (new ItemCloth(Blocks.CONCRETE)).setUnlocalizedName("concrete"));
+        registerItemBlock(Blocks.CONCRETE_POWDER, (new ItemCloth(Blocks.CONCRETE_POWDER)).setUnlocalizedName("concrete_powder"));
+        registerItemBlock(Blocks.STRUCTURE_BLOCK);
         registerItem(256, "iron_shovel", (new ItemSpade(Item.ToolMaterial.IRON)).setUnlocalizedName("shovelIron"));
         registerItem(257, "iron_pickaxe", (new ItemPickaxe(Item.ToolMaterial.IRON)).setUnlocalizedName("pickaxeIron"));
         registerItem(258, "iron_axe", (new ItemAxe(Item.ToolMaterial.IRON)).setUnlocalizedName("hatchetIron"));
@@ -1597,6 +1786,10 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         registerItem(446, "jungle_boat", new ItemBoat(EntityBoat.Type.JUNGLE));
         registerItem(447, "acacia_boat", new ItemBoat(EntityBoat.Type.ACACIA));
         registerItem(448, "dark_oak_boat", new ItemBoat(EntityBoat.Type.DARK_OAK));
+        registerItem(449, "totem_of_undying", (new Item()).setUnlocalizedName("totem").setMaxStackSize(1).setCreativeTab(CreativeTabs.COMBAT));
+        registerItem(450, "shulker_shell", (new Item()).setUnlocalizedName("shulkerShell").setCreativeTab(CreativeTabs.MATERIALS));
+        registerItem(452, "iron_nugget", (new Item()).setUnlocalizedName("ironNugget").setCreativeTab(CreativeTabs.MATERIALS));
+        registerItem(453, "knowledge_book", (new ItemKnowledgeBook()).setUnlocalizedName("knowledgeBook"));
         registerItem(2256, "record_13", (new ItemRecord("13", SoundEvents.RECORD_13)).setUnlocalizedName("record"));
         registerItem(2257, "record_cat", (new ItemRecord("cat", SoundEvents.RECORD_CAT)).setUnlocalizedName("record"));
         registerItem(2258, "record_blocks", (new ItemRecord("blocks", SoundEvents.RECORD_BLOCKS)).setUnlocalizedName("record"));
@@ -1624,7 +1817,7 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
      */
     protected static void registerItemBlock(Block blockIn, Item itemIn)
     {
-        registerItem(Block.getIdFromBlock(blockIn), (ResourceLocation)Block.REGISTRY.getNameForObject(blockIn), itemIn);
+        registerItem(Block.getIdFromBlock(blockIn), Block.REGISTRY.getNameForObject(blockIn), itemIn);
         BLOCK_TO_ITEM.put(blockIn, itemIn);
     }
 
@@ -1636,6 +1829,12 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
     private static void registerItem(int id, ResourceLocation textualID, Item itemIn)
     {
         REGISTRY.register(id, textualID, itemIn);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public ItemStack getDefaultInstance()
+    {
+        return new ItemStack(this);
     }
 
     public static enum ToolMaterial
@@ -1651,22 +1850,20 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         /** The number of uses this material allows. (wood = 59, stone = 131, iron = 250, diamond = 1561, gold = 32) */
         private final int maxUses;
         /** The strength of this tool material against blocks which it is effective against. */
-        private final float efficiencyOnProperMaterial;
+        private final float efficiency;
         /** Damage versus entities. */
-        private final float damageVsEntity;
+        private final float attackDamage;
         /** Defines the natural enchantability factor of the material. */
         private final int enchantability;
-
         //Added by forge for custom Tool materials.
-        @Deprecated public Item customCraftingMaterial = null; // Remote in 1.8.1
-        private ItemStack repairMaterial = null;
+        private ItemStack repairMaterial = ItemStack.EMPTY;
 
         private ToolMaterial(int harvestLevel, int maxUses, float efficiency, float damageVsEntity, int enchantability)
         {
             this.harvestLevel = harvestLevel;
             this.maxUses = maxUses;
-            this.efficiencyOnProperMaterial = efficiency;
-            this.damageVsEntity = damageVsEntity;
+            this.efficiency = efficiency;
+            this.attackDamage = damageVsEntity;
             this.enchantability = enchantability;
         }
 
@@ -1681,17 +1878,17 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         /**
          * The strength of this tool material against blocks which it is effective against.
          */
-        public float getEfficiencyOnProperMaterial()
+        public float getEfficiency()
         {
-            return this.efficiencyOnProperMaterial;
+            return this.efficiency;
         }
 
         /**
          * Returns the damage against a given entity.
          */
-        public float getDamageVsEntity()
+        public float getAttackDamage()
         {
-            return this.damageVsEntity;
+            return this.attackDamage;
         }
 
         /**
@@ -1713,32 +1910,41 @@ public class Item extends net.minecraftforge.fml.common.registry.IForgeRegistryE
         @Deprecated // Use getRepairItemStack below
         public Item getRepairItem()
         {
-            switch (this)
+            if (this == WOOD)
             {
-                case WOOD:    return Item.getItemFromBlock(Blocks.PLANKS);
-                case STONE:   return Item.getItemFromBlock(Blocks.COBBLESTONE);
-                case GOLD:    return Items.GOLD_INGOT;
-                case IRON:    return Items.IRON_INGOT;
-                case DIAMOND: return Items.DIAMOND;
-                default:      return customCraftingMaterial;
+                return Item.getItemFromBlock(Blocks.PLANKS);
+            }
+            else if (this == STONE)
+            {
+                return Item.getItemFromBlock(Blocks.COBBLESTONE);
+            }
+            else if (this == GOLD)
+            {
+                return Items.GOLD_INGOT;
+            }
+            else if (this == IRON)
+            {
+                return Items.IRON_INGOT;
+            }
+            else
+            {
+                return this == DIAMOND ? Items.DIAMOND : null;
             }
         }
 
         public ToolMaterial setRepairItem(ItemStack stack)
         {
-            if (this.repairMaterial != null || customCraftingMaterial != null) throw new RuntimeException("Can not change already set repair material");
+            if (!this.repairMaterial.isEmpty()) throw new RuntimeException("Repair material has already been set");
             if (this == WOOD || this == STONE || this == GOLD || this == IRON || this == DIAMOND) throw new RuntimeException("Can not change vanilla tool repair materials");
             this.repairMaterial = stack;
-            this.customCraftingMaterial = stack.getItem();
             return this;
         }
 
         public ItemStack getRepairItemStack()
         {
-            if (repairMaterial != null) return repairMaterial;
+            if (!repairMaterial.isEmpty()) return repairMaterial;
             Item ret = this.getRepairItem();
-            if (ret == null) return null;
-            repairMaterial = new ItemStack(ret, 1, net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE);
+            if (ret != null) repairMaterial = new ItemStack(ret, 1, net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE);
             return repairMaterial;
         }
     }

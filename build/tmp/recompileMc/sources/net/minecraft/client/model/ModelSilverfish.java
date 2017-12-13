@@ -9,10 +9,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelSilverfish extends ModelBase
 {
     /** The body parts of the silverfish's model. */
-    private ModelRenderer[] silverfishBodyParts = new ModelRenderer[7];
+    private final ModelRenderer[] silverfishBodyParts = new ModelRenderer[7];
     /** The wings (dust-looking sprites) on the silverfish's model. */
-    private ModelRenderer[] silverfishWings;
-    private float[] zPlacement = new float[7];
+    private final ModelRenderer[] silverfishWings;
+    private final float[] zPlacement = new float[7];
     /** The widths, heights, and lengths for the silverfish model boxes. */
     private static final int[][] SILVERFISH_BOX_LENGTH = new int[][] {{3, 2, 2}, {4, 3, 2}, {6, 4, 3}, {3, 3, 3}, {2, 2, 3}, {2, 1, 2}, {1, 1, 2}};
     /** The texture positions for the silverfish's model's boxes. */
@@ -54,14 +54,14 @@ public class ModelSilverfish extends ModelBase
     {
         this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
 
-        for (int i = 0; i < this.silverfishBodyParts.length; ++i)
+        for (ModelRenderer modelrenderer : this.silverfishBodyParts)
         {
-            this.silverfishBodyParts[i].render(scale);
+            modelrenderer.render(scale);
         }
 
-        for (int j = 0; j < this.silverfishWings.length; ++j)
+        for (ModelRenderer modelrenderer1 : this.silverfishWings)
         {
-            this.silverfishWings[j].render(scale);
+            modelrenderer1.render(scale);
         }
     }
 

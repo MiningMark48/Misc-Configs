@@ -1,15 +1,13 @@
 package net.minecraft.item;
 
 import com.google.common.collect.Maps;
-import java.util.List;
 import java.util.Map;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.MobEffects;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemFishFood extends ItemFood
 {
@@ -51,14 +49,16 @@ public class ItemFishFood extends ItemFood
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (ItemFishFood.FishType itemfishfood$fishtype : ItemFishFood.FishType.values())
+        if (this.isInCreativeTab(tab))
         {
-            if (!this.cooked || itemfishfood$fishtype.canCook())
+            for (ItemFishFood.FishType itemfishfood$fishtype : ItemFishFood.FishType.values())
             {
-                subItems.add(new ItemStack(this, 1, itemfishfood$fishtype.getMetadata()));
+                if (!this.cooked || itemfishfood$fishtype.canCook())
+                {
+                    items.add(new ItemStack(this, 1, itemfishfood$fishtype.getMetadata()));
+                }
             }
         }
     }
@@ -80,6 +80,7 @@ public class ItemFishFood extends ItemFood
         CLOWNFISH(2, "clownfish", 1, 0.1F),
         PUFFERFISH(3, "pufferfish", 1, 0.1F);
 
+        /** Maps an item damage value for an ItemStack to the corresponding FishType value. */
         private static final Map<Integer, ItemFishFood.FishType> META_LOOKUP = Maps.<Integer, ItemFishFood.FishType>newHashMap();
         /** The item damage value on an ItemStack that represents this fish type */
         private final int meta;
@@ -97,7 +98,7 @@ public class ItemFishFood extends ItemFood
         /** The saturation modifier to apply to the heal amount when the player eats the cooked version of this fish. */
         private final float cookedSaturationModifier;
         /** Indicates whether this type of fish has "raw" and "cooked" variants */
-        private boolean cookable = false;
+        private final boolean cookable;
 
         private FishType(int meta, String unlocalizedName, int uncookedHeal, float uncookedSaturation, int cookedHeal, float cookedSaturation)
         {
@@ -186,7 +187,7 @@ public class ItemFishFood extends ItemFood
          */
         public static ItemFishFood.FishType byMetadata(int meta)
         {
-            ItemFishFood.FishType itemfishfood$fishtype = (ItemFishFood.FishType)META_LOOKUP.get(Integer.valueOf(meta));
+            ItemFishFood.FishType itemfishfood$fishtype = META_LOOKUP.get(Integer.valueOf(meta));
             return itemfishfood$fishtype == null ? COD : itemfishfood$fishtype;
         }
 

@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.model.ModelWolf;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.layers.LayerWolfCollar;
 import net.minecraft.entity.passive.EntityWolf;
@@ -15,9 +15,9 @@ public class RenderWolf extends RenderLiving<EntityWolf>
     private static final ResourceLocation TAMED_WOLF_TEXTURES = new ResourceLocation("textures/entity/wolf/wolf_tame.png");
     private static final ResourceLocation ANRGY_WOLF_TEXTURES = new ResourceLocation("textures/entity/wolf/wolf_angry.png");
 
-    public RenderWolf(RenderManager renderManagerIn, ModelBase modelBaseIn, float shadowSizeIn)
+    public RenderWolf(RenderManager p_i47187_1_)
     {
-        super(renderManagerIn, modelBaseIn, shadowSizeIn);
+        super(p_i47187_1_, new ModelWolf(), 0.5F);
         this.addLayer(new LayerWolfCollar(this));
     }
 
@@ -36,7 +36,7 @@ public class RenderWolf extends RenderLiving<EntityWolf>
     {
         if (entity.isWolfWet())
         {
-            float f = entity.getBrightness(partialTicks) * entity.getShadingWhileWet(partialTicks);
+            float f = entity.getBrightness() * entity.getShadingWhileWet(partialTicks);
             GlStateManager.color(f, f, f);
         }
 
@@ -48,6 +48,13 @@ public class RenderWolf extends RenderLiving<EntityWolf>
      */
     protected ResourceLocation getEntityTexture(EntityWolf entity)
     {
-        return entity.isTamed() ? TAMED_WOLF_TEXTURES : (entity.isAngry() ? ANRGY_WOLF_TEXTURES : WOLF_TEXTURES);
+        if (entity.isTamed())
+        {
+            return TAMED_WOLF_TEXTURES;
+        }
+        else
+        {
+            return entity.isAngry() ? ANRGY_WOLF_TEXTURES : WOLF_TEXTURES;
+        }
     }
 }

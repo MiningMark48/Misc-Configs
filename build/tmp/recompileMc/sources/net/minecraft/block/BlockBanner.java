@@ -6,13 +6,13 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityBanner;
 import net.minecraft.util.EnumFacing;
@@ -44,7 +44,7 @@ public class BlockBanner extends BlockContainer
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
@@ -54,6 +54,9 @@ public class BlockBanner extends BlockContainer
         return false;
     }
 
+    /**
+     * Determines if an entity can path through this block
+     */
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos)
     {
         return true;
@@ -86,38 +89,21 @@ public class BlockBanner extends BlockContainer
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.BANNER;
     }
 
-    @Nullable
-    private ItemStack getTileDataItemStack(World worldIn, BlockPos pos, IBlockState state)
+    private ItemStack getTileDataItemStack(World worldIn, BlockPos pos)
     {
         TileEntity tileentity = worldIn.getTileEntity(pos);
-
-        if (tileentity instanceof TileEntityBanner)
-        {
-            ItemStack itemstack = new ItemStack(Items.BANNER, 1, ((TileEntityBanner)tileentity).getBaseColor());
-            NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
-            nbttagcompound.removeTag("x");
-            nbttagcompound.removeTag("y");
-            nbttagcompound.removeTag("z");
-            nbttagcompound.removeTag("id");
-            itemstack.setTagInfo("BlockEntityTag", nbttagcompound);
-            return itemstack;
-        }
-        else
-        {
-            return null;
-        }
+        return tileentity instanceof TileEntityBanner ? ((TileEntityBanner)tileentity).getItem() : ItemStack.EMPTY;
     }
 
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
-        ItemStack itemstack = this.getTileDataItemStack(worldIn, pos, state);
-        return itemstack != null ? itemstack : new ItemStack(Items.BANNER);
+        ItemStack itemstack = this.getTileDataItemStack(worldIn, pos);
+        return itemstack.isEmpty() ? new ItemStack(Items.BANNER) : itemstack;
     }
 
     /**
@@ -135,15 +121,16 @@ public class BlockBanner extends BlockContainer
         return !this.hasInvalidNeighbor(worldIn, pos) && super.canPlaceBlockAt(worldIn, pos);
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
         if (te instanceof TileEntityBanner)
         {
             TileEntityBanner tileentitybanner = (TileEntityBanner)te;
-            ItemStack itemstack = new ItemStack(Items.BANNER, 1, ((TileEntityBanner)te).getBaseColor());
-            NBTTagCompound nbttagcompound = new NBTTagCompound();
-            TileEntityBanner.setBaseColorAndPatterns(nbttagcompound, tileentitybanner.getBaseColor(), tileentitybanner.getPatterns());
-            itemstack.setTagInfo("BlockEntityTag", nbttagcompound);
+            ItemStack itemstack = tileentitybanner.getItem();
             spawnAsEntity(worldIn, pos, itemstack);
         }
         else
@@ -152,26 +139,35 @@ public class BlockBanner extends BlockContainer
         }
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
+    }
+
     @Override
-    public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
         TileEntity te = world.getTileEntity(pos);
 
-        java.util.List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
         if (te instanceof TileEntityBanner)
         {
-            TileEntityBanner banner = (TileEntityBanner)te;
-            ItemStack item = new ItemStack(Items.BANNER, 1, banner.getBaseColor());
-            NBTTagCompound nbt = new NBTTagCompound();
-            TileEntityBanner.setBaseColorAndPatterns(nbt, banner.getBaseColor(), banner.getPatterns());
-            item.setTagInfo("BlockEntityTag", nbt);
-            ret.add(item);
+            TileEntityBanner tileentitybanner = (TileEntityBanner)te;
+            ItemStack itemstack = tileentitybanner.getItem();
+            drops.add(itemstack);
         }
         else
         {
-            ret.add(new ItemStack(Items.BANNER, 1, 0));
+            drops.add(new ItemStack(Items.BANNER, 1, 0));
         }
-        return ret;
     }
 
     public static class BlockBannerHanging extends BlockBanner
@@ -225,7 +221,7 @@ public class BlockBanner extends BlockContainer
              * neighbor change. Cases may include when redstone power is updated, cactus blocks popping off due to a
              * neighboring solid block, etc.
              */
-            public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+            public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
             {
                 EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
 
@@ -235,7 +231,7 @@ public class BlockBanner extends BlockContainer
                     worldIn.setBlockToAir(pos);
                 }
 
-                super.neighborChanged(state, worldIn, pos, blockIn);
+                super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
             }
 
             /**
@@ -302,7 +298,7 @@ public class BlockBanner extends BlockContainer
              * neighbor change. Cases may include when redstone power is updated, cactus blocks popping off due to a
              * neighboring solid block, etc.
              */
-            public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+            public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
             {
                 if (!worldIn.getBlockState(pos.down()).getMaterial().isSolid())
                 {
@@ -310,7 +306,7 @@ public class BlockBanner extends BlockContainer
                     worldIn.setBlockToAir(pos);
                 }
 
-                super.neighborChanged(state, worldIn, pos, blockIn);
+                super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
             }
 
             /**
