@@ -1,6 +1,7 @@
 package net.minecraft.network.play;
 
 import net.minecraft.network.INetHandler;
+import net.minecraft.network.play.server.SPacketAdvancementInfo;
 import net.minecraft.network.play.server.SPacketAnimation;
 import net.minecraft.network.play.server.SPacketBlockAction;
 import net.minecraft.network.play.server.SPacketBlockBreakAnim;
@@ -39,14 +40,17 @@ import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.network.play.server.SPacketMultiBlockChange;
 import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketParticles;
+import net.minecraft.network.play.server.SPacketPlaceGhostRecipe;
 import net.minecraft.network.play.server.SPacketPlayerAbilities;
 import net.minecraft.network.play.server.SPacketPlayerListHeaderFooter;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
+import net.minecraft.network.play.server.SPacketRecipeBook;
 import net.minecraft.network.play.server.SPacketRemoveEntityEffect;
 import net.minecraft.network.play.server.SPacketResourcePackSend;
 import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.network.play.server.SPacketScoreboardObjective;
+import net.minecraft.network.play.server.SPacketSelectAdvancementsTab;
 import net.minecraft.network.play.server.SPacketServerDifficulty;
 import net.minecraft.network.play.server.SPacketSetExperience;
 import net.minecraft.network.play.server.SPacketSetPassengers;
@@ -123,6 +127,8 @@ public interface INetHandlerPlayClient extends INetHandler
      * Updates the players statistics or achievements
      */
     void handleStatistics(SPacketStatistics packetIn);
+
+    void handleRecipeBook(SPacketRecipeBook packetIn);
 
     /**
      * Updates all registered IWorldAccess instances with destroyBlockInWorldPartially
@@ -375,9 +381,15 @@ public interface INetHandlerPlayClient extends INetHandler
 
     void handleResourcePack(SPacketResourcePackSend packetIn);
 
-    void handleUpdateEntityNBT(SPacketUpdateBossInfo packetIn);
+    void handleUpdateBossInfo(SPacketUpdateBossInfo packetIn);
 
     void handleCooldown(SPacketCooldown packetIn);
 
     void handleMoveVehicle(SPacketMoveVehicle packetIn);
+
+    void handleAdvancementInfo(SPacketAdvancementInfo packetIn);
+
+    void handleSelectAdvancementsTab(SPacketSelectAdvancementsTab packetIn);
+
+    void func_194307_a(SPacketPlaceGhostRecipe p_194307_1_);
 }

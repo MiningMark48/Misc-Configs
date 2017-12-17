@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
@@ -22,7 +23,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public abstract class BlockRailBase extends Block
 {
     protected static final AxisAlignedBB FLAT_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D);
-    protected static final AxisAlignedBB ASCENDING_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.15625D, 1.0D);
+    protected static final AxisAlignedBB ASCENDING_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.5D, 1.0D);
     protected final boolean isPowered;
 
     public static boolean isRailBlock(World worldIn, BlockPos pos)
@@ -44,7 +45,7 @@ public abstract class BlockRailBase extends Block
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
@@ -59,8 +60,22 @@ public abstract class BlockRailBase extends Block
 
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
-        BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = state.getBlock() == this ? (BlockRailBase.EnumRailDirection)state.getValue(this.getShapeProperty()) : null;
+        BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = state.getBlock() == this ? getRailDirection(source, pos, state, null) : null;
         return blockrailbase$enumraildirection != null && blockrailbase$enumraildirection.isAscending() ? ASCENDING_AABB : FLAT_AABB;
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 
     public boolean isFullCube(IBlockState state)
@@ -73,6 +88,9 @@ public abstract class BlockRailBase extends Block
         return worldIn.getBlockState(pos.down()).isSideSolid(worldIn, pos.down(), EnumFacing.UP);
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         if (!worldIn.isRemote)
@@ -81,7 +99,7 @@ public abstract class BlockRailBase extends Block
 
             if (this.isPowered)
             {
-                state.neighborChanged(worldIn, pos, this);
+                state.neighborChanged(worldIn, pos, this, pos);
             }
         }
     }
@@ -91,11 +109,11 @@ public abstract class BlockRailBase extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (!worldIn.isRemote)
         {
-            BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = (BlockRailBase.EnumRailDirection)state.getValue(this.getShapeProperty());
+            BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = getRailDirection(worldIn, pos, worldIn.getBlockState(pos), null);
             boolean flag = false;
 
             if (!worldIn.getBlockState(pos.down()).isSideSolid(worldIn, pos.down(), EnumFacing.UP))
@@ -132,13 +150,13 @@ public abstract class BlockRailBase extends Block
         }
     }
 
-    protected void updateState(IBlockState p_189541_1_, World p_189541_2_, BlockPos p_189541_3_, Block p_189541_4_)
+    protected void updateState(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
     {
     }
 
-    protected IBlockState updateDir(World worldIn, BlockPos pos, IBlockState state, boolean p_176564_4_)
+    protected IBlockState updateDir(World worldIn, BlockPos pos, IBlockState state, boolean initialPlacement)
     {
-        return worldIn.isRemote ? state : (new BlockRailBase.Rail(worldIn, pos, state)).place(worldIn.isBlockPowered(pos), p_176564_4_).getBlockState();
+        return worldIn.isRemote ? state : (new BlockRailBase.Rail(worldIn, pos, state)).place(worldIn.isBlockPowered(pos), initialPlacement).getBlockState();
     }
 
     public EnumPushReaction getMobilityFlag(IBlockState state)
@@ -152,22 +170,26 @@ public abstract class BlockRailBase extends Block
         return BlockRenderLayer.CUTOUT;
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         super.breakBlock(worldIn, pos, state);
 
-        if (((BlockRailBase.EnumRailDirection)state.getValue(this.getShapeProperty())).isAscending())
+        if (getRailDirection(worldIn, pos, state, null).isAscending())
         {
-            worldIn.notifyNeighborsOfStateChange(pos.up(), this);
+            worldIn.notifyNeighborsOfStateChange(pos.up(), this, false);
         }
 
         if (this.isPowered)
         {
-            worldIn.notifyNeighborsOfStateChange(pos, this);
-            worldIn.notifyNeighborsOfStateChange(pos.down(), this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
+            worldIn.notifyNeighborsOfStateChange(pos.down(), this, false);
         }
     }
 
+    //Forge: Use getRailDirection(IBlockAccess, BlockPos, IBlockState, EntityMinecart) for enhanced ability
     public abstract IProperty<BlockRailBase.EnumRailDirection> getShapeProperty();
 
     /* ======================================== FORGE START =====================================*/
@@ -403,7 +425,7 @@ public abstract class BlockRailBase extends Block
         {
             for (int i = 0; i < this.connectedRails.size(); ++i)
             {
-                BlockRailBase.Rail blockrailbase$rail = this.findRailAt((BlockPos)this.connectedRails.get(i));
+                BlockRailBase.Rail blockrailbase$rail = this.findRailAt(this.connectedRails.get(i));
 
                 if (blockrailbase$rail != null && blockrailbase$rail.isConnectedToRail(this))
                 {
@@ -457,7 +479,7 @@ public abstract class BlockRailBase extends Block
         {
             for (int i = 0; i < this.connectedRails.size(); ++i)
             {
-                BlockPos blockpos = (BlockPos)this.connectedRails.get(i);
+                BlockPos blockpos = this.connectedRails.get(i);
 
                 if (blockpos.getX() == posIn.getX() && blockpos.getZ() == posIn.getZ())
                 {
@@ -491,9 +513,9 @@ public abstract class BlockRailBase extends Block
             return this.isConnectedToRail(rail) || this.connectedRails.size() != 2;
         }
 
-        private void connectTo(BlockRailBase.Rail p_150645_1_)
+        private void connectTo(BlockRailBase.Rail rail)
         {
-            this.connectedRails.add(p_150645_1_.pos);
+            this.connectedRails.add(rail.pos);
             BlockPos blockpos = this.pos.north();
             BlockPos blockpos1 = this.pos.south();
             BlockPos blockpos2 = this.pos.west();
@@ -572,9 +594,9 @@ public abstract class BlockRailBase extends Block
             this.world.setBlockState(this.pos, this.state, 3);
         }
 
-        private boolean hasNeighborRail(BlockPos p_180361_1_)
+        private boolean hasNeighborRail(BlockPos posIn)
         {
-            BlockRailBase.Rail blockrailbase$rail = this.findRailAt(p_180361_1_);
+            BlockRailBase.Rail blockrailbase$rail = this.findRailAt(posIn);
 
             if (blockrailbase$rail == null)
             {
@@ -587,7 +609,7 @@ public abstract class BlockRailBase extends Block
             }
         }
 
-        public BlockRailBase.Rail place(boolean p_180364_1_, boolean p_180364_2_)
+        public BlockRailBase.Rail place(boolean powered, boolean initialPlacement)
         {
             BlockPos blockpos = this.pos.north();
             BlockPos blockpos1 = this.pos.south();
@@ -646,7 +668,7 @@ public abstract class BlockRailBase extends Block
 
                 if (!this.isPowered)
                 {
-                    if (p_180364_1_)
+                    if (powered)
                     {
                         if (flag1 && flag3)
                         {
@@ -727,13 +749,13 @@ public abstract class BlockRailBase extends Block
             this.updateConnectedRails(blockrailbase$enumraildirection);
             this.state = this.state.withProperty(this.block.getShapeProperty(), blockrailbase$enumraildirection);
 
-            if (p_180364_2_ || this.world.getBlockState(this.pos) != this.state)
+            if (initialPlacement || this.world.getBlockState(this.pos) != this.state)
             {
                 this.world.setBlockState(this.pos, this.state, 3);
 
                 for (int i = 0; i < this.connectedRails.size(); ++i)
                 {
-                    BlockRailBase.Rail blockrailbase$rail = this.findRailAt((BlockPos)this.connectedRails.get(i));
+                    BlockRailBase.Rail blockrailbase$rail = this.findRailAt(this.connectedRails.get(i));
 
                     if (blockrailbase$rail != null)
                     {

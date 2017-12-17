@@ -3,6 +3,7 @@ package com.miningmark48.miscconfigs.event;
 import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.reference.Reference;
 import com.miningmark48.miscconfigs.utility.LogHelper;
+import com.miningmark48.miscconfigs.utility.Translate;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.TextComponentString;
@@ -56,15 +57,15 @@ public class EventJoinGame{
             color = ConfigurationHandler.chatMessageColor;
         }
         if (color == 1) {
-            player.addChatComponentMessage(new TextComponentString(TextFormatting.RED + message));
+            player.sendStatusMessage(new TextComponentString(TextFormatting.RED + message), false);
         }else if (color == 2) {
-            player.addChatComponentMessage(new TextComponentString(TextFormatting.GREEN + message));
+            player.sendStatusMessage(new TextComponentString(TextFormatting.GREEN + message), false);
         }else if (color == 3) {
-            player.addChatComponentMessage(new TextComponentString(TextFormatting.BLUE + message));
+            player.sendStatusMessage(new TextComponentString(TextFormatting.BLUE + message), false);
         }else if (color == 4) {
-            player.addChatComponentMessage(new TextComponentString(TextFormatting.GOLD + message));
+            player.sendStatusMessage(new TextComponentString(TextFormatting.GOLD + message), false);
         }else{
-            player.addChatComponentMessage(new TextComponentString(message));
+            player.sendStatusMessage(new TextComponentString(message), false);
         }
     }
 

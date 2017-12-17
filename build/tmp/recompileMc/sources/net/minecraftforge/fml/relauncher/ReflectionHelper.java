@@ -1,17 +1,31 @@
 /*
- * The FML Forge Mod Loader suite. Copyright (C) 2012 cpw
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free
- * Software Foundation; either version 2.1 of the License, or any later version.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
  *
- * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 package net.minecraftforge.fml.relauncher;
 
+import com.google.common.base.Preconditions;
+import net.minecraft.launchwrapper.Launch;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 /**
@@ -33,6 +47,11 @@ public class ReflectionHelper
             //this.methodNames = methodNames;
         }
 
+        public UnableToFindMethodException(Throwable failed)
+        {
+            super(failed);
+        }
+
     }
 
     public static class UnableToFindClassException extends RuntimeException
@@ -40,7 +59,7 @@ public class ReflectionHelper
         private static final long serialVersionUID = 1L;
         //private String[] classNames;
 
-        public UnableToFindClassException(String[] classNames, Exception err)
+        public UnableToFindClassException(String[] classNames, @Nullable Exception err)
         {
             super(err);
             //this.classNames = classNames;
@@ -71,6 +90,14 @@ public class ReflectionHelper
         }
     }
 
+    public static class UnknownConstructorException extends RuntimeException
+    {
+        public UnknownConstructorException(final String message)
+        {
+            super(message);
+        }
+    }
+
     public static Field findField(Class<?> clazz, String... fieldNames)
     {
         Exception failed = null;
@@ -91,7 +118,7 @@ public class ReflectionHelper
     }
 
     @SuppressWarnings("unchecked")
-    public static <T, E> T getPrivateValue(Class <? super E > classToAccess, E instance, int fieldIndex)
+    public static <T, E> T getPrivateValue(Class <? super E > classToAccess, @Nullable E instance, int fieldIndex)
     {
         try
         {
@@ -163,23 +190,85 @@ public class ReflectionHelper
         throw new UnableToFindClassException(classNames, err);
     }
 
-
-    public static <E> Method findMethod(Class<? super E> clazz, E instance, String[] methodNames, Class<?>... methodTypes)
+    /**
+     * Finds a method with the specified name and parameters in the given class and makes it accessible.
+     * Note: for performance, store the returned value and avoid calling this repeatedly.
+     * <p>
+     * Throws an exception if the method is not found.
+     *
+     * @param clazz          The class to find the method on.
+     * @param methodName     The name of the method to find (used in developer environments, i.e. "getWorldTime").
+     * @param methodObfName  The obfuscated name of the method to find (used in obfuscated environments, i.e. "getWorldTime").
+     *                       If the name you are looking for is on a class that is never obfuscated, this should be null.
+     * @param parameterTypes The parameter types of the method to find.
+     * @return The method with the specified name and parameters in the given class.
+     */
+    @Nonnull
+    public static Method findMethod(@Nonnull Class<?> clazz, @Nonnull String methodName, @Nullable String methodObfName, Class<?>... parameterTypes)
     {
-        Exception failed = null;
-        for (String methodName : methodNames)
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkArgument(StringUtils.isNotEmpty(methodName), "Method name cannot be empty");
+
+        String nameToFind;
+        if (methodObfName == null || (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment"))
         {
-            try
-            {
-                Method m = clazz.getDeclaredMethod(methodName, methodTypes);
-                m.setAccessible(true);
-                return m;
-            }
-            catch (Exception e)
-            {
-                failed = e;
-            }
+            nameToFind = methodName;
         }
-        throw new UnableToFindMethodException(methodNames, failed);
+        else
+        {
+            nameToFind = methodObfName;
+        }
+
+        try
+        {
+            Method m = clazz.getDeclaredMethod(nameToFind, parameterTypes);
+            m.setAccessible(true);
+            return m;
+        }
+        catch (Exception e)
+        {
+            throw new UnableToFindMethodException(e);
+        }
+    }
+
+    /**
+     * Finds a constructor in the specified class that has matching parameter types.
+     *
+     * @param klass The class to find the constructor in
+     * @param parameterTypes The parameter types of the constructor.
+     * @param <T> The type
+     * @return The constructor
+     * @throws NullPointerException if {@code klass} is null
+     * @throws NullPointerException if {@code parameterTypes} is null
+     * @throws UnknownConstructorException if the constructor could not be found
+     */
+    @Nonnull
+    public static <T> Constructor<T> findConstructor(@Nonnull final Class<T> klass, @Nonnull final Class<?>... parameterTypes)
+    {
+        Preconditions.checkNotNull(klass, "class");
+        Preconditions.checkNotNull(parameterTypes, "parameter types");
+
+        final Constructor<T> constructor;
+        try
+        {
+            constructor = klass.getDeclaredConstructor(parameterTypes);
+            constructor.setAccessible(true);
+        }
+        catch (final NoSuchMethodException e)
+        {
+            final StringBuilder desc = new StringBuilder();
+            desc.append(klass.getSimpleName()).append('(');
+            for (int i = 0, length = parameterTypes.length; i < length; i++)
+            {
+                desc.append(parameterTypes[i].getName());
+                if (i > length)
+                {
+                    desc.append(',').append(' ');
+                }
+            }
+            desc.append(')');
+            throw new UnknownConstructorException("Could not find constructor '" + desc.toString() + "' in " + klass);
+        }
+        return constructor;
     }
 }

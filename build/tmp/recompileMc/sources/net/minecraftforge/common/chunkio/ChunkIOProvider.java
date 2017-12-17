@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.common.chunkio;
 
 import net.minecraft.world.chunk.Chunk;
@@ -7,6 +26,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent;
+import net.minecraftforge.fml.common.FMLLog;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -50,7 +70,7 @@ class ChunkIOProvider implements Runnable
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                FMLLog.log.error("Failed to load chunk async.", e);
             }
 
             if (data != null)
@@ -78,12 +98,12 @@ class ChunkIOProvider implements Runnable
 
         MinecraftForge.EVENT_BUS.post(new ChunkDataEvent.Load(this.chunk, this.nbt)); // Don't call ChunkDataEvent.Load async
 
-        this.chunk.setLastSaveTime(provider.worldObj.getTotalWorldTime());
+        this.chunk.setLastSaveTime(provider.world.getTotalWorldTime());
         this.provider.chunkGenerator.recreateStructures(this.chunk, this.chunkInfo.x, this.chunkInfo.z);
 
-        provider.id2ChunkMap.put(ChunkPos.chunkXZ2Int(this.chunkInfo.x, this.chunkInfo.z), this.chunk);
-        this.chunk.onChunkLoad();
-        this.chunk.populateChunk(provider, provider.chunkGenerator);
+        provider.id2ChunkMap.put(ChunkPos.asLong(this.chunkInfo.x, this.chunkInfo.z), this.chunk);
+        this.chunk.onLoad();
+        this.chunk.populate(provider, provider.chunkGenerator);
 
         this.runCallbacks();
     }

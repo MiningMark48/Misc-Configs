@@ -24,21 +24,21 @@ public class NettyCompressionEncoder extends MessageToByteEncoder<ByteBuf>
 
         if (i < this.threshold)
         {
-            packetbuffer.writeVarIntToBuffer(0);
+            packetbuffer.writeVarInt(0);
             packetbuffer.writeBytes(p_encode_2_);
         }
         else
         {
             byte[] abyte = new byte[i];
             p_encode_2_.readBytes(abyte);
-            packetbuffer.writeVarIntToBuffer(abyte.length);
+            packetbuffer.writeVarInt(abyte.length);
             this.deflater.setInput(abyte, 0, i);
             this.deflater.finish();
 
             while (!this.deflater.finished())
             {
                 int j = this.deflater.deflate(this.buffer);
-                packetbuffer.writeBytes((byte[])this.buffer, 0, j);
+                packetbuffer.writeBytes(this.buffer, 0, j);
             }
 
             this.deflater.reset();

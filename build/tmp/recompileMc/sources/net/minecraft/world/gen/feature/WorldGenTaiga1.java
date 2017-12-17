@@ -28,10 +28,11 @@ public class WorldGenTaiga1 extends WorldGenAbstractTree
         int j = i - rand.nextInt(2) - 3;
         int k = i - j;
         int l = 1 + rand.nextInt(k + 1);
-        boolean flag = true;
 
         if (position.getY() >= 1 && position.getY() + i + 1 <= 256)
         {
+            boolean flag = true;
+
             for (int i1 = position.getY(); i1 <= position.getY() + 1 + i && flag; ++i1)
             {
                 int j1 = 1;

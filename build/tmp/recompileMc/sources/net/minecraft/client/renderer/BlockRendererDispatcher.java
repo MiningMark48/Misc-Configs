@@ -1,6 +1,5 @@
 package net.minecraft.client.renderer;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.SimpleBakedModel;
@@ -21,7 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class BlockRendererDispatcher implements IResourceManagerReloadListener
 {
-    private BlockModelShapes blockModelShapes;
+    private final BlockModelShapes blockModelShapes;
     private final BlockModelRenderer blockModelRenderer;
     private final ChestRenderer chestRenderer = new ChestRenderer();
     private final BlockFluidRenderer fluidRenderer;
@@ -49,7 +48,7 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener
         }
     }
 
-    public boolean renderBlock(IBlockState state, BlockPos pos, IBlockAccess blockAccess, VertexBuffer worldRendererIn)
+    public boolean renderBlock(IBlockState state, BlockPos pos, IBlockAccess blockAccess, BufferBuilder bufferBuilderIn)
     {
         try
         {
@@ -61,7 +60,7 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener
             }
             else
             {
-                if (blockAccess.getWorldType() != WorldType.DEBUG_WORLD)
+                if (blockAccess.getWorldType() != WorldType.DEBUG_ALL_BLOCK_STATES)
                 {
                     try
                     {
@@ -78,11 +77,11 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener
                     case MODEL:
                         IBakedModel model = this.getModelForState(state);
                         state = state.getBlock().getExtendedState(state, blockAccess, pos);
-                        return this.blockModelRenderer.renderModel(blockAccess, model, state, pos, worldRendererIn, true);
+                        return this.blockModelRenderer.renderModel(blockAccess, model, state, pos, bufferBuilderIn, true);
                     case ENTITYBLOCK_ANIMATED:
                         return false;
                     case LIQUID:
-                        return this.fluidRenderer.renderFluid(blockAccess, state, pos, worldRendererIn);
+                        return this.fluidRenderer.renderFluid(blockAccess, state, pos, bufferBuilderIn);
                     default:
                         return false;
                 }
@@ -124,19 +123,6 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener
                     this.chestRenderer.renderChestBrightness(state.getBlock(), brightness);
                 case LIQUID:
             }
-        }
-    }
-
-    public boolean isEntityBlockAnimated(Block blockIn)
-    {
-        if (blockIn == null)
-        {
-            return false;
-        }
-        else
-        {
-            EnumBlockRenderType enumblockrendertype = blockIn.getDefaultState().getRenderType();
-            return enumblockrendertype == EnumBlockRenderType.MODEL ? false : enumblockrendertype == EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
         }
     }
 

@@ -4,9 +4,9 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.List;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.util.JsonException;
@@ -46,7 +46,7 @@ public class Shader
         this.listAuxHeights.add(this.listAuxHeights.size(), Integer.valueOf(height));
     }
 
-    private void preLoadShader()
+    private void preRender()
     {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.disableBlend();
@@ -64,9 +64,9 @@ public class Shader
         this.projectionMatrix = projectionMatrixIn;
     }
 
-    public void loadShader(float p_148042_1_)
+    public void render(float partialTicks)
     {
-        this.preLoadShader();
+        this.preRender();
         this.framebufferIn.unbindFramebuffer();
         float f = (float)this.framebufferOut.framebufferTextureWidth;
         float f1 = (float)this.framebufferOut.framebufferTextureHeight;
@@ -75,14 +75,14 @@ public class Shader
 
         for (int i = 0; i < this.listAuxFramebuffers.size(); ++i)
         {
-            this.manager.addSamplerTexture((String)this.listAuxNames.get(i), this.listAuxFramebuffers.get(i));
+            this.manager.addSamplerTexture(this.listAuxNames.get(i), this.listAuxFramebuffers.get(i));
             this.manager.getShaderUniformOrDefault("AuxSize" + i).set((float)((Integer)this.listAuxWidths.get(i)).intValue(), (float)((Integer)this.listAuxHeights.get(i)).intValue());
         }
 
         this.manager.getShaderUniformOrDefault("ProjMat").set(this.projectionMatrix);
         this.manager.getShaderUniformOrDefault("InSize").set((float)this.framebufferIn.framebufferTextureWidth, (float)this.framebufferIn.framebufferTextureHeight);
         this.manager.getShaderUniformOrDefault("OutSize").set(f, f1);
-        this.manager.getShaderUniformOrDefault("Time").set(p_148042_1_);
+        this.manager.getShaderUniformOrDefault("Time").set(partialTicks);
         Minecraft minecraft = Minecraft.getMinecraft();
         this.manager.getShaderUniformOrDefault("ScreenSize").set((float)minecraft.displayWidth, (float)minecraft.displayHeight);
         this.manager.useShader();
@@ -91,12 +91,12 @@ public class Shader
         GlStateManager.depthMask(false);
         GlStateManager.colorMask(true, true, true, true);
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        vertexbuffer.pos(0.0D, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        vertexbuffer.pos((double)f, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
-        vertexbuffer.pos((double)f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
-        vertexbuffer.pos(0.0D, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.pos(0.0D, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos((double)f, (double)f1, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos((double)f, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
+        bufferbuilder.pos(0.0D, 0.0D, 500.0D).color(255, 255, 255, 255).endVertex();
         tessellator.draw();
         GlStateManager.depthMask(true);
         GlStateManager.colorMask(true, true, true, true);

@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.client.resources.data.MetadataSerializer;
@@ -34,7 +35,7 @@ public class FallbackResourceManager implements IResourceManager
 
     public Set<String> getResourceDomains()
     {
-        return null;
+        return Collections.<String>emptySet();
     }
 
     public IResource getResource(ResourceLocation location) throws IOException
@@ -45,7 +46,7 @@ public class FallbackResourceManager implements IResourceManager
 
         for (int i = this.resourcePacks.size() - 1; i >= 0; --i)
         {
-            IResourcePack iresourcepack1 = (IResourcePack)this.resourcePacks.get(i);
+            IResourcePack iresourcepack1 = this.resourcePacks.get(i);
 
             if (iresourcepack == null && iresourcepack1.resourceExists(resourcelocation))
             {
@@ -118,14 +119,14 @@ public class FallbackResourceManager implements IResourceManager
         {
             private final InputStream inputStream;
             private final String message;
-            private boolean isClosed = false;
+            private boolean isClosed;
 
             public InputStreamLeakedResourceLogger(InputStream p_i46093_1_, ResourceLocation location, String resourcePack)
             {
                 this.inputStream = p_i46093_1_;
                 ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
                 (new Exception()).printStackTrace(new PrintStream(bytearrayoutputstream));
-                this.message = "Leaked resource: \'" + location + "\' loaded from pack: \'" + resourcePack + "\'\n" + bytearrayoutputstream.toString();
+                this.message = "Leaked resource: '" + location + "' loaded from pack: '" + resourcePack + "'\n" + bytearrayoutputstream;
             }
 
             public void close() throws IOException

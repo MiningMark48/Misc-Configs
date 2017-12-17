@@ -1,5 +1,8 @@
 package net.minecraft.entity.item;
 
+import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntityEndermite;
 import net.minecraft.entity.player.EntityPlayer;
@@ -9,6 +12,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityEndGateway;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
@@ -17,7 +21,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class EntityEnderPearl extends EntityThrowable
 {
-    private EntityLivingBase thrower;
+    private EntityLivingBase perlThrower;
 
     public EntityEnderPearl(World worldIn)
     {
@@ -27,13 +31,18 @@ public class EntityEnderPearl extends EntityThrowable
     public EntityEnderPearl(World worldIn, EntityLivingBase throwerIn)
     {
         super(worldIn, throwerIn);
-        this.thrower = throwerIn;
+        this.perlThrower = throwerIn;
     }
 
     @SideOnly(Side.CLIENT)
     public EntityEnderPearl(World worldIn, double x, double y, double z)
     {
         super(worldIn, x, y, z);
+    }
+
+    public static void registerFixesEnderPearl(DataFixer fixer)
+    {
+        EntityThrowable.registerFixesThrowable(fixer, "ThrownEnderpearl");
     }
 
     /**
@@ -45,7 +54,7 @@ public class EntityEnderPearl extends EntityThrowable
 
         if (result.entityHit != null)
         {
-            if (result.entityHit == this.thrower)
+            if (result.entityHit == this.perlThrower)
             {
                 return;
             }
@@ -56,7 +65,7 @@ public class EntityEnderPearl extends EntityThrowable
         if (result.typeOfHit == RayTraceResult.Type.BLOCK)
         {
             BlockPos blockpos = result.getBlockPos();
-            TileEntity tileentity = this.worldObj.getTileEntity(blockpos);
+            TileEntity tileentity = this.world.getTileEntity(blockpos);
 
             if (tileentity instanceof TileEntityEndGateway)
             {
@@ -64,6 +73,11 @@ public class EntityEnderPearl extends EntityThrowable
 
                 if (entitylivingbase != null)
                 {
+                    if (entitylivingbase instanceof EntityPlayerMP)
+                    {
+                        CriteriaTriggers.ENTER_BLOCK.trigger((EntityPlayerMP)entitylivingbase, this.world.getBlockState(blockpos));
+                    }
+
                     tileentityendgateway.teleportEntity(entitylivingbase);
                     this.setDead();
                     return;
@@ -76,36 +90,36 @@ public class EntityEnderPearl extends EntityThrowable
 
         for (int i = 0; i < 32; ++i)
         {
-            this.worldObj.spawnParticle(EnumParticleTypes.PORTAL, this.posX, this.posY + this.rand.nextDouble() * 2.0D, this.posZ, this.rand.nextGaussian(), 0.0D, this.rand.nextGaussian(), new int[0]);
+            this.world.spawnParticle(EnumParticleTypes.PORTAL, this.posX, this.posY + this.rand.nextDouble() * 2.0D, this.posZ, this.rand.nextGaussian(), 0.0D, this.rand.nextGaussian());
         }
 
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
             if (entitylivingbase instanceof EntityPlayerMP)
             {
                 EntityPlayerMP entityplayermp = (EntityPlayerMP)entitylivingbase;
 
-                if (entityplayermp.connection.getNetworkManager().isChannelOpen() && entityplayermp.worldObj == this.worldObj && !entityplayermp.isPlayerSleeping())
+                if (entityplayermp.connection.getNetworkManager().isChannelOpen() && entityplayermp.world == this.world && !entityplayermp.isPlayerSleeping())
                 {
                     net.minecraftforge.event.entity.living.EnderTeleportEvent event = new net.minecraftforge.event.entity.living.EnderTeleportEvent(entityplayermp, this.posX, this.posY, this.posZ, 5.0F);
                     if (!net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event))
                     { // Don't indent to lower patch size
-                    if (this.rand.nextFloat() < 0.05F && this.worldObj.getGameRules().getBoolean("doMobSpawning"))
+                    if (this.rand.nextFloat() < 0.05F && this.world.getGameRules().getBoolean("doMobSpawning"))
                     {
-                        EntityEndermite entityendermite = new EntityEndermite(this.worldObj);
+                        EntityEndermite entityendermite = new EntityEndermite(this.world);
                         entityendermite.setSpawnedByPlayer(true);
                         entityendermite.setLocationAndAngles(entitylivingbase.posX, entitylivingbase.posY, entitylivingbase.posZ, entitylivingbase.rotationYaw, entitylivingbase.rotationPitch);
-                        this.worldObj.spawnEntityInWorld(entityendermite);
+                        this.world.spawnEntity(entityendermite);
                     }
 
                     if (entitylivingbase.isRiding())
                     {
-                        this.dismountRidingEntity();
+                        entitylivingbase.dismountRidingEntity();
                     }
 
                     entitylivingbase.setPositionAndUpdate(event.getTargetX(), event.getTargetY(), event.getTargetZ());
                     entitylivingbase.fallDistance = 0.0F;
-                    entitylivingbase.attackEntityFrom(DamageSource.fall, event.getAttackDamage());
+                    entitylivingbase.attackEntityFrom(DamageSource.FALL, event.getAttackDamage());
                     }
                 }
             }
@@ -134,5 +148,16 @@ public class EntityEnderPearl extends EntityThrowable
         {
             super.onUpdate();
         }
+    }
+
+    @Nullable
+    public Entity changeDimension(int dimensionIn)
+    {
+        if (this.thrower.dimension != dimensionIn)
+        {
+            this.thrower = null;
+        }
+
+        return super.changeDimension(dimensionIn);
     }
 }

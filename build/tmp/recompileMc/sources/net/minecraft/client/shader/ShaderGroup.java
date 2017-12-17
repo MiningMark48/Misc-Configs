@@ -1,6 +1,5 @@
 package net.minecraft.client.shader;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -11,6 +10,7 @@ import com.google.gson.JsonSyntaxException;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.renderer.GlStateManager;
@@ -29,9 +29,9 @@ import org.lwjgl.util.vector.Matrix4f;
 @SideOnly(Side.CLIENT)
 public class ShaderGroup
 {
-    private Framebuffer mainFramebuffer;
-    private IResourceManager resourceManager;
-    private String shaderGroupName;
+    private final Framebuffer mainFramebuffer;
+    private final IResourceManager resourceManager;
+    private final String shaderGroupName;
     private final List<Shader> listShaders = Lists.<Shader>newArrayList();
     private final Map<String, Framebuffer> mapFramebuffers = Maps.<String, Framebuffer>newHashMap();
     private final List<Framebuffer> listFramebuffers = Lists.<Framebuffer>newArrayList();
@@ -62,7 +62,7 @@ public class ShaderGroup
         try
         {
             iresource = this.resourceManager.getResource(p_152765_2_);
-            JsonObject jsonobject = jsonparser.parse(IOUtils.toString(iresource.getInputStream(), Charsets.UTF_8)).getAsJsonObject();
+            JsonObject jsonobject = jsonparser.parse(IOUtils.toString(iresource.getInputStream(), StandardCharsets.UTF_8)).getAsJsonObject();
 
             if (JsonUtils.isJsonArray(jsonobject, "targets"))
             {
@@ -142,9 +142,9 @@ public class ShaderGroup
         }
     }
 
-    private void parsePass(TextureManager p_152764_1_, JsonElement p_152764_2_) throws JsonException, IOException
+    private void parsePass(TextureManager p_152764_1_, JsonElement json) throws JsonException, IOException
     {
-        JsonObject jsonobject = JsonUtils.getJsonObject(p_152764_2_, "pass");
+        JsonObject jsonobject = JsonUtils.getJsonObject(json, "pass");
         String s = JsonUtils.getString(jsonobject, "name");
         String s1 = JsonUtils.getString(jsonobject, "intarget");
         String s2 = JsonUtils.getString(jsonobject, "outtarget");
@@ -153,11 +153,11 @@ public class ShaderGroup
 
         if (framebuffer == null)
         {
-            throw new JsonException("Input target \'" + s1 + "\' does not exist");
+            throw new JsonException("Input target '" + s1 + "' does not exist");
         }
         else if (framebuffer1 == null)
         {
-            throw new JsonException("Output target \'" + s2 + "\' does not exist");
+            throw new JsonException("Output target '" + s2 + "' does not exist");
         }
         else
         {
@@ -179,7 +179,8 @@ public class ShaderGroup
 
                         if (framebuffer2 == null)
                         {
-                            ResourceLocation resourcelocation = new ResourceLocation("textures/effect/" + s3 + ".png");
+                            String[] rl = ResourceLocation.splitObjectName(s3);
+                            ResourceLocation resourcelocation = new ResourceLocation(rl[0], "textures/effect/" + rl[1] + ".png");
                             IResource iresource = null;
 
                             try
@@ -188,7 +189,7 @@ public class ShaderGroup
                             }
                             catch (FileNotFoundException var29)
                             {
-                                throw new JsonException("Render target or texture \'" + s3 + "\' does not exist");
+                                throw new JsonException("Render target or texture '" + s3 + "' does not exist");
                             }
                             finally
                             {
@@ -196,7 +197,7 @@ public class ShaderGroup
                             }
 
                             p_152764_1_.bindTexture(resourcelocation);
-                            ITextureObject lvt_20_1_ = p_152764_1_.getTexture(resourcelocation);
+                            ITextureObject lvt_20_2_ = p_152764_1_.getTexture(resourcelocation);
                             int lvt_21_1_ = JsonUtils.getInt(jsonobject1, "width");
                             int lvt_22_1_ = JsonUtils.getInt(jsonobject1, "height");
                             boolean lvt_23_1_ = JsonUtils.getBoolean(jsonobject1, "bilinear");
@@ -212,7 +213,7 @@ public class ShaderGroup
                                 GlStateManager.glTexParameteri(3553, 10240, 9728);
                             }
 
-                            shader.addAuxFramebuffer(s4, Integer.valueOf(lvt_20_1_.getGlTextureId()), lvt_21_1_, lvt_22_1_);
+                            shader.addAuxFramebuffer(s4, Integer.valueOf(lvt_20_2_.getGlTextureId()), lvt_21_1_, lvt_22_1_);
                         }
                         else
                         {
@@ -255,15 +256,15 @@ public class ShaderGroup
         }
     }
 
-    private void initUniform(JsonElement p_148028_1_) throws JsonException
+    private void initUniform(JsonElement json) throws JsonException
     {
-        JsonObject jsonobject = JsonUtils.getJsonObject(p_148028_1_, "uniform");
+        JsonObject jsonobject = JsonUtils.getJsonObject(json, "uniform");
         String s = JsonUtils.getString(jsonobject, "name");
         ShaderUniform shaderuniform = ((Shader)this.listShaders.get(this.listShaders.size() - 1)).getShaderManager().getShaderUniform(s);
 
         if (shaderuniform == null)
         {
-            throw new JsonException("Uniform \'" + s + "\' does not exist");
+            throw new JsonException("Uniform '" + s + "' does not exist");
         }
         else
         {
@@ -306,18 +307,18 @@ public class ShaderGroup
         }
     }
 
-    public Framebuffer getFramebufferRaw(String p_177066_1_)
+    public Framebuffer getFramebufferRaw(String attributeName)
     {
-        return (Framebuffer)this.mapFramebuffers.get(p_177066_1_);
+        return this.mapFramebuffers.get(attributeName);
     }
 
-    public void addFramebuffer(String p_148020_1_, int p_148020_2_, int p_148020_3_)
+    public void addFramebuffer(String name, int width, int height)
     {
-        Framebuffer framebuffer = new Framebuffer(p_148020_2_, p_148020_3_, true);
+        Framebuffer framebuffer = new Framebuffer(width, height, true);
         framebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-        this.mapFramebuffers.put(p_148020_1_, framebuffer);
+        this.mapFramebuffers.put(name, framebuffer);
 
-        if (p_148020_2_ == this.mainFramebufferWidth && p_148020_3_ == this.mainFramebufferHeight)
+        if (width == this.mainFramebufferWidth && height == this.mainFramebufferHeight)
         {
             this.listFramebuffers.add(framebuffer);
         }
@@ -338,9 +339,9 @@ public class ShaderGroup
         this.listShaders.clear();
     }
 
-    public Shader addShader(String p_148023_1_, Framebuffer p_148023_2_, Framebuffer p_148023_3_) throws JsonException, IOException
+    public Shader addShader(String programName, Framebuffer framebufferIn, Framebuffer framebufferOut) throws JsonException, IOException
     {
-        Shader shader = new Shader(this.resourceManager, p_148023_1_, p_148023_2_, p_148023_3_);
+        Shader shader = new Shader(this.resourceManager, programName, framebufferIn, framebufferOut);
         this.listShaders.add(this.listShaders.size(), shader);
         return shader;
     }
@@ -375,7 +376,7 @@ public class ShaderGroup
         }
     }
 
-    public void loadShaderGroup(float partialTicks)
+    public void render(float partialTicks)
     {
         if (partialTicks < this.lastStamp)
         {
@@ -394,7 +395,7 @@ public class ShaderGroup
 
         for (Shader shader : this.listShaders)
         {
-            shader.loadShader(this.time / 20.0F);
+            shader.render(this.time / 20.0F);
         }
     }
 
@@ -405,6 +406,13 @@ public class ShaderGroup
 
     private Framebuffer getFramebuffer(String p_148017_1_)
     {
-        return p_148017_1_ == null ? null : (p_148017_1_.equals("minecraft:main") ? this.mainFramebuffer : (Framebuffer)this.mapFramebuffers.get(p_148017_1_));
+        if (p_148017_1_ == null)
+        {
+            return null;
+        }
+        else
+        {
+            return p_148017_1_.equals("minecraft:main") ? this.mainFramebuffer : (Framebuffer)this.mapFramebuffers.get(p_148017_1_);
+        }
     }
 }

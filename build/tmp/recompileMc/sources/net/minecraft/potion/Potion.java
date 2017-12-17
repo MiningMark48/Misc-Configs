@@ -22,9 +22,10 @@ import net.minecraft.util.registry.RegistryNamespaced;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistryEntry.Impl<Potion>
+public class Potion extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<Potion>
 {
-    public static final RegistryNamespaced<ResourceLocation, Potion> REGISTRY = net.minecraftforge.fml.common.registry.GameData.getPotionRegistry();
+    public static final RegistryNamespaced<ResourceLocation, Potion> REGISTRY = net.minecraftforge.registries.GameData.getWrapper(Potion.class);
+    /** Contains a Map of the AttributeModifiers registered by potions */
     private final Map<IAttribute, AttributeModifier> attributeModifierMap = Maps.<IAttribute, AttributeModifier>newHashMap();
     /** This field indicated if the effect is 'bad' - negative - for the entity. */
     private final boolean isBadEffect;
@@ -43,7 +44,7 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
     @Nullable
     public static Potion getPotionById(int potionID)
     {
-        return (Potion)REGISTRY.getObjectById(potionID);
+        return REGISTRY.getObjectById(potionID);
     }
 
     /**
@@ -57,7 +58,7 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
     @Nullable
     public static Potion getPotionFromResourceLocation(String location)
     {
-        return (Potion)REGISTRY.getObject(new ResourceLocation(location));
+        return REGISTRY.getObject(new ResourceLocation(location));
     }
 
     protected Potion(boolean isBadEffectIn, int liquidColorIn)
@@ -85,7 +86,7 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
         return this;
     }
 
-    public void performEffect(EntityLivingBase entityLivingBaseIn, int p_76394_2_)
+    public void performEffect(EntityLivingBase entityLivingBaseIn, int amplifier)
     {
         if (this == MobEffects.REGENERATION)
         {
@@ -98,34 +99,34 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
         {
             if (entityLivingBaseIn.getHealth() > 1.0F)
             {
-                entityLivingBaseIn.attackEntityFrom(DamageSource.magic, 1.0F);
+                entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, 1.0F);
             }
         }
         else if (this == MobEffects.WITHER)
         {
-            entityLivingBaseIn.attackEntityFrom(DamageSource.wither, 1.0F);
+            entityLivingBaseIn.attackEntityFrom(DamageSource.WITHER, 1.0F);
         }
         else if (this == MobEffects.HUNGER && entityLivingBaseIn instanceof EntityPlayer)
         {
-            ((EntityPlayer)entityLivingBaseIn).addExhaustion(0.025F * (float)(p_76394_2_ + 1));
+            ((EntityPlayer)entityLivingBaseIn).addExhaustion(0.005F * (float)(amplifier + 1));
         }
         else if (this == MobEffects.SATURATION && entityLivingBaseIn instanceof EntityPlayer)
         {
-            if (!entityLivingBaseIn.worldObj.isRemote)
+            if (!entityLivingBaseIn.world.isRemote)
             {
-                ((EntityPlayer)entityLivingBaseIn).getFoodStats().addStats(p_76394_2_ + 1, 1.0F);
+                ((EntityPlayer)entityLivingBaseIn).getFoodStats().addStats(amplifier + 1, 1.0F);
             }
         }
         else if ((this != MobEffects.INSTANT_HEALTH || entityLivingBaseIn.isEntityUndead()) && (this != MobEffects.INSTANT_DAMAGE || !entityLivingBaseIn.isEntityUndead()))
         {
             if (this == MobEffects.INSTANT_DAMAGE && !entityLivingBaseIn.isEntityUndead() || this == MobEffects.INSTANT_HEALTH && entityLivingBaseIn.isEntityUndead())
             {
-                entityLivingBaseIn.attackEntityFrom(DamageSource.magic, (float)(6 << p_76394_2_));
+                entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, (float)(6 << amplifier));
             }
         }
         else
         {
-            entityLivingBaseIn.heal((float)Math.max(4 << p_76394_2_, 0));
+            entityLivingBaseIn.heal((float)Math.max(4 << amplifier, 0));
         }
     }
 
@@ -139,7 +140,7 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
 
                 if (source == null)
                 {
-                    entityLivingBaseIn.attackEntityFrom(DamageSource.magic, (float)j);
+                    entityLivingBaseIn.attackEntityFrom(DamageSource.MAGIC, (float)j);
                 }
                 else
                 {
@@ -162,17 +163,41 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
         if (this == MobEffects.REGENERATION)
         {
             int k = 50 >> amplifier;
-            return k > 0 ? duration % k == 0 : true;
+
+            if (k > 0)
+            {
+                return duration % k == 0;
+            }
+            else
+            {
+                return true;
+            }
         }
         else if (this == MobEffects.POISON)
         {
             int j = 25 >> amplifier;
-            return j > 0 ? duration % j == 0 : true;
+
+            if (j > 0)
+            {
+                return duration % j == 0;
+            }
+            else
+            {
+                return true;
+            }
         }
         else if (this == MobEffects.WITHER)
         {
             int i = 40 >> amplifier;
-            return i > 0 ? duration % i == 0 : true;
+
+            if (i > 0)
+            {
+                return duration % i == 0;
+            }
+            else
+            {
+                return true;
+            }
         }
         else
         {
@@ -238,15 +263,15 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
     }
 
     @SideOnly(Side.CLIENT)
-    public static String getPotionDurationString(PotionEffect p_188410_0_, float p_188410_1_)
+    public static String getPotionDurationString(PotionEffect effect, float durationFactor)
     {
-        if (p_188410_0_.getIsPotionDurationMax())
+        if (effect.getIsPotionDurationMax())
         {
             return "**:**";
         }
         else
         {
-            int i = MathHelper.floor_float((float)p_188410_0_.getDuration() * p_188410_1_);
+            int i = MathHelper.floor((float)effect.getDuration() * durationFactor);
             return StringUtils.ticksToElapsedTime(i);
         }
     }
@@ -273,11 +298,11 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
     {
         for (Entry<IAttribute, AttributeModifier> entry : this.attributeModifierMap.entrySet())
         {
-            IAttributeInstance iattributeinstance = attributeMapIn.getAttributeInstance((IAttribute)entry.getKey());
+            IAttributeInstance iattributeinstance = attributeMapIn.getAttributeInstance(entry.getKey());
 
             if (iattributeinstance != null)
             {
-                iattributeinstance.removeModifier((AttributeModifier)entry.getValue());
+                iattributeinstance.removeModifier(entry.getValue());
             }
         }
     }
@@ -292,11 +317,11 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
     {
         for (Entry<IAttribute, AttributeModifier> entry : this.attributeModifierMap.entrySet())
         {
-            IAttributeInstance iattributeinstance = attributeMapIn.getAttributeInstance((IAttribute)entry.getKey());
+            IAttributeInstance iattributeinstance = attributeMapIn.getAttributeInstance(entry.getKey());
 
             if (iattributeinstance != null)
             {
-                AttributeModifier attributemodifier = (AttributeModifier)entry.getValue();
+                AttributeModifier attributemodifier = entry.getValue();
                 iattributeinstance.removeModifier(attributemodifier);
                 iattributeinstance.applyModifier(new AttributeModifier(attributemodifier.getID(), this.getName() + " " + amplifier, this.getAttributeModifierAmount(amplifier, attributemodifier), attributemodifier.getOperation()));
             }
@@ -359,6 +384,30 @@ public class Potion extends net.minecraftforge.fml.common.registry.IForgeRegistr
      */
     @SideOnly(Side.CLIENT)
     public void renderHUDEffect(int x, int y, PotionEffect effect, net.minecraft.client.Minecraft mc, float alpha) { }
+
+    /**
+     * Get a fresh list of items that can cure this Potion.
+     * All new PotionEffects created from this Potion will call this to initialize the default curative items
+     * @see PotionEffect#getCurativeItems
+     * @return A list of items that can cure this Potion
+     */
+    public java.util.List<net.minecraft.item.ItemStack> getCurativeItems()
+    {
+        java.util.ArrayList<net.minecraft.item.ItemStack> ret = new java.util.ArrayList<net.minecraft.item.ItemStack>();
+        ret.add(new net.minecraft.item.ItemStack(net.minecraft.init.Items.MILK_BUCKET));
+        return ret;
+    }
+    
+    /**
+     * Used for determining {@code PotionEffect} sort order in GUIs.
+     * Defaults to the {@code PotionEffect}'s liquid color.
+     * @param potionEffect the {@code PotionEffect} instance containing the potion
+     * @return a value used to sort {@code PotionEffect}s in GUIs 
+     */
+    public int getGuiSortColor(PotionEffect potionEffect)
+    {
+        return this.getLiquidColor();
+    }
 
     /* ======================================== FORGE END =====================================*/
 

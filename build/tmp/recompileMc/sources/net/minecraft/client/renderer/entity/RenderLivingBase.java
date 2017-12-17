@@ -30,7 +30,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
     protected ModelBase mainModel;
     protected FloatBuffer brightnessBuffer = GLAllocation.createDirectFloatBuffer(4);
     protected List<LayerRenderer<T>> layerRenderers = Lists.<LayerRenderer<T>>newArrayList();
-    protected boolean renderMarker = false;
+    protected boolean renderMarker;
 
     public static float NAME_TAG_RANGE = 64.0f;
     public static float NAME_TAG_RANGE_SNEAK = 32.0f;
@@ -45,11 +45,6 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
     public <V extends EntityLivingBase, U extends LayerRenderer<V>> boolean addLayer(U layer)
     {
         return this.layerRenderers.add((LayerRenderer<T>)layer);
-    }
-
-    public <V extends EntityLivingBase, U extends LayerRenderer<V>> boolean removeLayer(U layer)
-    {
-        return this.layerRenderers.remove(layer);
     }
 
     public ModelBase getMainModel()
@@ -88,7 +83,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
      */
     public void doRender(T entity, double x, double y, double z, float entityYaw, float partialTicks)
     {
-        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Pre<T>(entity, this, x, y, z))) return;
+        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Pre<T>(entity, this, partialTicks, x, y, z))) return;
         GlStateManager.pushMatrix();
         GlStateManager.disableCull();
         this.mainModel.swingProgress = this.getSwingProgress(entity, partialTicks);
@@ -125,12 +120,14 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
                 {
                     f += f3 * 0.2F;
                 }
+
+                f2 = f1 - f;
             }
 
             float f7 = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
             this.renderLivingAt(entity, x, y, z);
             float f8 = this.handleRotationFloat(entity, partialTicks);
-            this.rotateCorpse(entity, f8, f, partialTicks);
+            this.applyRotations(entity, f8, f, partialTicks);
             float f4 = this.prepareScale(entity, partialTicks);
             float f5 = 0.0F;
             float f6 = 0.0F;
@@ -149,6 +146,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
                 {
                     f5 = 1.0F;
                 }
+                f2 = f1 - f; // Forge: Fix MC-1207
             }
 
             GlStateManager.enableAlpha();
@@ -201,7 +199,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         }
         catch (Exception exception)
         {
-            LOGGER.error((String)"Couldn\'t render entity", (Throwable)exception);
+            LOGGER.error("Couldn't render entity", (Throwable)exception);
         }
 
         GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
@@ -210,7 +208,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         GlStateManager.enableCull();
         GlStateManager.popMatrix();
         super.doRender(entity, x, y, z, entityYaw, partialTicks);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Post<T>(entity, this, x, y, z));
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Post<T>(entity, this, partialTicks, x, y, z));
     }
 
     public float prepareScale(T entitylivingbaseIn, float partialTicks)
@@ -245,8 +243,8 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
      */
     protected void renderModel(T entitylivingbaseIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor)
     {
-        boolean flag = !entitylivingbaseIn.isInvisible() || this.renderOutlines;
-        boolean flag1 = !flag && !entitylivingbaseIn.isInvisibleToPlayer(Minecraft.getMinecraft().thePlayer);
+        boolean flag = this.isVisible(entitylivingbaseIn);
+        boolean flag1 = !flag && !entitylivingbaseIn.isInvisibleToPlayer(Minecraft.getMinecraft().player);
 
         if (flag || flag1)
         {
@@ -269,6 +267,11 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         }
     }
 
+    protected boolean isVisible(T p_193115_1_)
+    {
+        return !p_193115_1_.isInvisible() || this.renderOutlines;
+    }
+
     protected boolean setDoRenderBrightness(T entityLivingBaseIn, float partialTicks)
     {
         return this.setBrightness(entityLivingBaseIn, partialTicks, true);
@@ -276,7 +279,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
 
     protected boolean setBrightness(T entitylivingbaseIn, float partialTicks, boolean combineTextures)
     {
-        float f = entitylivingbaseIn.getBrightness(partialTicks);
+        float f = entitylivingbaseIn.getBrightness();
         int i = this.getColorMultiplier(entitylivingbaseIn, f, partialTicks);
         boolean flag = (i >> 24 & 255) > 0;
         boolean flag1 = entitylivingbaseIn.hurtTime > 0 || entitylivingbaseIn.deathTime > 0;
@@ -404,14 +407,14 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         GlStateManager.translate((float)x, (float)y, (float)z);
     }
 
-    protected void rotateCorpse(T entityLiving, float p_77043_2_, float p_77043_3_, float partialTicks)
+    protected void applyRotations(T entityLiving, float p_77043_2_, float rotationYaw, float partialTicks)
     {
-        GlStateManager.rotate(180.0F - p_77043_3_, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);
 
         if (entityLiving.deathTime > 0)
         {
             float f = ((float)entityLiving.deathTime + partialTicks - 1.0F) / 20.0F * 1.6F;
-            f = MathHelper.sqrt_float(f);
+            f = MathHelper.sqrt(f);
 
             if (f > 1.0F)
             {
@@ -424,7 +427,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         {
             String s = TextFormatting.getTextWithoutFormattingCodes(entityLiving.getName());
 
-            if (s != null && (s.equals("Dinnerbone") || s.equals("Grumm")) && (!(entityLiving instanceof EntityPlayer) || ((EntityPlayer)entityLiving).isWearing(EnumPlayerModelParts.CAPE)))
+            if (s != null && ("Dinnerbone".equals(s) || "Grumm".equals(s)) && (!(entityLiving instanceof EntityPlayer) || ((EntityPlayer)entityLiving).isWearing(EnumPlayerModelParts.CAPE)))
             {
                 GlStateManager.translate(0.0F, entityLiving.height + 0.1F, 0.0F);
                 GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
@@ -487,7 +490,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
         if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.RenderLivingEvent.Specials.Pre<T>(entity, this, x, y, z))) return;
         if (this.canRenderName(entity))
         {
-            double d0 = entity.getDistanceSqToEntity(this.renderManager.renderViewEntity);
+            double d0 = entity.getDistanceSq(this.renderManager.renderViewEntity);
             float f = entity.isSneaking() ? NAME_TAG_RANGE_SNEAK : NAME_TAG_RANGE;
 
             if (d0 < (double)(f * f))
@@ -502,7 +505,7 @@ public abstract class RenderLivingBase<T extends EntityLivingBase> extends Rende
 
     protected boolean canRenderName(T entity)
     {
-        EntityPlayerSP entityplayersp = Minecraft.getMinecraft().thePlayer;
+        EntityPlayerSP entityplayersp = Minecraft.getMinecraft().player;
         boolean flag = !entity.isInvisibleToPlayer(entityplayersp);
 
         if (entity != entityplayersp)

@@ -11,9 +11,9 @@ import net.minecraft.world.World;
 
 public class WorldGenMegaJungle extends WorldGenHugeTrees
 {
-    public WorldGenMegaJungle(boolean p_i46448_1_, int p_i46448_2_, int p_i46448_3_, IBlockState p_i46448_4_, IBlockState p_i46448_5_)
+    public WorldGenMegaJungle(boolean notify, int baseHeightIn, int extraRandomHeightIn, IBlockState woodMetadataIn, IBlockState p_i46448_5_)
     {
-        super(p_i46448_1_, p_i46448_2_, p_i46448_3_, p_i46448_4_, p_i46448_5_);
+        super(notify, baseHeightIn, extraRandomHeightIn, woodMetadataIn, p_i46448_5_);
     }
 
     public boolean generate(World worldIn, Random rand, BlockPos position)
@@ -125,7 +125,7 @@ public class WorldGenMegaJungle extends WorldGenHugeTrees
     {
         int i = 2;
 
-        for (int j = -i; j <= 0; ++j)
+        for (int j = -2; j <= 0; ++j)
         {
             this.growLeavesLayerStrict(worldIn, p_175930_2_.up(j), p_175930_3_ + 1 - j);
         }

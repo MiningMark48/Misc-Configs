@@ -1,25 +1,29 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.relauncher;
 
 import java.io.File;
 
-import org.apache.logging.log4j.Level;
-
 import net.minecraft.launchwrapper.LaunchClassLoader;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.launcher.FMLTweaker;
-
-import com.google.common.base.Throwables;
 
 public class FMLLaunchHandler
 {
@@ -67,14 +71,12 @@ public class FMLLaunchHandler
 
     private void setupClient()
     {
-        FMLRelaunchLog.side = Side.CLIENT;
         side = Side.CLIENT;
         setupHome();
     }
 
     private void setupServer()
     {
-        FMLRelaunchLog.side = Side.SERVER;
         side = Side.SERVER;
         setupHome();
 
@@ -83,12 +85,15 @@ public class FMLLaunchHandler
     private void setupHome()
     {
         FMLInjectionData.build(minecraftHome, classLoader);
-        FMLRelaunchLog.minecraftHome = minecraftHome;
-        FMLRelaunchLog.info("Forge Mod Loader version %s.%s.%s.%s for Minecraft %s loading", FMLInjectionData.major, FMLInjectionData.minor,
-                FMLInjectionData.rev, FMLInjectionData.build, FMLInjectionData.mccversion, FMLInjectionData.mcpversion);
-        FMLRelaunchLog.info("Java is %s, version %s, running on %s:%s:%s, installed at %s", System.getProperty("java.vm.name"), System.getProperty("java.version"), System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"), System.getProperty("java.home"));
-        FMLRelaunchLog.fine("Java classpath at launch is %s", System.getProperty("java.class.path"));
-        FMLRelaunchLog.fine("Java library path at launch is %s", System.getProperty("java.library.path"));
+        FMLLog.log.info("Forge Mod Loader version {}.{}.{}.{} for Minecraft {} loading", FMLInjectionData.major, FMLInjectionData.minor,
+                FMLInjectionData.rev, FMLInjectionData.build, FMLInjectionData.mccversion);
+        FMLLog.log.info("Java is {}, version {}, running on {}:{}:{}, installed at {}", System.getProperty("java.vm.name"), System.getProperty("java.version"), System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"), System.getProperty("java.home"));
+        FMLLog.log.debug("Java classpath at launch is:");
+        for (String path : System.getProperty("java.class.path").split(File.pathSeparator))
+            FMLLog.log.debug("    {}", path);
+        FMLLog.log.debug("Java library path at launch is:");
+        for (String path : System.getProperty("java.library.path").split(File.pathSeparator))
+            FMLLog.log.debug("    {}", path);
 
         try
         {
@@ -96,9 +101,7 @@ public class FMLLaunchHandler
         }
         catch (Throwable t)
         {
-            t.printStackTrace();
-            FMLRelaunchLog.log(Level.ERROR, t, "An error occurred trying to configure the minecraft home at %s for Forge Mod Loader", minecraftHome.getAbsolutePath());
-            throw Throwables.propagate(t);
+            throw new RuntimeException("An error occurred trying to configure the Minecraft home at " + minecraftHome.getAbsolutePath() + " for Forge Mod Loader", t);
         }
     }
 

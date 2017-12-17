@@ -54,7 +54,7 @@ public class ShaderLinkHelper
 
         if (i == 0)
         {
-            LOGGER.warn("Error encountered when linking program containing VS " + manager.getVertexShaderLoader().getShaderFilename() + " and FS " + manager.getFragmentShaderLoader().getShaderFilename() + ". Log output:");
+            LOGGER.warn("Error encountered when linking program containing VS {} and FS {}. Log output:", manager.getVertexShaderLoader().getShaderFilename(), manager.getFragmentShaderLoader().getShaderFilename());
             LOGGER.warn(OpenGlHelper.glGetProgramInfoLog(manager.getProgram(), 32768));
         }
     }

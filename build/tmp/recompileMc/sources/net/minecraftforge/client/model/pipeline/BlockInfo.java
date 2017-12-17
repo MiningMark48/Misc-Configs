@@ -1,15 +1,35 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.pipeline;
 
-import net.minecraft.block.Block.EnumOffsetType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 
 public class BlockInfo
 {
+    private static final EnumFacing[] SIDES = EnumFacing.values();
+
     private final BlockColors colors;
     private IBlockAccess world;
     private IBlockState state;
@@ -21,6 +41,10 @@ public class BlockInfo
     private final float[][][][] skyLight = new float[3][2][2][2];
     private final float[][][][] blockLight = new float[3][2][2][2];
     private final float[][][] ao = new float[3][3][3];
+
+    private final int[] packed = new int[7];
+
+    private boolean full;
 
     private float shx = 0, shy = 0, shz = 0;
 
@@ -42,22 +66,10 @@ public class BlockInfo
 
     public void updateShift()
     {
-        updateShift(false);
-    }
-
-    public void updateShift(boolean ignoreY)
-    {
-        long rand = 0;
-        if(state.getBlock().getOffsetType() != EnumOffsetType.NONE)
-        {
-            rand = MathHelper.getCoordinateRandom(blockPos.getX(), ignoreY ? 0 : blockPos.getY(), blockPos.getZ());
-            shx = ((float)((rand >> 16) & 0xF) / 0xF - .5f) * .5f;
-            shz = ((float)((rand >> 24) & 0xF) / 0xF - .5f) * .5f;
-            if(state.getBlock().getOffsetType() == EnumOffsetType.XYZ)
-            {
-                shy = ((float)((rand >> 20) & 0xF) / 0xF - 1) * .2f;
-            }
-        }
+        Vec3d offset = state.getOffset(world, blockPos);
+        shx = (float) offset.x;
+        shy = (float) offset.y;
+        shz = (float) offset.z;
     }
 
     public void setWorld(IBlockAccess world)
@@ -117,7 +129,7 @@ public class BlockInfo
         }
         if(!full)
         {
-            for(EnumFacing side : EnumFacing.values())
+            for(EnumFacing side : SIDES)
             {
                 int x = side.getFrontOffsetX() + 1;
                 int y = side.getFrontOffsetY() + 1;
@@ -144,11 +156,23 @@ public class BlockInfo
                     skyLight[1][x][y][z] = combine(s[1][y1][1], s[x1][y1][1], s[1][y1][z1], ty ? s[x1][y1][z1] : s[1][y1][1]);
                     blockLight[1][x][y][z] = combine(b[1][y1][1], b[x1][y1][1], b[1][y1][z1], ty ? b[x1][y1][z1] : b[1][y1][1]);
 
-                    boolean tz = translucent[1][y1][z1] || translucent[1][y1][z1];
+                    boolean tz = translucent[1][y1][z1] || translucent[x1][1][z1];
                     skyLight[2][x][y][z] = combine(s[1][1][z1], s[1][y1][z1], s[x1][1][z1], tz ? s[x1][y1][z1] : s[1][1][z1]);
                     blockLight[2][x][y][z] = combine(b[1][1][z1], b[1][y1][z1], b[x1][1][z1], tz ? b[x1][y1][z1] : b[1][1][z1]);
                 }
             }
+        }
+    }
+
+    public void updateFlatLighting()
+    {
+        full = state.isFullCube();
+        packed[0] = state.getPackedLightmapCoords(world, blockPos);
+
+        for (EnumFacing side : SIDES)
+        {
+            int i = side.ordinal() + 1;
+            packed[i] = state.getPackedLightmapCoords(world, blockPos.offset(side));
         }
     }
 
@@ -185,6 +209,16 @@ public class BlockInfo
     public float[][][] getAo()
     {
         return ao;
+    }
+
+    public int[] getPackedLight()
+    {
+        return packed;
+    }
+
+    public boolean isFullCube()
+    {
+        return full;
     }
 
     public float getShx()

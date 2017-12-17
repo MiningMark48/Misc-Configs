@@ -1,9 +1,9 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -33,10 +33,9 @@ public class BlockMobSpawner extends BlockContainer
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
     /**
@@ -70,17 +69,17 @@ public class BlockMobSpawner extends BlockContainer
     }
 
     /**
-     * The type of render function called. 3 for standard block models, 2 for TESR's, 1 for liquids, -1 is no render
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
      */
     public EnumBlockRenderType getRenderType(IBlockState state)
     {
         return EnumBlockRenderType.MODEL;
     }
 
-    @Nullable
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     @SideOnly(Side.CLIENT)

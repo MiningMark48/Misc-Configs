@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.model.ModelRabbit;
 import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
@@ -19,9 +19,9 @@ public class RenderRabbit extends RenderLiving<EntityRabbit>
     private static final ResourceLocation TOAST = new ResourceLocation("textures/entity/rabbit/toast.png");
     private static final ResourceLocation CAERBANNOG = new ResourceLocation("textures/entity/rabbit/caerbannog.png");
 
-    public RenderRabbit(RenderManager renderManagerIn, ModelBase modelBaseIn, float shadowSizeIn)
+    public RenderRabbit(RenderManager p_i47196_1_)
     {
-        super(renderManagerIn, modelBaseIn, shadowSizeIn);
+        super(p_i47196_1_, new ModelRabbit(), 0.3F);
     }
 
     /**
@@ -31,7 +31,7 @@ public class RenderRabbit extends RenderLiving<EntityRabbit>
     {
         String s = TextFormatting.getTextWithoutFormattingCodes(entity.getName());
 
-        if (s != null && s.equals("Toast"))
+        if (s != null && "Toast".equals(s))
         {
             return TOAST;
         }

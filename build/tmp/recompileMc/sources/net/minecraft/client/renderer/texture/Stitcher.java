@@ -64,16 +64,16 @@ public class Stitcher
             bar.step(stitcher$holder.getAtlasSprite().getIconName());
             if (!this.allocateSlot(stitcher$holder))
             {
-                String s = String.format("Unable to fit: %s - size: %dx%d - Maybe try a lowerresolution resourcepack?", new Object[] {stitcher$holder.getAtlasSprite().getIconName(), Integer.valueOf(stitcher$holder.getAtlasSprite().getIconWidth()), Integer.valueOf(stitcher$holder.getAtlasSprite().getIconHeight())});
-                net.minecraftforge.fml.common.FMLLog.info(s);
+                String s = String.format("Unable to fit: %s - size: %dx%d - Maybe try a lowerresolution resourcepack?", stitcher$holder.getAtlasSprite().getIconName(), stitcher$holder.getAtlasSprite().getIconWidth(), stitcher$holder.getAtlasSprite().getIconHeight());
+                net.minecraftforge.fml.common.FMLLog.log.info(s);
                 for (Stitcher.Holder h : astitcher$holder)
-                    net.minecraftforge.fml.common.FMLLog.info("  %s", h);
+                    net.minecraftforge.fml.common.FMLLog.log.info("  {}", h);
                 throw new StitcherException(stitcher$holder, s);
             }
         }
 
-        this.currentWidth = MathHelper.roundUpToPowerOfTwo(this.currentWidth);
-        this.currentHeight = MathHelper.roundUpToPowerOfTwo(this.currentHeight);
+        this.currentWidth = MathHelper.smallestEncompassingPowerOfTwo(this.currentWidth);
+        this.currentHeight = MathHelper.smallestEncompassingPowerOfTwo(this.currentHeight);
         net.minecraftforge.fml.common.ProgressManager.pop(bar);
     }
 
@@ -142,10 +142,10 @@ public class Stitcher
     {
         int i = Math.min(p_94311_1_.getWidth(), p_94311_1_.getHeight());
         int j = Math.max(p_94311_1_.getWidth(), p_94311_1_.getHeight());
-        int k = MathHelper.roundUpToPowerOfTwo(this.currentWidth);
-        int l = MathHelper.roundUpToPowerOfTwo(this.currentHeight);
-        int i1 = MathHelper.roundUpToPowerOfTwo(this.currentWidth + i);
-        int j1 = MathHelper.roundUpToPowerOfTwo(this.currentHeight + i);
+        int k = MathHelper.smallestEncompassingPowerOfTwo(this.currentWidth);
+        int l = MathHelper.smallestEncompassingPowerOfTwo(this.currentHeight);
+        int i1 = MathHelper.smallestEncompassingPowerOfTwo(this.currentWidth + i);
+        int j1 = MathHelper.smallestEncompassingPowerOfTwo(this.currentHeight + i);
         boolean flag1 = i1 <= this.maxWidth;
         boolean flag2 = j1 <= this.maxHeight;
 
@@ -161,7 +161,7 @@ public class Stitcher
 
             if (flag3 ^ flag4)
             {
-                flag = flag3;
+                flag = !flag3 && flag1; //Forge: Fix stitcher not expanding entire height before growing width, and {potentially} growing larger then the max size.
             }
             else
             {
@@ -200,7 +200,7 @@ public class Stitcher
     @SideOnly(Side.CLIENT)
     public static class Holder implements Comparable<Stitcher.Holder>
         {
-            private final TextureAtlasSprite theTexture;
+            private final TextureAtlasSprite sprite;
             private final int width;
             private final int height;
             private final int mipmapLevelHolder;
@@ -209,7 +209,7 @@ public class Stitcher
 
             public Holder(TextureAtlasSprite theTextureIn, int mipmapLevelHolderIn)
             {
-                this.theTexture = theTextureIn;
+                this.sprite = theTextureIn;
                 this.width = theTextureIn.getIconWidth();
                 this.height = theTextureIn.getIconHeight();
                 this.mipmapLevelHolder = mipmapLevelHolderIn;
@@ -218,17 +218,19 @@ public class Stitcher
 
             public TextureAtlasSprite getAtlasSprite()
             {
-                return this.theTexture;
+                return this.sprite;
             }
 
             public int getWidth()
             {
-                return this.rotated ? Stitcher.getMipmapDimension((int)((float)this.height * this.scaleFactor), this.mipmapLevelHolder) : Stitcher.getMipmapDimension((int)((float)this.width * this.scaleFactor), this.mipmapLevelHolder);
+                int i = this.rotated ? this.height : this.width;
+                return Stitcher.getMipmapDimension((int)((float)i * this.scaleFactor), this.mipmapLevelHolder);
             }
 
             public int getHeight()
             {
-                return this.rotated ? Stitcher.getMipmapDimension((int)((float)this.width * this.scaleFactor), this.mipmapLevelHolder) : Stitcher.getMipmapDimension((int)((float)this.height * this.scaleFactor), this.mipmapLevelHolder);
+                int i = this.rotated ? this.width : this.height;
+                return Stitcher.getMipmapDimension((int)((float)i * this.scaleFactor), this.mipmapLevelHolder);
             }
 
             public void rotate()
@@ -251,7 +253,7 @@ public class Stitcher
 
             public String toString()
             {
-                return "Holder{width=" + this.width + ", height=" + this.height + ", name=" + this.theTexture.getIconName() + '}';
+                return "Holder{width=" + this.width + ", height=" + this.height + ", name=" + this.sprite.getIconName() + '}';
             }
 
             public int compareTo(Stitcher.Holder p_compareTo_1_)
@@ -262,12 +264,12 @@ public class Stitcher
                 {
                     if (this.getWidth() == p_compareTo_1_.getWidth())
                     {
-                        if (this.theTexture.getIconName() == null)
+                        if (this.sprite.getIconName() == null)
                         {
-                            return p_compareTo_1_.theTexture.getIconName() == null ? 0 : -1;
+                            return p_compareTo_1_.sprite.getIconName() == null ? 0 : -1;
                         }
 
-                        return this.theTexture.getIconName().compareTo(p_compareTo_1_.theTexture.getIconName());
+                        return this.sprite.getIconName().compareTo(p_compareTo_1_.sprite.getIconName());
                     }
 
                     i = this.getWidth() < p_compareTo_1_.getWidth() ? 1 : -1;

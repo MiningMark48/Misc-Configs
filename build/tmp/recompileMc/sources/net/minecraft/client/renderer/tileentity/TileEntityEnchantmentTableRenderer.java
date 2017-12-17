@@ -14,9 +14,9 @@ public class TileEntityEnchantmentTableRenderer extends TileEntitySpecialRendere
 {
     /** The texture for the book above the enchantment table. */
     private static final ResourceLocation TEXTURE_BOOK = new ResourceLocation("textures/entity/enchanting_table_book.png");
-    private ModelBook modelBook = new ModelBook();
+    private final ModelBook modelBook = new ModelBook();
 
-    public void renderTileEntityAt(TileEntityEnchantmentTable te, double x, double y, double z, float partialTicks, int destroyStage)
+    public void render(TileEntityEnchantmentTable te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
     {
         GlStateManager.pushMatrix();
         GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F, (float)z + 0.5F);
@@ -40,8 +40,8 @@ public class TileEntityEnchantmentTableRenderer extends TileEntitySpecialRendere
         this.bindTexture(TEXTURE_BOOK);
         float f3 = te.pageFlipPrev + (te.pageFlip - te.pageFlipPrev) * partialTicks + 0.25F;
         float f4 = te.pageFlipPrev + (te.pageFlip - te.pageFlipPrev) * partialTicks + 0.75F;
-        f3 = (f3 - (float)MathHelper.truncateDoubleToInt((double)f3)) * 1.6F - 0.3F;
-        f4 = (f4 - (float)MathHelper.truncateDoubleToInt((double)f4)) * 1.6F - 0.3F;
+        f3 = (f3 - (float)MathHelper.fastFloor((double)f3)) * 1.6F - 0.3F;
+        f4 = (f4 - (float)MathHelper.fastFloor((double)f4)) * 1.6F - 0.3F;
 
         if (f3 < 0.0F)
         {

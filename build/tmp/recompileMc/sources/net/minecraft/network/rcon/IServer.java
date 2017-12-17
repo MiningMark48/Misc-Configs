@@ -64,7 +64,7 @@ public interface IServer
     /**
      * Returns an array of the usernames of all the connected players.
      */
-    String[] getAllUsernames();
+    String[] getOnlinePlayerNames();
 
     String getFolderName();
 

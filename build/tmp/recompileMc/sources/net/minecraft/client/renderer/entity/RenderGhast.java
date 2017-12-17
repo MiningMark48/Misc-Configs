@@ -32,9 +32,9 @@ public class RenderGhast extends RenderLiving<EntityGhast>
     protected void preRenderCallback(EntityGhast entitylivingbaseIn, float partialTickTime)
     {
         float f = 1.0F;
-        float f1 = (8.0F + f) / 2.0F;
-        float f2 = (8.0F + 1.0F / f) / 2.0F;
-        GlStateManager.scale(f2, f1, f2);
+        float f1 = 4.5F;
+        float f2 = 4.5F;
+        GlStateManager.scale(4.5F, 4.5F, 4.5F);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

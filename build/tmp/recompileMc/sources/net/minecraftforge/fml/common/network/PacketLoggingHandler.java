@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.network;
 
 import io.netty.buffer.ByteBuf;
@@ -37,7 +56,7 @@ public class PacketLoggingHandler
                 {
                     PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
                     msg.writePacketData(buf);
-                    FMLLog.log(Level.DEBUG, "%s %s:\n%s", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
+                    FMLLog.log.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
                     ctx.fireChannelRead(msg);
                 }
             });
@@ -51,7 +70,7 @@ public class PacketLoggingHandler
                     {
                         PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
                         ((Packet<?>)msg).writePacketData(buf);
-                        FMLLog.log(Level.DEBUG, "%s %s:\n%s", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
+                        FMLLog.log.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
                     }
                     ctx.write(msg, promise);
                 }
@@ -71,7 +90,7 @@ public class PacketLoggingHandler
                     {
                         ByteBuf pkt = (ByteBuf)itr.next();
                         pkt.markReaderIndex();
-                        FMLLog.log(Level.DEBUG, "%s:\n%s", prefix, ByteBufUtils.getContentDump(pkt));
+                        FMLLog.log.debug("{}:\n{}", prefix, ByteBufUtils.getContentDump(pkt));
                         pkt.resetReaderIndex();
                     }
                 }
@@ -83,7 +102,7 @@ public class PacketLoggingHandler
                 protected void encode(ChannelHandlerContext context, ByteBuf input, ByteBuf output) throws Exception
                 {
                     input.markReaderIndex();
-                    FMLLog.log(Level.DEBUG, "%s:\n%s", prefix, ByteBufUtils.getContentDump(input));
+                    FMLLog.log.debug("{}:\n{}", prefix, ByteBufUtils.getContentDump(input));
                     input.resetReaderIndex();
                     super.encode(context, input, output);
                 }

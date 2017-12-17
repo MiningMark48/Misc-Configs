@@ -42,12 +42,12 @@ public class RandomValueRange
 
     public int generateInt(Random rand)
     {
-        return MathHelper.getRandomIntegerInRange(rand, MathHelper.floor_float(this.min), MathHelper.floor_float(this.max));
+        return MathHelper.getInt(rand, MathHelper.floor(this.min), MathHelper.floor(this.max));
     }
 
     public float generateFloat(Random rand)
     {
-        return MathHelper.randomFloatClamp(rand, this.min, this.max);
+        return MathHelper.nextFloat(rand, this.min, this.max);
     }
 
     public boolean isInRange(int value)
@@ -76,13 +76,13 @@ public class RandomValueRange
             {
                 if (p_serialize_1_.min == p_serialize_1_.max)
                 {
-                    return new JsonPrimitive(Float.valueOf(p_serialize_1_.min));
+                    return new JsonPrimitive(p_serialize_1_.min);
                 }
                 else
                 {
                     JsonObject jsonobject = new JsonObject();
-                    jsonobject.addProperty("min", (Number)Float.valueOf(p_serialize_1_.min));
-                    jsonobject.addProperty("max", (Number)Float.valueOf(p_serialize_1_.max));
+                    jsonobject.addProperty("min", Float.valueOf(p_serialize_1_.min));
+                    jsonobject.addProperty("max", Float.valueOf(p_serialize_1_.max));
                     return jsonobject;
                 }
             }

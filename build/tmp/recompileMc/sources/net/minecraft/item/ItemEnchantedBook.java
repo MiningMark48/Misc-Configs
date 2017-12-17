@@ -1,16 +1,29 @@
 package net.minecraft.item;
 
 import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentData;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.NonNullList;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemEnchantedBook extends Item
 {
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
     @SideOnly(Side.CLIENT)
     public boolean hasEffect(ItemStack stack)
     {
@@ -20,7 +33,7 @@ public class ItemEnchantedBook extends Item
     /**
      * Checks isDamagable and if it cannot be stacked
      */
-    public boolean isItemTool(ItemStack stack)
+    public boolean isEnchantable(ItemStack stack)
     {
         return false;
     }
@@ -30,35 +43,33 @@ public class ItemEnchantedBook extends Item
      */
     public EnumRarity getRarity(ItemStack stack)
     {
-        return !this.getEnchantments(stack).hasNoTags() ? EnumRarity.UNCOMMON : super.getRarity(stack);
+        return getEnchantments(stack).hasNoTags() ? super.getRarity(stack) : EnumRarity.UNCOMMON;
     }
 
-    public NBTTagList getEnchantments(ItemStack stack)
+    public static NBTTagList getEnchantments(ItemStack p_92110_0_)
     {
-        NBTTagCompound nbttagcompound = stack.getTagCompound();
-        return nbttagcompound != null && nbttagcompound.hasKey("StoredEnchantments", 9) ? (NBTTagList)nbttagcompound.getTag("StoredEnchantments") : new NBTTagList();
+        NBTTagCompound nbttagcompound = p_92110_0_.getTagCompound();
+        return nbttagcompound != null ? nbttagcompound.getTagList("StoredEnchantments", 10) : new NBTTagList();
     }
 
     /**
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
-        super.addInformation(stack, playerIn, tooltip, advanced);
-        NBTTagList nbttaglist = this.getEnchantments(stack);
+        super.addInformation(stack, worldIn, tooltip, flagIn);
+        NBTTagList nbttaglist = getEnchantments(stack);
 
-        if (nbttaglist != null)
+        for (int i = 0; i < nbttaglist.tagCount(); ++i)
         {
-            for (int i = 0; i < nbttaglist.tagCount(); ++i)
-            {
-                int j = nbttaglist.getCompoundTagAt(i).getShort("id");
-                int k = nbttaglist.getCompoundTagAt(i).getShort("lvl");
+            NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
+            int j = nbttagcompound.getShort("id");
+            Enchantment enchantment = Enchantment.getEnchantmentByID(j);
 
-                if (Enchantment.getEnchantmentByID(j) != null)
-                {
-                    tooltip.add(Enchantment.getEnchantmentByID(j).getTranslatedName(k));
-                }
+            if (enchantment != null)
+            {
+                tooltip.add(enchantment.getTranslatedName(nbttagcompound.getShort("lvl")));
             }
         }
     }
@@ -66,20 +77,20 @@ public class ItemEnchantedBook extends Item
     /**
      * Adds an stored enchantment to an enchanted book ItemStack
      */
-    public void addEnchantment(ItemStack stack, EnchantmentData enchantment)
+    public static void addEnchantment(ItemStack p_92115_0_, EnchantmentData stack)
     {
-        NBTTagList nbttaglist = this.getEnchantments(stack);
+        NBTTagList nbttaglist = getEnchantments(p_92115_0_);
         boolean flag = true;
 
         for (int i = 0; i < nbttaglist.tagCount(); ++i)
         {
             NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
 
-            if (Enchantment.getEnchantmentByID(nbttagcompound.getShort("id")) == enchantment.enchantmentobj)
+            if (Enchantment.getEnchantmentByID(nbttagcompound.getShort("id")) == stack.enchantment)
             {
-                if (nbttagcompound.getShort("lvl") < enchantment.enchantmentLevel)
+                if (nbttagcompound.getShort("lvl") < stack.enchantmentLevel)
                 {
-                    nbttagcompound.setShort("lvl", (short)enchantment.enchantmentLevel);
+                    nbttagcompound.setShort("lvl", (short)stack.enchantmentLevel);
                 }
 
                 flag = false;
@@ -90,35 +101,56 @@ public class ItemEnchantedBook extends Item
         if (flag)
         {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-            nbttagcompound1.setShort("id", (short)Enchantment.getEnchantmentID(enchantment.enchantmentobj));
-            nbttagcompound1.setShort("lvl", (short)enchantment.enchantmentLevel);
+            nbttagcompound1.setShort("id", (short)Enchantment.getEnchantmentID(stack.enchantment));
+            nbttagcompound1.setShort("lvl", (short)stack.enchantmentLevel);
             nbttaglist.appendTag(nbttagcompound1);
         }
 
-        if (!stack.hasTagCompound())
+        if (!p_92115_0_.hasTagCompound())
         {
-            stack.setTagCompound(new NBTTagCompound());
+            p_92115_0_.setTagCompound(new NBTTagCompound());
         }
 
-        stack.getTagCompound().setTag("StoredEnchantments", nbttaglist);
+        p_92115_0_.getTagCompound().setTag("StoredEnchantments", nbttaglist);
     }
 
     /**
      * Returns the ItemStack of an enchanted version of this item.
      */
-    public ItemStack getEnchantedItemStack(EnchantmentData data)
+    public static ItemStack getEnchantedItemStack(EnchantmentData p_92111_0_)
     {
-        ItemStack itemstack = new ItemStack(this);
-        this.addEnchantment(itemstack, data);
+        ItemStack itemstack = new ItemStack(Items.ENCHANTED_BOOK);
+        addEnchantment(itemstack, p_92111_0_);
         return itemstack;
     }
 
-    @SideOnly(Side.CLIENT)
-    public void getAll(Enchantment enchantment, List<ItemStack> list)
+    /**
+     * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
+     */
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (int i = enchantment.getMinLevel(); i <= enchantment.getMaxLevel(); ++i)
+        if (tab == CreativeTabs.SEARCH)
         {
-            list.add(this.getEnchantedItemStack(new EnchantmentData(enchantment, i)));
+            for (Enchantment enchantment : Enchantment.REGISTRY)
+            {
+                if (enchantment.type != null)
+                {
+                    for (int i = enchantment.getMinLevel(); i <= enchantment.getMaxLevel(); ++i)
+                    {
+                        items.add(getEnchantedItemStack(new EnchantmentData(enchantment, i)));
+                    }
+                }
+            }
+        }
+        else if (tab.getRelevantEnchantmentTypes().length != 0)
+        {
+            for (Enchantment enchantment1 : Enchantment.REGISTRY)
+            {
+                if (tab.hasRelevantEnchantmentType(enchantment1.type))
+                {
+                    items.add(getEnchantedItemStack(new EnchantmentData(enchantment1, enchantment1.getMaxLevel())));
+                }
+            }
         }
     }
 }

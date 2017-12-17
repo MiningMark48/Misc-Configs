@@ -17,7 +17,7 @@ public class FaceBakery
 {
     private static final float SCALE_ROTATION_22_5 = 1.0F / (float)Math.cos(0.39269909262657166D) - 1.0F;
     private static final float SCALE_ROTATION_GENERAL = 1.0F / (float)Math.cos((Math.PI / 4D)) - 1.0F;
-    private static FaceBakery.Rotation[] UV_ROTATIONS = new FaceBakery.Rotation[ModelRotation.values().length * EnumFacing.values().length];
+    private static final FaceBakery.Rotation[] UV_ROTATIONS = new FaceBakery.Rotation[ModelRotation.values().length * EnumFacing.values().length];
     private static final FaceBakery.Rotation UV_ROTATION_0 = new FaceBakery.Rotation()
     {
         BlockFaceUV makeRotatedUV(float p_188007_1_, float p_188007_2_, float p_188007_3_, float p_188007_4_)
@@ -98,7 +98,7 @@ public class FaceBakery
     private int getFaceShadeColor(EnumFacing facing)
     {
         float f = this.getFaceBrightness(facing);
-        int i = MathHelper.clamp_int((int)(f * 255.0F), 0, 255);
+        int i = MathHelper.clamp((int)(f * 255.0F), 0, 255);
         return -16777216 | i << 16 | i << 8 | i;
     }
 

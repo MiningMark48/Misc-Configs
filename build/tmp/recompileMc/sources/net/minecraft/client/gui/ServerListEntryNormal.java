@@ -1,6 +1,5 @@
 package net.minecraft.client.gui;
 
-import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -8,6 +7,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.base64.Base64;
 import java.awt.image.BufferedImage;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -16,6 +16,7 @@ import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureUtil;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
@@ -39,16 +40,16 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
     private DynamicTexture icon;
     private long lastClickTime;
 
-    protected ServerListEntryNormal(GuiMultiplayer p_i45048_1_, ServerData serverIn)
+    protected ServerListEntryNormal(GuiMultiplayer ownerIn, ServerData serverIn)
     {
-        this.owner = p_i45048_1_;
+        this.owner = ownerIn;
         this.server = serverIn;
         this.mc = Minecraft.getMinecraft();
         this.serverIcon = new ResourceLocation("servers/" + serverIn.serverIP + "/icon");
         this.icon = (DynamicTexture)this.mc.getTextureManager().getTexture(this.serverIcon);
     }
 
-    public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+    public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks)
     {
         if (!this.server.pinged)
         {
@@ -67,31 +68,31 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
                     catch (UnknownHostException var2)
                     {
                         ServerListEntryNormal.this.server.pingToServer = -1L;
-                        ServerListEntryNormal.this.server.serverMOTD = TextFormatting.DARK_RED + "Can\'t resolve hostname";
+                        ServerListEntryNormal.this.server.serverMOTD = TextFormatting.DARK_RED + I18n.format("multiplayer.status.cannot_resolve");
                     }
                     catch (Exception var3)
                     {
                         ServerListEntryNormal.this.server.pingToServer = -1L;
-                        ServerListEntryNormal.this.server.serverMOTD = TextFormatting.DARK_RED + "Can\'t connect to server.";
+                        ServerListEntryNormal.this.server.serverMOTD = TextFormatting.DARK_RED + I18n.format("multiplayer.status.cannot_connect");
                     }
                 }
             });
         }
 
-        boolean flag = this.server.version > 110;
-        boolean flag1 = this.server.version < 110;
+        boolean flag = this.server.version > 340;
+        boolean flag1 = this.server.version < 340;
         boolean flag2 = flag || flag1;
-        this.mc.fontRendererObj.drawString(this.server.serverName, x + 32 + 3, y + 1, 16777215);
-        List<String> list = this.mc.fontRendererObj.listFormattedStringToWidth(net.minecraftforge.fml.client.FMLClientHandler.instance().fixDescription(this.server.serverMOTD), listWidth - 48 - 2);
+        this.mc.fontRenderer.drawString(this.server.serverName, x + 32 + 3, y + 1, 16777215);
+        List<String> list = this.mc.fontRenderer.listFormattedStringToWidth(net.minecraftforge.fml.client.FMLClientHandler.instance().fixDescription(this.server.serverMOTD), listWidth - 32 - 2);
 
         for (int i = 0; i < Math.min(list.size(), 2); ++i)
         {
-            this.mc.fontRendererObj.drawString((String)list.get(i), x + 32 + 3, y + 12 + this.mc.fontRendererObj.FONT_HEIGHT * i, 8421504);
+            this.mc.fontRenderer.drawString(list.get(i), x + 32 + 3, y + 12 + this.mc.fontRenderer.FONT_HEIGHT * i, 8421504);
         }
 
         String s2 = flag2 ? TextFormatting.DARK_RED + this.server.gameVersion : this.server.populationInfo;
-        int j = this.mc.fontRendererObj.getStringWidth(s2);
-        this.mc.fontRendererObj.drawString(s2, x + listWidth - j - 15 - 2, y + 1, 8421504);
+        int j = this.mc.fontRenderer.getStringWidth(s2);
+        this.mc.fontRenderer.drawString(s2, x + listWidth - j - 15 - 2, y + 1, 8421504);
         int k = 0;
         String s = null;
         int l;
@@ -100,7 +101,7 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
         if (flag2)
         {
             l = 5;
-            s1 = flag ? "Client out of date!" : "Server out of date!";
+            s1 = I18n.format(flag ? "multiplayer.status.client_out_of_date" : "multiplayer.status.server_out_of_date");
             s = this.server.playerList;
         }
         else if (this.server.pinged && this.server.pingToServer != -2L)
@@ -132,7 +133,7 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
 
             if (this.server.pingToServer < 0L)
             {
-                s1 = "(no connection)";
+                s1 = I18n.format("multiplayer.status.no_connection");
             }
             else
             {
@@ -150,7 +151,7 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
                 l = 8 - l;
             }
 
-            s1 = "Pinging...";
+            s1 = I18n.format("multiplayer.status.pinging");
         }
 
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -258,27 +259,32 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
         }
         else
         {
-            ByteBuf bytebuf = Unpooled.copiedBuffer((CharSequence)this.server.getBase64EncodedIconData(), Charsets.UTF_8);
-            ByteBuf bytebuf1 = Base64.decode(bytebuf);
+            ByteBuf bytebuf = Unpooled.copiedBuffer((CharSequence)this.server.getBase64EncodedIconData(), StandardCharsets.UTF_8);
+            ByteBuf bytebuf1 = null;
             BufferedImage bufferedimage;
-            label101:
+            label99:
             {
                 try
                 {
+                    bytebuf1 = Base64.decode(bytebuf);
                     bufferedimage = TextureUtil.readBufferedImage(new ByteBufInputStream(bytebuf1));
-                    Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide", new Object[0]);
-                    Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high", new Object[0]);
-                    break label101;
+                    Validate.validState(bufferedimage.getWidth() == 64, "Must be 64 pixels wide");
+                    Validate.validState(bufferedimage.getHeight() == 64, "Must be 64 pixels high");
+                    break label99;
                 }
                 catch (Throwable throwable)
                 {
-                    LOGGER.error("Invalid icon for server " + this.server.serverName + " (" + this.server.serverIP + ")", throwable);
+                    LOGGER.error("Invalid icon for server {} ({})", this.server.serverName, this.server.serverIP, throwable);
                     this.server.setBase64EncodedIconData((String)null);
                 }
                 finally
                 {
                     bytebuf.release();
-                    bytebuf1.release();
+
+                    if (bytebuf1 != null)
+                    {
+                        bytebuf1.release();
+                    }
                 }
 
                 return;
@@ -334,7 +340,7 @@ public class ServerListEntryNormal implements GuiListExtended.IGuiListEntry
         return false;
     }
 
-    public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_)
+    public void updatePosition(int slotIndex, int x, int y, float partialTicks)
     {
     }
 

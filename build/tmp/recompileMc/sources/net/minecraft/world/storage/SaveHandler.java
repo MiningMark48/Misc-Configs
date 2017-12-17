@@ -48,7 +48,7 @@ public class SaveHandler implements ISaveHandler, IPlayerFileData
         if (p_i46648_3_)
         {
             this.playersDirectory.mkdirs();
-            this.structureTemplateManager = new TemplateManager((new File(this.worldDirectory, "structures")).toString());
+            this.structureTemplateManager = new TemplateManager((new File(this.worldDirectory, "structures")).toString(), dataFixerIn);
         }
         else
         {
@@ -131,6 +131,7 @@ public class SaveHandler implements ISaveHandler, IPlayerFileData
     /**
      * Loads and returns the world info
      */
+    @Nullable
     public WorldInfo loadWorldInfo()
     {
         File file1 = new File(this.worldDirectory, "level.dat");
@@ -223,13 +224,14 @@ public class SaveHandler implements ISaveHandler, IPlayerFileData
         }
         catch (Exception var5)
         {
-            LOGGER.warn("Failed to save player data for " + player.getName());
+            LOGGER.warn("Failed to save player data for {}", (Object)player.getName());
         }
     }
 
     /**
      * Reads the player data from disk into the specified PlayerEntityMP.
      */
+    @Nullable
     public NBTTagCompound readPlayerData(EntityPlayer player)
     {
         NBTTagCompound nbttagcompound = null;
@@ -245,7 +247,7 @@ public class SaveHandler implements ISaveHandler, IPlayerFileData
         }
         catch (Exception var4)
         {
-            LOGGER.warn("Failed to load player data for " + player.getName());
+            LOGGER.warn("Failed to load player data for {}", (Object)player.getName());
         }
 
         if (nbttagcompound != null)

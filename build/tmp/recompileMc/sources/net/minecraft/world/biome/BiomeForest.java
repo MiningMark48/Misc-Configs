@@ -20,20 +20,20 @@ public class BiomeForest extends Biome
     protected static final WorldGenBirchTree SUPER_BIRCH_TREE = new WorldGenBirchTree(false, true);
     protected static final WorldGenBirchTree BIRCH_TREE = new WorldGenBirchTree(false, false);
     protected static final WorldGenCanopyTree ROOF_TREE = new WorldGenCanopyTree(false);
-    private BiomeForest.Type type;
+    private final BiomeForest.Type type;
 
     public BiomeForest(BiomeForest.Type typeIn, Biome.BiomeProperties properties)
     {
         super(properties);
         this.type = typeIn;
-        this.theBiomeDecorator.treesPerChunk = 10;
-        this.theBiomeDecorator.grassPerChunk = 2;
+        this.decorator.treesPerChunk = 10;
+        this.decorator.grassPerChunk = 2;
 
         if (this.type == BiomeForest.Type.FLOWER)
         {
-            this.theBiomeDecorator.treesPerChunk = 6;
-            this.theBiomeDecorator.flowersPerChunk = 100;
-            this.theBiomeDecorator.grassPerChunk = 1;
+            this.decorator.treesPerChunk = 6;
+            this.decorator.flowersPerChunk = 100;
+            this.decorator.grassPerChunk = 1;
             this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityRabbit.class, 4, 2, 3));
         }
 
@@ -44,20 +44,42 @@ public class BiomeForest extends Biome
 
         if (this.type == BiomeForest.Type.ROOFED)
         {
-            this.theBiomeDecorator.treesPerChunk = -999;
+            this.decorator.treesPerChunk = -999;
+        }
+
+        if (this.type == BiomeForest.Type.FLOWER) //Needs to be done here so we have access to this.type
+        {
+            this.flowers.clear();
+            for (BlockFlower.EnumFlowerType type : BlockFlower.EnumFlowerType.values())
+            {
+                if (type.getBlockType() == BlockFlower.EnumFlowerColor.YELLOW) continue;
+                if (type == BlockFlower.EnumFlowerType.BLUE_ORCHID) type = BlockFlower.EnumFlowerType.POPPY;
+                addFlower(net.minecraft.init.Blocks.RED_FLOWER.getDefaultState().withProperty(net.minecraft.init.Blocks.RED_FLOWER.getTypeProperty(), type), 10);
+            }
         }
     }
 
-    public WorldGenAbstractTree genBigTreeChance(Random rand)
+    public WorldGenAbstractTree getRandomTreeFeature(Random rand)
     {
-        return (WorldGenAbstractTree)(this.type == BiomeForest.Type.ROOFED && rand.nextInt(3) > 0 ? ROOF_TREE : (this.type != BiomeForest.Type.BIRCH && rand.nextInt(5) != 0 ? (rand.nextInt(10) == 0 ? BIG_TREE_FEATURE : TREE_FEATURE) : BIRCH_TREE));
+        if (this.type == BiomeForest.Type.ROOFED && rand.nextInt(3) > 0)
+        {
+            return ROOF_TREE;
+        }
+        else if (this.type != BiomeForest.Type.BIRCH && rand.nextInt(5) != 0)
+        {
+            return (WorldGenAbstractTree)(rand.nextInt(10) == 0 ? BIG_TREE_FEATURE : TREE_FEATURE);
+        }
+        else
+        {
+            return BIRCH_TREE;
+        }
     }
 
     public BlockFlower.EnumFlowerType pickRandomFlower(Random rand, BlockPos pos)
     {
         if (this.type == BiomeForest.Type.FLOWER)
         {
-            double d0 = MathHelper.clamp_double((1.0D + GRASS_COLOR_NOISE.getValue((double)pos.getX() / 48.0D, (double)pos.getZ() / 48.0D)) / 2.0D, 0.0D, 0.9999D);
+            double d0 = MathHelper.clamp((1.0D + GRASS_COLOR_NOISE.getValue((double)pos.getX() / 48.0D, (double)pos.getZ() / 48.0D)) / 2.0D, 0.0D, 0.9999D);
             BlockFlower.EnumFlowerType blockflower$enumflowertype = BlockFlower.EnumFlowerType.values()[(int)(d0 * (double)BlockFlower.EnumFlowerType.values().length)];
             return blockflower$enumflowertype == BlockFlower.EnumFlowerType.BLUE_ORCHID ? BlockFlower.EnumFlowerType.POPPY : blockflower$enumflowertype;
         }
@@ -74,6 +96,8 @@ public class BiomeForest extends Biome
             this.addMushrooms(worldIn, rand, pos);
         }
 
+        if(net.minecraftforge.event.terraingen.TerrainGen.decorate(worldIn, rand, pos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.FLOWERS))
+        { // no tab for patch
         int i = rand.nextInt(5) - 3;
 
         if (this.type == BiomeForest.Type.FLOWER)
@@ -82,11 +106,13 @@ public class BiomeForest extends Biome
         }
 
         this.addDoublePlants(worldIn, rand, pos, i);
+        }
         super.decorate(worldIn, rand, pos);
     }
 
     public void addMushrooms(World p_185379_1_, Random p_185379_2_, BlockPos p_185379_3_)
     {
+
         for (int i = 0; i < 4; ++i)
         {
             for (int j = 0; j < 4; ++j)
@@ -95,14 +121,14 @@ public class BiomeForest extends Biome
                 int l = j * 4 + 1 + 8 + p_185379_2_.nextInt(3);
                 BlockPos blockpos = p_185379_1_.getHeight(p_185379_3_.add(k, 0, l));
 
-                if (p_185379_2_.nextInt(20) == 0)
+                if (p_185379_2_.nextInt(20) == 0 && net.minecraftforge.event.terraingen.TerrainGen.decorate(p_185379_1_, p_185379_2_, blockpos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.BIG_SHROOM))
                 {
                     WorldGenBigMushroom worldgenbigmushroom = new WorldGenBigMushroom();
                     worldgenbigmushroom.generate(p_185379_1_, p_185379_2_, blockpos);
                 }
-                else
+                else if (net.minecraftforge.event.terraingen.TerrainGen.decorate(p_185379_1_, p_185379_2_, blockpos, net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate.EventType.TREE))
                 {
-                    WorldGenAbstractTree worldgenabstracttree = this.genBigTreeChance(p_185379_2_);
+                    WorldGenAbstractTree worldgenabstracttree = this.getRandomTreeFeature(p_185379_2_);
                     worldgenabstracttree.setDecorationDefaults();
 
                     if (worldgenabstracttree.generate(p_185379_1_, p_185379_2_, blockpos))
@@ -144,22 +170,6 @@ public class BiomeForest extends Biome
                     break;
                 }
             }
-        }
-    }
-
-    @Override
-    public void addDefaultFlowers()
-    {
-        if (type != BiomeForest.Type.FLOWER)
-        {
-            super.addDefaultFlowers();
-            return;
-        }
-        for (BlockFlower.EnumFlowerType type : BlockFlower.EnumFlowerType.values())
-        {
-            if (type.getBlockType() == BlockFlower.EnumFlowerColor.YELLOW) continue;
-            if (type == BlockFlower.EnumFlowerType.BLUE_ORCHID) type = BlockFlower.EnumFlowerType.POPPY;
-            addFlower(net.minecraft.init.Blocks.RED_FLOWER.getDefaultState().withProperty(net.minecraft.init.Blocks.RED_FLOWER.getTypeProperty(), type), 10);
         }
     }
 

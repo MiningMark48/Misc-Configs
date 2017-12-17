@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -53,10 +52,11 @@ public class BlockNetherWart extends BlockBush
     {
         int i = ((Integer)state.getValue(AGE)).intValue();
 
-        if (i < 3 && rand.nextInt(10) == 0)
+        if (i < 3 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, rand.nextInt(10) == 0))
         {
-            state = state.withProperty(AGE, Integer.valueOf(i + 1));
-            worldIn.setBlockState(pos, state, 2);
+            IBlockState newState = state.withProperty(AGE, Integer.valueOf(i + 1));
+            worldIn.setBlockState(pos, newState, 2);
+            net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state, newState);
         }
 
         super.updateTick(worldIn, pos, state, rand);
@@ -93,10 +93,9 @@ public class BlockNetherWart extends BlockBush
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
     /**
@@ -129,9 +128,8 @@ public class BlockNetherWart extends BlockBush
     }
 
     @Override
-    public java.util.List<ItemStack> getDrops(net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        java.util.List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
         Random rand = world instanceof World ? ((World)world).rand : new Random();
         int count = 1;
 
@@ -142,10 +140,8 @@ public class BlockNetherWart extends BlockBush
 
         for (int i = 0; i < count; i++)
         {
-            ret.add(new ItemStack(Items.NETHER_WART));
+            drops.add(new ItemStack(Items.NETHER_WART));
         }
-
-        return ret;
     }
 
     protected BlockStateContainer createBlockState()

@@ -1,7 +1,27 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.common.model;
 
 import java.util.EnumMap;
 
+import javax.annotation.Nullable;
 import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
@@ -21,8 +41,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
+import com.google.common.base.MoreObjects;
+import java.util.Optional;
 import com.google.common.collect.Maps;
 
 /*
@@ -59,7 +79,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
         }
     }
 
-    public TRSRTransformation(Vector3f translation, Quat4f leftRot, Vector3f scale, Quat4f rightRot)
+    public TRSRTransformation(@Nullable Vector3f translation, @Nullable Quat4f leftRot, @Nullable Vector3f scale, @Nullable Quat4f rightRot)
     {
         this.matrix = mul(translation, leftRot, scale, rightRot);
         this.translation = translation != null ? translation : new Vector3f();
@@ -241,7 +261,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
         );
     }
 
-    public static Matrix4f mul(Vector3f translation, Quat4f leftRot, Vector3f scale, Quat4f rightRot)
+    public static Matrix4f mul(@Nullable Vector3f translation, @Nullable Quat4f leftRot, @Nullable Vector3f scale, @Nullable Quat4f rightRot)
     {
         Matrix4f res = new Matrix4f(), t = new Matrix4f();
         res.setIdentity();
@@ -488,7 +508,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
     }
 
     /*
-     * Divides m by m33, sets last row to (0, 0, 0, 1), extracts linear and translation parts 
+     * Divides m by m33, sets last row to (0, 0, 0, 1), extracts linear and translation parts
      */
     public static Pair<Matrix3f, Vector3f> toAffine(Matrix4f m)
     {
@@ -508,6 +528,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
         return new net.minecraft.client.renderer.block.model.ItemTransformVec3f(toLwjgl(toXYZDegrees(getLeftRot())), toLwjgl(getTranslation()), toLwjgl(getScale()));
     }
 
+    @Override
     public Matrix4f getMatrix()
     {
         return (Matrix4f)matrix.clone();
@@ -537,15 +558,17 @@ public final class TRSRTransformation implements IModelState, ITransformation
         return (Quat4f)rightRot.clone();
     }
 
+    @Override
     public Optional<TRSRTransformation> apply(Optional<? extends IModelPart> part)
     {
         if(part.isPresent())
         {
-            return Optional.absent();
+            return Optional.empty();
         }
         return Optional.of(this);
     }
 
+    @Override
     public EnumFacing rotate(EnumFacing facing)
     {
         return rotate(matrix, facing);
@@ -577,6 +600,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
         return true;
     }
 
+    @Override
     public int rotate(EnumFacing facing, int vertexIndex)
     {
         // FIXME check if this is good enough
@@ -587,7 +611,7 @@ public final class TRSRTransformation implements IModelState, ITransformation
     public String toString()
     {
         genCheck();
-        return Objects.toStringHelper(this.getClass())
+        return MoreObjects.toStringHelper(this.getClass())
             .add("matrix", matrix)
             .add("translation", translation)
             .add("leftRot", leftRot)

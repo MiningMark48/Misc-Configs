@@ -31,7 +31,7 @@ public class ParticleWaterWake extends Particle
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
         this.motionY -= (double)this.particleGravity;
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.9800000190734863D;
         this.motionY *= 0.9800000190734863D;
         this.motionZ *= 0.9800000190734863D;
@@ -49,7 +49,7 @@ public class ParticleWaterWake extends Particle
     @SideOnly(Side.CLIENT)
     public static class Factory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 return new ParticleWaterWake(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
             }

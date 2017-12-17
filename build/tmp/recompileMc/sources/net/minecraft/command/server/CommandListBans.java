@@ -16,7 +16,7 @@ public class CommandListBans extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "banlist";
     }
@@ -40,7 +40,7 @@ public class CommandListBans extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.banlist.usage";
     }
@@ -50,20 +50,23 @@ public class CommandListBans extends CommandBase
      */
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException
     {
-        if (args.length >= 1 && args[0].equalsIgnoreCase("ips"))
+        if (args.length >= 1 && "ips".equalsIgnoreCase(args[0]))
         {
-            sender.addChatMessage(new TextComponentTranslation("commands.banlist.ips", new Object[] {Integer.valueOf(server.getPlayerList().getBannedIPs().getKeys().length)}));
-            sender.addChatMessage(new TextComponentString(joinNiceString(server.getPlayerList().getBannedIPs().getKeys())));
+            sender.sendMessage(new TextComponentTranslation("commands.banlist.ips", new Object[] {server.getPlayerList().getBannedIPs().getKeys().length}));
+            sender.sendMessage(new TextComponentString(joinNiceString(server.getPlayerList().getBannedIPs().getKeys())));
         }
         else
         {
-            sender.addChatMessage(new TextComponentTranslation("commands.banlist.players", new Object[] {Integer.valueOf(server.getPlayerList().getBannedPlayers().getKeys().length)}));
-            sender.addChatMessage(new TextComponentString(joinNiceString(server.getPlayerList().getBannedPlayers().getKeys())));
+            sender.sendMessage(new TextComponentTranslation("commands.banlist.players", new Object[] {server.getPlayerList().getBannedPlayers().getKeys().length}));
+            sender.sendMessage(new TextComponentString(joinNiceString(server.getPlayerList().getBannedPlayers().getKeys())));
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"players", "ips"}): Collections.<String>emptyList();
+        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"players", "ips"}) : Collections.emptyList();
     }
 }

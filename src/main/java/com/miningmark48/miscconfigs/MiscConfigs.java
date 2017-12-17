@@ -9,6 +9,8 @@ import com.miningmark48.miscconfigs.handler.ConfigurationHandler;
 import com.miningmark48.miscconfigs.proxy.ClientProxy;
 import com.miningmark48.miscconfigs.proxy.IProxy;
 import com.miningmark48.miscconfigs.reference.Reference;
+import com.miningmark48.miscconfigs.utility.LogHelper;
+import com.miningmark48.miscconfigs.utility.Translate;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -31,25 +33,21 @@ public class MiscConfigs {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event){
         ConfigurationHandler.init(event.getSuggestedConfigurationFile());
-        FMLCommonHandler.instance().bus().register(new ConfigurationHandler());
-
+        MinecraftForge.EVENT_BUS.register(new ConfigurationHandler());
         ConfigWindowName.setWindowName();
-
         //LogHelper.info(Translate.translateToLocal("log.info.preinit"));
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event){
         MinecraftForge.EVENT_BUS.register(new EventDisableFeatures());
-        FMLCommonHandler.instance().bus().register(new EventJoinGame());
-        FMLCommonHandler.instance().bus().register(new EventNoRain());
-
+        MinecraftForge.EVENT_BUS.register(new EventJoinGame());
+        MinecraftForge.EVENT_BUS.register(new EventNoRain());
         //LogHelper.info(Translate.translateToLocal( "log.info.init"));
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event){
-        FMLCommonHandler.instance().bus().register(new EventSaplingGrowthMultiplier());
         MinecraftForge.EVENT_BUS.register(new EventSaplingGrowthMultiplier());
         //LogHelper.info(Translate.translateToLocal("log.info.postinit"));
     }

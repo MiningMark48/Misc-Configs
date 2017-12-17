@@ -12,10 +12,12 @@ public interface IChunkProvider
     /**
      * Unloads chunks that are marked to be unloaded. This is not guaranteed to unload every such chunk.
      */
-    boolean unloadQueuedChunks();
+    boolean tick();
 
     /**
      * Converts the instance data to a readable string.
      */
     String makeString();
+
+    boolean isChunkGeneratedAt(int x, int z);
 }

@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.IProgressUpdate;
 import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.biome.BiomeProviderSingle;
@@ -72,7 +73,7 @@ public class AnvilSaveConverter extends SaveFormatOld
                         }
 
                         long i = 0L;
-                        list.add(new WorldSummary(worldinfo, s, s1, i, flag));
+                        list.add(new WorldSummary(worldinfo, s, s1, 0L, flag));
                     }
                 }
             }
@@ -81,7 +82,7 @@ public class AnvilSaveConverter extends SaveFormatOld
         }
         else
         {
-            throw new AnvilConverterException("Unable to read or access folder where game worlds are saved!");
+            throw new AnvilConverterException(I18n.translateToLocal("selectWorld.load_folder_access"));
         }
     }
 
@@ -146,11 +147,11 @@ public class AnvilSaveConverter extends SaveFormatOld
         }
 
         int i = list.size() + list1.size() + list2.size();
-        LOGGER.info("Total conversion count is " + i);
+        LOGGER.info("Total conversion count is {}", (int)i);
         WorldInfo worldinfo = this.getWorldInfo(filename);
-        BiomeProvider biomeprovider = null;
+        BiomeProvider biomeprovider;
 
-        if (worldinfo.getTerrainType() == WorldType.FLAT)
+        if (worldinfo != null && worldinfo.getTerrainType() == WorldType.FLAT)
         {
             biomeprovider = new BiomeProviderSingle(Biomes.PLAINS);
         }

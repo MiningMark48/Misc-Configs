@@ -32,7 +32,7 @@ public enum SoundCategory
 
     public static SoundCategory getByName(String categoryName)
     {
-        return (SoundCategory)SOUND_CATEGORIES.get(categoryName);
+        return SOUND_CATEGORIES.get(categoryName);
     }
 
     public static Set<String> getSoundCategoryNames()

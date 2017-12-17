@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
@@ -41,8 +42,8 @@ public class BlockPart
     {
         for (Entry<EnumFacing, BlockPartFace> entry : this.mapFaces.entrySet())
         {
-            float[] afloat = this.getFaceUvs((EnumFacing)entry.getKey());
-            ((BlockPartFace)entry.getValue()).blockFaceUV.setUvs(afloat);
+            float[] afloat = this.getFaceUvs(entry.getKey());
+            (entry.getValue()).blockFaceUV.setUvs(afloat);
         }
     }
 
@@ -124,7 +125,7 @@ public class BlockPart
             private EnumFacing.Axis parseAxis(JsonObject object)
             {
                 String s = JsonUtils.getString(object, "axis");
-                EnumFacing.Axis enumfacing$axis = EnumFacing.Axis.byName(s.toLowerCase());
+                EnumFacing.Axis enumfacing$axis = EnumFacing.Axis.byName(s.toLowerCase(Locale.ROOT));
 
                 if (enumfacing$axis == null)
                 {
@@ -157,8 +158,8 @@ public class BlockPart
 
                 for (Entry<String, JsonElement> entry : jsonobject.entrySet())
                 {
-                    EnumFacing enumfacing = this.parseEnumFacing((String)entry.getKey());
-                    map.put(enumfacing, (BlockPartFace)deserializationContext.deserialize((JsonElement)entry.getValue(), BlockPartFace.class));
+                    EnumFacing enumfacing = this.parseEnumFacing(entry.getKey());
+                    map.put(enumfacing, (BlockPartFace)deserializationContext.deserialize(entry.getValue(), BlockPartFace.class));
                 }
 
                 return map;
@@ -188,7 +189,7 @@ public class BlockPart
                 }
                 else
                 {
-                    throw new JsonParseException("\'to\' specifier exceeds the allowed boundaries: " + vector3f);
+                    throw new JsonParseException("'to' specifier exceeds the allowed boundaries: " + vector3f);
                 }
             }
 
@@ -202,7 +203,7 @@ public class BlockPart
                 }
                 else
                 {
-                    throw new JsonParseException("\'from\' specifier exceeds the allowed boundaries: " + vector3f);
+                    throw new JsonParseException("'from' specifier exceeds the allowed boundaries: " + vector3f);
                 }
             }
 

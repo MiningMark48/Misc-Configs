@@ -78,7 +78,7 @@ public abstract class Biomes
 
     private static Biome getRegisteredBiome(String id)
     {
-        Biome biome = (Biome)Biome.REGISTRY.getObject(new ResourceLocation(id));
+        Biome biome = Biome.REGISTRY.getObject(new ResourceLocation(id));
 
         if (biome == null)
         {

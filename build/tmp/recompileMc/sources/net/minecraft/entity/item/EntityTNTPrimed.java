@@ -1,7 +1,9 @@
 package net.minecraft.entity.item;
 
+import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.MoverType;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
@@ -12,6 +14,7 @@ import net.minecraft.world.World;
 public class EntityTNTPrimed extends Entity
 {
     private static final DataParameter<Integer> FUSE = EntityDataManager.<Integer>createKey(EntityTNTPrimed.class, DataSerializers.VARINT);
+    @Nullable
     private EntityLivingBase tntPlacedBy;
     /** How long the fuse is */
     private int fuse;
@@ -21,6 +24,7 @@ public class EntityTNTPrimed extends Entity
         super(worldIn);
         this.fuse = 80;
         this.preventEntitySpawning = true;
+        this.isImmuneToFire = true;
         this.setSize(0.98F, 0.98F);
     }
 
@@ -69,8 +73,13 @@ public class EntityTNTPrimed extends Entity
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
-        this.motionY -= 0.03999999910593033D;
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+
+        if (!this.hasNoGravity())
+        {
+            this.motionY -= 0.03999999910593033D;
+        }
+
+        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.9800000190734863D;
         this.motionY *= 0.9800000190734863D;
         this.motionZ *= 0.9800000190734863D;
@@ -88,7 +97,7 @@ public class EntityTNTPrimed extends Entity
         {
             this.setDead();
 
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
                 this.explode();
             }
@@ -96,14 +105,14 @@ public class EntityTNTPrimed extends Entity
         else
         {
             this.handleWaterMovement();
-            this.worldObj.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY + 0.5D, this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+            this.world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, this.posX, this.posY + 0.5D, this.posZ, 0.0D, 0.0D, 0.0D);
         }
     }
 
     private void explode()
     {
         float f = 4.0F;
-        this.worldObj.createExplosion(this, this.posX, this.posY + (double)(this.height / 16.0F), this.posZ, f, true);
+        this.world.createExplosion(this, this.posX, this.posY + (double)(this.height / 16.0F), this.posZ, 4.0F, true);
     }
 
     /**
@@ -125,6 +134,7 @@ public class EntityTNTPrimed extends Entity
     /**
      * returns null or the entityliving it was placed or ignited by
      */
+    @Nullable
     public EntityLivingBase getTntPlacedBy()
     {
         return this.tntPlacedBy;

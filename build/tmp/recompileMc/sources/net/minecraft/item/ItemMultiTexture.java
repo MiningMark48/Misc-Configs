@@ -1,29 +1,26 @@
 package net.minecraft.item;
 
-import com.google.common.base.Function;
-import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 
 public class ItemMultiTexture extends ItemBlock
 {
-    protected final Block theBlock;
-    protected final Function<ItemStack, String> nameFunction;
+    protected final Block unused;
+    protected final ItemMultiTexture.Mapper nameFunction;
 
-    public ItemMultiTexture(Block block, Block block2, Function<ItemStack, String> nameFunction)
+    public ItemMultiTexture(Block p_i47262_1_, Block p_i47262_2_, ItemMultiTexture.Mapper p_i47262_3_)
     {
-        super(block);
-        this.theBlock = block2;
-        this.nameFunction = nameFunction;
+        super(p_i47262_1_);
+        this.unused = p_i47262_2_;
+        this.nameFunction = p_i47262_3_;
         this.setMaxDamage(0);
         this.setHasSubtypes(true);
     }
 
     public ItemMultiTexture(Block block, Block block2, final String[] namesByMeta)
     {
-        this(block, block2, new Function<ItemStack, String>()
+        this(block, block2, new ItemMultiTexture.Mapper()
         {
-            @Nullable
-            public String apply(@Nullable ItemStack p_apply_1_)
+            public String apply(ItemStack p_apply_1_)
             {
                 int i = p_apply_1_.getMetadata();
 
@@ -52,6 +49,11 @@ public class ItemMultiTexture extends ItemBlock
      */
     public String getUnlocalizedName(ItemStack stack)
     {
-        return super.getUnlocalizedName() + "." + (String)this.nameFunction.apply(stack);
+        return super.getUnlocalizedName() + "." + this.nameFunction.apply(stack);
+    }
+
+    public interface Mapper
+    {
+        String apply(ItemStack var1);
     }
 }

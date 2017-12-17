@@ -3,6 +3,7 @@ package net.minecraft.client.renderer.entity;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
+import net.minecraft.client.renderer.entity.layers.LayerElytra;
 import net.minecraft.client.renderer.entity.layers.LayerHeldItem;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.ResourceLocation;
@@ -13,21 +14,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RenderBiped<T extends EntityLiving> extends RenderLiving<T>
 {
     private static final ResourceLocation DEFAULT_RES_LOC = new ResourceLocation("textures/entity/steve.png");
-    public ModelBiped modelBipedMain;
-    protected float scale;
 
     public RenderBiped(RenderManager renderManagerIn, ModelBiped modelBipedIn, float shadowSize)
     {
-        this(renderManagerIn, modelBipedIn, shadowSize, 1.0F);
-        this.addLayer(new LayerHeldItem(this));
-    }
-
-    public RenderBiped(RenderManager renderManagerIn, ModelBiped modelBipedIn, float shadowSize, float p_i46169_4_)
-    {
         super(renderManagerIn, modelBipedIn, shadowSize);
-        this.modelBipedMain = modelBipedIn;
-        this.scale = p_i46169_4_;
         this.addLayer(new LayerCustomHead(modelBipedIn.bipedHead));
+        this.addLayer(new LayerElytra(this));
+        this.addLayer(new LayerHeldItem(this));
     }
 
     /**

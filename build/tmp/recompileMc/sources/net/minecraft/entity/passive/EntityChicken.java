@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIFollowParent;
@@ -14,7 +15,7 @@ import net.minecraft.entity.ai.EntityAIMate;
 import net.minecraft.entity.ai.EntityAIPanic;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWanderAvoidWater;
 import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -23,8 +24,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.pathfinding.PathNodeType;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -32,7 +35,7 @@ import net.minecraft.world.storage.loot.LootTableList;
 
 public class EntityChicken extends EntityAnimal
 {
-    private static final Set<Item> TEMPTATION_ITEMS = Sets.newHashSet(new Item[] {Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS});
+    private static final Set<Item> TEMPTATION_ITEMS = Sets.newHashSet(Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS);
     public float wingRotation;
     public float destPos;
     public float oFlapSpeed;
@@ -57,7 +60,7 @@ public class EntityChicken extends EntityAnimal
         this.tasks.addTask(2, new EntityAIMate(this, 1.0D));
         this.tasks.addTask(3, new EntityAITempt(this, 1.0D, false, TEMPTATION_ITEMS));
         this.tasks.addTask(4, new EntityAIFollowParent(this, 1.1D));
-        this.tasks.addTask(5, new EntityAIWander(this, 1.0D));
+        this.tasks.addTask(5, new EntityAIWanderAvoidWater(this, 1.0D));
         this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
         this.tasks.addTask(7, new EntityAILookIdle(this));
     }
@@ -84,7 +87,7 @@ public class EntityChicken extends EntityAnimal
         this.oFlap = this.wingRotation;
         this.oFlapSpeed = this.destPos;
         this.destPos = (float)((double)this.destPos + (double)(this.onGround ? -1 : 4) * 0.3D);
-        this.destPos = MathHelper.clamp_float(this.destPos, 0.0F, 1.0F);
+        this.destPos = MathHelper.clamp(this.destPos, 0.0F, 1.0F);
 
         if (!this.onGround && this.wingRotDelta < 1.0F)
         {
@@ -100,7 +103,7 @@ public class EntityChicken extends EntityAnimal
 
         this.wingRotation += this.wingRotDelta * 2.0F;
 
-        if (!this.worldObj.isRemote && !this.isChild() && !this.isChickenJockey() && --this.timeUntilNextEgg <= 0)
+        if (!this.world.isRemote && !this.isChild() && !this.isChickenJockey() && --this.timeUntilNextEgg <= 0)
         {
             this.playSound(SoundEvents.ENTITY_CHICKEN_EGG, 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
             this.dropItem(Items.EGG, 1);
@@ -117,7 +120,7 @@ public class EntityChicken extends EntityAnimal
         return SoundEvents.ENTITY_CHICKEN_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_CHICKEN_HURT;
     }
@@ -140,16 +143,29 @@ public class EntityChicken extends EntityAnimal
 
     public EntityChicken createChild(EntityAgeable ageable)
     {
-        return new EntityChicken(this.worldObj);
+        return new EntityChicken(this.world);
     }
 
     /**
      * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on
      * the animal type)
      */
-    public boolean isBreedingItem(@Nullable ItemStack stack)
+    public boolean isBreedingItem(ItemStack stack)
     {
-        return stack != null && TEMPTATION_ITEMS.contains(stack.getItem());
+        return TEMPTATION_ITEMS.contains(stack.getItem());
+    }
+
+    /**
+     * Get the experience points the entity currently has.
+     */
+    protected int getExperiencePoints(EntityPlayer player)
+    {
+        return this.isChickenJockey() ? 10 : super.getExperiencePoints(player);
+    }
+
+    public static void registerFixesChicken(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntityChicken.class);
     }
 
     /**
@@ -164,14 +180,6 @@ public class EntityChicken extends EntityAnimal
         {
             this.timeUntilNextEgg = compound.getInteger("EggLayTime");
         }
-    }
-
-    /**
-     * Get the experience points the entity currently has.
-     */
-    protected int getExperiencePoints(EntityPlayer player)
-    {
-        return this.isChickenJockey() ? 10 : super.getExperiencePoints(player);
     }
 
     /**
@@ -199,7 +207,7 @@ public class EntityChicken extends EntityAnimal
         float f1 = MathHelper.cos(this.renderYawOffset * 0.017453292F);
         float f2 = 0.1F;
         float f3 = 0.0F;
-        passenger.setPosition(this.posX + (double)(f2 * f), this.posY + (double)(this.height * 0.5F) + passenger.getYOffset() + (double)f3, this.posZ - (double)(f2 * f1));
+        passenger.setPosition(this.posX + (double)(0.1F * f), this.posY + (double)(this.height * 0.5F) + passenger.getYOffset() + 0.0D, this.posZ - (double)(0.1F * f1));
 
         if (passenger instanceof EntityLivingBase)
         {

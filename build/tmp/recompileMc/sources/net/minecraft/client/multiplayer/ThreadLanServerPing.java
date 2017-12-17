@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -33,7 +34,7 @@ public class ThreadLanServerPing extends Thread
     public void run()
     {
         String s = getPingResponse(this.motd, this.address);
-        byte[] abyte = s.getBytes();
+        byte[] abyte = s.getBytes(StandardCharsets.UTF_8);
 
         while (!this.isInterrupted() && this.isStopping)
         {
@@ -45,7 +46,7 @@ public class ThreadLanServerPing extends Thread
             }
             catch (IOException ioexception)
             {
-                LOGGER.warn("LanServerPinger: " + ioexception.getMessage());
+                LOGGER.warn("LanServerPinger: {}", (Object)ioexception.getMessage());
                 break;
             }
 

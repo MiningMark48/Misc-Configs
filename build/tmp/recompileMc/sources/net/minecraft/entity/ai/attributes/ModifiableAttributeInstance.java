@@ -32,7 +32,7 @@ public class ModifiableAttributeInstance implements IAttributeInstance
 
         for (int i = 0; i < 3; ++i)
         {
-            this.mapByOperation.put(Integer.valueOf(i), Sets.<AttributeModifier>newHashSet());
+            this.mapByOperation.put(Integer.valueOf(i), Sets.newHashSet());
         }
     }
 
@@ -81,7 +81,7 @@ public class ModifiableAttributeInstance implements IAttributeInstance
     @Nullable
     public AttributeModifier getModifier(UUID uuid)
     {
-        return (AttributeModifier)this.mapByUUID.get(uuid);
+        return this.mapByUUID.get(uuid);
     }
 
     public boolean hasModifier(AttributeModifier modifier)
@@ -105,7 +105,7 @@ public class ModifiableAttributeInstance implements IAttributeInstance
                 this.mapByName.put(modifier.getName(), set);
             }
 
-            ((Set)this.mapByOperation.get(Integer.valueOf(modifier.getOperation()))).add(modifier);
+            (this.mapByOperation.get(Integer.valueOf(modifier.getOperation()))).add(modifier);
             set.add(modifier);
             this.mapByUUID.put(modifier.getID(), modifier);
             this.flagForUpdate();

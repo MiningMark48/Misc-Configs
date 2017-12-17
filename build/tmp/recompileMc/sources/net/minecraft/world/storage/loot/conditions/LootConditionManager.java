@@ -29,11 +29,11 @@ public class LootConditionManager
 
         if (NAME_TO_SERIALIZER_MAP.containsKey(resourcelocation))
         {
-            throw new IllegalArgumentException("Can\'t re-register item condition name " + resourcelocation);
+            throw new IllegalArgumentException("Can't re-register item condition name " + resourcelocation);
         }
         else if (CLASS_TO_SERIALIZER_MAP.containsKey(oclass))
         {
-            throw new IllegalArgumentException("Can\'t re-register item condition class " + oclass.getName());
+            throw new IllegalArgumentException("Can't re-register item condition class " + oclass.getName());
         }
         else
         {
@@ -59,12 +59,8 @@ public class LootConditionManager
         }
         else
         {
-            int i = 0;
-
-            for (int j = conditions.length; i < j; ++i)
+            for (LootCondition lootcondition : conditions)
             {
-                LootCondition lootcondition = conditions[i];
-
                 if (!lootcondition.testCondition(rand, context))
                 {
                     return false;
@@ -81,7 +77,7 @@ public class LootConditionManager
 
         if (serializer == null)
         {
-            throw new IllegalArgumentException("Unknown loot item condition \'" + location + "\'");
+            throw new IllegalArgumentException("Unknown loot item condition '" + location + "'");
         }
         else
         {
@@ -126,7 +122,7 @@ public class LootConditionManager
                 }
                 catch (IllegalArgumentException var8)
                 {
-                    throw new JsonSyntaxException("Unknown condition \'" + resourcelocation + "\'");
+                    throw new JsonSyntaxException("Unknown condition '" + resourcelocation + "'");
                 }
 
                 return serializer.deserialize(jsonobject, p_deserialize_3_);

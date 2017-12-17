@@ -1,10 +1,10 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -12,7 +12,6 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -25,6 +24,7 @@ public class BlockFarmland extends Block
 {
     public static final PropertyInteger MOISTURE = PropertyInteger.create("moisture", 0, 7);
     protected static final AxisAlignedBB FARMLAND_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 0.9375D, 1.0D);
+    protected static final AxisAlignedBB field_194405_c = new AxisAlignedBB(0.0D, 0.9375D, 0.0D, 1.0D, 1.0D, 1.0D);
 
     protected BlockFarmland()
     {
@@ -37,12 +37,6 @@ public class BlockFarmland extends Block
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
         return FARMLAND_AABB;
-    }
-
-    @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
-    {
-        return FULL_BLOCK_AABB;
     }
 
     /**
@@ -70,7 +64,7 @@ public class BlockFarmland extends Block
             }
             else if (!this.hasCrops(worldIn, pos))
             {
-                worldIn.setBlockState(pos, Blocks.DIRT.getDefaultState());
+                turnToDirt(worldIn, pos);
             }
         }
         else if (i < 7)
@@ -84,12 +78,24 @@ public class BlockFarmland extends Block
      */
     public void onFallenUpon(World worldIn, BlockPos pos, Entity entityIn, float fallDistance)
     {
-        if (!worldIn.isRemote && worldIn.rand.nextFloat() < fallDistance - 0.5F && entityIn instanceof EntityLivingBase && (entityIn instanceof EntityPlayer || worldIn.getGameRules().getBoolean("mobGriefing")) && entityIn.width * entityIn.width * entityIn.height > 0.512F)
+        if (!worldIn.isRemote && entityIn.canTrample(worldIn, this, pos, fallDistance)) // Forge: Move logic to Entity#canTrample
         {
-            worldIn.setBlockState(pos, Blocks.DIRT.getDefaultState());
+            turnToDirt(worldIn, pos);
         }
 
         super.onFallenUpon(worldIn, pos, entityIn, fallDistance);
+    }
+
+    protected static void turnToDirt(World p_190970_0_, BlockPos worldIn)
+    {
+        p_190970_0_.setBlockState(worldIn, Blocks.DIRT.getDefaultState());
+        AxisAlignedBB axisalignedbb = field_194405_c.offset(worldIn);
+
+        for (Entity entity : p_190970_0_.getEntitiesWithinAABBExcludingEntity((Entity)null, axisalignedbb))
+        {
+            double d0 = Math.min(axisalignedbb.maxY - axisalignedbb.minY, axisalignedbb.maxY - entity.getEntityBoundingBox().minY);
+            entity.setPositionAndUpdate(entity.posX, entity.posY + d0 + 0.001D, entity.posZ);
+        }
     }
 
     private boolean hasCrops(World worldIn, BlockPos pos)
@@ -116,13 +122,26 @@ public class BlockFarmland extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
-        super.neighborChanged(state, worldIn, pos, blockIn);
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
 
         if (worldIn.getBlockState(pos.up()).getMaterial().isSolid())
         {
-            worldIn.setBlockState(pos, Blocks.DIRT.getDefaultState());
+            turnToDirt(worldIn, pos);
+        }
+    }
+
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
+    public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
+    {
+        super.onBlockAdded(worldIn, pos, state);
+
+        if (worldIn.getBlockState(pos.up()).getMaterial().isSolid())
+        {
+            turnToDirt(worldIn, pos);
         }
     }
 
@@ -148,15 +167,9 @@ public class BlockFarmland extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Blocks.DIRT.getItemDropped(Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.DIRT), rand, fortune);
-    }
-
-    public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
-    {
-        return new ItemStack(Blocks.DIRT);
     }
 
     /**
@@ -178,5 +191,19 @@ public class BlockFarmland extends Block
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {MOISTURE});
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return face == EnumFacing.DOWN ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
     }
 }

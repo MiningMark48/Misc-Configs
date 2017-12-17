@@ -1,6 +1,5 @@
 package net.minecraft.entity.item;
 
-import com.google.common.base.Optional;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityHanging;
@@ -17,6 +16,9 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.walkers.ItemStackData;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapData;
@@ -25,7 +27,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class EntityItemFrame extends EntityHanging
 {
-    private static final DataParameter<Optional<ItemStack>> ITEM = EntityDataManager.<Optional<ItemStack>>createKey(EntityItemFrame.class, DataSerializers.OPTIONAL_ITEM_STACK);
+    private static final DataParameter<ItemStack> ITEM = EntityDataManager.<ItemStack>createKey(EntityItemFrame.class, DataSerializers.ITEM_STACK);
     private static final DataParameter<Integer> ROTATION = EntityDataManager.<Integer>createKey(EntityItemFrame.class, DataSerializers.VARINT);
     /** Chance for this item frame's item to drop from the frame. */
     private float itemDropChance = 1.0F;
@@ -43,7 +45,7 @@ public class EntityItemFrame extends EntityHanging
 
     protected void entityInit()
     {
-        this.getDataManager().register(ITEM, Optional.<ItemStack>absent());
+        this.getDataManager().register(ITEM, ItemStack.EMPTY);
         this.getDataManager().register(ROTATION, Integer.valueOf(0));
     }
 
@@ -61,13 +63,13 @@ public class EntityItemFrame extends EntityHanging
         {
             return false;
         }
-        else if (!source.isExplosion() && this.getDisplayedItem() != null)
+        else if (!source.isExplosion() && !this.getDisplayedItem().isEmpty())
         {
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
-                this.dropItemOrSelf(source.getEntity(), false);
+                this.dropItemOrSelf(source.getTrueSource(), false);
                 this.playSound(SoundEvents.ENTITY_ITEMFRAME_REMOVE_ITEM, 1.0F, 1.0F);
-                this.setDisplayedItem((ItemStack)null);
+                this.setDisplayedItem(ItemStack.EMPTY);
             }
 
             return true;
@@ -115,7 +117,7 @@ public class EntityItemFrame extends EntityHanging
 
     public void dropItemOrSelf(@Nullable Entity entityIn, boolean p_146065_2_)
     {
-        if (this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+        if (this.world.getGameRules().getBoolean("doEntityDrops"))
         {
             ItemStack itemstack = this.getDisplayedItem();
 
@@ -135,7 +137,7 @@ public class EntityItemFrame extends EntityHanging
                 this.entityDropItem(new ItemStack(Items.ITEM_FRAME), 0.0F);
             }
 
-            if (itemstack != null && this.rand.nextFloat() < this.itemDropChance)
+            if (!itemstack.isEmpty() && this.rand.nextFloat() < this.itemDropChance)
             {
                 itemstack = itemstack.copy();
                 this.removeFrameFromMap(itemstack);
@@ -149,11 +151,11 @@ public class EntityItemFrame extends EntityHanging
      */
     private void removeFrameFromMap(ItemStack stack)
     {
-        if (stack != null)
+        if (!stack.isEmpty())
         {
             if (stack.getItem() instanceof net.minecraft.item.ItemMap)
             {
-                MapData mapdata = ((ItemMap)stack.getItem()).getMapData(stack, this.worldObj);
+                MapData mapdata = ((ItemMap)stack.getItem()).getMapData(stack, this.world);
                 mapdata.mapDecorations.remove("frame-" + this.getEntityId());
             }
 
@@ -161,37 +163,36 @@ public class EntityItemFrame extends EntityHanging
         }
     }
 
-    @Nullable
     public ItemStack getDisplayedItem()
     {
-        return (ItemStack)((Optional)this.getDataManager().get(ITEM)).orNull();
+        return (ItemStack)this.getDataManager().get(ITEM);
     }
 
-    public void setDisplayedItem(@Nullable ItemStack stack)
+    public void setDisplayedItem(ItemStack stack)
     {
         this.setDisplayedItemWithUpdate(stack, true);
     }
 
-    private void setDisplayedItemWithUpdate(@Nullable ItemStack stack, boolean p_174864_2_)
+    private void setDisplayedItemWithUpdate(ItemStack stack, boolean p_174864_2_)
     {
-        if (stack != null)
+        if (!stack.isEmpty())
         {
             stack = stack.copy();
-            stack.stackSize = 1;
+            stack.setCount(1);
             stack.setItemFrame(this);
         }
 
-        this.getDataManager().set(ITEM, Optional.fromNullable(stack));
+        this.getDataManager().set(ITEM, stack);
         this.getDataManager().setDirty(ITEM);
 
-        if (stack != null)
+        if (!stack.isEmpty())
         {
             this.playSound(SoundEvents.ENTITY_ITEMFRAME_ADD_ITEM, 1.0F, 1.0F);
         }
 
         if (p_174864_2_ && this.hangingPosition != null)
         {
-            this.worldObj.updateComparatorOutputLevel(this.hangingPosition, Blocks.AIR);
+            this.world.updateComparatorOutputLevel(this.hangingPosition, Blocks.AIR);
         }
     }
 
@@ -201,7 +202,7 @@ public class EntityItemFrame extends EntityHanging
         {
             ItemStack itemstack = this.getDisplayedItem();
 
-            if (itemstack != null && itemstack.getItemFrame() != this)
+            if (!itemstack.isEmpty() && itemstack.getItemFrame() != this)
             {
                 itemstack.setItemFrame(this);
             }
@@ -227,8 +228,13 @@ public class EntityItemFrame extends EntityHanging
 
         if (p_174865_2_ && this.hangingPosition != null)
         {
-            this.worldObj.updateComparatorOutputLevel(this.hangingPosition, Blocks.AIR);
+            this.world.updateComparatorOutputLevel(this.hangingPosition, Blocks.AIR);
         }
+    }
+
+    public static void registerFixesItemFrame(DataFixer fixer)
+    {
+        fixer.registerWalker(FixTypes.ENTITY, new ItemStackData(EntityItemFrame.class, new String[] {"Item"}));
     }
 
     /**
@@ -236,7 +242,7 @@ public class EntityItemFrame extends EntityHanging
      */
     public void writeEntityToNBT(NBTTagCompound compound)
     {
-        if (this.getDisplayedItem() != null)
+        if (!this.getDisplayedItem().isEmpty())
         {
             compound.setTag("Item", this.getDisplayedItem().writeToNBT(new NBTTagCompound()));
             compound.setByte("ItemRotation", (byte)this.getRotation());
@@ -255,7 +261,7 @@ public class EntityItemFrame extends EntityHanging
 
         if (nbttagcompound != null && !nbttagcompound.hasNoTags())
         {
-            this.setDisplayedItemWithUpdate(ItemStack.loadItemStackFromNBT(nbttagcompound), false);
+            this.setDisplayedItemWithUpdate(new ItemStack(nbttagcompound), false);
             this.setRotation(compound.getByte("ItemRotation"), false);
 
             if (compound.hasKey("ItemDropChance", 99))
@@ -267,24 +273,29 @@ public class EntityItemFrame extends EntityHanging
         super.readEntityFromNBT(compound);
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
     {
-        if (this.getDisplayedItem() == null)
-        {
-            if (stack != null && !this.worldObj.isRemote)
-            {
-                this.setDisplayedItem(stack);
+        ItemStack itemstack = player.getHeldItem(hand);
 
-                if (!player.capabilities.isCreativeMode)
+        if (!this.world.isRemote)
+        {
+            if (this.getDisplayedItem().isEmpty())
+            {
+                if (!itemstack.isEmpty())
                 {
-                    --stack.stackSize;
+                    this.setDisplayedItem(itemstack);
+
+                    if (!player.capabilities.isCreativeMode)
+                    {
+                        itemstack.shrink(1);
+                    }
                 }
             }
-        }
-        else if (!this.worldObj.isRemote)
-        {
-            this.playSound(SoundEvents.ENTITY_ITEMFRAME_ROTATE_ITEM, 1.0F, 1.0F);
-            this.setItemRotation(this.getRotation() + 1);
+            else
+            {
+                this.playSound(SoundEvents.ENTITY_ITEMFRAME_ROTATE_ITEM, 1.0F, 1.0F);
+                this.setItemRotation(this.getRotation() + 1);
+            }
         }
 
         return true;
@@ -292,6 +303,6 @@ public class EntityItemFrame extends EntityHanging
 
     public int getAnalogOutput()
     {
-        return this.getDisplayedItem() == null ? 0 : this.getRotation() % 8 + 1;
+        return this.getDisplayedItem().isEmpty() ? 0 : this.getRotation() % 8 + 1;
     }
 }

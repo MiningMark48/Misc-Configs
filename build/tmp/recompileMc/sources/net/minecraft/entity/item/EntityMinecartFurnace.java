@@ -1,6 +1,5 @@
 package net.minecraft.entity.item;
 
-import javax.annotation.Nullable;
 import net.minecraft.block.BlockFurnace;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,6 +14,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -34,6 +34,11 @@ public class EntityMinecartFurnace extends EntityMinecart
     public EntityMinecartFurnace(World worldIn, double x, double y, double z)
     {
         super(worldIn, x, y, z);
+    }
+
+    public static void registerFixesMinecartFurnace(DataFixer fixer)
+    {
+        EntityMinecart.registerFixesMinecart(fixer, EntityMinecartFurnace.class);
     }
 
     public EntityMinecart.Type getType()
@@ -61,14 +66,15 @@ public class EntityMinecartFurnace extends EntityMinecart
 
         if (this.fuel <= 0)
         {
-            this.pushX = this.pushZ = 0.0D;
+            this.pushX = 0.0D;
+            this.pushZ = 0.0D;
         }
 
         this.setMinecartPowered(this.fuel > 0);
 
         if (this.isMinecartPowered() && this.rand.nextInt(4) == 0)
         {
-            this.worldObj.spawnParticle(EnumParticleTypes.SMOKE_LARGE, this.posX, this.posY + 0.8D, this.posZ, 0.0D, 0.0D, 0.0D, new int[0]);
+            this.world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, this.posX, this.posY + 0.8D, this.posZ, 0.0D, 0.0D, 0.0D);
         }
     }
 
@@ -84,20 +90,20 @@ public class EntityMinecartFurnace extends EntityMinecart
     {
         super.killMinecart(source);
 
-        if (!source.isExplosion() && this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+        if (!source.isExplosion() && this.world.getGameRules().getBoolean("doEntityDrops"))
         {
             this.entityDropItem(new ItemStack(Blocks.FURNACE, 1), 0.0F);
         }
     }
 
-    protected void moveAlongTrack(BlockPos p_180460_1_, IBlockState p_180460_2_)
+    protected void moveAlongTrack(BlockPos pos, IBlockState state)
     {
-        super.moveAlongTrack(p_180460_1_, p_180460_2_);
+        super.moveAlongTrack(pos, state);
         double d0 = this.pushX * this.pushX + this.pushZ * this.pushZ;
 
         if (d0 > 1.0E-4D && this.motionX * this.motionX + this.motionZ * this.motionZ > 0.001D)
         {
-            d0 = (double)MathHelper.sqrt_double(d0);
+            d0 = (double)MathHelper.sqrt(d0);
             this.pushX /= d0;
             this.pushZ /= d0;
 
@@ -121,15 +127,15 @@ public class EntityMinecartFurnace extends EntityMinecart
 
         if (d0 > 1.0E-4D)
         {
-            d0 = (double)MathHelper.sqrt_double(d0);
+            d0 = (double)MathHelper.sqrt(d0);
             this.pushX /= d0;
             this.pushZ /= d0;
             double d1 = 1.0D;
             this.motionX *= 0.800000011920929D;
             this.motionY *= 0.0D;
             this.motionZ *= 0.800000011920929D;
-            this.motionX += this.pushX * d1;
-            this.motionZ += this.pushZ * d1;
+            this.motionX += this.pushX * 1.0D;
+            this.motionZ += this.pushZ * 1.0D;
         }
         else
         {
@@ -141,15 +147,17 @@ public class EntityMinecartFurnace extends EntityMinecart
         super.applyDrag();
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
     {
-        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, stack, hand))) return true;
+        ItemStack itemstack = player.getHeldItem(hand);
 
-        if (stack != null && stack.getItem() == Items.COAL && this.fuel + 3600 <= 32000)
+        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, hand))) return true;
+
+        if (itemstack.getItem() == Items.COAL && this.fuel + 3600 <= 32000)
         {
             if (!player.capabilities.isCreativeMode)
             {
-                --stack.stackSize;
+                itemstack.shrink(1);
             }
 
             this.fuel += 3600;

@@ -21,7 +21,7 @@ public class PhaseSittingScanning extends PhaseSittingBase
     public void doLocalUpdate()
     {
         ++this.scanningTime;
-        EntityLivingBase entitylivingbase = this.dragon.worldObj.getNearestAttackablePlayer(this.dragon, 20.0D, 10.0D);
+        EntityLivingBase entitylivingbase = this.dragon.world.getNearestAttackablePlayer(this.dragon, 20.0D, 10.0D);
 
         if (entitylivingbase != null)
         {
@@ -40,9 +40,9 @@ public class PhaseSittingScanning extends PhaseSittingBase
                 {
                     double d0 = entitylivingbase.posX - this.dragon.dragonPartHead.posX;
                     double d1 = entitylivingbase.posZ - this.dragon.dragonPartHead.posZ;
-                    double d2 = MathHelper.clamp_double(MathHelper.wrapDegrees(180.0D - MathHelper.atan2(d0, d1) * (180D / Math.PI) - (double)this.dragon.rotationYaw), -100.0D, 100.0D);
+                    double d2 = MathHelper.clamp(MathHelper.wrapDegrees(180.0D - MathHelper.atan2(d0, d1) * (180D / Math.PI) - (double)this.dragon.rotationYaw), -100.0D, 100.0D);
                     this.dragon.randomYawVelocity *= 0.8F;
-                    float f2 = MathHelper.sqrt_double(d0 * d0 + d1 * d1) + 1.0F;
+                    float f2 = MathHelper.sqrt(d0 * d0 + d1 * d1) + 1.0F;
                     float f3 = f2;
 
                     if (f2 > 40.0F)
@@ -57,7 +57,7 @@ public class PhaseSittingScanning extends PhaseSittingBase
         }
         else if (this.scanningTime >= 100)
         {
-            entitylivingbase = this.dragon.worldObj.getNearestAttackablePlayer(this.dragon, 150.0D, 150.0D);
+            entitylivingbase = this.dragon.world.getNearestAttackablePlayer(this.dragon, 150.0D, 150.0D);
             this.dragon.getPhaseManager().setPhase(PhaseList.TAKEOFF);
 
             if (entitylivingbase != null)
@@ -76,7 +76,7 @@ public class PhaseSittingScanning extends PhaseSittingBase
         this.scanningTime = 0;
     }
 
-    public PhaseList<PhaseSittingScanning> getPhaseList()
+    public PhaseList<PhaseSittingScanning> getType()
     {
         return PhaseList.SITTING_SCANNING;
     }

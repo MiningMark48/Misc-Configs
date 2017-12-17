@@ -16,8 +16,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
+import net.minecraft.world.GameType;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -40,13 +40,13 @@ public abstract class AbstractClientPlayer extends EntityPlayer
     public boolean isSpectator()
     {
         NetworkPlayerInfo networkplayerinfo = Minecraft.getMinecraft().getConnection().getPlayerInfo(this.getGameProfile().getId());
-        return networkplayerinfo != null && networkplayerinfo.getGameType() == WorldSettings.GameType.SPECTATOR;
+        return networkplayerinfo != null && networkplayerinfo.getGameType() == GameType.SPECTATOR;
     }
 
     public boolean isCreative()
     {
         NetworkPlayerInfo networkplayerinfo = Minecraft.getMinecraft().getConnection().getPlayerInfo(this.getGameProfile().getId());
-        return networkplayerinfo != null && networkplayerinfo.getGameType() == WorldSettings.GameType.CREATIVE;
+        return networkplayerinfo != null && networkplayerinfo.getGameType() == GameType.CREATIVE;
     }
 
     /**
@@ -115,7 +115,7 @@ public abstract class AbstractClientPlayer extends EntityPlayer
 
         if (itextureobject == null)
         {
-            itextureobject = new ThreadDownloadImageData((File)null, String.format("http://skins.minecraft.net/MinecraftSkins/%s.png", new Object[] {StringUtils.stripControlCodes(username)}), DefaultPlayerSkin.getDefaultSkin(getOfflineUUID(username)), new ImageBufferDownload());
+            itextureobject = new ThreadDownloadImageData((File)null, String.format("http://skins.minecraft.net/MinecraftSkins/%s.png", StringUtils.stripControlCodes(username)), DefaultPlayerSkin.getDefaultSkin(getOfflineUUID(username)), new ImageBufferDownload());
             texturemanager.loadTexture(resourceLocationIn, itextureobject);
         }
 
@@ -153,7 +153,7 @@ public abstract class AbstractClientPlayer extends EntityPlayer
             f = 1.0F;
         }
 
-        if (this.isHandActive() && this.getActiveItemStack() != null && this.getActiveItemStack().getItem() == Items.BOW)
+        if (this.isHandActive() && this.getActiveItemStack().getItem() == Items.BOW)
         {
             int i = this.getItemInUseMaxCount();
             float f1 = (float)i / 20.0F;

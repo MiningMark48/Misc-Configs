@@ -9,6 +9,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.math.BigInteger;
 import java.security.PublicKey;
+import javax.annotation.Nullable;
 import javax.crypto.SecretKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiDisconnected;
@@ -36,11 +37,12 @@ public class NetHandlerLoginClient implements INetHandlerLoginClient
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private final Minecraft mc;
+    @Nullable
     private final GuiScreen previousGuiScreen;
     private final NetworkManager networkManager;
     private GameProfile gameProfile;
 
-    public NetHandlerLoginClient(NetworkManager networkManagerIn, Minecraft mcIn, GuiScreen previousScreenIn)
+    public NetHandlerLoginClient(NetworkManager networkManagerIn, Minecraft mcIn, @Nullable GuiScreen previousScreenIn)
     {
         this.networkManager = networkManagerIn;
         this.mc = mcIn;
@@ -62,7 +64,7 @@ public class NetHandlerLoginClient implements INetHandlerLoginClient
             }
             catch (AuthenticationException var10)
             {
-                LOGGER.warn("Couldn\'t connect to auth servers but will continue to join LAN");
+                LOGGER.warn("Couldn't connect to auth servers but will continue to join LAN");
             }
         }
         else
@@ -94,7 +96,7 @@ public class NetHandlerLoginClient implements INetHandlerLoginClient
             {
                 NetHandlerLoginClient.this.networkManager.enableEncryption(secretkey);
             }
-        }, new GenericFutureListener[0]);
+        });
     }
 
     private MinecraftSessionService getSessionService()
@@ -106,10 +108,10 @@ public class NetHandlerLoginClient implements INetHandlerLoginClient
     {
         this.gameProfile = packetIn.getProfile();
         this.networkManager.setConnectionState(EnumConnectionState.PLAY);
-        net.minecraftforge.fml.common.network.internal.FMLNetworkHandler.fmlClientHandshake(this.networkManager);
         NetHandlerPlayClient nhpc = new NetHandlerPlayClient(this.mc, this.previousGuiScreen, this.networkManager, this.gameProfile);
         this.networkManager.setNetHandler(nhpc);
         net.minecraftforge.fml.client.FMLClientHandler.instance().setPlayClient(nhpc);
+        net.minecraftforge.fml.common.network.internal.FMLNetworkHandler.fmlClientHandshake(this.networkManager);
     }
 
     /**

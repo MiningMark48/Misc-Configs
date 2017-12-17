@@ -1,10 +1,29 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model.pipeline;
 
 import java.util.List;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockModelRenderer;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
@@ -33,10 +52,10 @@ public class ForgeBlockModelRenderer extends BlockModelRenderer
         }
     };
 
-    private final ThreadLocal<VertexBufferConsumer> wrFlat = new ThreadLocal<VertexBufferConsumer>();
-    private final ThreadLocal<VertexBufferConsumer> wrSmooth = new ThreadLocal<VertexBufferConsumer>();
-    private final ThreadLocal<VertexBuffer> lastRendererFlat = new ThreadLocal<VertexBuffer>();
-    private final ThreadLocal<VertexBuffer> lastRendererSmooth = new ThreadLocal<VertexBuffer>();
+    private final ThreadLocal<VertexBufferConsumer> wrFlat = new ThreadLocal<>();
+    private final ThreadLocal<VertexBufferConsumer> wrSmooth = new ThreadLocal<>();
+    private final ThreadLocal<BufferBuilder> lastRendererFlat = new ThreadLocal<>();
+    private final ThreadLocal<BufferBuilder> lastRendererSmooth = new ThreadLocal<>();
 
     private final BlockColors colors;
 
@@ -48,7 +67,7 @@ public class ForgeBlockModelRenderer extends BlockModelRenderer
     }
 
     @Override
-    public boolean renderModelFlat(IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, VertexBuffer buffer, boolean checkSides, long rand)
+    public boolean renderModelFlat(IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long rand)
     {
         if(ForgeModContainer.forgeLightPipelineEnabled)
         {
@@ -69,7 +88,7 @@ public class ForgeBlockModelRenderer extends BlockModelRenderer
     }
 
     @Override
-    public boolean renderModelSmooth(IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, VertexBuffer buffer, boolean checkSides, long rand)
+    public boolean renderModelSmooth(IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long rand)
     {
         if(ForgeModContainer.forgeLightPipelineEnabled)
         {
@@ -89,7 +108,7 @@ public class ForgeBlockModelRenderer extends BlockModelRenderer
         }
     }
 
-    public static boolean render(VertexLighterFlat lighter, IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, VertexBuffer wr, boolean checkSides, long rand)
+    public static boolean render(VertexLighterFlat lighter, IBlockAccess world, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder wr, boolean checkSides, long rand)
     {
         lighter.setWorld(world);
         lighter.setState(state);

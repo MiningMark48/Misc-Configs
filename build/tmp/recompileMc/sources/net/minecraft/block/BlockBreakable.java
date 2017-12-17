@@ -12,7 +12,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockBreakable extends Block
 {
-    private boolean ignoreSimilarity;
+    private final boolean ignoreSimilarity;
 
     protected BlockBreakable(Material materialIn, boolean ignoreSimilarityIn)
     {

@@ -25,6 +25,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DifficultyInstance;
@@ -65,14 +66,19 @@ public class EntitySlime extends EntityLiving implements IMob
         this.dataManager.register(SLIME_SIZE, Integer.valueOf(1));
     }
 
-    protected void setSlimeSize(int size)
+    protected void setSlimeSize(int size, boolean resetHealth)
     {
         this.dataManager.set(SLIME_SIZE, Integer.valueOf(size));
         this.setSize(0.51000005F * (float)size, 0.51000005F * (float)size);
         this.setPosition(this.posX, this.posY, this.posZ);
         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue((double)(size * size));
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)(0.2F + 0.1F * (float)size));
-        this.setHealth(this.getMaxHealth());
+
+        if (resetHealth)
+        {
+            this.setHealth(this.getMaxHealth());
+        }
+
         this.experienceValue = size;
     }
 
@@ -84,6 +90,11 @@ public class EntitySlime extends EntityLiving implements IMob
         return ((Integer)this.dataManager.get(SLIME_SIZE)).intValue();
     }
 
+    public static void registerFixesSlime(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntitySlime.class);
+    }
+
     /**
      * (abstract) Protected helper method to write subclass entity data to NBT.
      */
@@ -92,11 +103,6 @@ public class EntitySlime extends EntityLiving implements IMob
         super.writeEntityToNBT(compound);
         compound.setInteger("Size", this.getSlimeSize() - 1);
         compound.setBoolean("wasOnGround", this.wasOnGround);
-    }
-
-    public boolean isSmallSlime()
-    {
-        return this.getSlimeSize() <= 1;
     }
 
     /**
@@ -112,8 +118,13 @@ public class EntitySlime extends EntityLiving implements IMob
             i = 0;
         }
 
-        this.setSlimeSize(i + 1);
+        this.setSlimeSize(i + 1, false);
         this.wasOnGround = compound.getBoolean("wasOnGround");
+    }
+
+    public boolean isSmallSlime()
+    {
+        return this.getSlimeSize() <= 1;
     }
 
     protected EnumParticleTypes getParticleType()
@@ -126,7 +137,7 @@ public class EntitySlime extends EntityLiving implements IMob
      */
     public void onUpdate()
     {
-        if (!this.worldObj.isRemote && this.worldObj.getDifficulty() == EnumDifficulty.PEACEFUL && this.getSlimeSize() > 0)
+        if (!this.world.isRemote && this.world.getDifficulty() == EnumDifficulty.PEACEFUL && this.getSlimeSize() > 0)
         {
             this.isDead = true;
         }
@@ -145,11 +156,11 @@ public class EntitySlime extends EntityLiving implements IMob
                 float f1 = this.rand.nextFloat() * 0.5F + 0.5F;
                 float f2 = MathHelper.sin(f) * (float)i * 0.5F * f1;
                 float f3 = MathHelper.cos(f) * (float)i * 0.5F * f1;
-                World world = this.worldObj;
+                World world = this.world;
                 EnumParticleTypes enumparticletypes = this.getParticleType();
                 double d0 = this.posX + (double)f2;
                 double d1 = this.posZ + (double)f3;
-                world.spawnParticle(enumparticletypes, d0, this.getEntityBoundingBox().minY, d1, 0.0D, 0.0D, 0.0D, new int[0]);
+                world.spawnParticle(enumparticletypes, d0, this.getEntityBoundingBox().minY, d1, 0.0D, 0.0D, 0.0D);
             }
 
             this.playSound(this.getSquishSound(), this.getSoundVolume(), ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) / 0.8F);
@@ -179,7 +190,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
     protected EntitySlime createInstance()
     {
-        return new EntitySlime(this.worldObj);
+        return new EntitySlime(this.world);
     }
 
     public void notifyDataManagerChange(DataParameter<?> key)
@@ -193,7 +204,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
             if (this.isInWater() && this.rand.nextInt(20) == 0)
             {
-                this.resetHeight();
+                this.doWaterSplashEffect();
             }
         }
 
@@ -207,7 +218,7 @@ public class EntitySlime extends EntityLiving implements IMob
     {
         int i = this.getSlimeSize();
 
-        if (!this.worldObj.isRemote && i > 1 && this.getHealth() <= 0.0F)
+        if (!this.world.isRemote && i > 1 && this.getHealth() <= 0.0F)
         {
             int j = 2 + this.rand.nextInt(3);
 
@@ -227,9 +238,9 @@ public class EntitySlime extends EntityLiving implements IMob
                     entityslime.enablePersistence();
                 }
 
-                entityslime.setSlimeSize(i / 2);
+                entityslime.setSlimeSize(i / 2, true);
                 entityslime.setLocationAndAngles(this.posX + (double)f, this.posY + 0.5D, this.posZ + (double)f1, this.rand.nextFloat() * 360.0F, 0.0F);
-                this.worldObj.spawnEntityInWorld(entityslime);
+                this.world.spawnEntity(entityslime);
             }
         }
 
@@ -264,7 +275,7 @@ public class EntitySlime extends EntityLiving implements IMob
     {
         int i = this.getSlimeSize();
 
-        if (this.canEntityBeSeen(entityIn) && this.getDistanceSqToEntity(entityIn) < 0.6D * (double)i * 0.6D * (double)i && entityIn.attackEntityFrom(DamageSource.causeMobDamage(this), (float)this.getAttackStrength()))
+        if (this.canEntityBeSeen(entityIn) && this.getDistanceSq(entityIn) < 0.6D * (double)i * 0.6D * (double)i && entityIn.attackEntityFrom(DamageSource.causeMobDamage(this), (float)this.getAttackStrength()))
         {
             this.playSound(SoundEvents.ENTITY_SLIME_ATTACK, 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
             this.applyEnchantments(this, entityIn);
@@ -292,7 +303,7 @@ public class EntitySlime extends EntityLiving implements IMob
         return this.getSlimeSize();
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return this.isSmallSlime() ? SoundEvents.ENTITY_SMALL_SLIME_HURT : SoundEvents.ENTITY_SLIME_HURT;
     }
@@ -323,20 +334,20 @@ public class EntitySlime extends EntityLiving implements IMob
      */
     public boolean getCanSpawnHere()
     {
-        BlockPos blockpos = new BlockPos(MathHelper.floor_double(this.posX), 0, MathHelper.floor_double(this.posZ));
-        Chunk chunk = this.worldObj.getChunkFromBlockCoords(blockpos);
+        BlockPos blockpos = new BlockPos(MathHelper.floor(this.posX), 0, MathHelper.floor(this.posZ));
+        Chunk chunk = this.world.getChunkFromBlockCoords(blockpos);
 
-        if (this.worldObj.getWorldInfo().getTerrainType().handleSlimeSpawnReduction(rand, worldObj))
+        if (this.world.getWorldInfo().getTerrainType().handleSlimeSpawnReduction(rand, world))
         {
             return false;
         }
         else
         {
-            if (this.worldObj.getDifficulty() != EnumDifficulty.PEACEFUL)
+            if (this.world.getDifficulty() != EnumDifficulty.PEACEFUL)
             {
-                Biome biome = this.worldObj.getBiomeGenForCoords(blockpos);
+                Biome biome = this.world.getBiome(blockpos);
 
-                if (biome == Biomes.SWAMPLAND && this.posY > 50.0D && this.posY < 70.0D && this.rand.nextFloat() < 0.5F && this.rand.nextFloat() < this.worldObj.getCurrentMoonPhaseFactor() && this.worldObj.getLightFromNeighbors(new BlockPos(this)) <= this.rand.nextInt(8))
+                if (biome == Biomes.SWAMPLAND && this.posY > 50.0D && this.posY < 70.0D && this.rand.nextFloat() < 0.5F && this.rand.nextFloat() < this.world.getCurrentMoonPhaseFactor() && this.world.getLightFromNeighbors(new BlockPos(this)) <= this.rand.nextInt(8))
                 {
                     return super.getCanSpawnHere();
                 }
@@ -400,7 +411,7 @@ public class EntitySlime extends EntityLiving implements IMob
         }
 
         int j = 1 << i;
-        this.setSlimeSize(j);
+        this.setSlimeSize(j, true);
         return super.onInitialSpawn(difficulty, livingdata);
     }
 
@@ -419,7 +430,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
     static class AISlimeAttack extends EntityAIBase
         {
-            private EntitySlime slime;
+            private final EntitySlime slime;
             private int growTieredTimer;
 
             public AISlimeAttack(EntitySlime slimeIn)
@@ -434,7 +445,19 @@ public class EntitySlime extends EntityLiving implements IMob
             public boolean shouldExecute()
             {
                 EntityLivingBase entitylivingbase = this.slime.getAttackTarget();
-                return entitylivingbase == null ? false : (!entitylivingbase.isEntityAlive() ? false : !(entitylivingbase instanceof EntityPlayer) || !((EntityPlayer)entitylivingbase).capabilities.disableDamage);
+
+                if (entitylivingbase == null)
+                {
+                    return false;
+                }
+                else if (!entitylivingbase.isEntityAlive())
+                {
+                    return false;
+                }
+                else
+                {
+                    return !(entitylivingbase instanceof EntityPlayer) || !((EntityPlayer)entitylivingbase).capabilities.disableDamage;
+                }
             }
 
             /**
@@ -449,14 +472,30 @@ public class EntitySlime extends EntityLiving implements IMob
             /**
              * Returns whether an in-progress EntityAIBase should continue executing
              */
-            public boolean continueExecuting()
+            public boolean shouldContinueExecuting()
             {
                 EntityLivingBase entitylivingbase = this.slime.getAttackTarget();
-                return entitylivingbase == null ? false : (!entitylivingbase.isEntityAlive() ? false : (entitylivingbase instanceof EntityPlayer && ((EntityPlayer)entitylivingbase).capabilities.disableDamage ? false : --this.growTieredTimer > 0));
+
+                if (entitylivingbase == null)
+                {
+                    return false;
+                }
+                else if (!entitylivingbase.isEntityAlive())
+                {
+                    return false;
+                }
+                else if (entitylivingbase instanceof EntityPlayer && ((EntityPlayer)entitylivingbase).capabilities.disableDamage)
+                {
+                    return false;
+                }
+                else
+                {
+                    return --this.growTieredTimer > 0;
+                }
             }
 
             /**
-             * Updates the task
+             * Keep ticking a continuous task that has already been started
              */
             public void updateTask()
             {
@@ -467,7 +506,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
     static class AISlimeFaceRandom extends EntityAIBase
         {
-            private EntitySlime slime;
+            private final EntitySlime slime;
             private float chosenDegrees;
             private int nextRandomizeTime;
 
@@ -486,7 +525,7 @@ public class EntitySlime extends EntityLiving implements IMob
             }
 
             /**
-             * Updates the task
+             * Keep ticking a continuous task that has already been started
              */
             public void updateTask()
             {
@@ -502,7 +541,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
     static class AISlimeFloat extends EntityAIBase
         {
-            private EntitySlime slime;
+            private final EntitySlime slime;
 
             public AISlimeFloat(EntitySlime slimeIn)
             {
@@ -520,7 +559,7 @@ public class EntitySlime extends EntityLiving implements IMob
             }
 
             /**
-             * Updates the task
+             * Keep ticking a continuous task that has already been started
              */
             public void updateTask()
             {
@@ -535,7 +574,7 @@ public class EntitySlime extends EntityLiving implements IMob
 
     static class AISlimeHop extends EntityAIBase
         {
-            private EntitySlime slime;
+            private final EntitySlime slime;
 
             public AISlimeHop(EntitySlime slimeIn)
             {
@@ -552,7 +591,7 @@ public class EntitySlime extends EntityLiving implements IMob
             }
 
             /**
-             * Updates the task
+             * Keep ticking a continuous task that has already been started
              */
             public void updateTask()
             {
@@ -564,7 +603,7 @@ public class EntitySlime extends EntityLiving implements IMob
         {
             private float yRot;
             private int jumpDelay;
-            private EntitySlime slime;
+            private final EntitySlime slime;
             private boolean isAggressive;
 
             public SlimeMoveHelper(EntitySlime slimeIn)
@@ -622,7 +661,8 @@ public class EntitySlime extends EntityLiving implements IMob
                         }
                         else
                         {
-                            this.slime.moveStrafing = this.slime.moveForward = 0.0F;
+                            this.slime.moveStrafing = 0.0F;
+                            this.slime.moveForward = 0.0F;
                             this.entity.setAIMoveSpeed(0.0F);
                         }
                     }

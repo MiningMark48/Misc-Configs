@@ -26,6 +26,8 @@ public interface IBlockProperties
 
     boolean isFullBlock();
 
+    boolean canEntitySpawn(Entity entityIn);
+
     @Deprecated //Forge location aware version below
     int getLightOpacity();
     int getLightOpacity(IBlockAccess world, BlockPos pos);
@@ -39,7 +41,7 @@ public interface IBlockProperties
 
     boolean useNeighborBrightness();
 
-    MapColor getMapColor();
+    MapColor getMapColor(IBlockAccess p_185909_1_, BlockPos p_185909_2_);
 
     /**
      * Returns the blockstate with the given rotation. If inapplicable, returns itself.
@@ -52,6 +54,9 @@ public interface IBlockProperties
     IBlockState withMirror(Mirror mirrorIn);
 
     boolean isFullCube();
+
+    @SideOnly(Side.CLIENT)
+    boolean hasCustomBreakingProgress();
 
     EnumBlockRenderType getRenderType();
 
@@ -92,18 +97,27 @@ public interface IBlockProperties
     boolean isOpaqueCube();
 
     @Nullable
-    AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos);
+    AxisAlignedBB getCollisionBoundingBox(IBlockAccess worldIn, BlockPos pos);
 
-    void addCollisionBoxToList(World worldIn, BlockPos pos, AxisAlignedBB p_185908_3_, List<AxisAlignedBB> p_185908_4_, @Nullable Entity p_185908_5_);
+    void addCollisionBoxToList(World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean p_185908_6_);
 
     AxisAlignedBB getBoundingBox(IBlockAccess blockAccess, BlockPos pos);
 
     RayTraceResult collisionRayTrace(World worldIn, BlockPos pos, Vec3d start, Vec3d end);
 
+    /**
+     * Determines if the block is solid enough on the top side to support other blocks, like redstone components.
+     */
     @Deprecated // Forge: Use isSideSolid(IBlockAccess, BlockPos, EnumFacing.UP) instead
-    boolean isFullyOpaque();
+    boolean isTopSolid();
 
     //Forge added functions
     boolean doesSideBlockRendering(IBlockAccess world, BlockPos pos, EnumFacing side);
     boolean isSideSolid(IBlockAccess world, BlockPos pos, EnumFacing side);
+
+    Vec3d getOffset(IBlockAccess access, BlockPos pos);
+
+    boolean causesSuffocation();
+
+    BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, BlockPos pos, EnumFacing facing);
 }

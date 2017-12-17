@@ -5,13 +5,13 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.IStringSerializable;
@@ -42,7 +42,7 @@ public class BlockLever extends Block
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
@@ -61,11 +61,11 @@ public class BlockLever extends Block
     }
 
     /**
-     * Check whether this Block can be placed on the given side
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
      */
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
-        return canAttachTo(worldIn, pos, side.getOpposite());
+        return canAttachTo(worldIn, pos, side);
     }
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
@@ -81,20 +81,20 @@ public class BlockLever extends Block
         return false;
     }
 
-    protected static boolean canAttachTo(World p_181090_0_, BlockPos p_181090_1_, EnumFacing p_181090_2_)
+    protected static boolean canAttachTo(World worldIn, BlockPos p_181090_1_, EnumFacing p_181090_2_)
     {
-        return BlockButton.canPlaceBlock(p_181090_0_, p_181090_1_, p_181090_2_);
+        return BlockButton.canPlaceBlock(worldIn, p_181090_1_, p_181090_2_);
     }
 
     /**
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         IBlockState iblockstate = this.getDefaultState().withProperty(POWERED, Boolean.valueOf(false));
 
-        if (canAttachTo(worldIn, pos, facing.getOpposite()))
+        if (canAttachTo(worldIn, pos, facing))
         {
             return iblockstate.withProperty(FACING, BlockLever.EnumOrientation.forFacings(facing, placer.getHorizontalFacing()));
         }
@@ -102,13 +102,13 @@ public class BlockLever extends Block
         {
             for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
             {
-                if (enumfacing != facing && canAttachTo(worldIn, pos, enumfacing.getOpposite()))
+                if (enumfacing != facing && canAttachTo(worldIn, pos, enumfacing))
                 {
                     return iblockstate.withProperty(FACING, BlockLever.EnumOrientation.forFacings(enumfacing, placer.getHorizontalFacing()));
                 }
             }
 
-            if (worldIn.getBlockState(pos.down()).isFullyOpaque())
+            if (worldIn.getBlockState(pos.down()).isTopSolid())
             {
                 return iblockstate.withProperty(FACING, BlockLever.EnumOrientation.forFacings(EnumFacing.UP, placer.getHorizontalFacing()));
             }
@@ -124,25 +124,25 @@ public class BlockLever extends Block
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
-        if (this.checkCanSurvive(worldIn, pos, state) && !canAttachTo(worldIn, pos, ((BlockLever.EnumOrientation)state.getValue(FACING)).getFacing().getOpposite()))
+        if (this.checkCanSurvive(worldIn, pos, state) && !canAttachTo(worldIn, pos, ((BlockLever.EnumOrientation)state.getValue(FACING)).getFacing()))
         {
             this.dropBlockAsItem(worldIn, pos, state, 0);
             worldIn.setBlockToAir(pos);
         }
     }
 
-    private boolean checkCanSurvive(World p_181091_1_, BlockPos p_181091_2_, IBlockState p_181091_3_)
+    private boolean checkCanSurvive(World worldIn, BlockPos pos, IBlockState state)
     {
-        if (this.canPlaceBlockAt(p_181091_1_, p_181091_2_))
+        if (this.canPlaceBlockAt(worldIn, pos))
         {
             return true;
         }
         else
         {
-            this.dropBlockAsItem(p_181091_1_, p_181091_2_, p_181091_3_, 0);
-            p_181091_1_.setBlockToAir(p_181091_2_);
+            this.dropBlockAsItem(worldIn, pos, state, 0);
+            worldIn.setBlockToAir(pos);
             return false;
         }
     }
@@ -169,7 +169,10 @@ public class BlockLever extends Block
         }
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (worldIn.isRemote)
         {
@@ -181,20 +184,23 @@ public class BlockLever extends Block
             worldIn.setBlockState(pos, state, 3);
             float f = ((Boolean)state.getValue(POWERED)).booleanValue() ? 0.6F : 0.5F;
             worldIn.playSound((EntityPlayer)null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 0.3F, f);
-            worldIn.notifyNeighborsOfStateChange(pos, this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
             EnumFacing enumfacing = ((BlockLever.EnumOrientation)state.getValue(FACING)).getFacing();
-            worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing.getOpposite()), this);
+            worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing.getOpposite()), this, false);
             return true;
         }
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         if (((Boolean)state.getValue(POWERED)).booleanValue())
         {
-            worldIn.notifyNeighborsOfStateChange(pos, this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
             EnumFacing enumfacing = ((BlockLever.EnumOrientation)state.getValue(FACING)).getFacing();
-            worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing.getOpposite()), this);
+            worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing.getOpposite()), this, false);
         }
 
         super.breakBlock(worldIn, pos, state);
@@ -207,7 +213,14 @@ public class BlockLever extends Block
 
     public int getStrongPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side)
     {
-        return !((Boolean)blockState.getValue(POWERED)).booleanValue() ? 0 : (((BlockLever.EnumOrientation)blockState.getValue(FACING)).getFacing() == side ? 15 : 0);
+        if (!((Boolean)blockState.getValue(POWERED)).booleanValue())
+        {
+            return 0;
+        }
+        else
+        {
+            return ((BlockLever.EnumOrientation)blockState.getValue(FACING)).getFacing() == side ? 15 : 0;
+        }
     }
 
     /**
@@ -329,10 +342,18 @@ public class BlockLever extends Block
         return new BlockStateContainer(this, new IProperty[] {FACING, POWERED});
     }
 
-
-    private boolean canAttach(World world, BlockPos pos, EnumFacing side)
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
     {
-        return world.isSideSolid(pos, side);
+        return BlockFaceShape.UNDEFINED;
     }
 
     public static enum EnumOrientation implements IStringSerializable

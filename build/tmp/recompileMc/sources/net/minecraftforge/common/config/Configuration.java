@@ -1,6 +1,20 @@
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.common.config;
@@ -36,6 +50,7 @@ import java.util.regex.Pattern;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 
+import com.google.common.primitives.Floats;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.GuiConfigEntries;
 import net.minecraftforge.fml.client.config.GuiConfigEntries.IConfigEntry;
@@ -43,6 +58,7 @@ import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
+import org.apache.commons.io.IOUtils;
 
 /**
  * This class offers advanced configurations capabilities, allowing to provide
@@ -60,7 +76,7 @@ public class Configuration
     private static final String CONFIG_VERSION_MARKER = "~CONFIG_VERSION";
     private static final Pattern CONFIG_START = Pattern.compile("START: \"([^\\\"]+)\"");
     private static final Pattern CONFIG_END = Pattern.compile("END: \"([^\\\"]+)\"");
-    public static final CharMatcher allowedProperties = CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.anyOf(ALLOWED_CHARS));
+    public static final CharMatcher allowedProperties = CharMatcher.javaLetterOrDigit().or(CharMatcher.anyOf(ALLOWED_CHARS));
     private static Configuration PARENT = null;
 
     File file;
@@ -94,7 +110,7 @@ public class Configuration
     /**
      * Create a configuration file for the file given in parameter with the provided config version number.
      */
-    public Configuration(File file, String configVersion)
+    private void runConfiguration(File file, String configVersion)
     {
         this.file = file;
         this.definedConfigVersion = configVersion;
@@ -116,9 +132,8 @@ public class Configuration
             {
                 File fileBak = new File(file.getAbsolutePath() + "_" +
                         new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".errored");
-                FMLLog.severe("An exception occurred while loading config file %s. This file will be renamed to %s " +
-                        "and a new config file will be generated.", file.getName(), fileBak.getName());
-                e.printStackTrace();
+                FMLLog.log.fatal("An exception occurred while loading config file {}. This file will be renamed to {} " +
+                        "and a new config file will be generated.", file.getName(), fileBak.getName(), e);
 
                 file.renameTo(fileBak);
                 load();
@@ -126,10 +141,15 @@ public class Configuration
         }
     }
 
+    public Configuration(File file, String configVersion)
+    {
+        runConfiguration(file, configVersion);
+    }
+
     public Configuration(File file, String configVersion, boolean caseSensitiveCustomCategories)
     {
-        this(file, configVersion);
         this.caseSensitiveCustomCategories = caseSensitiveCustomCategories;
+        runConfiguration(file, configVersion);
     }
 
     public Configuration(File file, boolean caseSensitiveCustomCategories)
@@ -1027,24 +1047,12 @@ public class Configuration
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error while loading config.", e);
         }
         finally
         {
-            if (buffer != null)
-            {
-                try
-                {
-                    buffer.close();
-                } catch (IOException e){}
-            }
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e){}
-            }
+            IOUtils.closeQuietly(buffer);
+            IOUtils.closeQuietly(input);
         }
 
         resetChangedState();
@@ -1100,7 +1108,7 @@ public class Configuration
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error while saving config.", e);
         }
     }
 
@@ -1404,10 +1412,12 @@ public class Configuration
     {
         if (hasCategory(category))
         {
-            if (getCategory(category).containsKey(oldPropName) && !oldPropName.equalsIgnoreCase(newPropName))
+            ConfigCategory cat = getCategory(category);
+            if (cat.containsKey(oldPropName) && !oldPropName.equalsIgnoreCase(newPropName))
             {
-                get(category, newPropName, getCategory(category).get(oldPropName).getString(), "");
-                getCategory(category).remove(oldPropName);
+                Property prop = cat.remove(oldPropName);
+                prop.setName(newPropName);
+                cat.put(newPropName, prop);
                 return true;
             }
         }
@@ -1704,11 +1714,12 @@ public class Configuration
         prop.setMaxValue(maxValue);
         try
         {
-            return Float.parseFloat(prop.getString()) < minValue ? minValue : (Float.parseFloat(prop.getString()) > maxValue ? maxValue : Float.parseFloat(prop.getString()));
+            float parseFloat = Float.parseFloat(prop.getString());
+            return Floats.constrainToRange(parseFloat, minValue, maxValue);
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Failed to get float for {}/{}", name, category, e);
         }
         return defaultValue;
     }

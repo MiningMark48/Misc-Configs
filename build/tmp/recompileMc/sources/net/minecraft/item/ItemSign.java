@@ -1,10 +1,12 @@
 package net.minecraft.item;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.BlockStandingSign;
 import net.minecraft.block.BlockWallSign;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
@@ -26,7 +28,7 @@ public class ItemSign extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
         boolean flag = iblockstate.getBlock().isReplaceable(worldIn, pos);
@@ -34,8 +36,9 @@ public class ItemSign extends Item
         if (facing != EnumFacing.DOWN && (iblockstate.getMaterial().isSolid() || flag) && (!flag || facing == EnumFacing.UP))
         {
             pos = pos.offset(facing);
+            ItemStack itemstack = player.getHeldItem(hand);
 
-            if (playerIn.canPlayerEdit(pos, facing, stack) && Blocks.STANDING_SIGN.canPlaceBlockAt(worldIn, pos))
+            if (player.canPlayerEdit(pos, facing, itemstack) && Blocks.STANDING_SIGN.canPlaceBlockAt(worldIn, pos))
             {
                 if (worldIn.isRemote)
                 {
@@ -47,7 +50,7 @@ public class ItemSign extends Item
 
                     if (facing == EnumFacing.UP)
                     {
-                        int i = MathHelper.floor_double((double)((playerIn.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
+                        int i = MathHelper.floor((double)((player.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
                         worldIn.setBlockState(pos, Blocks.STANDING_SIGN.getDefaultState().withProperty(BlockStandingSign.ROTATION, Integer.valueOf(i)), 11);
                     }
                     else
@@ -55,14 +58,19 @@ public class ItemSign extends Item
                         worldIn.setBlockState(pos, Blocks.WALL_SIGN.getDefaultState().withProperty(BlockWallSign.FACING, facing), 11);
                     }
 
-                    --stack.stackSize;
                     TileEntity tileentity = worldIn.getTileEntity(pos);
 
-                    if (tileentity instanceof TileEntitySign && !ItemBlock.setTileEntityNBT(worldIn, playerIn, pos, stack))
+                    if (tileentity instanceof TileEntitySign && !ItemBlock.setTileEntityNBT(worldIn, player, pos, itemstack))
                     {
-                        playerIn.openEditSign((TileEntitySign)tileentity);
+                        player.openEditSign((TileEntitySign)tileentity);
                     }
 
+                    if (player instanceof EntityPlayerMP)
+                    {
+                        CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+                    }
+
+                    itemstack.shrink(1);
                     return EnumActionResult.SUCCESS;
                 }
             }

@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.network.internal;
 
 import io.netty.buffer.ByteBuf;
@@ -18,10 +37,6 @@ import net.minecraftforge.fml.common.registry.EntityRegistry.EntityRegistration;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.common.registry.IThrowableEntity;
 import net.minecraftforge.fml.relauncher.Side;
-
-import org.apache.logging.log4j.Level;
-
-import com.google.common.base.Throwables;
 
 public abstract class FMLMessage {
     public static class CompleteHandshake extends FMLMessage {
@@ -162,10 +177,11 @@ public abstract class FMLMessage {
             try
             {
                 entity.getDataManager().writeEntries(pb);
-            } catch (IOException e)
+            }
+            catch (IOException e)
             {
-                FMLLog.log(Level.FATAL,e,"Encountered fatal exception trying to send entity spawn data watchers");
-                throw Throwables.propagate(e);
+                FMLLog.log.fatal("Encountered fatal exception trying to send entity spawn data watchers", e);
+                throw new RuntimeException(e);
             }
             buf.writeBytes(tmpBuf);
 
@@ -214,10 +230,11 @@ public abstract class FMLMessage {
             try
             {
                 dataWatcherList = EntityDataManager.readEntries(new PacketBuffer(dat));
-            } catch (IOException e)
+            }
+            catch (IOException e)
             {
-                FMLLog.log(Level.FATAL, e, "There was a critical error decoding the datawatcher stream for a mod entity.");
-                throw Throwables.propagate(e);
+                FMLLog.log.fatal("There was a critical error decoding the datawatcher stream for a mod entity.", e);
+                throw new RuntimeException(e);
             }
 
             throwerId = dat.readInt();
@@ -227,7 +244,7 @@ public abstract class FMLMessage {
                 speedScaledY = dat.readInt() / 8000D;
                 speedScaledZ = dat.readInt() / 8000D;
             }
-            this.dataStream = dat;
+            this.dataStream = dat.retain();
         }
     }
     abstract void toBytes(ByteBuf buf);

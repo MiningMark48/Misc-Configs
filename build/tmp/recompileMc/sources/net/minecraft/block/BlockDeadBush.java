@@ -34,7 +34,7 @@ public class BlockDeadBush extends BlockBush implements net.minecraftforge.commo
     /**
      * Get the MapColor for this Block and the given BlockState
      */
-    public MapColor getMapColor(IBlockState state)
+    public MapColor getMapColor(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
         return MapColor.WOOD;
     }
@@ -66,15 +66,18 @@ public class BlockDeadBush extends BlockBush implements net.minecraftforge.commo
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.STICK;
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
-        if (false && !worldIn.isRemote && stack != null && stack.getItem() == Items.SHEARS) // Forge: Noop
+        if (!worldIn.isRemote && stack.getItem() == Items.SHEARS)
         {
             player.addStat(StatList.getBlockStats(this));
             spawnAsEntity(worldIn, pos, new ItemStack(Blocks.DEADBUSH, 1, 0));

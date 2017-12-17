@@ -6,6 +6,7 @@ import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIEatGrass;
@@ -15,7 +16,7 @@ import net.minecraft.entity.ai.EntityAIMate;
 import net.minecraft.entity.ai.EntityAIPanic;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWanderAvoidWater;
 import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,9 +33,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DifficultyInstance;
@@ -52,11 +55,15 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
      */
     private final InventoryCrafting inventoryCrafting = new InventoryCrafting(new Container()
     {
+        /**
+         * Determines whether supplied player can use this container
+         */
         public boolean canInteractWith(EntityPlayer playerIn)
         {
             return false;
         }
     }, 2, 1);
+    /** Map from EnumDyeColor to RGB values for passage to GlStateManager.color() */
     private static final Map<EnumDyeColor, float[]> DYE_TO_RGB = Maps.newEnumMap(EnumDyeColor.class);
     /**
      * Used to control movement as well as wool regrowth. Set to 40 on handleHealthUpdate and counts down with each
@@ -65,9 +72,17 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
     private int sheepTimer;
     private EntityAIEatGrass entityAIEatGrass;
 
+    private static float[] createSheepColor(EnumDyeColor p_192020_0_)
+    {
+        float[] afloat = p_192020_0_.getColorComponentValues();
+        float f = 0.75F;
+        return new float[] {afloat[0] * 0.75F, afloat[1] * 0.75F, afloat[2] * 0.75F};
+    }
+
+    @SideOnly(Side.CLIENT)
     public static float[] getDyeRgb(EnumDyeColor dyeColor)
     {
-        return (float[])DYE_TO_RGB.get(dyeColor);
+        return DYE_TO_RGB.get(dyeColor);
     }
 
     public EntitySheep(World worldIn)
@@ -80,13 +95,14 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
 
     protected void initEntityAI()
     {
+        this.entityAIEatGrass = new EntityAIEatGrass(this);
         this.tasks.addTask(0, new EntityAISwimming(this));
         this.tasks.addTask(1, new EntityAIPanic(this, 1.25D));
         this.tasks.addTask(2, new EntityAIMate(this, 1.0D));
         this.tasks.addTask(3, new EntityAITempt(this, 1.1D, Items.WHEAT, false));
         this.tasks.addTask(4, new EntityAIFollowParent(this, 1.1D));
-        this.tasks.addTask(5, this.entityAIEatGrass = new EntityAIEatGrass(this));
-        this.tasks.addTask(6, new EntityAIWander(this, 1.0D));
+        this.tasks.addTask(5, this.entityAIEatGrass);
+        this.tasks.addTask(6, new EntityAIWanderAvoidWater(this, 1.0D));
         this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
         this.tasks.addTask(8, new EntityAILookIdle(this));
     }
@@ -103,7 +119,7 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
      */
     public void onLivingUpdate()
     {
-        if (this.worldObj.isRemote)
+        if (this.world.isRemote)
         {
             this.sheepTimer = Math.max(0, this.sheepTimer - 1);
         }
@@ -172,6 +188,9 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @SideOnly(Side.CLIENT)
     public void handleStatusUpdate(byte id)
     {
@@ -185,13 +204,13 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
         }
     }
 
-    @SuppressWarnings("unused")
-    public boolean processInteract(EntityPlayer player, EnumHand hand, @Nullable ItemStack stack)
+    public boolean processInteract(EntityPlayer player, EnumHand hand)
     {
-        if (false)  //Forge: Moved to onSheared
-        if (stack != null && stack.getItem() == Items.SHEARS && !this.getSheared() && !this.isChild())
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (false && itemstack.getItem() == Items.SHEARS && !this.getSheared() && !this.isChild())   //Forge: Moved to onSheared
         {
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
                 this.setSheared(true);
                 int i = 1 + this.rand.nextInt(3);
@@ -205,17 +224,33 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
                 }
             }
 
-            stack.damageItem(1, player);
+            itemstack.damageItem(1, player);
             this.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, 1.0F, 1.0F);
         }
 
-        return super.processInteract(player, hand, stack);
+        return super.processInteract(player, hand);
+    }
+
+    public static void registerFixesSheep(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntitySheep.class);
     }
 
     @SideOnly(Side.CLIENT)
     public float getHeadRotationPointY(float p_70894_1_)
     {
-        return this.sheepTimer <= 0 ? 0.0F : (this.sheepTimer >= 4 && this.sheepTimer <= 36 ? 1.0F : (this.sheepTimer < 4 ? ((float)this.sheepTimer - p_70894_1_) / 4.0F : -((float)(this.sheepTimer - 40) - p_70894_1_) / 4.0F));
+        if (this.sheepTimer <= 0)
+        {
+            return 0.0F;
+        }
+        else if (this.sheepTimer >= 4 && this.sheepTimer <= 36)
+        {
+            return 1.0F;
+        }
+        else
+        {
+            return this.sheepTimer < 4 ? ((float)this.sheepTimer - p_70894_1_) / 4.0F : -((float)(this.sheepTimer - 40) - p_70894_1_) / 4.0F;
+        }
     }
 
     @SideOnly(Side.CLIENT)
@@ -257,7 +292,7 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
         return SoundEvents.ENTITY_SHEEP_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_SHEEP_HURT;
     }
@@ -320,13 +355,33 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
     public static EnumDyeColor getRandomSheepColor(Random random)
     {
         int i = random.nextInt(100);
-        return i < 5 ? EnumDyeColor.BLACK : (i < 10 ? EnumDyeColor.GRAY : (i < 15 ? EnumDyeColor.SILVER : (i < 18 ? EnumDyeColor.BROWN : (random.nextInt(500) == 0 ? EnumDyeColor.PINK : EnumDyeColor.WHITE))));
+
+        if (i < 5)
+        {
+            return EnumDyeColor.BLACK;
+        }
+        else if (i < 10)
+        {
+            return EnumDyeColor.GRAY;
+        }
+        else if (i < 15)
+        {
+            return EnumDyeColor.SILVER;
+        }
+        else if (i < 18)
+        {
+            return EnumDyeColor.BROWN;
+        }
+        else
+        {
+            return random.nextInt(500) == 0 ? EnumDyeColor.PINK : EnumDyeColor.WHITE;
+        }
     }
 
     public EntitySheep createChild(EntityAgeable ageable)
     {
         EntitySheep entitysheep = (EntitySheep)ageable;
-        EntitySheep entitysheep1 = new EntitySheep(this.worldObj);
+        EntitySheep entitysheep1 = new EntitySheep(this.world);
         entitysheep1.setFleeceColor(this.getDyeColorMixFromParents(this, entitysheep));
         return entitysheep1;
     }
@@ -353,57 +408,8 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
     public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable IEntityLivingData livingdata)
     {
         livingdata = super.onInitialSpawn(difficulty, livingdata);
-        this.setFleeceColor(getRandomSheepColor(this.worldObj.rand));
+        this.setFleeceColor(getRandomSheepColor(this.world.rand));
         return livingdata;
-    }
-
-    /**
-     * Attempts to mix both parent sheep to come up with a mixed dye color.
-     */
-    private EnumDyeColor getDyeColorMixFromParents(EntityAnimal father, EntityAnimal mother)
-    {
-        int i = ((EntitySheep)father).getFleeceColor().getDyeDamage();
-        int j = ((EntitySheep)mother).getFleeceColor().getDyeDamage();
-        this.inventoryCrafting.getStackInSlot(0).setItemDamage(i);
-        this.inventoryCrafting.getStackInSlot(1).setItemDamage(j);
-        ItemStack itemstack = CraftingManager.getInstance().findMatchingRecipe(this.inventoryCrafting, ((EntitySheep)father).worldObj);
-        int k;
-
-        if (itemstack != null && itemstack.getItem() == Items.DYE)
-        {
-            k = itemstack.getMetadata();
-        }
-        else
-        {
-            k = this.worldObj.rand.nextBoolean() ? i : j;
-        }
-
-        return EnumDyeColor.byDyeDamage(k);
-    }
-
-    public float getEyeHeight()
-    {
-        return 0.95F * this.height;
-    }
-
-    static
-    {
-        DYE_TO_RGB.put(EnumDyeColor.WHITE, new float[] {1.0F, 1.0F, 1.0F});
-        DYE_TO_RGB.put(EnumDyeColor.ORANGE, new float[] {0.85F, 0.5F, 0.2F});
-        DYE_TO_RGB.put(EnumDyeColor.MAGENTA, new float[] {0.7F, 0.3F, 0.85F});
-        DYE_TO_RGB.put(EnumDyeColor.LIGHT_BLUE, new float[] {0.4F, 0.6F, 0.85F});
-        DYE_TO_RGB.put(EnumDyeColor.YELLOW, new float[] {0.9F, 0.9F, 0.2F});
-        DYE_TO_RGB.put(EnumDyeColor.LIME, new float[] {0.5F, 0.8F, 0.1F});
-        DYE_TO_RGB.put(EnumDyeColor.PINK, new float[] {0.95F, 0.5F, 0.65F});
-        DYE_TO_RGB.put(EnumDyeColor.GRAY, new float[] {0.3F, 0.3F, 0.3F});
-        DYE_TO_RGB.put(EnumDyeColor.SILVER, new float[] {0.6F, 0.6F, 0.6F});
-        DYE_TO_RGB.put(EnumDyeColor.CYAN, new float[] {0.3F, 0.5F, 0.6F});
-        DYE_TO_RGB.put(EnumDyeColor.PURPLE, new float[] {0.5F, 0.25F, 0.7F});
-        DYE_TO_RGB.put(EnumDyeColor.BLUE, new float[] {0.2F, 0.3F, 0.7F});
-        DYE_TO_RGB.put(EnumDyeColor.BROWN, new float[] {0.4F, 0.3F, 0.2F});
-        DYE_TO_RGB.put(EnumDyeColor.GREEN, new float[] {0.4F, 0.5F, 0.2F});
-        DYE_TO_RGB.put(EnumDyeColor.RED, new float[] {0.6F, 0.2F, 0.2F});
-        DYE_TO_RGB.put(EnumDyeColor.BLACK, new float[] {0.1F, 0.1F, 0.1F});
     }
 
     @Override public boolean isShearable(ItemStack item, net.minecraft.world.IBlockAccess world, BlockPos pos){ return !this.getSheared() && !this.isChild(); }
@@ -419,5 +425,44 @@ public class EntitySheep extends EntityAnimal implements net.minecraftforge.comm
 
         this.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, 1.0F, 1.0F);
         return ret;
+    }
+
+    /**
+     * Attempts to mix both parent sheep to come up with a mixed dye color.
+     */
+    private EnumDyeColor getDyeColorMixFromParents(EntityAnimal father, EntityAnimal mother)
+    {
+        int i = ((EntitySheep)father).getFleeceColor().getDyeDamage();
+        int j = ((EntitySheep)mother).getFleeceColor().getDyeDamage();
+        this.inventoryCrafting.getStackInSlot(0).setItemDamage(i);
+        this.inventoryCrafting.getStackInSlot(1).setItemDamage(j);
+        ItemStack itemstack = CraftingManager.findMatchingResult(this.inventoryCrafting, ((EntitySheep)father).world);
+        int k;
+
+        if (itemstack.getItem() == Items.DYE)
+        {
+            k = itemstack.getMetadata();
+        }
+        else
+        {
+            k = this.world.rand.nextBoolean() ? i : j;
+        }
+
+        return EnumDyeColor.byDyeDamage(k);
+    }
+
+    public float getEyeHeight()
+    {
+        return 0.95F * this.height;
+    }
+
+    static
+    {
+        for (EnumDyeColor enumdyecolor : EnumDyeColor.values())
+        {
+            DYE_TO_RGB.put(enumdyecolor, createSheepColor(enumdyecolor));
+        }
+
+        DYE_TO_RGB.put(EnumDyeColor.WHITE, new float[] {0.9019608F, 0.9019608F, 0.9019608F});
     }
 }

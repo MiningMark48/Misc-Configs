@@ -18,7 +18,7 @@ public class LayerDeadmau5Head implements LayerRenderer<AbstractClientPlayer>
 
     public void doRenderLayer(AbstractClientPlayer entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale)
     {
-        if (entitylivingbaseIn.getName().equals("deadmau5") && entitylivingbaseIn.hasSkin() && !entitylivingbaseIn.isInvisible())
+        if ("deadmau5".equals(entitylivingbaseIn.getName()) && entitylivingbaseIn.hasSkin() && !entitylivingbaseIn.isInvisible())
         {
             this.playerRenderer.bindTexture(entitylivingbaseIn.getLocationSkin());
 
@@ -34,7 +34,7 @@ public class LayerDeadmau5Head implements LayerRenderer<AbstractClientPlayer>
                 GlStateManager.rotate(-f1, 1.0F, 0.0F, 0.0F);
                 GlStateManager.rotate(-f, 0.0F, 1.0F, 0.0F);
                 float f2 = 1.3333334F;
-                GlStateManager.scale(f2, f2, f2);
+                GlStateManager.scale(1.3333334F, 1.3333334F, 1.3333334F);
                 this.playerRenderer.getMainModel().renderDeadmau5Head(0.0625F);
                 GlStateManager.popMatrix();
             }

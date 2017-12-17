@@ -1,9 +1,10 @@
 package net.minecraft.client.settings;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.IntHashMap;
 import net.minecraftforge.fml.relauncher.Side;
@@ -13,9 +14,11 @@ import org.lwjgl.input.Keyboard;
 @SideOnly(Side.CLIENT)
 public class KeyBinding implements Comparable<KeyBinding>
 {
-    private static final List<KeyBinding> KEYBIND_ARRAY = Lists.<KeyBinding>newArrayList();
+    private static final Map<String, KeyBinding> KEYBIND_ARRAY = Maps.<String, KeyBinding>newHashMap();
     private static final net.minecraftforge.client.settings.KeyBindingMap HASH = new net.minecraftforge.client.settings.KeyBindingMap();
     private static final Set<String> KEYBIND_SET = Sets.<String>newHashSet();
+    /** A map that assigns priorities to all categories, for ordering purposes. */
+    private static final Map<String, Integer> CATEGORY_ORDER = Maps.<String, Integer>newHashMap();
     private final String keyDescription;
     private final int keyCodeDefault;
     private final String keyCategory;
@@ -50,13 +53,16 @@ public class KeyBinding implements Comparable<KeyBinding>
         }
     }
 
+    /**
+     * Completely recalculates whether any keybinds are held, from scratch.
+     */
     public static void updateKeyBindState()
     {
-        for (KeyBinding keybinding : KEYBIND_ARRAY)
+        for (KeyBinding keybinding : KEYBIND_ARRAY.values())
         {
             try
             {
-                setKeyBindState(keybinding.keyCode, Keyboard.isKeyDown(keybinding.keyCode));
+                setKeyBindState(keybinding.keyCode, keybinding.keyCode < 256 && Keyboard.isKeyDown(keybinding.keyCode));
             }
             catch (IndexOutOfBoundsException var3)
             {
@@ -67,7 +73,7 @@ public class KeyBinding implements Comparable<KeyBinding>
 
     public static void unPressAllKeys()
     {
-        for (KeyBinding keybinding : KEYBIND_ARRAY)
+        for (KeyBinding keybinding : KEYBIND_ARRAY.values())
         {
             keybinding.unpressKey();
         }
@@ -77,7 +83,7 @@ public class KeyBinding implements Comparable<KeyBinding>
     {
         HASH.clearMap();
 
-        for (KeyBinding keybinding : KEYBIND_ARRAY)
+        for (KeyBinding keybinding : KEYBIND_ARRAY.values())
         {
             HASH.addKey(keybinding.keyCode, keybinding);
         }
@@ -94,7 +100,7 @@ public class KeyBinding implements Comparable<KeyBinding>
         this.keyCode = keyCode;
         this.keyCodeDefault = keyCode;
         this.keyCategory = category;
-        KEYBIND_ARRAY.add(this);
+        KEYBIND_ARRAY.put(description, this);
         HASH.addKey(keyCode, this);
         KEYBIND_SET.add(category);
     }
@@ -104,7 +110,7 @@ public class KeyBinding implements Comparable<KeyBinding>
      */
     public boolean isKeyDown()
     {
-        return this.pressed && getKeyConflictContext().isActive() && getKeyModifier().isActive();
+        return this.pressed && getKeyConflictContext().isActive() && getKeyModifier().isActive(getKeyConflictContext());
     }
 
     public String getKeyCategory()
@@ -157,14 +163,13 @@ public class KeyBinding implements Comparable<KeyBinding>
 
     public int compareTo(KeyBinding p_compareTo_1_)
     {
-        int i = I18n.format(this.keyCategory, new Object[0]).compareTo(I18n.format(p_compareTo_1_.keyCategory, new Object[0]));
-
-        if (i == 0)
-        {
-            i = I18n.format(this.keyDescription, new Object[0]).compareTo(I18n.format(p_compareTo_1_.keyDescription, new Object[0]));
-        }
-
-        return i;
+        if (this.keyCategory.equals(p_compareTo_1_.keyCategory)) return I18n.format(this.keyDescription).compareTo(I18n.format(p_compareTo_1_.keyDescription));
+        Integer tCat = CATEGORY_ORDER.get(this.keyCategory);
+        Integer oCat = CATEGORY_ORDER.get(p_compareTo_1_.keyCategory);
+        if (tCat == null && oCat != null) return 1;
+        if (tCat != null && oCat == null) return -1;
+        if (tCat == null && oCat == null) return I18n.format(this.keyCategory).compareTo(I18n.format(p_compareTo_1_.keyCategory));
+        return  tCat.compareTo(oCat);
     }
 
     /****************** Forge Start *****************************/
@@ -196,7 +201,7 @@ public class KeyBinding implements Comparable<KeyBinding>
         {
             this.keyModifier = net.minecraftforge.client.settings.KeyModifier.NONE;
         }
-        KEYBIND_ARRAY.add(this);
+        KEYBIND_ARRAY.put(description, this);
         HASH.addKey(keyCode, this);
         KEYBIND_SET.add(category);
     }
@@ -206,7 +211,7 @@ public class KeyBinding implements Comparable<KeyBinding>
      */
     public boolean isActiveAndMatches(int keyCode)
     {
-        return keyCode == this.getKeyCode() && getKeyConflictContext().isActive() && getKeyModifier().isActive();
+        return keyCode != 0 && keyCode == this.getKeyCode() && getKeyConflictContext().isActive() && getKeyModifier().isActive(getKeyConflictContext());
     }
 
     public void setKeyConflictContext(net.minecraftforge.client.settings.IKeyConflictContext keyConflictContext)
@@ -251,7 +256,7 @@ public class KeyBinding implements Comparable<KeyBinding>
         return getKeyCode() == getKeyCodeDefault() && getKeyModifier() == getKeyModifierDefault();
     }
 
-	/**
+    /**
      * Returns true when the other keyBinding conflicts with this one
      */
     public boolean conflicts(KeyBinding other)
@@ -264,9 +269,14 @@ public class KeyBinding implements Comparable<KeyBinding>
             {
                 return true;
             }
-            else if (keyModifier == otherKeyModifier || keyModifier == net.minecraftforge.client.settings.KeyModifier.NONE || otherKeyModifier == net.minecraftforge.client.settings.KeyModifier.NONE)
+            else if (getKeyCode() == other.getKeyCode())
             {
-                return getKeyCode() == other.getKeyCode();
+                return keyModifier == otherKeyModifier ||
+                        // IN_GAME key contexts have a conflict when at least one modifier is NONE.
+                        // For example: If you hold shift to crouch, you can still press E to open your inventory. This means that a Shift+E hotkey is in conflict with E.
+                        // GUI and other key contexts do not have this limitation.
+                        (getKeyConflictContext().conflicts(net.minecraftforge.client.settings.KeyConflictContext.IN_GAME) &&
+                                (keyModifier == net.minecraftforge.client.settings.KeyModifier.NONE || otherKeyModifier == net.minecraftforge.client.settings.KeyModifier.NONE));
             }
         }
         return false;
@@ -292,4 +302,34 @@ public class KeyBinding implements Comparable<KeyBinding>
         return getKeyModifier().getLocalizedComboName(getKeyCode());
     }
     /****************** Forge End *****************************/
+
+    /**
+     * Returns a supplier which gets a keybind's current binding (eg, <code>key.forward</code> returns <samp>W</samp> by
+     * default), or the keybind's name if no such keybind exists (eg, <code>key.invalid</code> returns
+     * <samp>key.invalid</samp>)
+     *  
+     * @param key The description of the key (eg, <code>key.forward</code>).
+     */
+    public static Supplier<String> getDisplayString(String key)
+    {
+        KeyBinding keybinding = KEYBIND_ARRAY.get(key);
+        return keybinding == null ? () ->
+        {
+            return key;
+        } : () ->
+        {
+            return keybinding.getDisplayName();
+        };
+    }
+
+    static
+    {
+        CATEGORY_ORDER.put("key.categories.movement", Integer.valueOf(1));
+        CATEGORY_ORDER.put("key.categories.gameplay", Integer.valueOf(2));
+        CATEGORY_ORDER.put("key.categories.inventory", Integer.valueOf(3));
+        CATEGORY_ORDER.put("key.categories.creative", Integer.valueOf(4));
+        CATEGORY_ORDER.put("key.categories.multiplayer", Integer.valueOf(5));
+        CATEGORY_ORDER.put("key.categories.ui", Integer.valueOf(6));
+        CATEGORY_ORDER.put("key.categories.misc", Integer.valueOf(7));
+    }
 }

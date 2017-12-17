@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -30,6 +31,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.ILockableContainer;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockChest extends BlockContainer
 {
@@ -63,8 +66,15 @@ public class BlockChest extends BlockContainer
         return false;
     }
 
+    @SideOnly(Side.CLIENT)
+    public boolean hasCustomBreakingProgress(IBlockState state)
+    {
+        return true;
+    }
+
     /**
-     * The type of render function called. 3 for standard block models, 2 for TESR's, 1 for liquids, -1 is no render
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
      */
     public EnumBlockRenderType getRenderType(IBlockState state)
     {
@@ -73,9 +83,27 @@ public class BlockChest extends BlockContainer
 
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
-        return source.getBlockState(pos.north()).getBlock() == this ? NORTH_CHEST_AABB : (source.getBlockState(pos.south()).getBlock() == this ? SOUTH_CHEST_AABB : (source.getBlockState(pos.west()).getBlock() == this ? WEST_CHEST_AABB : (source.getBlockState(pos.east()).getBlock() == this ? EAST_CHEST_AABB : NOT_CONNECTED_AABB)));
+        if (source.getBlockState(pos.north()).getBlock() == this)
+        {
+            return NORTH_CHEST_AABB;
+        }
+        else if (source.getBlockState(pos.south()).getBlock() == this)
+        {
+            return SOUTH_CHEST_AABB;
+        }
+        else if (source.getBlockState(pos.west()).getBlock() == this)
+        {
+            return WEST_CHEST_AABB;
+        }
+        else
+        {
+            return source.getBlockState(pos.east()).getBlock() == this ? EAST_CHEST_AABB : NOT_CONNECTED_AABB;
+        }
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         this.checkForSurroundingChests(worldIn, pos, state);
@@ -96,7 +124,7 @@ public class BlockChest extends BlockContainer
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         return this.getDefaultState().withProperty(FACING, placer.getHorizontalFacing());
     }
@@ -106,7 +134,7 @@ public class BlockChest extends BlockContainer
      */
     public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
     {
-        EnumFacing enumfacing = EnumFacing.getHorizontal(MathHelper.floor_double((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3).getOpposite();
+        EnumFacing enumfacing = EnumFacing.getHorizontal(MathHelper.floor((double)(placer.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3).getOpposite();
         state = state.withProperty(FACING, enumfacing);
         BlockPos blockpos = pos.north();
         BlockPos blockpos1 = pos.south();
@@ -381,9 +409,9 @@ public class BlockChest extends BlockContainer
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
-        super.neighborChanged(state, worldIn, pos, blockIn);
+        super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
         TileEntity tileentity = worldIn.getTileEntity(pos);
 
         if (tileentity instanceof TileEntityChest)
@@ -392,6 +420,9 @@ public class BlockChest extends BlockContainer
         }
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         TileEntity tileentity = worldIn.getTileEntity(pos);
@@ -405,7 +436,10 @@ public class BlockChest extends BlockContainer
         super.breakBlock(worldIn, pos, state);
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (worldIn.isRemote)
         {
@@ -440,9 +474,9 @@ public class BlockChest extends BlockContainer
     }
 
     @Nullable
-    public ILockableContainer getContainer(World p_189418_1_, BlockPos p_189418_2_, boolean p_189418_3_)
+    public ILockableContainer getContainer(World worldIn, BlockPos pos, boolean allowBlocking)
     {
-        TileEntity tileentity = p_189418_1_.getTileEntity(p_189418_2_);
+        TileEntity tileentity = worldIn.getTileEntity(pos);
 
         if (!(tileentity instanceof TileEntityChest))
         {
@@ -452,7 +486,7 @@ public class BlockChest extends BlockContainer
         {
             ILockableContainer ilockablecontainer = (TileEntityChest)tileentity;
 
-            if (!p_189418_3_ && this.isBlocked(p_189418_1_, p_189418_2_))
+            if (!allowBlocking && this.isBlocked(worldIn, pos))
             {
                 return null;
             }
@@ -460,17 +494,17 @@ public class BlockChest extends BlockContainer
             {
                 for (EnumFacing enumfacing : EnumFacing.Plane.HORIZONTAL)
                 {
-                    BlockPos blockpos = p_189418_2_.offset(enumfacing);
-                    Block block = p_189418_1_.getBlockState(blockpos).getBlock();
+                    BlockPos blockpos = pos.offset(enumfacing);
+                    Block block = worldIn.getBlockState(blockpos).getBlock();
 
                     if (block == this)
                     {
-                        if (this.isBlocked(p_189418_1_, blockpos))
+                        if (this.isBlocked(worldIn, blockpos))
                         {
                             return null;
                         }
 
-                        TileEntity tileentity1 = p_189418_1_.getTileEntity(blockpos);
+                        TileEntity tileentity1 = worldIn.getTileEntity(blockpos);
 
                         if (tileentity1 instanceof TileEntityChest)
                         {
@@ -523,7 +557,7 @@ public class BlockChest extends BlockContainer
                 i = ((TileEntityChest)tileentity).numPlayersUsing;
             }
 
-            return MathHelper.clamp_int(i, 0, 15);
+            return MathHelper.clamp(i, 0, 15);
         }
     }
 
@@ -613,9 +647,29 @@ public class BlockChest extends BlockContainer
         return new BlockStateContainer(this, new IProperty[] {FACING});
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
+    }
+
     public static enum Type
     {
         BASIC,
         TRAP;
+    }
+
+    /* ======================================== FORGE START =====================================*/
+    public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis)
+    {
+        return !isDoubleChest(world, pos) && super.rotateBlock(world, pos, axis);
     }
 }

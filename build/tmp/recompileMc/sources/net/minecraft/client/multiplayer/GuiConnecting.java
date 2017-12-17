@@ -50,7 +50,7 @@ public class GuiConnecting extends GuiScreen
 
     private void connect(final String ip, final int port)
     {
-        LOGGER.info("Connecting to " + ip + ", " + port);
+        LOGGER.info("Connecting to {}, {}", ip, Integer.valueOf(port));
         (new Thread("Server Connector #" + CONNECTION_ID.incrementAndGet())
         {
             public void run()
@@ -67,7 +67,7 @@ public class GuiConnecting extends GuiScreen
                     inetaddress = InetAddress.getByName(ip);
                     GuiConnecting.this.networkManager = NetworkManager.createNetworkManagerAndConnect(inetaddress, port, GuiConnecting.this.mc.gameSettings.isUsingNativeTransport());
                     GuiConnecting.this.networkManager.setNetHandler(new NetHandlerLoginClient(GuiConnecting.this.networkManager, GuiConnecting.this.mc, GuiConnecting.this.previousGuiScreen));
-                    GuiConnecting.this.networkManager.sendPacket(new C00Handshake(110, ip, port, EnumConnectionState.LOGIN, true));
+                    GuiConnecting.this.networkManager.sendPacket(new C00Handshake(ip, port, EnumConnectionState.LOGIN, true));
                     GuiConnecting.this.networkManager.sendPacket(new CPacketLoginStart(GuiConnecting.this.mc.getSession().getProfile()));
                 }
                 catch (UnknownHostException unknownhostexception)
@@ -77,7 +77,7 @@ public class GuiConnecting extends GuiScreen
                         return;
                     }
 
-                    GuiConnecting.LOGGER.error((String)"Couldn\'t connect to server", (Throwable)unknownhostexception);
+                    GuiConnecting.LOGGER.error("Couldn't connect to server", (Throwable)unknownhostexception);
                     GuiConnecting.this.mc.displayGuiScreen(new GuiDisconnected(GuiConnecting.this.previousGuiScreen, "connect.failed", new TextComponentTranslation("disconnect.genericReason", new Object[] {"Unknown host"})));
                 }
                 catch (Exception exception)
@@ -87,12 +87,12 @@ public class GuiConnecting extends GuiScreen
                         return;
                     }
 
-                    GuiConnecting.LOGGER.error((String)"Couldn\'t connect to server", (Throwable)exception);
+                    GuiConnecting.LOGGER.error("Couldn't connect to server", (Throwable)exception);
                     String s = exception.toString();
 
                     if (inetaddress != null)
                     {
-                        String s1 = inetaddress.toString() + ":" + port;
+                        String s1 = inetaddress + ":" + port;
                         s = s.replaceAll(s1, "");
                     }
 
@@ -135,7 +135,7 @@ public class GuiConnecting extends GuiScreen
     public void initGui()
     {
         this.buttonList.clear();
-        this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 120 + 12, I18n.format("gui.cancel", new Object[0])));
+        this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 120 + 12, I18n.format("gui.cancel")));
     }
 
     /**
@@ -165,11 +165,11 @@ public class GuiConnecting extends GuiScreen
 
         if (this.networkManager == null)
         {
-            this.drawCenteredString(this.fontRendererObj, I18n.format("connect.connecting", new Object[0]), this.width / 2, this.height / 2 - 50, 16777215);
+            this.drawCenteredString(this.fontRenderer, I18n.format("connect.connecting"), this.width / 2, this.height / 2 - 50, 16777215);
         }
         else
         {
-            this.drawCenteredString(this.fontRendererObj, I18n.format("connect.authorizing", new Object[0]), this.width / 2, this.height / 2 - 50, 16777215);
+            this.drawCenteredString(this.fontRenderer, I18n.format("connect.authorizing"), this.width / 2, this.height / 2 - 50, 16777215);
         }
 
         super.drawScreen(mouseX, mouseY, partialTicks);

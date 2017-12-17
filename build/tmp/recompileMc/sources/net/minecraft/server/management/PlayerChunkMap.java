@@ -37,13 +37,18 @@ public class PlayerChunkMap
             return p_apply_1_ != null && (!p_apply_1_.isSpectator() || p_apply_1_.getServerWorld().getGameRules().getBoolean("spectatorsGenerateChunks"));
         }
     };
-    private final WorldServer theWorldServer;
+    private final WorldServer world;
+    /** players in the current instance */
     private final List<EntityPlayerMP> players = Lists.<EntityPlayerMP>newArrayList();
-    private final Long2ObjectMap<PlayerChunkMapEntry> playerInstances = new Long2ObjectOpenHashMap(4096);
-    private final Set<PlayerChunkMapEntry> playerInstancesToUpdate = Sets.<PlayerChunkMapEntry>newHashSet();
+    /** the hash of all playerInstances created */
+    private final Long2ObjectMap<PlayerChunkMapEntry> entryMap = new Long2ObjectOpenHashMap<PlayerChunkMapEntry>(4096);
+    /** the playerInstances(chunks) that need to be updated */
+    private final Set<PlayerChunkMapEntry> dirtyEntries = Sets.<PlayerChunkMapEntry>newHashSet();
     private final List<PlayerChunkMapEntry> pendingSendToPlayers = Lists.<PlayerChunkMapEntry>newLinkedList();
-    private final List<PlayerChunkMapEntry> playersNeedingChunks = Lists.<PlayerChunkMapEntry>newLinkedList();
-    private final List<PlayerChunkMapEntry> playerInstanceList = Lists.<PlayerChunkMapEntry>newArrayList();
+    /** List of player instances whose chunk field is unassigned, and need the chunk at their pos to be loaded. */
+    private final List<PlayerChunkMapEntry> entriesWithoutChunks = Lists.<PlayerChunkMapEntry>newLinkedList();
+    /** This field is using when chunk should be processed (every 8000 ticks) */
+    private final List<PlayerChunkMapEntry> entries = Lists.<PlayerChunkMapEntry>newArrayList();
     /** Number of chunks the server sends to the client. Valid 3<=x<=15. In server.properties. */
     private int playerViewRadius;
     /** time what is using to check if InhabitedTime should be calculated */
@@ -53,7 +58,7 @@ public class PlayerChunkMap
 
     public PlayerChunkMap(WorldServer serverWorld)
     {
-        this.theWorldServer = serverWorld;
+        this.world = serverWorld;
         this.setPlayerViewRadius(serverWorld.getMinecraftServer().getPlayerList().getViewDistance());
     }
 
@@ -62,12 +67,12 @@ public class PlayerChunkMap
      */
     public WorldServer getWorldServer()
     {
-        return this.theWorldServer;
+        return this.world;
     }
 
     public Iterator<Chunk> getChunkIterator()
     {
-        final Iterator<PlayerChunkMapEntry> iterator = this.playerInstanceList.iterator();
+        final Iterator<PlayerChunkMapEntry> iterator = this.entries.iterator();
         return new AbstractIterator<Chunk>()
         {
             protected Chunk computeNext()
@@ -76,7 +81,7 @@ public class PlayerChunkMap
                 {
                     if (iterator.hasNext())
                     {
-                        PlayerChunkMapEntry playerchunkmapentry = (PlayerChunkMapEntry)iterator.next();
+                        PlayerChunkMapEntry playerchunkmapentry = iterator.next();
                         Chunk chunk = playerchunkmapentry.getChunk();
 
                         if (chunk == null)
@@ -89,7 +94,7 @@ public class PlayerChunkMap
                             return chunk;
                         }
 
-                        if (!chunk.isChunkTicked())
+                        if (!chunk.wasTicked())
                         {
                             return chunk;
                         }
@@ -113,34 +118,34 @@ public class PlayerChunkMap
      */
     public void tick()
     {
-        long i = this.theWorldServer.getTotalWorldTime();
+        long i = this.world.getTotalWorldTime();
 
         if (i - this.previousTotalWorldTime > 8000L)
         {
             this.previousTotalWorldTime = i;
 
-            for (int j = 0; j < this.playerInstanceList.size(); ++j)
+            for (int j = 0; j < this.entries.size(); ++j)
             {
-                PlayerChunkMapEntry playerchunkmapentry = (PlayerChunkMapEntry)this.playerInstanceList.get(j);
+                PlayerChunkMapEntry playerchunkmapentry = this.entries.get(j);
                 playerchunkmapentry.update();
                 playerchunkmapentry.updateChunkInhabitedTime();
             }
         }
 
-        if (!this.playerInstancesToUpdate.isEmpty())
+        if (!this.dirtyEntries.isEmpty())
         {
-            for (PlayerChunkMapEntry playerchunkmapentry2 : this.playerInstancesToUpdate)
+            for (PlayerChunkMapEntry playerchunkmapentry2 : this.dirtyEntries)
             {
                 playerchunkmapentry2.update();
             }
 
-            this.playerInstancesToUpdate.clear();
+            this.dirtyEntries.clear();
         }
 
         if (this.sortMissingChunks && i % 4L == 0L)
         {
             this.sortMissingChunks = false;
-            Collections.sort(this.playersNeedingChunks, new Comparator<PlayerChunkMapEntry>()
+            Collections.sort(this.entriesWithoutChunks, new Comparator<PlayerChunkMapEntry>()
             {
                 public int compare(PlayerChunkMapEntry p_compare_1_, PlayerChunkMapEntry p_compare_2_)
                 {
@@ -161,15 +166,15 @@ public class PlayerChunkMap
             });
         }
 
-        if (!this.playersNeedingChunks.isEmpty())
+        if (!this.entriesWithoutChunks.isEmpty())
         {
             long l = System.nanoTime() + 50000000L;
             int k = 49;
-            Iterator<PlayerChunkMapEntry> iterator = this.playersNeedingChunks.iterator();
+            Iterator<PlayerChunkMapEntry> iterator = this.entriesWithoutChunks.iterator();
 
             while (iterator.hasNext())
             {
-                PlayerChunkMapEntry playerchunkmapentry1 = (PlayerChunkMapEntry)iterator.next();
+                PlayerChunkMapEntry playerchunkmapentry1 = iterator.next();
 
                 if (playerchunkmapentry1.getChunk() == null)
                 {
@@ -179,7 +184,7 @@ public class PlayerChunkMap
                     {
                         iterator.remove();
 
-                        if (playerchunkmapentry1.sentToPlayers())
+                        if (playerchunkmapentry1.sendToPlayers())
                         {
                             this.pendingSendToPlayers.remove(playerchunkmapentry1);
                         }
@@ -202,9 +207,9 @@ public class PlayerChunkMap
 
             while (iterator1.hasNext())
             {
-                PlayerChunkMapEntry playerchunkmapentry3 = (PlayerChunkMapEntry)iterator1.next();
+                PlayerChunkMapEntry playerchunkmapentry3 = iterator1.next();
 
-                if (playerchunkmapentry3.sentToPlayers())
+                if (playerchunkmapentry3.sendToPlayers())
                 {
                     iterator1.remove();
                     --i1;
@@ -219,11 +224,11 @@ public class PlayerChunkMap
 
         if (this.players.isEmpty())
         {
-            WorldProvider worldprovider = this.theWorldServer.provider;
+            WorldProvider worldprovider = this.world.provider;
 
             if (!worldprovider.canRespawnHere())
             {
-                this.theWorldServer.getChunkProvider().unloadAllChunks();
+                this.world.getChunkProvider().queueUnloadAll();
             }
         }
     }
@@ -231,32 +236,32 @@ public class PlayerChunkMap
     public boolean contains(int chunkX, int chunkZ)
     {
         long i = getIndex(chunkX, chunkZ);
-        return this.playerInstances.get(i) != null;
+        return this.entryMap.get(i) != null;
     }
 
     @Nullable
     public PlayerChunkMapEntry getEntry(int x, int z)
     {
-        return (PlayerChunkMapEntry)this.playerInstances.get(getIndex(x, z));
+        return (PlayerChunkMapEntry)this.entryMap.get(getIndex(x, z));
     }
 
     private PlayerChunkMapEntry getOrCreateEntry(int chunkX, int chunkZ)
     {
         long i = getIndex(chunkX, chunkZ);
-        PlayerChunkMapEntry playerchunkmapentry = (PlayerChunkMapEntry)this.playerInstances.get(i);
+        PlayerChunkMapEntry playerchunkmapentry = (PlayerChunkMapEntry)this.entryMap.get(i);
 
         if (playerchunkmapentry == null)
         {
             playerchunkmapentry = new PlayerChunkMapEntry(this, chunkX, chunkZ);
-            this.playerInstances.put(i, playerchunkmapentry);
-            this.playerInstanceList.add(playerchunkmapentry);
+            this.entryMap.put(i, playerchunkmapentry);
+            this.entries.add(playerchunkmapentry);
 
             if (playerchunkmapentry.getChunk() == null)
             {
-                this.playersNeedingChunks.add(playerchunkmapentry);
+                this.entriesWithoutChunks.add(playerchunkmapentry);
             }
 
-            if (!playerchunkmapentry.sentToPlayers())
+            if (!playerchunkmapentry.sendToPlayers())
             {
                 this.pendingSendToPlayers.add(playerchunkmapentry);
             }
@@ -332,13 +337,21 @@ public class PlayerChunkMap
     {
         int i = x1 - x2;
         int j = z1 - z2;
-        return i >= -radius && i <= radius ? j >= -radius && j <= radius : false;
+
+        if (i >= -radius && i <= radius)
+        {
+            return j >= -radius && j <= radius;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     /**
-     * update chunks around a player being moved by server logic (e.g. cart, boat)
+     * Update chunks around a player that moved
      */
-    public void updateMountedMovingPlayer(EntityPlayerMP player)
+    public void updateMovingPlayer(EntityPlayerMP player)
     {
         int i = (int)player.posX >> 4;
         int j = (int)player.posZ >> 4;
@@ -392,7 +405,7 @@ public class PlayerChunkMap
 
     public void setPlayerViewRadius(int radius)
     {
-        radius = MathHelper.clamp_int(radius, 3, 32);
+        radius = MathHelper.clamp(radius, 3, 32);
 
         if (radius != this.playerViewRadius)
         {
@@ -457,26 +470,29 @@ public class PlayerChunkMap
         return (long)p_187307_0_ + 2147483647L | (long)p_187307_1_ + 2147483647L << 32;
     }
 
-    public void addEntry(PlayerChunkMapEntry entry)
+    /**
+     * Marks an entry as dirty
+     */
+    public void entryChanged(PlayerChunkMapEntry entry)
     {
-        this.playerInstancesToUpdate.add(entry);
+        this.dirtyEntries.add(entry);
     }
 
     public void removeEntry(PlayerChunkMapEntry entry)
     {
         ChunkPos chunkpos = entry.getPos();
-        long i = getIndex(chunkpos.chunkXPos, chunkpos.chunkZPos);
+        long i = getIndex(chunkpos.x, chunkpos.z);
         entry.updateChunkInhabitedTime();
-        this.playerInstances.remove(i);
-        this.playerInstanceList.remove(entry);
-        this.playerInstancesToUpdate.remove(entry);
+        this.entryMap.remove(i);
+        this.entries.remove(entry);
+        this.dirtyEntries.remove(entry);
         this.pendingSendToPlayers.remove(entry);
-        this.playersNeedingChunks.remove(entry);
+        this.entriesWithoutChunks.remove(entry);
         Chunk chunk = entry.getChunk();
 
         if (chunk != null)
         {
-            this.getWorldServer().getChunkProvider().unload(chunk);
+            this.getWorldServer().getChunkProvider().queueUnload(chunk);
         }
     }
 }

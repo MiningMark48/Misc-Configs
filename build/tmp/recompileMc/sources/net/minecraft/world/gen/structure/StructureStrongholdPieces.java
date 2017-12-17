@@ -14,6 +14,8 @@ import net.minecraft.block.BlockStoneBrick;
 import net.minecraft.block.BlockStoneSlab;
 import net.minecraft.block.BlockTorch;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.monster.EntitySilverfish;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -21,6 +23,7 @@ import net.minecraft.tileentity.TileEntityMobSpawner;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.minecraft.world.storage.loot.LootTableList;
 
 @SuppressWarnings("incomplete-switch")
@@ -180,7 +183,7 @@ public class StructureStrongholdPieces
 
                     if (i < 0)
                     {
-                        if (!structurestrongholdpieces$pieceweight.canSpawnMoreStructuresOfType(p_175955_7_) || structurestrongholdpieces$pieceweight == p_175955_0_.strongholdPieceWeight)
+                        if (!structurestrongholdpieces$pieceweight.canSpawnMoreStructuresOfType(p_175955_7_) || structurestrongholdpieces$pieceweight == p_175955_0_.lastPlaced)
                         {
                             break;
                         }
@@ -190,7 +193,7 @@ public class StructureStrongholdPieces
                         if (structurestrongholdpieces$stronghold1 != null)
                         {
                             ++structurestrongholdpieces$pieceweight.instancesSpawned;
-                            p_175955_0_.strongholdPieceWeight = structurestrongholdpieces$pieceweight;
+                            p_175955_0_.lastPlaced = structurestrongholdpieces$pieceweight;
 
                             if (!structurestrongholdpieces$pieceweight.canSpawnMoreStructures())
                             {
@@ -268,9 +271,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.hasMadeChest = tagCompound.getBoolean("Chest");
             }
 
@@ -285,9 +288,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.ChestCorridor createPiece(List<StructureComponent> p_175868_0_, Random p_175868_1_, int p_175868_2_, int p_175868_3_, int p_175868_4_, EnumFacing p_175868_5_, int p_175868_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175868_2_, p_175868_3_, p_175868_4_, -1, -1, 0, 5, 5, 7, p_175868_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175868_0_, structureboundingbox) == null ? new StructureStrongholdPieces.ChestCorridor(p_175868_6_, p_175868_1_, structureboundingbox, p_175868_5_) : null;
             }
 
@@ -356,9 +356,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.steps = tagCompound.getInteger("Steps");
             }
 
@@ -470,9 +470,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.leftLow = tagCompound.getBoolean("leftLow");
                 this.leftHigh = tagCompound.getBoolean("leftHigh");
                 this.rightLow = tagCompound.getBoolean("rightLow");
@@ -520,9 +520,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.Crossing createPiece(List<StructureComponent> p_175866_0_, Random p_175866_1_, int p_175866_2_, int p_175866_3_, int p_175866_4_, EnumFacing p_175866_5_, int p_175866_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175866_2_, p_175866_3_, p_175866_4_, -4, -3, 0, 10, 9, 11, p_175866_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175866_0_, structureboundingbox) == null ? new StructureStrongholdPieces.Crossing(p_175866_6_, p_175866_1_, structureboundingbox, p_175866_5_) : null;
             }
 
@@ -615,9 +612,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.LeftTurn createPiece(List<StructureComponent> p_175867_0_, Random p_175867_1_, int p_175867_2_, int p_175867_3_, int p_175867_4_, EnumFacing p_175867_5_, int p_175867_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175867_2_, p_175867_3_, p_175867_4_, -1, -1, 0, 5, 5, 5, p_175867_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175867_0_, structureboundingbox) == null ? new StructureStrongholdPieces.LeftTurn(p_175867_6_, p_175867_1_, structureboundingbox, p_175867_5_) : null;
             }
 
@@ -680,9 +674,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.isLargeRoom = tagCompound.getBoolean("Tall");
             }
 
@@ -724,7 +718,7 @@ public class StructureStrongholdPieces
 
                     this.fillWithRandomizedBlocks(worldIn, structureBoundingBoxIn, 0, 0, 0, 13, i - 1, 14, true, randomIn, StructureStrongholdPieces.STRONGHOLD_STONES);
                     this.placeDoor(worldIn, randomIn, structureBoundingBoxIn, this.entryDoor, 4, 1, 0);
-                    this.fillWithBlocksRandomly(worldIn, structureBoundingBoxIn, randomIn, 0.07F, 2, 1, 1, 11, 4, 13, Blocks.WEB.getDefaultState(), Blocks.WEB.getDefaultState(), false);
+                    this.generateMaybeBox(worldIn, structureBoundingBoxIn, randomIn, 0.07F, 2, 1, 1, 11, 4, 13, Blocks.WEB.getDefaultState(), Blocks.WEB.getDefaultState(), false, 0);
                     int j = 1;
                     int k = 12;
 
@@ -789,25 +783,25 @@ public class StructureStrongholdPieces
                         this.setBlockState(worldIn, iblockstate1, 10, 7, 13, structureBoundingBoxIn);
                         int i1 = 7;
                         int j1 = 7;
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 1, 9, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1, 9, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 1, 8, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1, 8, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 1, 7, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1, 7, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 2, 7, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 + 1, 7, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 1, 7, j1 - 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1 - 1, 7, j1 + 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1, 7, j1 - 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), i1, 7, j1 + 1, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 6, 9, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 7, 9, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 6, 8, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 7, 8, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 6, 7, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 7, 7, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 5, 7, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 8, 7, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 6, 7, 6, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 6, 7, 8, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 7, 7, 6, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, Blocks.OAK_FENCE.getDefaultState(), 7, 7, 8, structureBoundingBoxIn);
                         IBlockState iblockstate = Blocks.TORCH.getDefaultState().withProperty(BlockTorch.FACING, EnumFacing.UP);
-                        this.setBlockState(worldIn, iblockstate, i1 - 2, 8, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, iblockstate, i1 + 1, 8, j1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, iblockstate, i1 - 1, 8, j1 - 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, iblockstate, i1 - 1, 8, j1 + 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, iblockstate, i1, 8, j1 - 1, structureBoundingBoxIn);
-                        this.setBlockState(worldIn, iblockstate, i1, 8, j1 + 1, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 5, 8, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 8, 8, 7, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 6, 8, 6, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 6, 8, 8, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 7, 8, 6, structureBoundingBoxIn);
+                        this.setBlockState(worldIn, iblockstate, 7, 8, 8, structureBoundingBoxIn);
                     }
 
                     this.generateChest(worldIn, structureBoundingBoxIn, randomIn, 3, 3, 5, LootTableList.CHESTS_STRONGHOLD_LIBRARY);
@@ -880,9 +874,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.hasSpawner = tagCompound.getBoolean("Mob");
             }
 
@@ -900,9 +894,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.PortalRoom createPiece(List<StructureComponent> p_175865_0_, Random p_175865_1_, int p_175865_2_, int p_175865_3_, int p_175865_4_, EnumFacing p_175865_5_, int p_175865_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175865_2_, p_175865_3_, p_175865_4_, -4, -1, 0, 11, 8, 16, p_175865_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175865_0_, structureboundingbox) == null ? new StructureStrongholdPieces.PortalRoom(p_175865_6_, p_175865_1_, structureboundingbox, p_175865_5_) : null;
             }
 
@@ -1002,7 +993,7 @@ public class StructureStrongholdPieces
 
                         if (tileentity instanceof TileEntityMobSpawner)
                         {
-                            ((TileEntityMobSpawner)tileentity).getSpawnerBaseLogic().setEntityName("Silverfish");
+                            ((TileEntityMobSpawner)tileentity).getSpawnerBaseLogic().setEntityId(EntityList.getKey(EntitySilverfish.class));
                         }
                     }
                 }
@@ -1036,9 +1027,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.Prison createPiece(List<StructureComponent> p_175860_0_, Random p_175860_1_, int p_175860_2_, int p_175860_3_, int p_175860_4_, EnumFacing p_175860_5_, int p_175860_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175860_2_, p_175860_3_, p_175860_4_, -1, -1, 0, 9, 5, 11, p_175860_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175860_0_, structureboundingbox) == null ? new StructureStrongholdPieces.Prison(p_175860_6_, p_175860_1_, structureboundingbox, p_175860_5_) : null;
             }
 
@@ -1154,9 +1142,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.roomType = tagCompound.getInteger("Type");
             }
 
@@ -1173,9 +1161,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.RoomCrossing createPiece(List<StructureComponent> p_175859_0_, Random p_175859_1_, int p_175859_2_, int p_175859_3_, int p_175859_4_, EnumFacing p_175859_5_, int p_175859_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175859_2_, p_175859_3_, p_175859_4_, -4, -1, 0, 11, 7, 11, p_175859_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175859_0_, structureboundingbox) == null ? new StructureStrongholdPieces.RoomCrossing(p_175859_6_, p_175859_1_, structureboundingbox, p_175859_5_) : null;
             }
 
@@ -1338,9 +1323,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.source = tagCompound.getBoolean("Source");
             }
 
@@ -1360,9 +1345,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.Stairs createPiece(List<StructureComponent> p_175863_0_, Random p_175863_1_, int p_175863_2_, int p_175863_3_, int p_175863_4_, EnumFacing p_175863_5_, int p_175863_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175863_2_, p_175863_3_, p_175863_4_, -1, -7, 0, 5, 11, 5, p_175863_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175863_0_, structureboundingbox) == null ? new StructureStrongholdPieces.Stairs(p_175863_6_, p_175863_1_, structureboundingbox, p_175863_5_) : null;
             }
 
@@ -1405,7 +1387,7 @@ public class StructureStrongholdPieces
 
     public static class Stairs2 extends StructureStrongholdPieces.Stairs
         {
-            public StructureStrongholdPieces.PieceWeight strongholdPieceWeight;
+            public StructureStrongholdPieces.PieceWeight lastPlaced;
             public StructureStrongholdPieces.PortalRoom strongholdPortalRoom;
             public List<StructureComponent> pendingChildren = Lists.<StructureComponent>newArrayList();
 
@@ -1416,11 +1398,6 @@ public class StructureStrongholdPieces
             public Stairs2(int p_i2083_1_, Random p_i2083_2_, int p_i2083_3_, int p_i2083_4_)
             {
                 super(0, p_i2083_2_, p_i2083_3_, p_i2083_4_);
-            }
-
-            public BlockPos getBoundingBoxCenter()
-            {
-                return this.strongholdPortalRoom != null ? this.strongholdPortalRoom.getBoundingBoxCenter() : super.getBoundingBoxCenter();
             }
         }
 
@@ -1449,9 +1426,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.StairsStraight createPiece(List<StructureComponent> p_175861_0_, Random p_175861_1_, int p_175861_2_, int p_175861_3_, int p_175861_4_, EnumFacing p_175861_5_, int p_175861_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175861_2_, p_175861_3_, p_175861_4_, -1, -7, 0, 5, 11, 8, p_175861_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175861_0_, structureboundingbox) == null ? new StructureStrongholdPieces.StairsStraight(p_175861_6_, p_175861_1_, structureboundingbox, p_175861_5_) : null;
             }
 
@@ -1500,9 +1474,9 @@ public class StructureStrongholdPieces
             /**
              * picks Block Ids and Metadata (Silverfish)
              */
-            public void selectBlocks(Random rand, int x, int y, int z, boolean p_75062_5_)
+            public void selectBlocks(Random rand, int x, int y, int z, boolean wall)
             {
-                if (p_75062_5_)
+                if (wall)
                 {
                     float f = rand.nextFloat();
 
@@ -1562,9 +1536,9 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
-                super.readStructureFromNBT(tagCompound);
+                super.readStructureFromNBT(tagCompound, p_143011_2_);
                 this.expandsX = tagCompound.getBoolean("Left");
                 this.expandsZ = tagCompound.getBoolean("Right");
             }
@@ -1590,9 +1564,6 @@ public class StructureStrongholdPieces
             public static StructureStrongholdPieces.Straight createPiece(List<StructureComponent> p_175862_0_, Random p_175862_1_, int p_175862_2_, int p_175862_3_, int p_175862_4_, EnumFacing p_175862_5_, int p_175862_6_)
             {
                 StructureBoundingBox structureboundingbox = StructureBoundingBox.getComponentToAddBoundingBox(p_175862_2_, p_175862_3_, p_175862_4_, -1, -1, 0, 5, 5, 7, p_175862_5_);
-                /**
-                 * returns false if the Structure Bounding Box goes below 10
-                 */
                 return canStrongholdGoDeeper(structureboundingbox) && StructureComponent.findIntersecting(p_175862_0_, structureboundingbox) == null ? new StructureStrongholdPieces.Straight(p_175862_6_, p_175862_1_, structureboundingbox, p_175862_5_) : null;
             }
 
@@ -1657,7 +1628,7 @@ public class StructureStrongholdPieces
             /**
              * (abstract) Helper method to read subclass data from NBT
              */
-            protected void readStructureFromNBT(NBTTagCompound tagCompound)
+            protected void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_)
             {
                 this.entryDoor = StructureStrongholdPieces.Stronghold.Door.valueOf(tagCompound.getString("EntryDoor"));
             }
@@ -1670,7 +1641,6 @@ public class StructureStrongholdPieces
                 switch (p_74990_4_)
                 {
                     case OPENING:
-                    default:
                         this.fillWithBlocks(worldIn, p_74990_3_, p_74990_5_, p_74990_6_, p_74990_7_, p_74990_5_ + 3 - 1, p_74990_6_ + 3 - 1, p_74990_7_, Blocks.AIR.getDefaultState(), Blocks.AIR.getDefaultState(), false);
                         break;
                     case WOOD_DOOR:
@@ -1732,6 +1702,7 @@ public class StructureStrongholdPieces
             /**
              * Gets the next component in any cardinal direction
              */
+            @Nullable
             protected StructureComponent getNextComponentNormal(StructureStrongholdPieces.Stairs2 p_74986_1_, List<StructureComponent> p_74986_2_, Random p_74986_3_, int p_74986_4_, int p_74986_5_)
             {
                 EnumFacing enumfacing = this.getCoordBaseMode();
@@ -1757,6 +1728,7 @@ public class StructureStrongholdPieces
             /**
              * Gets the next component in the +/- X direction
              */
+            @Nullable
             protected StructureComponent getNextComponentX(StructureStrongholdPieces.Stairs2 p_74989_1_, List<StructureComponent> p_74989_2_, Random p_74989_3_, int p_74989_4_, int p_74989_5_)
             {
                 EnumFacing enumfacing = this.getCoordBaseMode();
@@ -1782,6 +1754,7 @@ public class StructureStrongholdPieces
             /**
              * Gets the next component in the +/- Z direction
              */
+            @Nullable
             protected StructureComponent getNextComponentZ(StructureStrongholdPieces.Stairs2 p_74987_1_, List<StructureComponent> p_74987_2_, Random p_74987_3_, int p_74987_4_, int p_74987_5_)
             {
                 EnumFacing enumfacing = this.getCoordBaseMode();

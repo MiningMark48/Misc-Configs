@@ -9,9 +9,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelEnderCrystal extends ModelBase
 {
     /** The cube model for the Ender Crystal. */
-    private ModelRenderer cube;
+    private final ModelRenderer cube;
     /** The glass model for the Ender Crystal. */
-    private ModelRenderer glass = new ModelRenderer(this, "glass");
+    private final ModelRenderer glass = new ModelRenderer(this, "glass");
     /** The base model for the Ender Crystal. */
     private ModelRenderer base;
 
@@ -47,11 +47,11 @@ public class ModelEnderCrystal extends ModelBase
         GlStateManager.rotate(60.0F, 0.7071F, 0.0F, 0.7071F);
         this.glass.render(scale);
         float f = 0.875F;
-        GlStateManager.scale(f, f, f);
+        GlStateManager.scale(0.875F, 0.875F, 0.875F);
         GlStateManager.rotate(60.0F, 0.7071F, 0.0F, 0.7071F);
         GlStateManager.rotate(limbSwingAmount, 0.0F, 1.0F, 0.0F);
         this.glass.render(scale);
-        GlStateManager.scale(f, f, f);
+        GlStateManager.scale(0.875F, 0.875F, 0.875F);
         GlStateManager.rotate(60.0F, 0.7071F, 0.0F, 0.7071F);
         GlStateManager.rotate(limbSwingAmount, 0.0F, 1.0F, 0.0F);
         this.cube.render(scale);

@@ -1,6 +1,6 @@
 package net.minecraft.network.rcon;
 
-import com.google.common.base.Charsets;
+import java.nio.charset.StandardCharsets;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -23,7 +23,7 @@ public class RConUtils
             ;
         }
 
-        return new String(p_72661_0_, p_72661_1_, j - p_72661_1_, Charsets.UTF_8);
+        return new String(p_72661_0_, p_72661_1_, j - p_72661_1_, StandardCharsets.UTF_8);
     }
 
     /**
@@ -31,9 +31,6 @@ public class RConUtils
      */
     public static int getRemainingBytesAsLEInt(byte[] p_72662_0_, int p_72662_1_)
     {
-        /**
-         * Read 4 bytes from the given array in little-endian format and return them as an int
-         */
         return getBytesAsLEInt(p_72662_0_, p_72662_1_, p_72662_0_.length);
     }
 

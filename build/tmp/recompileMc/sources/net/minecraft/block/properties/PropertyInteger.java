@@ -5,8 +5,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Set;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PropertyInteger extends PropertyHelper<Integer>
 {
@@ -69,25 +67,24 @@ public class PropertyInteger extends PropertyHelper<Integer>
         return new PropertyInteger(name, min, max);
     }
 
+    public Optional<Integer> parseValue(String value)
+    {
+        try
+        {
+            Integer integer = Integer.valueOf(value);
+            return this.allowedValues.contains(integer) ? Optional.of(integer) : Optional.absent();
+        }
+        catch (NumberFormatException var3)
+        {
+            return Optional.<Integer>absent();
+        }
+    }
+
     /**
      * Get the name for the given value.
      */
     public String getName(Integer value)
     {
         return value.toString();
-    }
-
-    @SideOnly(Side.CLIENT)
-    public Optional<Integer> parseValue(String value)
-    {
-        try
-        {
-            Integer integer = Integer.valueOf(value);
-            return this.allowedValues.contains(integer) ? Optional.of(integer) : Optional.<Integer>absent();
-        }
-        catch (NumberFormatException var3)
-        {
-            return Optional.<Integer>absent();
-        }
     }
 }

@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.model.ModelCow;
 import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
@@ -11,9 +11,9 @@ public class RenderCow extends RenderLiving<EntityCow>
 {
     private static final ResourceLocation COW_TEXTURES = new ResourceLocation("textures/entity/cow/cow.png");
 
-    public RenderCow(RenderManager renderManagerIn, ModelBase modelBaseIn, float shadowSizeIn)
+    public RenderCow(RenderManager p_i47210_1_)
     {
-        super(renderManagerIn, modelBaseIn, shadowSizeIn);
+        super(p_i47210_1_, new ModelCow(), 0.7F);
     }
 
     /**

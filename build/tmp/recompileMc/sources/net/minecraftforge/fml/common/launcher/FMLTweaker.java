@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.launcher;
 
 import java.io.File;
@@ -16,7 +35,6 @@ import net.minecraftforge.fml.relauncher.FMLSecurityManager;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -28,7 +46,10 @@ public class FMLTweaker implements ITweaker {
 
     public FMLTweaker()
     {
-        System.setProperty("java.net.preferIPv4Stack", "true"); //Lets do this as early as possible. Vanilla does it in Main.main
+        if (System.getProperty("java.net.preferIPv4Stack") == null)
+        {
+            System.setProperty("java.net.preferIPv4Stack", "true");
+        }
         try
         {
             System.setSecurityManager(new FMLSecurityManager());
@@ -109,7 +130,7 @@ public class FMLTweaker implements ITweaker {
         catch (URISyntaxException e)
         {
             LogManager.getLogger("FMLTWEAK").log(Level.ERROR, "Missing URI information for FML tweak");
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
 

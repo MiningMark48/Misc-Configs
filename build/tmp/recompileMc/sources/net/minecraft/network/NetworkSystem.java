@@ -6,7 +6,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -50,29 +49,31 @@ public class NetworkSystem
     {
         protected NioEventLoopGroup load()
         {
-            return new NioEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Server IO #%d").setDaemon(true).build());
+            return new NioEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Server IO #%d").setDaemon(true).setThreadFactory(net.minecraftforge.fml.common.thread.SidedThreadGroups.SERVER).build());
         }
     };
     public static final LazyLoadBase<EpollEventLoopGroup> SERVER_EPOLL_EVENTLOOP = new LazyLoadBase<EpollEventLoopGroup>()
     {
         protected EpollEventLoopGroup load()
         {
-            return new EpollEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Epoll Server IO #%d").setDaemon(true).build());
+            return new EpollEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Epoll Server IO #%d").setDaemon(true).setThreadFactory(net.minecraftforge.fml.common.thread.SidedThreadGroups.SERVER).build());
         }
     };
     public static final LazyLoadBase<LocalEventLoopGroup> SERVER_LOCAL_EVENTLOOP = new LazyLoadBase<LocalEventLoopGroup>()
     {
         protected LocalEventLoopGroup load()
         {
-            return new LocalEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Local Server IO #%d").setDaemon(true).build());
+            return new LocalEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Local Server IO #%d").setDaemon(true).setThreadFactory(net.minecraftforge.fml.common.thread.SidedThreadGroups.CLIENT).build());
         }
     };
     /** Reference to the MinecraftServer object. */
     private final MinecraftServer mcServer;
     /** True if this NetworkSystem has never had his endpoints terminated */
     public volatile boolean isAlive;
-    private final List<ChannelFuture> endpoints = Collections.<ChannelFuture>synchronizedList(Lists.<ChannelFuture>newArrayList());
-    private final List<NetworkManager> networkManagers = Collections.<NetworkManager>synchronizedList(Lists.<NetworkManager>newArrayList());
+    /** Contains all endpoints added to this NetworkSystem */
+    private final List<ChannelFuture> endpoints = Collections.<ChannelFuture>synchronizedList(Lists.newArrayList());
+    /** A list containing all NetworkManager instances of all endpoints */
+    private final List<NetworkManager> networkManagers = Collections.<NetworkManager>synchronizedList(Lists.newArrayList());
 
     public NetworkSystem(MinecraftServer server)
     {
@@ -85,6 +86,7 @@ public class NetworkSystem
      */
     public void addLanEndpoint(InetAddress address, int port) throws IOException
     {
+        if (address instanceof java.net.Inet6Address) System.setProperty("java.net.preferIPv4Stack", "false");
         synchronized (this.endpoints)
         {
             Class <? extends ServerSocketChannel > oclass;
@@ -116,13 +118,13 @@ public class NetworkSystem
                         ;
                     }
 
-                    p_initChannel_1_.pipeline().addLast((String)"timeout", (ChannelHandler)(new ReadTimeoutHandler(net.minecraftforge.fml.common.network.internal.FMLNetworkHandler.READ_TIMEOUT))).addLast((String)"legacy_query", (ChannelHandler)(new LegacyPingHandler(NetworkSystem.this))).addLast((String)"splitter", (ChannelHandler)(new NettyVarint21FrameDecoder())).addLast((String)"decoder", (ChannelHandler)(new NettyPacketDecoder(EnumPacketDirection.SERVERBOUND))).addLast((String)"prepender", (ChannelHandler)(new NettyVarint21FrameEncoder())).addLast((String)"encoder", (ChannelHandler)(new NettyPacketEncoder(EnumPacketDirection.CLIENTBOUND)));
+                    p_initChannel_1_.pipeline().addLast("timeout", new ReadTimeoutHandler(net.minecraftforge.fml.common.network.internal.FMLNetworkHandler.READ_TIMEOUT)).addLast("legacy_query", new LegacyPingHandler(NetworkSystem.this)).addLast("splitter", new NettyVarint21FrameDecoder()).addLast("decoder", new NettyPacketDecoder(EnumPacketDirection.SERVERBOUND)).addLast("prepender", new NettyVarint21FrameEncoder()).addLast("encoder", new NettyPacketEncoder(EnumPacketDirection.CLIENTBOUND));
                     NetworkManager networkmanager = new NetworkManager(EnumPacketDirection.SERVERBOUND);
                     NetworkSystem.this.networkManagers.add(networkmanager);
-                    p_initChannel_1_.pipeline().addLast((String)"packet_handler", (ChannelHandler)networkmanager);
+                    p_initChannel_1_.pipeline().addLast("packet_handler", networkmanager);
                     networkmanager.setNetHandler(new NetHandlerHandshakeTCP(NetworkSystem.this.mcServer, networkmanager));
                 }
-            }).group((EventLoopGroup)lazyloadbase.getValue()).localAddress(address, port)).bind().syncUninterruptibly());
+            }).group(lazyloadbase.getValue()).localAddress(address, port)).bind().syncUninterruptibly());
         }
     }
 
@@ -143,9 +145,9 @@ public class NetworkSystem
                     NetworkManager networkmanager = new NetworkManager(EnumPacketDirection.SERVERBOUND);
                     networkmanager.setNetHandler(new NetHandlerHandshakeMemory(NetworkSystem.this.mcServer, networkmanager));
                     NetworkSystem.this.networkManagers.add(networkmanager);
-                    p_initChannel_1_.pipeline().addLast((String)"packet_handler", (ChannelHandler)networkmanager);
+                    p_initChannel_1_.pipeline().addLast("packet_handler", networkmanager);
                 }
-            }).group((EventLoopGroup)SERVER_NIO_EVENTLOOP.getValue()).localAddress(LocalAddress.ANY)).bind().syncUninterruptibly();
+            }).group(SERVER_NIO_EVENTLOOP.getValue()).localAddress(LocalAddress.ANY)).bind().syncUninterruptibly();
             this.endpoints.add(channelfuture);
         }
 
@@ -184,7 +186,7 @@ public class NetworkSystem
 
             while (iterator.hasNext())
             {
-                final NetworkManager networkmanager = (NetworkManager)iterator.next();
+                final NetworkManager networkmanager = iterator.next();
 
                 if (!networkmanager.hasNoChannel())
                 {
@@ -200,7 +202,7 @@ public class NetworkSystem
                             {
                                 CrashReport crashreport = CrashReport.makeCrashReport(exception, "Ticking memory connection");
                                 CrashReportCategory crashreportcategory = crashreport.makeCategory("Ticking connection");
-                                crashreportcategory.setDetail("Connection", new ICrashReportDetail<String>()
+                                crashreportcategory.addDetail("Connection", new ICrashReportDetail<String>()
                                 {
                                     public String call() throws Exception
                                     {
@@ -210,7 +212,7 @@ public class NetworkSystem
                                 throw new ReportedException(crashreport);
                             }
 
-                            LOGGER.warn((String)("Failed to handle packet for " + networkmanager.getRemoteAddress()), (Throwable)exception);
+                            LOGGER.warn("Failed to handle packet for {}", networkmanager.getRemoteAddress(), exception);
                             final TextComponentString textcomponentstring = new TextComponentString("Internal server error");
                             networkmanager.sendPacket(new SPacketDisconnect(textcomponentstring), new GenericFutureListener < Future <? super Void >> ()
                             {
@@ -218,7 +220,7 @@ public class NetworkSystem
                                 {
                                     networkmanager.closeChannel(textcomponentstring);
                                 }
-                            }, new GenericFutureListener[0]);
+                            });
                             networkmanager.disableAutoRead();
                         }
                     }

@@ -1,6 +1,6 @@
 package net.minecraft.client.network;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
@@ -14,7 +14,7 @@ import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.world.WorldSettings;
+import net.minecraft.world.GameType;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -24,7 +24,7 @@ public class NetworkPlayerInfo
     /** The GameProfile for the player represented by this NetworkPlayerInfo instance */
     private final GameProfile gameProfile;
     Map<Type, ResourceLocation> playerTextures = Maps.newEnumMap(Type.class);
-    private WorldSettings.GameType gameType;
+    private GameType gameType;
     /** Player response time to server in milliseconds */
     private int responseTime;
     private boolean playerTexturesLoaded;
@@ -58,12 +58,12 @@ public class NetworkPlayerInfo
         return this.gameProfile;
     }
 
-    public WorldSettings.GameType getGameType()
+    public GameType getGameType()
     {
         return this.gameType;
     }
 
-    protected void setGameType(WorldSettings.GameType gameMode)
+    protected void setGameType(GameType gameMode)
     {
         this.gameType = gameMode;
     }
@@ -91,14 +91,14 @@ public class NetworkPlayerInfo
     public ResourceLocation getLocationSkin()
     {
         this.loadPlayerTextures();
-        return (ResourceLocation)Objects.firstNonNull(this.playerTextures.get(Type.SKIN), DefaultPlayerSkin.getDefaultSkin(this.gameProfile.getId()));
+        return (ResourceLocation)MoreObjects.firstNonNull(this.playerTextures.get(Type.SKIN), DefaultPlayerSkin.getDefaultSkin(this.gameProfile.getId()));
     }
 
     @Nullable
     public ResourceLocation getLocationCape()
     {
         this.loadPlayerTextures();
-        return (ResourceLocation)this.playerTextures.get(Type.CAPE);
+        return this.playerTextures.get(Type.CAPE);
     }
 
     /**
@@ -108,13 +108,13 @@ public class NetworkPlayerInfo
     public ResourceLocation getLocationElytra()
     {
         this.loadPlayerTextures();
-        return (ResourceLocation)this.playerTextures.get(Type.ELYTRA);
+        return this.playerTextures.get(Type.ELYTRA);
     }
 
     @Nullable
     public ScorePlayerTeam getPlayerTeam()
     {
-        return Minecraft.getMinecraft().theWorld.getScoreboard().getPlayersTeam(this.getGameProfile().getName());
+        return Minecraft.getMinecraft().world.getScoreboard().getPlayersTeam(this.getGameProfile().getName());
     }
 
     protected void loadPlayerTextures()

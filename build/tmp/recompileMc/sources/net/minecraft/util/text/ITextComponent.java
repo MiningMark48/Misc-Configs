@@ -14,6 +14,7 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.annotation.Nullable;
 import net.minecraft.util.EnumTypeAdapterFactory;
 import net.minecraft.util.JsonUtils;
 import net.minecraftforge.fml.relauncher.Side;
@@ -21,36 +22,59 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public interface ITextComponent extends Iterable<ITextComponent>
 {
+    /**
+     * Sets the style of this component and updates the parent style of all of the sibling components.
+     */
     ITextComponent setStyle(Style style);
 
+    /**
+     * Gets the style of this component. Returns a direct reference; changes to this style will modify the style of this
+     * component (IE, there is no need to call {@link #setStyle(Style)} again after modifying it).
+     *  
+     * If this component's style is currently <code>null</code>, it will be initialized to the default style, and the
+     * parent style of all sibling components will be set to that style. (IE, changes to this style will also be
+     * reflected in sibling components.)
+     *  
+     * This method never returns <code>null</code>.
+     */
     Style getStyle();
 
     /**
-     * Appends the given text to the end of this component.
+     * Adds a new component to the end of the sibling list, with the specified text. Same as calling {@link
+     * #appendSibling(ITextComponent)} with a new {@link TextComponentString}.
+     *  
+     * @return This component, for chaining (and not the newly added component)
      */
     ITextComponent appendText(String text);
 
     /**
-     * Appends the given component to the end of this one.
+     * Adds a new component to the end of the sibling list, setting that component's style's parent style to this
+     * component's style.
+     *  
+     * @return This component, for chaining (and not the newly added component)
      */
     ITextComponent appendSibling(ITextComponent component);
 
     /**
-     * Gets the text of this component, without any special formatting codes added, for chat.  TODO: why is this two
-     * different methods?
+     * Gets the raw content of this component (but not its sibling components), without any formatting codes. For
+     * example, this is the raw text in a {@link TextComponentString}, but it's the translated text for a {@link
+     * TextComponentTranslation} and it's the score value for a {@link TextComponentScore}.
      */
     String getUnformattedComponentText();
 
     /**
-     * Get the text of this component, <em>and all child components</em>, with all special formatting codes removed.
+     * Gets the text of this component <em>and all sibling components</em>, without any formatting codes.
      */
     String getUnformattedText();
 
     /**
-     * Gets the text of this component, with formatting codes added for rendering.
+     * Gets the text of this component <em>and all sibling components</em>, with formatting codes added for rendering.
      */
     String getFormattedText();
 
+    /**
+     * Gets the sibling components of this one.
+     */
     List<ITextComponent> getSiblings();
 
     /**
@@ -93,7 +117,7 @@ public interface ITextComponent extends Iterable<ITextComponent>
                     }
                     else
                     {
-                        throw new JsonParseException("Don\'t know how to turn " + p_deserialize_1_.toString() + " into a Component");
+                        throw new JsonParseException("Don't know how to turn " + p_deserialize_1_ + " into a Component");
                     }
                 }
                 else
@@ -152,14 +176,18 @@ public interface ITextComponent extends Iterable<ITextComponent>
                             ((TextComponentScore)itextcomponent).setValue(JsonUtils.getString(jsonobject1, "value"));
                         }
                     }
+                    else if (jsonobject.has("selector"))
+                    {
+                        itextcomponent = new TextComponentSelector(JsonUtils.getString(jsonobject, "selector"));
+                    }
                     else
                     {
-                        if (!jsonobject.has("selector"))
+                        if (!jsonobject.has("keybind"))
                         {
-                            throw new JsonParseException("Don\'t know how to turn " + p_deserialize_1_.toString() + " into a Component");
+                            throw new JsonParseException("Don't know how to turn " + p_deserialize_1_ + " into a Component");
                         }
 
-                        itextcomponent = new TextComponentSelector(JsonUtils.getString(jsonobject, "selector"));
+                        itextcomponent = new TextComponentKeybind(JsonUtils.getString(jsonobject, "keybind"));
                     }
 
                     if (jsonobject.has("extra"))
@@ -192,7 +220,7 @@ public interface ITextComponent extends Iterable<ITextComponent>
 
                     for (Entry<String, JsonElement> entry : jsonobject.entrySet())
                     {
-                        object.add((String)entry.getKey(), (JsonElement)entry.getValue());
+                        object.add(entry.getKey(), entry.getValue());
                     }
                 }
             }
@@ -212,7 +240,7 @@ public interface ITextComponent extends Iterable<ITextComponent>
 
                     for (ITextComponent itextcomponent : p_serialize_1_.getSiblings())
                     {
-                        jsonarray.add(this.serialize((ITextComponent)itextcomponent, itextcomponent.getClass(), p_serialize_3_));
+                        jsonarray.add(this.serialize(itextcomponent, itextcomponent.getClass(), p_serialize_3_));
                     }
 
                     jsonobject.add("extra", jsonarray);
@@ -235,7 +263,7 @@ public interface ITextComponent extends Iterable<ITextComponent>
                         {
                             if (object instanceof ITextComponent)
                             {
-                                jsonarray1.add(this.serialize((ITextComponent)((ITextComponent)object), object.getClass(), p_serialize_3_));
+                                jsonarray1.add(this.serialize((ITextComponent)object, object.getClass(), p_serialize_3_));
                             }
                             else
                             {
@@ -255,30 +283,52 @@ public interface ITextComponent extends Iterable<ITextComponent>
                     jsonobject1.addProperty("value", textcomponentscore.getUnformattedComponentText());
                     jsonobject.add("score", jsonobject1);
                 }
-                else
+                else if (p_serialize_1_ instanceof TextComponentSelector)
                 {
-                    if (!(p_serialize_1_ instanceof TextComponentSelector))
-                    {
-                        throw new IllegalArgumentException("Don\'t know how to serialize " + p_serialize_1_ + " as a Component");
-                    }
-
                     TextComponentSelector textcomponentselector = (TextComponentSelector)p_serialize_1_;
                     jsonobject.addProperty("selector", textcomponentselector.getSelector());
+                }
+                else
+                {
+                    if (!(p_serialize_1_ instanceof TextComponentKeybind))
+                    {
+                        throw new IllegalArgumentException("Don't know how to serialize " + p_serialize_1_ + " as a Component");
+                    }
+
+                    TextComponentKeybind textcomponentkeybind = (TextComponentKeybind)p_serialize_1_;
+                    jsonobject.addProperty("keybind", textcomponentkeybind.getKeybind());
                 }
 
                 return jsonobject;
             }
 
+            /**
+             * Serializes a component into JSON.
+             */
             public static String componentToJson(ITextComponent component)
             {
-                return GSON.toJson((Object)component);
+                return GSON.toJson(component);
             }
 
+            /**
+             * Parses a JSON string into a {@link ITextComponent}, with strict parsing.
+             *  
+             * @see #fromJsonLenient(String)
+             * @see {@link com.google.gson.stream.JsonReader#setLenient(boolean)}
+             */
+            @Nullable
             public static ITextComponent jsonToComponent(String json)
             {
                 return (ITextComponent)JsonUtils.gsonDeserialize(GSON, json, ITextComponent.class, false);
             }
 
+            /**
+             * Parses a JSON string into a {@link ITextComponent}, being lenient upon parse errors.
+             *  
+             * @see #jsonToComponent(String)
+             * @see {@link com.google.gson.stream.JsonReader#setLenient(boolean)}
+             */
+            @Nullable
             public static ITextComponent fromJsonLenient(String json)
             {
                 return (ITextComponent)JsonUtils.gsonDeserialize(GSON, json, ITextComponent.class, true);

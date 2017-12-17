@@ -21,6 +21,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -43,7 +44,7 @@ public class ItemArmor extends Item
         protected ItemStack dispenseStack(IBlockSource source, ItemStack stack)
         {
             ItemStack itemstack = ItemArmor.dispenseArmor(source, stack);
-            return itemstack != null ? itemstack : super.dispenseStack(source, stack);
+            return itemstack.isEmpty() ? super.dispenseStack(source, stack) : itemstack;
         }
     };
     /** Stores the armor type: 0 is helmet, 1 is plate, 2 is legs and 3 is boots */
@@ -61,23 +62,18 @@ public class ItemArmor extends Item
 
     public static ItemStack dispenseArmor(IBlockSource blockSource, ItemStack stack)
     {
-        BlockPos blockpos = blockSource.getBlockPos().offset(BlockDispenser.getFacing(blockSource.getBlockMetadata()));
-        int i = blockpos.getX();
-        int j = blockpos.getY();
-        int k = blockpos.getZ();
-        AxisAlignedBB axisalignedbb = new AxisAlignedBB((double)i, (double)j, (double)k, (double)(i + 1), (double)(j + 1), (double)(k + 1));
-        List<EntityLivingBase> list = blockSource.getWorld().<EntityLivingBase>getEntitiesWithinAABB(EntityLivingBase.class, axisalignedbb, Predicates.<EntityLivingBase>and(EntitySelectors.NOT_SPECTATING, new EntitySelectors.ArmoredMob(stack)));
+        BlockPos blockpos = blockSource.getBlockPos().offset((EnumFacing)blockSource.getBlockState().getValue(BlockDispenser.FACING));
+        List<EntityLivingBase> list = blockSource.getWorld().<EntityLivingBase>getEntitiesWithinAABB(EntityLivingBase.class, new AxisAlignedBB(blockpos), Predicates.and(EntitySelectors.NOT_SPECTATING, new EntitySelectors.ArmoredMob(stack)));
 
         if (list.isEmpty())
         {
-            return null;
+            return ItemStack.EMPTY;
         }
         else
         {
-            EntityLivingBase entitylivingbase = (EntityLivingBase)list.get(0);
+            EntityLivingBase entitylivingbase = list.get(0);
             EntityEquipmentSlot entityequipmentslot = EntityLiving.getSlotForItemStack(stack);
-            ItemStack itemstack = stack.copy();
-            itemstack.stackSize = 1;
+            ItemStack itemstack = stack.splitStack(1);
             entitylivingbase.setItemStackToSlot(entityequipmentslot, itemstack);
 
             if (entitylivingbase instanceof EntityLiving)
@@ -85,7 +81,6 @@ public class ItemArmor extends Item
                 ((EntityLiving)entitylivingbase).setDropChance(entityequipmentslot, 2.0F);
             }
 
-            --stack.stackSize;
             return stack;
         }
     }
@@ -199,7 +194,7 @@ public class ItemArmor extends Item
     {
         if (this.material != ItemArmor.ArmorMaterial.LEATHER)
         {
-            throw new UnsupportedOperationException("Can\'t dye non-leather!");
+            throw new UnsupportedOperationException("Can't dye non-leather!");
         }
         else
         {
@@ -224,40 +219,65 @@ public class ItemArmor extends Item
 
     /**
      * Return whether this item is repairable in an anvil.
+     *  
+     * @param toRepair the {@code ItemStack} being repaired
+     * @param repair the {@code ItemStack} being used to perform the repair
      */
     public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
     {
-        return this.material.getRepairItem() == repair.getItem() ? true : super.getIsRepairable(toRepair, repair);
+        ItemStack mat = this.material.getRepairItemStack();
+        if (!mat.isEmpty() && net.minecraftforge.oredict.OreDictionary.itemMatches(mat,repair,false)) return true;
+        return super.getIsRepairable(toRepair, repair);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        EntityEquipmentSlot entityequipmentslot = EntityLiving.getSlotForItemStack(itemStackIn);
-        ItemStack itemstack = playerIn.getItemStackFromSlot(entityequipmentslot);
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+        EntityEquipmentSlot entityequipmentslot = EntityLiving.getSlotForItemStack(itemstack);
+        ItemStack itemstack1 = playerIn.getItemStackFromSlot(entityequipmentslot);
 
-        if (itemstack == null)
+        if (itemstack1.isEmpty())
         {
-            playerIn.setItemStackToSlot(entityequipmentslot, itemStackIn.copy());
-            itemStackIn.stackSize = 0;
-            return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+            playerIn.setItemStackToSlot(entityequipmentslot, itemstack.copy());
+            itemstack.setCount(0);
+            return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
         }
         else
         {
-            return new ActionResult(EnumActionResult.FAIL, itemStackIn);
+            return new ActionResult<ItemStack>(EnumActionResult.FAIL, itemstack);
         }
     }
 
+    /**
+     * Gets a map of item attribute modifiers, used by ItemSword to increase hit damage.
+     */
     public Multimap<String, AttributeModifier> getItemAttributeModifiers(EntityEquipmentSlot equipmentSlot)
     {
         Multimap<String, AttributeModifier> multimap = super.getItemAttributeModifiers(equipmentSlot);
 
         if (equipmentSlot == this.armorType)
         {
-            multimap.put(SharedMonsterAttributes.ARMOR.getAttributeUnlocalizedName(), new AttributeModifier(ARMOR_MODIFIERS[equipmentSlot.getIndex()], "Armor modifier", (double)this.damageReduceAmount, 0));
-            multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getAttributeUnlocalizedName(), new AttributeModifier(ARMOR_MODIFIERS[equipmentSlot.getIndex()], "Armor toughness", (double)this.toughness, 0));
+            multimap.put(SharedMonsterAttributes.ARMOR.getName(), new AttributeModifier(ARMOR_MODIFIERS[equipmentSlot.getIndex()], "Armor modifier", (double)this.damageReduceAmount, 0));
+            multimap.put(SharedMonsterAttributes.ARMOR_TOUGHNESS.getName(), new AttributeModifier(ARMOR_MODIFIERS[equipmentSlot.getIndex()], "Armor toughness", (double)this.toughness, 0));
         }
 
         return multimap;
+    }
+
+    /**
+     * Determines if this armor will be rendered with the secondary 'overlay' texture.
+     * If this is true, the first texture will be rendered using a tint of the color
+     * specified by getColor(ItemStack)
+     *
+     * @param stack The stack
+     * @return true/false
+     */
+    public boolean hasOverlay(ItemStack stack)
+    {
+        return this.material == ItemArmor.ArmorMaterial.LEATHER || getColor(stack) != 0x00FFFFFF;
     }
 
     public static enum ArmorMaterial
@@ -284,16 +304,16 @@ public class ItemArmor extends Item
         private final SoundEvent soundEvent;
         private final float toughness;
         //Added by forge for custom Armor materials.
-        public Item customCraftingMaterial = null;
+        public ItemStack repairMaterial = ItemStack.EMPTY;
 
-        private ArmorMaterial(String p_i47117_3_, int p_i47117_4_, int[] p_i47117_5_, int p_i47117_6_, SoundEvent p_i47117_7_, float p_i47117_8_)
+        private ArmorMaterial(String nameIn, int maxDamageFactorIn, int[] damageReductionAmountArrayIn, int enchantabilityIn, SoundEvent soundEventIn, float toughnessIn)
         {
-            this.name = p_i47117_3_;
-            this.maxDamageFactor = p_i47117_4_;
-            this.damageReductionAmountArray = p_i47117_5_;
-            this.enchantability = p_i47117_6_;
-            this.soundEvent = p_i47117_7_;
-            this.toughness = p_i47117_8_;
+            this.name = nameIn;
+            this.maxDamageFactor = maxDamageFactorIn;
+            this.damageReductionAmountArray = damageReductionAmountArrayIn;
+            this.enchantability = enchantabilityIn;
+            this.soundEvent = soundEventIn;
+            this.toughness = toughnessIn;
         }
 
         /**
@@ -329,16 +349,28 @@ public class ItemArmor extends Item
         /**
          * Get a main crafting component of this Armor Material (example is Items.iron_ingot)
          */
+        @Deprecated // Use getRepairItemStack below
         public Item getRepairItem()
         {
-            switch (this)
+            if (this == LEATHER)
             {
-                case LEATHER: return Items.LEATHER;
-                case CHAIN:   return Items.IRON_INGOT;
-                case GOLD:    return Items.GOLD_INGOT;
-                case IRON:    return Items.IRON_INGOT;
-                case DIAMOND: return Items.DIAMOND;
-                default:      return customCraftingMaterial;
+                return Items.LEATHER;
+            }
+            else if (this == CHAIN)
+            {
+                return Items.IRON_INGOT;
+            }
+            else if (this == GOLD)
+            {
+                return Items.GOLD_INGOT;
+            }
+            else if (this == IRON)
+            {
+                return Items.IRON_INGOT;
+            }
+            else
+            {
+                return this == DIAMOND ? Items.DIAMOND : null;
             }
         }
 
@@ -351,6 +383,22 @@ public class ItemArmor extends Item
         public float getToughness()
         {
             return this.toughness;
+        }
+
+        public ArmorMaterial setRepairItem(ItemStack stack)
+        {
+            if (!this.repairMaterial.isEmpty()) throw new RuntimeException("Repair material has already been set");
+            if (this == LEATHER || this == CHAIN || this == GOLD || this == IRON || this == DIAMOND) throw new RuntimeException("Can not change vanilla armor repair materials");
+            this.repairMaterial = stack;
+            return this;
+        }
+
+        public ItemStack getRepairItemStack()
+        {
+            if (!repairMaterial.isEmpty()) return repairMaterial;
+            Item ret = this.getRepairItem();
+            if (ret != null) repairMaterial = new ItemStack(ret,1,net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE);
+            return repairMaterial;
         }
     }
 }

@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Properties;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -32,11 +30,11 @@ public class PropertyManager
             try
             {
                 fileinputstream = new FileInputStream(propertiesFile);
-                this.serverProperties.load((InputStream)fileinputstream);
+                this.serverProperties.load(fileinputstream);
             }
             catch (Exception exception)
             {
-                LOGGER.warn((String)("Failed to load " + propertiesFile), (Throwable)exception);
+                LOGGER.warn("Failed to load {}", propertiesFile, exception);
                 this.generateNewProperties();
             }
             finally
@@ -56,7 +54,7 @@ public class PropertyManager
         }
         else
         {
-            LOGGER.warn(propertiesFile + " does not exist");
+            LOGGER.warn("{} does not exist", (Object)propertiesFile);
             this.generateNewProperties();
         }
     }
@@ -80,11 +78,11 @@ public class PropertyManager
         try
         {
             fileoutputstream = new FileOutputStream(this.serverPropertiesFile);
-            this.serverProperties.store((OutputStream)fileoutputstream, "Minecraft server properties");
+            this.serverProperties.store(fileoutputstream, "Minecraft server properties");
         }
         catch (Exception exception)
         {
-            LOGGER.warn((String)("Failed to save " + this.serverPropertiesFile), (Throwable)exception);
+            LOGGER.warn("Failed to save {}", this.serverPropertiesFile, exception);
             this.generateNewProperties();
         }
         finally

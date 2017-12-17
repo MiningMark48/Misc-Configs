@@ -34,7 +34,7 @@ public class PhaseList<T extends IPhase>
         try
         {
             Constructor <? extends IPhase > constructor = this.getConstructor();
-            return (IPhase)constructor.newInstance(new Object[] {dragon});
+            return constructor.newInstance(dragon);
         }
         catch (Exception exception)
         {
@@ -44,7 +44,7 @@ public class PhaseList<T extends IPhase>
 
     protected Constructor <? extends IPhase > getConstructor() throws NoSuchMethodException
     {
-        return this.clazz.getConstructor(new Class[] {EntityDragon.class});
+        return this.clazz.getConstructor(EntityDragon.class);
     }
 
     public int getId()
@@ -57,9 +57,13 @@ public class PhaseList<T extends IPhase>
         return this.name + " (#" + this.id + ")";
     }
 
-    public static PhaseList<?> getById(int p_188738_0_)
+    /**
+     * Gets a phase by its ID. If the phase is out of bounds (negative or beyond the end of the phase array), returns
+     * {@link #HOLDING_PATTERN}.
+     */
+    public static PhaseList<?> getById(int idIn)
     {
-        return p_188738_0_ >= 0 && p_188738_0_ < phases.length ? phases[p_188738_0_] : HOLDING_PATTERN;
+        return idIn >= 0 && idIn < phases.length ? phases[idIn] : HOLDING_PATTERN;
     }
 
     public static int getTotalPhases()
@@ -69,7 +73,7 @@ public class PhaseList<T extends IPhase>
 
     private static <T extends IPhase> PhaseList<T> create(Class<T> phaseIn, String nameIn)
     {
-        PhaseList<T> phaselist = new PhaseList(phases.length, phaseIn, nameIn);
+        PhaseList<T> phaselist = new PhaseList<T>(phases.length, phaseIn, nameIn);
         phases = (PhaseList[])Arrays.copyOf(phases, phases.length + 1);
         phases[phaselist.getId()] = phaselist;
         return phaselist;

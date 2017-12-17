@@ -16,6 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.UserListIPBansEntry;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
 
 public class CommandBanIp extends CommandBase
 {
@@ -25,7 +26,7 @@ public class CommandBanIp extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "ban-ip";
     }
@@ -49,7 +50,7 @@ public class CommandBanIp extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.banip.usage";
     }
@@ -74,7 +75,7 @@ public class CommandBanIp extends CommandBase
 
                 if (entityplayermp == null)
                 {
-                    throw new PlayerNotFoundException("commands.banip.invalid", new Object[0]);
+                    throw new PlayerNotFoundException("commands.banip.invalid");
                 }
 
                 this.banIp(server, sender, entityplayermp.getPlayerIP(), itextcomponent == null ? null : itextcomponent.getUnformattedText());
@@ -86,9 +87,12 @@ public class CommandBanIp extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : Collections.<String>emptyList();
+        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
     }
 
     protected void banIp(MinecraftServer server, ICommandSender sender, String ipAddress, @Nullable String banReason)
@@ -101,7 +105,7 @@ public class CommandBanIp extends CommandBase
 
         for (EntityPlayerMP entityplayermp : list)
         {
-            entityplayermp.connection.kickPlayerFromServer("You have been IP banned.");
+            entityplayermp.connection.disconnect(new TextComponentTranslation("multiplayer.disconnect.ip_banned", new Object[0]));
             astring[i++] = entityplayermp.getName();
         }
 

@@ -7,6 +7,7 @@ import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
 import net.minecraft.init.PotionTypes;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemBanner;
@@ -23,6 +25,7 @@ import net.minecraft.stats.StatList;
 import net.minecraft.tileentity.TileEntityBanner;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -44,7 +47,7 @@ public class BlockCauldron extends Block
         this.setDefaultState(this.blockState.getBaseState().withProperty(LEVEL, Integer.valueOf(0)));
     }
 
-    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn)
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
     {
         addCollisionBoxToList(pos, entityBox, collidingBoxes, AABB_LEGS);
         addCollisionBoxToList(pos, entityBox, collidingBoxes, AABB_WALL_WEST);
@@ -86,16 +89,21 @@ public class BlockCauldron extends Block
         }
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        if (heldItem == null)
+        ItemStack itemstack = playerIn.getHeldItem(hand);
+
+        if (itemstack.isEmpty())
         {
             return true;
         }
         else
         {
             int i = ((Integer)state.getValue(LEVEL)).intValue();
-            Item item = heldItem.getItem();
+            Item item = itemstack.getItem();
 
             if (item == Items.WATER_BUCKET)
             {
@@ -108,6 +116,7 @@ public class BlockCauldron extends Block
 
                     playerIn.addStat(StatList.CAULDRON_FILLED);
                     this.setWaterLevel(worldIn, pos, state, 3);
+                    worldIn.playSound((EntityPlayer)null, pos, SoundEvents.ITEM_BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
                 }
 
                 return true;
@@ -118,9 +127,9 @@ public class BlockCauldron extends Block
                 {
                     if (!playerIn.capabilities.isCreativeMode)
                     {
-                        --heldItem.stackSize;
+                        itemstack.shrink(1);
 
-                        if (heldItem.stackSize == 0)
+                        if (itemstack.isEmpty())
                         {
                             playerIn.setHeldItem(hand, new ItemStack(Items.WATER_BUCKET));
                         }
@@ -132,6 +141,7 @@ public class BlockCauldron extends Block
 
                     playerIn.addStat(StatList.CAULDRON_USED);
                     this.setWaterLevel(worldIn, pos, state, 0);
+                    worldIn.playSound((EntityPlayer)null, pos, SoundEvents.ITEM_BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
                 }
 
                 return true;
@@ -142,16 +152,17 @@ public class BlockCauldron extends Block
                 {
                     if (!playerIn.capabilities.isCreativeMode)
                     {
-                        ItemStack itemstack1 = PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM), PotionTypes.WATER);
+                        ItemStack itemstack3 = PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM), PotionTypes.WATER);
                         playerIn.addStat(StatList.CAULDRON_USED);
+                        itemstack.shrink(1);
 
-                        if (--heldItem.stackSize == 0)
+                        if (itemstack.isEmpty())
                         {
-                            playerIn.setHeldItem(hand, itemstack1);
+                            playerIn.setHeldItem(hand, itemstack3);
                         }
-                        else if (!playerIn.inventory.addItemStackToInventory(itemstack1))
+                        else if (!playerIn.inventory.addItemStackToInventory(itemstack3))
                         {
-                            playerIn.dropItem(itemstack1, false);
+                            playerIn.dropItem(itemstack3, false);
                         }
                         else if (playerIn instanceof EntityPlayerMP)
                         {
@@ -159,7 +170,30 @@ public class BlockCauldron extends Block
                         }
                     }
 
+                    worldIn.playSound((EntityPlayer)null, pos, SoundEvents.ITEM_BOTTLE_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
                     this.setWaterLevel(worldIn, pos, state, i - 1);
+                }
+
+                return true;
+            }
+            else if (item == Items.POTIONITEM && PotionUtils.getPotionFromItem(itemstack) == PotionTypes.WATER)
+            {
+                if (i < 3 && !worldIn.isRemote)
+                {
+                    if (!playerIn.capabilities.isCreativeMode)
+                    {
+                        ItemStack itemstack2 = new ItemStack(Items.GLASS_BOTTLE);
+                        playerIn.addStat(StatList.CAULDRON_USED);
+                        playerIn.setHeldItem(hand, itemstack2);
+
+                        if (playerIn instanceof EntityPlayerMP)
+                        {
+                            ((EntityPlayerMP)playerIn).sendContainerToPlayer(playerIn.inventoryContainer);
+                        }
+                    }
+
+                    worldIn.playSound((EntityPlayer)null, pos, SoundEvents.ITEM_BOTTLE_EMPTY, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                    this.setWaterLevel(worldIn, pos, state, i + 1);
                 }
 
                 return true;
@@ -170,9 +204,9 @@ public class BlockCauldron extends Block
                 {
                     ItemArmor itemarmor = (ItemArmor)item;
 
-                    if (itemarmor.getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER && itemarmor.hasColor(heldItem) && !worldIn.isRemote)
+                    if (itemarmor.getArmorMaterial() == ItemArmor.ArmorMaterial.LEATHER && itemarmor.hasColor(itemstack) && !worldIn.isRemote)
                     {
-                        itemarmor.removeColor(heldItem);
+                        itemarmor.removeColor(itemstack);
                         this.setWaterLevel(worldIn, pos, state, i - 1);
                         playerIn.addStat(StatList.ARMOR_CLEANED);
                         return true;
@@ -181,34 +215,30 @@ public class BlockCauldron extends Block
 
                 if (i > 0 && item instanceof ItemBanner)
                 {
-                    if (TileEntityBanner.getPatterns(heldItem) > 0 && !worldIn.isRemote)
+                    if (TileEntityBanner.getPatterns(itemstack) > 0 && !worldIn.isRemote)
                     {
-                        ItemStack itemstack = heldItem.copy();
-                        itemstack.stackSize = 1;
-                        TileEntityBanner.removeBannerData(itemstack);
+                        ItemStack itemstack1 = itemstack.copy();
+                        itemstack1.setCount(1);
+                        TileEntityBanner.removeBannerData(itemstack1);
                         playerIn.addStat(StatList.BANNER_CLEANED);
 
                         if (!playerIn.capabilities.isCreativeMode)
                         {
-                            --heldItem.stackSize;
+                            itemstack.shrink(1);
+                            this.setWaterLevel(worldIn, pos, state, i - 1);
                         }
 
-                        if (heldItem.stackSize == 0)
+                        if (itemstack.isEmpty())
                         {
-                            playerIn.setHeldItem(hand, itemstack);
+                            playerIn.setHeldItem(hand, itemstack1);
                         }
-                        else if (!playerIn.inventory.addItemStackToInventory(itemstack))
+                        else if (!playerIn.inventory.addItemStackToInventory(itemstack1))
                         {
-                            playerIn.dropItem(itemstack, false);
+                            playerIn.dropItem(itemstack1, false);
                         }
                         else if (playerIn instanceof EntityPlayerMP)
                         {
                             ((EntityPlayerMP)playerIn).sendContainerToPlayer(playerIn.inventoryContainer);
-                        }
-
-                        if (!playerIn.capabilities.isCreativeMode)
-                        {
-                            this.setWaterLevel(worldIn, pos, state, i - 1);
                         }
                     }
 
@@ -224,7 +254,7 @@ public class BlockCauldron extends Block
 
     public void setWaterLevel(World worldIn, BlockPos pos, IBlockState state, int level)
     {
-        worldIn.setBlockState(pos, state.withProperty(LEVEL, Integer.valueOf(MathHelper.clamp_int(level, 0, 3))), 2);
+        worldIn.setBlockState(pos, state.withProperty(LEVEL, Integer.valueOf(MathHelper.clamp(level, 0, 3))), 2);
         worldIn.updateComparatorOutputLevel(pos, this);
     }
 
@@ -235,7 +265,7 @@ public class BlockCauldron extends Block
     {
         if (worldIn.rand.nextInt(20) == 1)
         {
-            float f = worldIn.getBiomeGenForCoords(pos).getFloatTemperature(pos);
+            float f = worldIn.getBiome(pos).getTemperature(pos);
 
             if (worldIn.getBiomeProvider().getTemperatureAtHeight(f, pos.getY()) >= 0.15F)
             {
@@ -252,7 +282,6 @@ public class BlockCauldron extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.CAULDRON;
@@ -294,8 +323,32 @@ public class BlockCauldron extends Block
         return new BlockStateContainer(this, new IProperty[] {LEVEL});
     }
 
+    /**
+     * Determines if an entity can path through this block
+     */
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos)
     {
         return true;
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        if (face == EnumFacing.UP)
+        {
+            return BlockFaceShape.BOWL;
+        }
+        else
+        {
+            return face == EnumFacing.DOWN ? BlockFaceShape.UNDEFINED : BlockFaceShape.SOLID;
+        }
     }
 }

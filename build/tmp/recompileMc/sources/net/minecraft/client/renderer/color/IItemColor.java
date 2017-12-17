@@ -7,5 +7,5 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IItemColor
 {
-    int getColorFromItemstack(ItemStack stack, int tintIndex);
+    int colorMultiplier(ItemStack stack, int tintIndex);
 }

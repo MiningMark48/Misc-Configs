@@ -21,7 +21,9 @@ public abstract class RConThreadBase implements Runnable
     /** Thread for this runnable class */
     protected Thread rconThread;
     protected int maxStopWait = 5;
+    /** A list of registered DatagramSockets */
     protected List<DatagramSocket> socketList = Lists.<DatagramSocket>newArrayList();
+    /** A list of registered ServerSockets */
     protected List<ServerSocket> serverSocketList = Lists.<ServerSocket>newArrayList();
 
     protected RConThreadBase(IServer serverIn, String threadName)

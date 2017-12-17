@@ -30,11 +30,11 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
         this.mc = Minecraft.getMinecraft();
     }
 
-    public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+    public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks)
     {
         int i = this.getResourcePackFormat();
 
-        if (i != 2)
+        if (i != 3)
         {
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             Gui.drawRect(x - 1, y - 1, x + listWidth - 9, y + slotHeight + 1, -8978432);
@@ -54,12 +54,12 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
             int j = mouseX - x;
             int k = mouseY - y;
 
-            if (i < 2)
+            if (i < 3)
             {
                 s = INCOMPATIBLE.getFormattedText();
                 s1 = INCOMPATIBLE_OLD.getFormattedText();
             }
-            else if (i > 2)
+            else if (i > 3)
             {
                 s = INCOMPATIBLE.getFormattedText();
                 s1 = INCOMPATIBLE_NEW.getFormattedText();
@@ -116,19 +116,19 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
             }
         }
 
-        int i1 = this.mc.fontRendererObj.getStringWidth(s);
+        int i1 = this.mc.fontRenderer.getStringWidth(s);
 
         if (i1 > 157)
         {
-            s = this.mc.fontRendererObj.trimStringToWidth(s, 157 - this.mc.fontRendererObj.getStringWidth("...")) + "...";
+            s = this.mc.fontRenderer.trimStringToWidth(s, 157 - this.mc.fontRenderer.getStringWidth("...")) + "...";
         }
 
-        this.mc.fontRendererObj.drawStringWithShadow(s, (float)(x + 32 + 2), (float)(y + 1), 16777215);
-        List<String> list = this.mc.fontRendererObj.listFormattedStringToWidth(s1, 157);
+        this.mc.fontRenderer.drawStringWithShadow(s, (float)(x + 32 + 2), (float)(y + 1), 16777215);
+        List<String> list = this.mc.fontRenderer.listFormattedStringToWidth(s1, 157);
 
         for (int l = 0; l < 2 && l < list.size(); ++l)
         {
-            this.mc.fontRendererObj.drawStringWithShadow((String)list.get(l), (float)(x + 32 + 2), (float)(y + 12 + 10 * l), 8421504);
+            this.mc.fontRenderer.drawStringWithShadow(list.get(l), (float)(x + 32 + 2), (float)(y + 12 + 10 * l), 8421504);
         }
     }
 
@@ -183,10 +183,15 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
                 final int j = ((ResourcePackListEntry)this.resourcePacksGUI.getSelectedResourcePacks().get(0)).isServerPack() ? 1 : 0;
                 int l = this.getResourcePackFormat();
 
-                if (l != 2)
+                if (l == 3)
                 {
-                    String s = I18n.format("resourcePack.incompatible.confirm.title", new Object[0]);
-                    String s1 = I18n.format("resourcePack.incompatible.confirm." + (l > 2 ? "new" : "old"), new Object[0]);
+                    this.resourcePacksGUI.getListContaining(this).remove(this);
+                    this.resourcePacksGUI.getSelectedResourcePacks().add(j, this);
+                }
+                else
+                {
+                    String s = I18n.format("resourcePack.incompatible.confirm.title");
+                    String s1 = I18n.format("resourcePack.incompatible.confirm." + (l > 3 ? "new" : "old"));
                     this.mc.displayGuiScreen(new GuiYesNo(new GuiYesNoCallback()
                     {
                         public void confirmClicked(boolean result, int id)
@@ -201,11 +206,6 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
                             }
                         }
                     }, s, s1, 0));
-                }
-                else
-                {
-                    this.resourcePacksGUI.getListContaining(this).remove(this);
-                    this.resourcePacksGUI.getSelectedResourcePacks().add(j, this);
                 }
 
                 return true;
@@ -243,7 +243,7 @@ public abstract class ResourcePackListEntry implements GuiListExtended.IGuiListE
         return false;
     }
 
-    public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_)
+    public void updatePosition(int slotIndex, int x, int y, float partialTicks)
     {
     }
 

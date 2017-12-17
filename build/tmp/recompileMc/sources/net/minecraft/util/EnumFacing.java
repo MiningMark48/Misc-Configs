@@ -4,9 +4,12 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import javax.annotation.Nullable;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
 
@@ -76,9 +79,6 @@ public enum EnumFacing implements IStringSerializable
      */
     public EnumFacing getOpposite()
     {
-        /**
-         * Get a Facing by it's index (0-5). The order is D-U-N-S-W-E. Named getFront for legacy reasons.
-         */
         return getFront(this.opposite);
     }
 
@@ -242,7 +242,7 @@ public enum EnumFacing implements IStringSerializable
     @Nullable
     public static EnumFacing byName(String name)
     {
-        return name == null ? null : (EnumFacing)NAME_LOOKUP.get(name.toLowerCase());
+        return name == null ? null : (EnumFacing)NAME_LOOKUP.get(name.toLowerCase(Locale.ROOT));
     }
 
     /**
@@ -250,15 +250,15 @@ public enum EnumFacing implements IStringSerializable
      */
     public static EnumFacing getFront(int index)
     {
-        return VALUES[MathHelper.abs_int(index % VALUES.length)];
+        return VALUES[MathHelper.abs(index % VALUES.length)];
     }
 
     /**
      * Get a Facing by it's horizontal index (0-3). The order is S-W-N-E.
      */
-    public static EnumFacing getHorizontal(int p_176731_0_)
+    public static EnumFacing getHorizontal(int horizontalIndexIn)
     {
-        return HORIZONTALS[MathHelper.abs_int(p_176731_0_ % HORIZONTALS.length)];
+        return HORIZONTALS[MathHelper.abs(horizontalIndexIn % HORIZONTALS.length)];
     }
 
     /**
@@ -266,10 +266,7 @@ public enum EnumFacing implements IStringSerializable
      */
     public static EnumFacing fromAngle(double angle)
     {
-        /**
-         * Get a Facing by it's horizontal index (0-3). The order is S-W-N-E.
-         */
-        return getHorizontal(MathHelper.floor_double(angle / 90.0D + 0.5D) & 3);
+        return getHorizontal(MathHelper.floor(angle / 90.0D + 0.5D) & 3);
     }
 
     public float getHorizontalAngle()
@@ -327,6 +324,26 @@ public enum EnumFacing implements IStringSerializable
         throw new IllegalArgumentException("No such direction: " + axisDirectionIn + " " + axisIn);
     }
 
+    public static EnumFacing getDirectionFromEntityLiving(BlockPos pos, EntityLivingBase placer)
+    {
+        if (Math.abs(placer.posX - (double)((float)pos.getX() + 0.5F)) < 2.0D && Math.abs(placer.posZ - (double)((float)pos.getZ() + 0.5F)) < 2.0D)
+        {
+            double d0 = placer.posY + (double)placer.getEyeHeight();
+
+            if (d0 - (double)pos.getY() > 2.0D)
+            {
+                return UP;
+            }
+
+            if ((double)pos.getY() - d0 > 0.0D)
+            {
+                return DOWN;
+            }
+        }
+
+        return placer.getHorizontalFacing().getOpposite();
+    }
+
     /**
      * Get a normalized Vector that points in the direction of this Facing.
      */
@@ -346,7 +363,7 @@ public enum EnumFacing implements IStringSerializable
                 HORIZONTALS[enumfacing.horizontalIndex] = enumfacing;
             }
 
-            NAME_LOOKUP.put(enumfacing.getName2().toLowerCase(), enumfacing);
+            NAME_LOOKUP.put(enumfacing.getName2().toLowerCase(Locale.ROOT), enumfacing);
         }
     }
 
@@ -371,7 +388,7 @@ public enum EnumFacing implements IStringSerializable
         @Nullable
         public static EnumFacing.Axis byName(String name)
         {
-            return name == null ? null : (EnumFacing.Axis)NAME_LOOKUP.get(name.toLowerCase());
+            return name == null ? null : (EnumFacing.Axis)NAME_LOOKUP.get(name.toLowerCase(Locale.ROOT));
         }
 
         /**
@@ -425,7 +442,7 @@ public enum EnumFacing implements IStringSerializable
         {
             for (EnumFacing.Axis enumfacing$axis : values())
             {
-                NAME_LOOKUP.put(enumfacing$axis.getName2().toLowerCase(), enumfacing$axis);
+                NAME_LOOKUP.put(enumfacing$axis.getName2().toLowerCase(Locale.ROOT), enumfacing$axis);
             }
         }
     }
@@ -473,7 +490,7 @@ public enum EnumFacing implements IStringSerializable
                 case VERTICAL:
                     return new EnumFacing[] {EnumFacing.UP, EnumFacing.DOWN};
                 default:
-                    throw new Error("Someone\'s been tampering with the universe!");
+                    throw new Error("Someone's been tampering with the universe!");
             }
         }
 

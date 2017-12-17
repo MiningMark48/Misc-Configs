@@ -19,11 +19,16 @@ public class ItemEnderPearl extends Item
         this.setCreativeTab(CreativeTabs.MISC);
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+
         if (!playerIn.capabilities.isCreativeMode)
         {
-            --itemStackIn.stackSize;
+            itemstack.shrink(1);
         }
 
         worldIn.playSound((EntityPlayer)null, playerIn.posX, playerIn.posY, playerIn.posZ, SoundEvents.ENTITY_ENDERPEARL_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
@@ -32,11 +37,11 @@ public class ItemEnderPearl extends Item
         if (!worldIn.isRemote)
         {
             EntityEnderPearl entityenderpearl = new EntityEnderPearl(worldIn, playerIn);
-            entityenderpearl.setHeadingFromThrower(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5F, 1.0F);
-            worldIn.spawnEntityInWorld(entityenderpearl);
+            entityenderpearl.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5F, 1.0F);
+            worldIn.spawnEntity(entityenderpearl);
         }
 
         playerIn.addStat(StatList.getObjectUseStats(this));
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
     }
 }

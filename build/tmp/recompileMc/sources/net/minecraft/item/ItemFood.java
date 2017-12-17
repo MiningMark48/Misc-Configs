@@ -1,9 +1,10 @@
 package net.minecraft.item;
 
-import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.stats.StatList;
@@ -47,11 +48,8 @@ public class ItemFood extends Item
      * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
      * the Item before the action is complete.
      */
-    @Nullable
     public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving)
     {
-        --stack.stackSize;
-
         if (entityLiving instanceof EntityPlayer)
         {
             EntityPlayer entityplayer = (EntityPlayer)entityLiving;
@@ -59,8 +57,14 @@ public class ItemFood extends Item
             worldIn.playSound((EntityPlayer)null, entityplayer.posX, entityplayer.posY, entityplayer.posZ, SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 0.5F, worldIn.rand.nextFloat() * 0.1F + 0.9F);
             this.onFoodEaten(stack, worldIn, entityplayer);
             entityplayer.addStat(StatList.getObjectUseStats(this));
+
+            if (entityplayer instanceof EntityPlayerMP)
+            {
+                CriteriaTriggers.CONSUME_ITEM.trigger((EntityPlayerMP)entityplayer, stack);
+            }
         }
 
+        stack.shrink(1);
         return stack;
     }
 
@@ -88,16 +92,21 @@ public class ItemFood extends Item
         return EnumAction.EAT;
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+
         if (playerIn.canEat(this.alwaysEdible))
         {
-            playerIn.setActiveHand(hand);
-            return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+            playerIn.setActiveHand(handIn);
+            return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
         }
         else
         {
-            return new ActionResult(EnumActionResult.FAIL, itemStackIn);
+            return new ActionResult<ItemStack>(EnumActionResult.FAIL, itemstack);
         }
     }
 
@@ -119,10 +128,10 @@ public class ItemFood extends Item
         return this.isWolfsFavoriteMeat;
     }
 
-    public ItemFood setPotionEffect(PotionEffect p_185070_1_, float p_185070_2_)
+    public ItemFood setPotionEffect(PotionEffect effect, float probability)
     {
-        this.potionId = p_185070_1_;
-        this.potionEffectProbability = p_185070_2_;
+        this.potionId = effect;
+        this.potionEffectProbability = probability;
         return this;
     }
 

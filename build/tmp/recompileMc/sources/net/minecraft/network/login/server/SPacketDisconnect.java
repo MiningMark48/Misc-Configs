@@ -26,7 +26,7 @@ public class SPacketDisconnect implements Packet<INetHandlerLoginClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.reason = ITextComponent.Serializer.fromJsonLenient(buf.readStringFromBuffer(32767));
+        this.reason = ITextComponent.Serializer.fromJsonLenient(buf.readString(32767));
     }
 
     /**

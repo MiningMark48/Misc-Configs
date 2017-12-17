@@ -1,13 +1,14 @@
 package net.minecraft.entity.player;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.advancements.PlayerAdvancements;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFence;
 import net.minecraft.block.BlockFenceGate;
@@ -20,9 +21,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IMerchant;
-import net.minecraft.entity.passive.EntityHorse;
+import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.init.Items;
+import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerChest;
@@ -34,6 +36,8 @@ import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemMapBase;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.Packet;
@@ -67,12 +71,12 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.scoreboard.IScoreCriteria;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
+import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.server.management.UserListOpsEntry;
-import net.minecraft.stats.Achievement;
-import net.minecraft.stats.AchievementList;
+import net.minecraft.stats.RecipeBookServer;
 import net.minecraft.stats.StatBase;
 import net.minecraft.stats.StatList;
 import net.minecraft.stats.StatisticsManagerServer;
@@ -85,21 +89,27 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumHandSide;
-import net.minecraft.util.JsonSerializableSet;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
+import net.minecraft.util.datafix.IDataFixer;
+import net.minecraft.util.datafix.IDataWalker;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.village.MerchantRecipeList;
+import net.minecraft.world.GameType;
 import net.minecraft.world.IInteractionObject;
 import net.minecraft.world.ILockableContainer;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.WorldSettings;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.storage.loot.ILootContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -118,7 +128,12 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     public double managedPosX;
     /** player Z position as seen by PlayerManager */
     public double managedPosZ;
+    /**
+     * This is a queue that contains the entity IDs of entties that need to be removed on the client. Adding an entity
+     * ID to this queue will cause a SPacketDestroyEntities to be sent to the client.
+     */
     private final List<Integer> entityRemoveQueue = Lists.<Integer>newLinkedList();
+    private final PlayerAdvancements advancements;
     private final StatisticsManagerServer statsFile;
     /** the total health of the player, includes actual health and absorption health. Updated every tick. */
     private float lastHealthScore = Float.MIN_VALUE;
@@ -140,8 +155,16 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     private boolean chatColours = true;
     private long playerLastActiveTime = System.currentTimeMillis();
     /** The entity the player is currently spectating through. */
-    private Entity spectatingEntity = null;
+    private Entity spectatingEntity;
     private boolean invulnerableDimensionChange;
+    private boolean seenCredits;
+    private final RecipeBookServer recipeBook = new RecipeBookServer();
+    /** The position this player started levitating at. */
+    private Vec3d levitationStartPos;
+    /** The value of ticksExisted when this player started levitating. */
+    private int levitatingSince;
+    private boolean disconnected;
+    private Vec3d enteredNetherPosition;
     /** The currently in use window ID. Incremented every time a window is opened. */
     public int currentWindowId;
     /**
@@ -150,24 +173,20 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public boolean isChangingQuantityOnly;
     public int ping;
-    /**
-     * Set when a player beats the ender dragon, used to respawn the player at the spawn point while retaining inventory
-     * and XP
-     */
-    public boolean playerConqueredTheEnd;
+    /** True when the player has left the End using an the exit portal, but has not yet been respawned in the overworld */
+    public boolean queuedEndExit;
 
-    @SuppressWarnings("unused")
     public EntityPlayerMP(MinecraftServer server, WorldServer worldIn, GameProfile profile, PlayerInteractionManager interactionManagerIn)
     {
         super(worldIn, profile);
-        interactionManagerIn.thisPlayerMP = this;
+        interactionManagerIn.player = this;
         this.interactionManager = interactionManagerIn;
         BlockPos blockpos = worldIn.provider.getRandomizedSpawnPoint();
 
-        if (false && !worldIn.provider.getHasNoSky() && worldIn.getWorldInfo().getGameType() != WorldSettings.GameType.ADVENTURE)
+        if (false && worldIn.provider.hasSkyLight() && worldIn.getWorldInfo().getGameType() != GameType.ADVENTURE)
         {
             int i = Math.max(0, server.getSpawnRadius(worldIn));
-            int j = MathHelper.floor_double(worldIn.getWorldBorder().getClosestDistance((double)blockpos.getX(), (double)blockpos.getZ()));
+            int j = MathHelper.floor(worldIn.getWorldBorder().getClosestDistance((double)blockpos.getX(), (double)blockpos.getZ()));
 
             if (j < i)
             {
@@ -184,7 +203,8 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
         this.mcServer = server;
         this.statsFile = server.getPlayerList().getPlayerStatsFile(this);
-        this.stepHeight = 0.0F;
+        this.advancements = server.getPlayerList().getPlayerAdvancements(this);
+        this.stepHeight = 1.0F;
         this.moveToBlockPosAndAngles(blockpos, 0.0F, 0.0F);
 
         while (!worldIn.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && this.posY < 255.0D)
@@ -208,9 +228,43 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             }
             else
             {
-                this.interactionManager.setGameType(WorldSettings.GameType.getByID(compound.getInteger("playerGameType")));
+                this.interactionManager.setGameType(GameType.getByID(compound.getInteger("playerGameType")));
             }
         }
+
+        if (compound.hasKey("enteredNetherPosition", 10))
+        {
+            NBTTagCompound nbttagcompound = compound.getCompoundTag("enteredNetherPosition");
+            this.enteredNetherPosition = new Vec3d(nbttagcompound.getDouble("x"), nbttagcompound.getDouble("y"), nbttagcompound.getDouble("z"));
+        }
+
+        this.seenCredits = compound.getBoolean("seenCredits");
+
+        if (compound.hasKey("recipeBook", 10))
+        {
+            this.recipeBook.read(compound.getCompoundTag("recipeBook"));
+        }
+    }
+
+    public static void registerFixesPlayerMP(DataFixer p_191522_0_)
+    {
+        p_191522_0_.registerWalker(FixTypes.PLAYER, new IDataWalker()
+        {
+            public NBTTagCompound process(IDataFixer fixer, NBTTagCompound compound, int versionIn)
+            {
+                if (compound.hasKey("RootVehicle", 10))
+                {
+                    NBTTagCompound nbttagcompound = compound.getCompoundTag("RootVehicle");
+
+                    if (nbttagcompound.hasKey("Entity", 10))
+                    {
+                        nbttagcompound.setTag("Entity", fixer.process(FixTypes.ENTITY, nbttagcompound.getCompoundTag("Entity"), versionIn));
+                    }
+                }
+
+                return compound;
+            }
+        });
     }
 
     /**
@@ -220,17 +274,31 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         super.writeEntityToNBT(compound);
         compound.setInteger("playerGameType", this.interactionManager.getGameType().getID());
-        Entity entity = this.getLowestRidingEntity();
+        compound.setBoolean("seenCredits", this.seenCredits);
 
-        if (this.getRidingEntity() != null && entity != this & entity.getRecursivePassengersByType(EntityPlayerMP.class).size() == 1)
+        if (this.enteredNetherPosition != null)
         {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
-            NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-            entity.writeToNBTOptional(nbttagcompound1);
-            nbttagcompound.setUniqueId("Attach", this.getRidingEntity().getUniqueID());
-            nbttagcompound.setTag("Entity", nbttagcompound1);
-            compound.setTag("RootVehicle", nbttagcompound);
+            nbttagcompound.setDouble("x", this.enteredNetherPosition.x);
+            nbttagcompound.setDouble("y", this.enteredNetherPosition.y);
+            nbttagcompound.setDouble("z", this.enteredNetherPosition.z);
+            compound.setTag("enteredNetherPosition", nbttagcompound);
         }
+
+        Entity entity1 = this.getLowestRidingEntity();
+        Entity entity = this.getRidingEntity();
+
+        if (entity != null && entity1 != this && entity1.getRecursivePassengersByType(EntityPlayerMP.class).size() == 1)
+        {
+            NBTTagCompound nbttagcompound1 = new NBTTagCompound();
+            NBTTagCompound nbttagcompound2 = new NBTTagCompound();
+            entity1.writeToNBTOptional(nbttagcompound2);
+            nbttagcompound1.setUniqueId("Attach", entity.getUniqueID());
+            nbttagcompound1.setTag("Entity", nbttagcompound2);
+            compound.setTag("RootVehicle", nbttagcompound1);
+        }
+
+        compound.setTag("recipeBook", this.recipeBook.write());
     }
 
     /**
@@ -242,9 +310,9 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         this.lastExperience = -1;
     }
 
-    public void removeExperienceLevel(int levels)
+    public void onEnchant(ItemStack enchantedItem, int cost)
     {
-        super.removeExperienceLevel(levels);
+        super.onEnchant(enchantedItem, cost);
         this.lastExperience = -1;
     }
 
@@ -271,6 +339,11 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         this.connection.sendPacket(new SPacketCombatEvent(this.getCombatTracker(), SPacketCombatEvent.Event.END_COMBAT));
     }
 
+    protected void onInsideBlock(IBlockState p_191955_1_)
+    {
+        CriteriaTriggers.ENTER_BLOCK.trigger(this, p_191955_1_);
+    }
+
     protected CooldownTracker createCooldownTracker()
     {
         return new CooldownTrackerServer(this);
@@ -291,7 +364,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
         this.openContainer.detectAndSendChanges();
 
-        if (!this.worldObj.isRemote && !net.minecraftforge.common.ForgeHooks.canInteractWith(this, this.openContainer))
+        if (!this.world.isRemote && this.openContainer != null && !this.openContainer.canInteractWith(this))
         {
             this.closeScreen();
             this.openContainer = this.inventoryContainer;
@@ -317,21 +390,30 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
         if (entity != this)
         {
-            if (!entity.isEntityAlive())
-            {
-                this.setSpectatingEntity(this);
-            }
-            else
+            if (entity.isEntityAlive())
             {
                 this.setPositionAndRotation(entity.posX, entity.posY, entity.posZ, entity.rotationYaw, entity.rotationPitch);
-                this.mcServer.getPlayerList().serverUpdateMountedMovingPlayer(this);
+                this.mcServer.getPlayerList().serverUpdateMovingPlayer(this);
 
                 if (this.isSneaking())
                 {
                     this.setSpectatingEntity(this);
                 }
             }
+            else
+            {
+                this.setSpectatingEntity(this);
+            }
         }
+
+        CriteriaTriggers.TICK.trigger(this);
+
+        if (this.levitationStartPos != null)
+        {
+            CriteriaTriggers.LEVITATION.trigger(this, this.levitationStartPos, this.ticksExisted - this.levitatingSince);
+        }
+
+        this.advancements.flushDirty(this);
     }
 
     public void onUpdateEntity()
@@ -344,9 +426,9 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             {
                 ItemStack itemstack = this.inventory.getStackInSlot(i);
 
-                if (itemstack != null && itemstack.getItem().isMap())
+                if (!itemstack.isEmpty() && itemstack.getItem().isMap())
                 {
-                    Packet<?> packet = ((ItemMapBase)itemstack.getItem()).createMapDataPacket(itemstack, this.worldObj, this);
+                    Packet<?> packet = ((ItemMapBase)itemstack.getItem()).createMapDataPacket(itemstack, this.world, this);
 
                     if (packet != null)
                     {
@@ -366,37 +448,37 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             if (this.getHealth() + this.getAbsorptionAmount() != this.lastHealthScore)
             {
                 this.lastHealthScore = this.getHealth() + this.getAbsorptionAmount();
-                this.updateScorePoints(IScoreCriteria.HEALTH, MathHelper.ceiling_float_int(this.lastHealthScore));
+                this.updateScorePoints(IScoreCriteria.HEALTH, MathHelper.ceil(this.lastHealthScore));
             }
 
             if (this.foodStats.getFoodLevel() != this.lastFoodScore)
             {
                 this.lastFoodScore = this.foodStats.getFoodLevel();
-                this.updateScorePoints(IScoreCriteria.FOOD, MathHelper.ceiling_float_int((float)this.lastFoodScore));
+                this.updateScorePoints(IScoreCriteria.FOOD, MathHelper.ceil((float)this.lastFoodScore));
             }
 
             if (this.getAir() != this.lastAirScore)
             {
                 this.lastAirScore = this.getAir();
-                this.updateScorePoints(IScoreCriteria.AIR, MathHelper.ceiling_float_int((float)this.lastAirScore));
+                this.updateScorePoints(IScoreCriteria.AIR, MathHelper.ceil((float)this.lastAirScore));
             }
 
             if (this.getTotalArmorValue() != this.lastArmorScore)
             {
                 this.lastArmorScore = this.getTotalArmorValue();
-                this.updateScorePoints(IScoreCriteria.ARMOR, MathHelper.ceiling_float_int((float)this.lastArmorScore));
+                this.updateScorePoints(IScoreCriteria.ARMOR, MathHelper.ceil((float)this.lastArmorScore));
             }
 
             if (this.experienceTotal != this.lastExperienceScore)
             {
                 this.lastExperienceScore = this.experienceTotal;
-                this.updateScorePoints(IScoreCriteria.XP, MathHelper.ceiling_float_int((float)this.lastExperienceScore));
+                this.updateScorePoints(IScoreCriteria.XP, MathHelper.ceil((float)this.lastExperienceScore));
             }
 
             if (this.experienceLevel != this.lastLevelScore)
             {
                 this.lastLevelScore = this.experienceLevel;
-                this.updateScorePoints(IScoreCriteria.LEVEL, MathHelper.ceiling_float_int((float)this.lastLevelScore));
+                this.updateScorePoints(IScoreCriteria.LEVEL, MathHelper.ceil((float)this.lastLevelScore));
             }
 
             if (this.experienceTotal != this.lastExperience)
@@ -405,9 +487,9 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
                 this.connection.sendPacket(new SPacketSetExperience(this.experience, this.experienceTotal, this.experienceLevel));
             }
 
-            if (this.ticksExisted % 20 * 5 == 0 && !this.getStatFile().hasAchievementUnlocked(AchievementList.EXPLORE_ALL_BIOMES))
+            if (this.ticksExisted % 20 == 0)
             {
-                this.updateBiomesExplored();
+                CriteriaTriggers.LOCATION.trigger(this);
             }
         }
         catch (Throwable throwable)
@@ -429,59 +511,12 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     }
 
     /**
-     * Updates all biomes that have been explored by this player and triggers Adventuring Time if player qualifies.
-     */
-    protected void updateBiomesExplored()
-    {
-        Biome biome = this.worldObj.getBiomeGenForCoords(new BlockPos(MathHelper.floor_double(this.posX), 0, MathHelper.floor_double(this.posZ)));
-        String s = biome.getBiomeName();
-        JsonSerializableSet jsonserializableset = (JsonSerializableSet)this.getStatFile().getProgress(AchievementList.EXPLORE_ALL_BIOMES);
-
-        if (jsonserializableset == null)
-        {
-            jsonserializableset = (JsonSerializableSet)this.getStatFile().setProgress(AchievementList.EXPLORE_ALL_BIOMES, new JsonSerializableSet());
-        }
-
-        jsonserializableset.add(s);
-
-        if (this.getStatFile().canUnlockAchievement(AchievementList.EXPLORE_ALL_BIOMES) && jsonserializableset.size() >= Biome.EXPLORATION_BIOMES_LIST.size())
-        {
-            Set<Biome> set = Sets.newHashSet(Biome.EXPLORATION_BIOMES_LIST);
-
-            for (String s1 : jsonserializableset)
-            {
-                Iterator<Biome> iterator = set.iterator();
-
-                while (iterator.hasNext())
-                {
-                    Biome biome1 = (Biome)iterator.next();
-
-                    if (biome1.getBiomeName().equals(s1))
-                    {
-                        iterator.remove();
-                    }
-                }
-
-                if (set.isEmpty())
-                {
-                    break;
-                }
-            }
-
-            if (set.isEmpty())
-            {
-                this.addStat(AchievementList.EXPLORE_ALL_BIOMES);
-            }
-        }
-    }
-
-    /**
      * Called when the mob's health reaches 0.
      */
     public void onDeath(DamageSource cause)
     {
         if (net.minecraftforge.common.ForgeHooks.onLivingDeath(this, cause)) return;
-        boolean flag = this.worldObj.getGameRules().getBoolean("showDeathMessages");
+        boolean flag = this.world.getGameRules().getBoolean("showDeathMessages");
         this.connection.sendPacket(new SPacketCombatEvent(this.getCombatTracker(), SPacketCombatEvent.Event.ENTITY_DIED, flag));
 
         if (flag)
@@ -501,15 +536,17 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             }
             else
             {
-                this.mcServer.getPlayerList().sendChatMsg(this.getCombatTracker().getDeathMessage());
+                this.mcServer.getPlayerList().sendMessage(this.getCombatTracker().getDeathMessage());
             }
         }
 
-        if (!this.worldObj.getGameRules().getBoolean("keepInventory") && !this.isSpectator())
+        this.spawnShoulderEntities();
+
+        if (!this.world.getGameRules().getBoolean("keepInventory") && !this.isSpectator())
         {
             captureDrops = true;
             capturedDrops.clear();
-
+            this.destroyVanishingCursedItems();
             this.inventory.dropAllItems();
 
             captureDrops = false;
@@ -518,12 +555,12 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             {
                 for (net.minecraft.entity.item.EntityItem item : capturedDrops)
                 {
-                    this.worldObj.spawnEntityInWorld(item);
+                    this.world.spawnEntity(item);
                 }
             }
         }
 
-        for (ScoreObjective scoreobjective : this.worldObj.getScoreboard().getObjectivesFromCriteria(IScoreCriteria.DEATH_COUNT))
+        for (ScoreObjective scoreobjective : this.world.getScoreboard().getObjectivesFromCriteria(IScoreCriteria.DEATH_COUNT))
         {
             Score score = this.getWorldScoreboard().getOrCreateScore(this.getName(), scoreobjective);
             score.incrementScore();
@@ -533,19 +570,84 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
         if (entitylivingbase != null)
         {
-            EntityList.EntityEggInfo entitylist$entityegginfo = (EntityList.EntityEggInfo)EntityList.ENTITY_EGGS.get(EntityList.getEntityString(entitylivingbase));
+            EntityList.EntityEggInfo entitylist$entityegginfo = EntityList.ENTITY_EGGS.get(EntityList.getKey(entitylivingbase));
 
             if (entitylist$entityegginfo != null)
             {
                 this.addStat(entitylist$entityegginfo.entityKilledByStat);
             }
 
-            entitylivingbase.addToPlayerScore(this, this.scoreValue);
+            entitylivingbase.awardKillScore(this, this.scoreValue, cause);
         }
 
         this.addStat(StatList.DEATHS);
         this.takeStat(StatList.TIME_SINCE_DEATH);
+        this.extinguish();
+        this.setFlag(0, false);
         this.getCombatTracker().reset();
+    }
+
+    public void awardKillScore(Entity p_191956_1_, int p_191956_2_, DamageSource p_191956_3_)
+    {
+        if (p_191956_1_ != this)
+        {
+            super.awardKillScore(p_191956_1_, p_191956_2_, p_191956_3_);
+            this.addScore(p_191956_2_);
+            Collection<ScoreObjective> collection = this.getWorldScoreboard().getObjectivesFromCriteria(IScoreCriteria.TOTAL_KILL_COUNT);
+
+            if (p_191956_1_ instanceof EntityPlayer)
+            {
+                this.addStat(StatList.PLAYER_KILLS);
+                collection.addAll(this.getWorldScoreboard().getObjectivesFromCriteria(IScoreCriteria.PLAYER_KILL_COUNT));
+            }
+            else
+            {
+                this.addStat(StatList.MOB_KILLS);
+            }
+
+            collection.addAll(this.awardTeamKillScores(p_191956_1_));
+
+            for (ScoreObjective scoreobjective : collection)
+            {
+                this.getWorldScoreboard().getOrCreateScore(this.getName(), scoreobjective).incrementScore();
+            }
+
+            CriteriaTriggers.PLAYER_KILLED_ENTITY.trigger(this, p_191956_1_, p_191956_3_);
+        }
+    }
+
+    private Collection<ScoreObjective> awardTeamKillScores(Entity p_192038_1_)
+    {
+        String s = p_192038_1_ instanceof EntityPlayer ? p_192038_1_.getName() : p_192038_1_.getCachedUniqueIdString();
+        ScorePlayerTeam scoreplayerteam = this.getWorldScoreboard().getPlayersTeam(this.getName());
+
+        if (scoreplayerteam != null)
+        {
+            int i = scoreplayerteam.getColor().getColorIndex();
+
+            if (i >= 0 && i < IScoreCriteria.KILLED_BY_TEAM.length)
+            {
+                for (ScoreObjective scoreobjective : this.getWorldScoreboard().getObjectivesFromCriteria(IScoreCriteria.KILLED_BY_TEAM[i]))
+                {
+                    Score score = this.getWorldScoreboard().getOrCreateScore(s, scoreobjective);
+                    score.incrementScore();
+                }
+            }
+        }
+
+        ScorePlayerTeam scoreplayerteam1 = this.getWorldScoreboard().getPlayersTeam(s);
+
+        if (scoreplayerteam1 != null)
+        {
+            int j = scoreplayerteam1.getColor().getColorIndex();
+
+            if (j >= 0 && j < IScoreCriteria.TEAM_KILL.length)
+            {
+                return this.getWorldScoreboard().getObjectivesFromCriteria(IScoreCriteria.TEAM_KILL[j]);
+            }
+        }
+
+        return Lists.<ScoreObjective>newArrayList();
     }
 
     /**
@@ -561,7 +663,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         {
             boolean flag = this.mcServer.isDedicatedServer() && this.canPlayersAttack() && "fall".equals(source.damageType);
 
-            if (!flag && this.respawnInvulnerabilityTicks > 0 && source != DamageSource.outOfWorld)
+            if (!flag && this.respawnInvulnerabilityTicks > 0 && source != DamageSource.OUT_OF_WORLD)
             {
                 return false;
             }
@@ -569,7 +671,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             {
                 if (source instanceof EntityDamageSource)
                 {
-                    Entity entity = source.getEntity();
+                    Entity entity = source.getTrueSource();
 
                     if (entity instanceof EntityPlayer && !this.canAttackPlayer((EntityPlayer)entity))
                     {
@@ -611,23 +713,24 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, dimensionIn)) return this;
         this.invulnerableDimensionChange = true;
 
+        if (this.dimension == 0 && dimensionIn == -1)
+        {
+            this.enteredNetherPosition = new Vec3d(this.posX, this.posY, this.posZ);
+        }
+        else if (this.dimension != -1 && dimensionIn != 0)
+        {
+            this.enteredNetherPosition = null;
+        }
+
         if (this.dimension == 1 && dimensionIn == 1)
         {
-            this.worldObj.removeEntity(this);
+            this.world.removeEntity(this);
 
-            if (!this.playerConqueredTheEnd)
+            if (!this.queuedEndExit)
             {
-                this.playerConqueredTheEnd = true;
-
-                if (this.hasAchievement(AchievementList.THE_END2))
-                {
-                    this.connection.sendPacket(new SPacketChangeGameState(4, 0.0F));
-                }
-                else
-                {
-                    this.addStat(AchievementList.THE_END2);
-                    this.connection.sendPacket(new SPacketChangeGameState(4, 1.0F));
-                }
+                this.queuedEndExit = true;
+                this.connection.sendPacket(new SPacketChangeGameState(4, this.seenCredits ? 0.0F : 1.0F));
+                this.seenCredits = true;
             }
 
             return this;
@@ -636,12 +739,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         {
             if (this.dimension == 0 && dimensionIn == 1)
             {
-                this.addStat(AchievementList.THE_END);
                 dimensionIn = 1;
-            }
-            else
-            {
-                this.addStat(AchievementList.PORTAL);
             }
 
             this.mcServer.getPlayerList().changePlayerDimension(this, dimensionIn);
@@ -655,7 +753,14 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
     public boolean isSpectatedByPlayer(EntityPlayerMP player)
     {
-        return player.isSpectator() ? this.getSpectatingEntity() == this : (this.isSpectator() ? false : super.isSpectatedByPlayer(player));
+        if (player.isSpectator())
+        {
+            return this.getSpectatingEntity() == this;
+        }
+        else
+        {
+            return this.isSpectator() ? false : super.isSpectatedByPlayer(player);
+        }
     }
 
     private void sendTileEntityUpdate(TileEntity p_147097_1_)
@@ -688,9 +793,10 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         {
             this.addStat(StatList.SLEEP_IN_BED);
             Packet<?> packet = new SPacketUseBed(this, bedLocation);
-            this.getServerWorld().getEntityTracker().sendToAllTrackingEntity(this, packet);
+            this.getServerWorld().getEntityTracker().sendToTracking(this, packet);
             this.connection.setPlayerLocation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
             this.connection.sendPacket(packet);
+            CriteriaTriggers.SLEPT_IN_BED.trigger(this);
         }
 
         return entityplayer$sleepresult;
@@ -735,6 +841,9 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         }
     }
 
+    /**
+     * Dismounts this entity from the entity it is riding.
+     */
     public void dismountRidingEntity()
     {
         Entity entity = this.getRidingEntity();
@@ -772,16 +881,16 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public void handleFalling(double y, boolean onGroundIn)
     {
-        int i = MathHelper.floor_double(this.posX);
-        int j = MathHelper.floor_double(this.posY - 0.20000000298023224D);
-        int k = MathHelper.floor_double(this.posZ);
+        int i = MathHelper.floor(this.posX);
+        int j = MathHelper.floor(this.posY - 0.20000000298023224D);
+        int k = MathHelper.floor(this.posZ);
         BlockPos blockpos = new BlockPos(i, j, k);
-        IBlockState iblockstate = this.worldObj.getBlockState(blockpos);
+        IBlockState iblockstate = this.world.getBlockState(blockpos);
 
-        if (iblockstate.getBlock().isAir(iblockstate, this.worldObj, blockpos))
+        if (iblockstate.getBlock().isAir(iblockstate, this.world, blockpos))
         {
             BlockPos blockpos1 = blockpos.down();
-            IBlockState iblockstate1 = this.worldObj.getBlockState(blockpos1);
+            IBlockState iblockstate1 = this.world.getBlockState(blockpos1);
             Block block = iblockstate1.getBlock();
 
             if (block instanceof BlockFence || block instanceof BlockWall || block instanceof BlockFenceGate)
@@ -812,7 +921,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         if (guiOwner instanceof ILootContainer && ((ILootContainer)guiOwner).getLootTable() != null && this.isSpectator())
         {
-            this.addChatMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)));
+            this.sendStatusMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)), true);
         }
         else
         {
@@ -821,6 +930,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             this.openContainer = guiOwner.createContainer(this.inventory, this);
             this.openContainer.windowId = this.currentWindowId;
             this.openContainer.addListener(this);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
         }
     }
 
@@ -831,7 +941,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         if (chestInventory instanceof ILootContainer && ((ILootContainer)chestInventory).getLootTable() != null && this.isSpectator())
         {
-            this.addChatMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)));
+            this.sendStatusMessage((new TextComponentTranslation("container.spectatorCantOpen", new Object[0])).setStyle((new Style()).setColor(TextFormatting.RED)), true);
         }
         else
         {
@@ -846,7 +956,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
                 if (ilockablecontainer.isLocked() && !this.canOpen(ilockablecontainer.getLockCode()) && !this.isSpectator())
                 {
-                    this.connection.sendPacket(new SPacketChat(new TextComponentTranslation("container.isLocked", new Object[] {chestInventory.getDisplayName()}), (byte)2));
+                    this.connection.sendPacket(new SPacketChat(new TextComponentTranslation("container.isLocked", new Object[] {chestInventory.getDisplayName()}), ChatType.GAME_INFO));
                     this.connection.sendPacket(new SPacketSoundEffect(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, this.posX, this.posY, this.posZ, 1.0F, 1.0F));
                     return;
                 }
@@ -867,15 +977,17 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
             this.openContainer.windowId = this.currentWindowId;
             this.openContainer.addListener(this);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
         }
     }
 
     public void displayVillagerTradeGui(IMerchant villager)
     {
         this.getNextWindowId();
-        this.openContainer = new ContainerMerchant(this.inventory, villager, this.worldObj);
+        this.openContainer = new ContainerMerchant(this.inventory, villager, this.world);
         this.openContainer.windowId = this.currentWindowId;
         this.openContainer.addListener(this);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(this, this.openContainer));
         IInventory iinventory = ((ContainerMerchant)this.openContainer).getMerchantInventory();
         ITextComponent itextcomponent = villager.getDisplayName();
         this.connection.sendPacket(new SPacketOpenWindow(this.currentWindowId, "minecraft:villager", itextcomponent, iinventory.getSizeInventory()));
@@ -890,7 +1002,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         }
     }
 
-    public void openGuiHorseInventory(EntityHorse horse, IInventory inventoryIn)
+    public void openGuiHorseInventory(AbstractHorse horse, IInventory inventoryIn)
     {
         if (this.openContainer != this.inventoryContainer)
         {
@@ -916,13 +1028,10 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         }
     }
 
-    public void displayGuiCommandBlock(TileEntityCommandBlock p_184824_1_)
+    public void displayGuiCommandBlock(TileEntityCommandBlock commandBlock)
     {
-        if (this.canCommandSenderUseCommand(2, ""))
-        {
-            p_184824_1_.setSendToClient(true);
-            this.sendTileEntityUpdate(p_184824_1_);
-        }
+        commandBlock.setSendToClient(true);
+        this.sendTileEntityUpdate(commandBlock);
     }
 
     /**
@@ -933,6 +1042,11 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         if (!(containerToSend.getSlot(slotInd) instanceof SlotCrafting))
         {
+            if (containerToSend == this.inventoryContainer)
+            {
+                CriteriaTriggers.INVENTORY_CHANGED.trigger(this, this.inventory);
+            }
+
             if (!this.isChangingQuantityOnly)
             {
                 this.connection.sendPacket(new SPacketSetSlot(containerToSend.windowId, slotInd, stack));
@@ -942,13 +1056,13 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
     public void sendContainerToPlayer(Container containerIn)
     {
-        this.updateCraftingInventory(containerIn, containerIn.getInventory());
+        this.sendAllContents(containerIn, containerIn.getInventory());
     }
 
     /**
      * update the crafting window inventory with the items in the list
      */
-    public void updateCraftingInventory(Container containerToSend, List<ItemStack> itemsList)
+    public void sendAllContents(Container containerToSend, NonNullList<ItemStack> itemsList)
     {
         this.connection.sendPacket(new SPacketWindowItems(containerToSend.windowId, itemsList));
         this.connection.sendPacket(new SPacketSetSlot(-1, -1, this.inventory.getItemStack()));
@@ -959,7 +1073,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      * and enchanting level. Normally the first int identifies which variable to update, and the second contains the new
      * value. Both are truncated to shorts in non-local SMP.
      */
-    public void sendProgressBarUpdate(Container containerIn, int varToUpdate, int newValue)
+    public void sendWindowProperty(Container containerIn, int varToUpdate, int newValue)
     {
         this.connection.sendPacket(new SPacketWindowProperty(containerIn.windowId, varToUpdate, newValue));
     }
@@ -998,6 +1112,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     public void closeContainer()
     {
         this.openContainer.onContainerClosed(this);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Close(this, this.openContainer));
         this.openContainer = this.inventoryContainer;
     }
 
@@ -1020,11 +1135,6 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         }
     }
 
-    public boolean hasAchievement(Achievement achievementIn)
-    {
-        return this.statsFile.hasAchievementUnlocked(achievementIn);
-    }
-
     /**
      * Adds a value to a statistic field.
      */
@@ -1032,17 +1142,11 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         if (stat != null)
         {
-            if (stat.isAchievement() && net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.AchievementEvent(this, (net.minecraft.stats.Achievement) stat))) return;
             this.statsFile.increaseStat(this, stat, amount);
 
             for (ScoreObjective scoreobjective : this.getWorldScoreboard().getObjectivesFromCriteria(stat.getCriteria()))
             {
                 this.getWorldScoreboard().getOrCreateScore(this.getName(), scoreobjective).increaseScore(amount);
-            }
-
-            if (this.statsFile.hasUnsentAchievement())
-            {
-                this.statsFile.sendStats(this);
             }
         }
     }
@@ -1057,22 +1161,45 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             {
                 this.getWorldScoreboard().getOrCreateScore(this.getName(), scoreobjective).setScorePoints(0);
             }
-
-            if (this.statsFile.hasUnsentAchievement())
-            {
-                this.statsFile.sendStats(this);
-            }
         }
+    }
+
+    public void unlockRecipes(List<IRecipe> p_192021_1_)
+    {
+        this.recipeBook.add(p_192021_1_, this);
+    }
+
+    public void unlockRecipes(ResourceLocation[] p_193102_1_)
+    {
+        List<IRecipe> list = Lists.<IRecipe>newArrayList();
+
+        for (ResourceLocation resourcelocation : p_193102_1_)
+        {
+            list.add(CraftingManager.getRecipe(resourcelocation));
+        }
+
+        this.unlockRecipes(list);
+    }
+
+    public void resetRecipes(List<IRecipe> p_192022_1_)
+    {
+        this.recipeBook.remove(p_192022_1_, this);
     }
 
     public void mountEntityAndWakeUp()
     {
+        this.disconnected = true;
         this.removePassengers();
 
         if (this.sleeping)
         {
             this.wakeUpPlayer(true, false, false);
         }
+    }
+
+    public boolean hasDisconnected()
+    {
+        return this.disconnected;
     }
 
     /**
@@ -1084,9 +1211,9 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
         this.lastHealth = -1.0E8F;
     }
 
-    public void addChatComponentMessage(ITextComponent chatComponent)
+    public void sendStatusMessage(ITextComponent chatComponent, boolean actionBar)
     {
-        this.connection.sendPacket(new SPacketChat(chatComponent));
+        this.connection.sendPacket(new SPacketChat(chatComponent, actionBar ? ChatType.GAME_INFO : ChatType.CHAT));
     }
 
     /**
@@ -1094,42 +1221,95 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     protected void onItemUseFinish()
     {
-        if (this.activeItemStack != null && this.isHandActive())
+        if (!this.activeItemStack.isEmpty() && this.isHandActive())
         {
             this.connection.sendPacket(new SPacketEntityStatus(this, (byte)9));
             super.onItemUseFinish();
         }
     }
 
-    /**
-     * Copies the values from the given player into this player if boolean par2 is true. Always clones Ender Chest
-     * Inventory.
-     */
-    public void clonePlayer(EntityPlayer oldPlayer, boolean respawnFromEnd)
+    public void copyFrom(EntityPlayerMP that, boolean keepEverything)
     {
-        super.clonePlayer(oldPlayer, respawnFromEnd);
+        if (keepEverything)
+        {
+            this.inventory.copyInventory(that.inventory);
+            this.setHealth(that.getHealth());
+            this.foodStats = that.foodStats;
+            this.experienceLevel = that.experienceLevel;
+            this.experienceTotal = that.experienceTotal;
+            this.experience = that.experience;
+            this.setScore(that.getScore());
+            this.lastPortalPos = that.lastPortalPos;
+            this.lastPortalVec = that.lastPortalVec;
+            this.teleportDirection = that.teleportDirection;
+        }
+        else if (this.world.getGameRules().getBoolean("keepInventory") || that.isSpectator())
+        {
+            this.inventory.copyInventory(that.inventory);
+            this.experienceLevel = that.experienceLevel;
+            this.experienceTotal = that.experienceTotal;
+            this.experience = that.experience;
+            this.setScore(that.getScore());
+        }
+
+        this.xpSeed = that.xpSeed;
+        this.enderChest = that.enderChest;
+        this.getDataManager().set(PLAYER_MODEL_FLAG, that.getDataManager().get(PLAYER_MODEL_FLAG));
         this.lastExperience = -1;
         this.lastHealth = -1.0F;
         this.lastFoodLevel = -1;
-        this.entityRemoveQueue.addAll(((EntityPlayerMP)oldPlayer).entityRemoveQueue);
+        this.recipeBook.copyFrom(that.recipeBook);
+        this.entityRemoveQueue.addAll(that.entityRemoveQueue);
+        this.seenCredits = that.seenCredits;
+        this.enteredNetherPosition = that.enteredNetherPosition;
+        this.setLeftShoulderEntity(that.getLeftShoulderEntity());
+        this.setRightShoulderEntity(that.getRightShoulderEntity());
+
+        this.spawnChunkMap = that.spawnChunkMap;
+        this.spawnForcedMap = that.spawnForcedMap;
+
+        //Copy over a section of the Entity Data from the old player.
+        //Allows mods to specify data that persists after players respawn.
+        NBTTagCompound old = that.getEntityData();
+        if (old.hasKey(PERSISTED_NBT_TAG))
+        {
+            getEntityData().setTag(PERSISTED_NBT_TAG, old.getCompoundTag(PERSISTED_NBT_TAG));
+        }
+        net.minecraftforge.event.ForgeEventFactory.onPlayerClone(this, that, !keepEverything);
     }
 
     protected void onNewPotionEffect(PotionEffect id)
     {
         super.onNewPotionEffect(id);
         this.connection.sendPacket(new SPacketEntityEffect(this.getEntityId(), id));
+
+        if (id.getPotion() == MobEffects.LEVITATION)
+        {
+            this.levitatingSince = this.ticksExisted;
+            this.levitationStartPos = new Vec3d(this.posX, this.posY, this.posZ);
+        }
+
+        CriteriaTriggers.EFFECTS_CHANGED.trigger(this);
     }
 
     protected void onChangedPotionEffect(PotionEffect id, boolean p_70695_2_)
     {
         super.onChangedPotionEffect(id, p_70695_2_);
         this.connection.sendPacket(new SPacketEntityEffect(this.getEntityId(), id));
+        CriteriaTriggers.EFFECTS_CHANGED.trigger(this);
     }
 
     protected void onFinishedPotionEffect(PotionEffect effect)
     {
         super.onFinishedPotionEffect(effect);
         this.connection.sendPacket(new SPacketRemoveEntityEffect(this.getEntityId(), effect.getPotion()));
+
+        if (effect.getPotion() == MobEffects.LEVITATION)
+        {
+            this.levitationStartPos = null;
+        }
+
+        CriteriaTriggers.EFFECTS_CHANGED.trigger(this);
     }
 
     /**
@@ -1167,19 +1347,20 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
 
     public WorldServer getServerWorld()
     {
-        return (WorldServer)this.worldObj;
+        return (WorldServer)this.world;
     }
 
     /**
      * Sets the player's game mode and sends it to them.
      */
-    public void setGameType(WorldSettings.GameType gameType)
+    public void setGameType(GameType gameType)
     {
         this.interactionManager.setGameType(gameType);
         this.connection.sendPacket(new SPacketChangeGameState(3, (float)gameType.getID()));
 
-        if (gameType == WorldSettings.GameType.SPECTATOR)
+        if (gameType == GameType.SPECTATOR)
         {
+            this.spawnShoulderEntities();
             this.dismountRidingEntity();
         }
         else
@@ -1196,18 +1377,18 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public boolean isSpectator()
     {
-        return this.interactionManager.getGameType() == WorldSettings.GameType.SPECTATOR;
+        return this.interactionManager.getGameType() == GameType.SPECTATOR;
     }
 
     public boolean isCreative()
     {
-        return this.interactionManager.getGameType() == WorldSettings.GameType.CREATIVE;
+        return this.interactionManager.getGameType() == GameType.CREATIVE;
     }
 
     /**
      * Send a chat message to the CommandSender
      */
-    public void addChatMessage(ITextComponent component)
+    public void sendMessage(ITextComponent component)
     {
         this.connection.sendPacket(new SPacketChat(component));
     }
@@ -1215,7 +1396,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     /**
      * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
      */
-    public boolean canCommandSenderUseCommand(int permLevel, String commandName)
+    public boolean canUseCommand(int permLevel, String commandName)
     {
         if ("seed".equals(commandName) && !this.mcServer.isDedicatedServer())
         {
@@ -1226,7 +1407,15 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
             if (this.mcServer.getPlayerList().canSendCommands(this.getGameProfile()))
             {
                 UserListOpsEntry userlistopsentry = (UserListOpsEntry)this.mcServer.getPlayerList().getOppedPlayers().getEntry(this.getGameProfile());
-                return userlistopsentry != null ? userlistopsentry.getPermissionLevel() >= permLevel : this.mcServer.getOpPermissionLevel() >= permLevel;
+
+                if (userlistopsentry != null)
+                {
+                    return userlistopsentry.getPermissionLevel() >= permLevel;
+                }
+                else
+                {
+                    return this.mcServer.getOpPermissionLevel() >= permLevel;
+                }
             }
             else
             {
@@ -1289,6 +1478,11 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     public StatisticsManagerServer getStatFile()
     {
         return this.statsFile;
+    }
+
+    public RecipeBookServer getRecipeBook()
+    {
+        return this.recipeBook;
     }
 
     /**
@@ -1364,7 +1558,7 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
      */
     public void attackTargetEntityWithCurrentItem(Entity targetEntity)
     {
-        if (this.interactionManager.getGameType() == WorldSettings.GameType.SPECTATOR)
+        if (this.interactionManager.getGameType() == GameType.SPECTATOR)
         {
             this.setSpectatingEntity(targetEntity);
         }
@@ -1414,5 +1608,16 @@ public class EntityPlayerMP extends EntityPlayer implements IContainerListener
     {
         this.setFlag(7, true);
         this.setFlag(7, false);
+    }
+
+    public PlayerAdvancements getAdvancements()
+    {
+        return this.advancements;
+    }
+
+    @Nullable
+    public Vec3d getEnteredNetherPosition()
+    {
+        return this.enteredNetherPosition;
     }
 }

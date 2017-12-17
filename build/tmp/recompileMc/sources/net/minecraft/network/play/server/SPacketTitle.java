@@ -1,6 +1,7 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import java.util.Locale;
 import javax.annotation.Nullable;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
@@ -47,7 +48,7 @@ public class SPacketTitle implements Packet<INetHandlerPlayClient>
     {
         this.type = (SPacketTitle.Type)buf.readEnumValue(SPacketTitle.Type.class);
 
-        if (this.type == SPacketTitle.Type.TITLE || this.type == SPacketTitle.Type.SUBTITLE)
+        if (this.type == SPacketTitle.Type.TITLE || this.type == SPacketTitle.Type.SUBTITLE || this.type == SPacketTitle.Type.ACTIONBAR)
         {
             this.message = buf.readTextComponent();
         }
@@ -67,7 +68,7 @@ public class SPacketTitle implements Packet<INetHandlerPlayClient>
     {
         buf.writeEnumValue(this.type);
 
-        if (this.type == SPacketTitle.Type.TITLE || this.type == SPacketTitle.Type.SUBTITLE)
+        if (this.type == SPacketTitle.Type.TITLE || this.type == SPacketTitle.Type.SUBTITLE || this.type == SPacketTitle.Type.ACTIONBAR)
         {
             buf.writeTextComponent(this.message);
         }
@@ -122,6 +123,7 @@ public class SPacketTitle implements Packet<INetHandlerPlayClient>
     {
         TITLE,
         SUBTITLE,
+        ACTIONBAR,
         TIMES,
         CLEAR,
         RESET;
@@ -146,7 +148,7 @@ public class SPacketTitle implements Packet<INetHandlerPlayClient>
 
             for (SPacketTitle.Type spackettitle$type : values())
             {
-                astring[i++] = spackettitle$type.name().toLowerCase();
+                astring[i++] = spackettitle$type.name().toLowerCase(Locale.ROOT);
             }
 
             return astring;

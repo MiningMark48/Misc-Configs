@@ -4,46 +4,66 @@ import com.mojang.authlib.GameProfile;
 import java.util.UUID;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
+import net.minecraft.block.BlockShulkerBox;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelShield;
 import net.minecraft.client.renderer.BannerTextures;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.EnumDyeColor;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
 import net.minecraft.tileentity.TileEntityBanner;
+import net.minecraft.tileentity.TileEntityBed;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityEnderChest;
+import net.minecraft.tileentity.TileEntityShulkerBox;
 import net.minecraft.tileentity.TileEntitySkull;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.commons.lang3.StringUtils;
 
 @SideOnly(Side.CLIENT)
 public class TileEntityItemStackRenderer
 {
-    public static TileEntityItemStackRenderer instance = new TileEntityItemStackRenderer();
-    private TileEntityChest chestBasic = new TileEntityChest(BlockChest.Type.BASIC);
-    private TileEntityChest chestTrap = new TileEntityChest(BlockChest.Type.TRAP);
-    private TileEntityEnderChest enderChest = new TileEntityEnderChest();
-    private TileEntityBanner banner = new TileEntityBanner();
-    private TileEntitySkull skull = new TileEntitySkull();
-    private ModelShield modelShield = new ModelShield();
+    private static final TileEntityShulkerBox[] SHULKER_BOXES = new TileEntityShulkerBox[16];
+    public static TileEntityItemStackRenderer instance;
+    private final TileEntityChest chestBasic = new TileEntityChest(BlockChest.Type.BASIC);
+    private final TileEntityChest chestTrap = new TileEntityChest(BlockChest.Type.TRAP);
+    private final TileEntityEnderChest enderChest = new TileEntityEnderChest();
+    private final TileEntityBanner banner = new TileEntityBanner();
+    private final TileEntityBed bed = new TileEntityBed();
+    private final TileEntitySkull skull = new TileEntitySkull();
+    private final ModelShield modelShield = new ModelShield();
 
     public void renderByItem(ItemStack itemStackIn)
     {
-        if (itemStackIn.getItem() == Items.BANNER)
+        this.renderByItem(itemStackIn, 1.0F);
+    }
+
+    public void renderByItem(ItemStack p_192838_1_, float partialTicks)
+    {
+        Item item = p_192838_1_.getItem();
+
+        if (item == Items.BANNER)
         {
-            this.banner.setItemValues(itemStackIn);
-            TileEntityRendererDispatcher.instance.renderTileEntityAt(this.banner, 0.0D, 0.0D, 0.0D, 0.0F);
+            this.banner.setItemValues(p_192838_1_, false);
+            TileEntityRendererDispatcher.instance.render(this.banner, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks);
         }
-        else if (itemStackIn.getItem() == Items.SHIELD)
+        else if (item == Items.BED)
         {
-            if (itemStackIn.getSubCompound("BlockEntityTag", false) != null)
+            this.bed.setItemValues(p_192838_1_);
+            TileEntityRendererDispatcher.instance.render(this.bed, 0.0D, 0.0D, 0.0D, 0.0F);
+        }
+        else if (item == Items.SHIELD)
+        {
+            if (p_192838_1_.getSubCompound("BlockEntityTag") != null)
             {
-                this.banner.setItemValues(itemStackIn);
+                this.banner.setItemValues(p_192838_1_, true);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(BannerTextures.SHIELD_DESIGNS.getResourceLocation(this.banner.getPatternResourceLocation(), this.banner.getPatternList(), this.banner.getColorList()));
             }
             else
@@ -56,22 +76,22 @@ public class TileEntityItemStackRenderer
             this.modelShield.render();
             GlStateManager.popMatrix();
         }
-        else if (itemStackIn.getItem() == Items.SKULL)
+        else if (item == Items.SKULL)
         {
             GameProfile gameprofile = null;
 
-            if (itemStackIn.hasTagCompound())
+            if (p_192838_1_.hasTagCompound())
             {
-                NBTTagCompound nbttagcompound = itemStackIn.getTagCompound();
+                NBTTagCompound nbttagcompound = p_192838_1_.getTagCompound();
 
                 if (nbttagcompound.hasKey("SkullOwner", 10))
                 {
                     gameprofile = NBTUtil.readGameProfileFromNBT(nbttagcompound.getCompoundTag("SkullOwner"));
                 }
-                else if (nbttagcompound.hasKey("SkullOwner", 8) && !nbttagcompound.getString("SkullOwner").isEmpty())
+                else if (nbttagcompound.hasKey("SkullOwner", 8) && !StringUtils.isBlank(nbttagcompound.getString("SkullOwner")))
                 {
-                    GameProfile lvt_2_2_ = new GameProfile((UUID)null, nbttagcompound.getString("SkullOwner"));
-                    gameprofile = TileEntitySkull.updateGameprofile(lvt_2_2_);
+                    GameProfile gameprofile1 = new GameProfile((UUID)null, nbttagcompound.getString("SkullOwner"));
+                    gameprofile = TileEntitySkull.updateGameprofile(gameprofile1);
                     nbttagcompound.removeTag("SkullOwner");
                     nbttagcompound.setTag("SkullOwner", NBTUtil.writeGameProfile(new NBTTagCompound(), gameprofile));
                 }
@@ -81,28 +101,37 @@ public class TileEntityItemStackRenderer
             {
                 GlStateManager.pushMatrix();
                 GlStateManager.disableCull();
-                TileEntitySkullRenderer.instance.renderSkull(0.0F, 0.0F, 0.0F, EnumFacing.UP, 0.0F, itemStackIn.getMetadata(), gameprofile, -1, 0.0F);
+                TileEntitySkullRenderer.instance.renderSkull(0.0F, 0.0F, 0.0F, EnumFacing.UP, 180.0F, p_192838_1_.getMetadata(), gameprofile, -1, 0.0F);
                 GlStateManager.enableCull();
                 GlStateManager.popMatrix();
             }
         }
+        else if (item == Item.getItemFromBlock(Blocks.ENDER_CHEST))
+        {
+            TileEntityRendererDispatcher.instance.render(this.enderChest, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks);
+        }
+        else if (item == Item.getItemFromBlock(Blocks.TRAPPED_CHEST))
+        {
+            TileEntityRendererDispatcher.instance.render(this.chestTrap, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks);
+        }
+        else if (Block.getBlockFromItem(item) instanceof BlockShulkerBox)
+        {
+            TileEntityRendererDispatcher.instance.render(SHULKER_BOXES[BlockShulkerBox.getColorFromItem(item).getMetadata()], 0.0D, 0.0D, 0.0D, 0.0F, partialTicks);
+        }
+        else if (Block.getBlockFromItem(item) != Blocks.CHEST) net.minecraftforge.client.ForgeHooksClient.renderTileItem(p_192838_1_.getItem(), p_192838_1_.getMetadata());
         else
         {
-            Block block = Block.getBlockFromItem(itemStackIn.getItem());
-
-            if (block == Blocks.ENDER_CHEST)
-            {
-                TileEntityRendererDispatcher.instance.renderTileEntityAt(this.enderChest, 0.0D, 0.0D, 0.0D, 0.0F);
-            }
-            else if (block == Blocks.TRAPPED_CHEST)
-            {
-                TileEntityRendererDispatcher.instance.renderTileEntityAt(this.chestTrap, 0.0D, 0.0D, 0.0D, 0.0F);
-            }
-            else if (block != Blocks.CHEST) net.minecraftforge.client.ForgeHooksClient.renderTileItem(itemStackIn.getItem(), itemStackIn.getMetadata());
-            else
-            {
-                TileEntityRendererDispatcher.instance.renderTileEntityAt(this.chestBasic, 0.0D, 0.0D, 0.0D, 0.0F);
-            }
+            TileEntityRendererDispatcher.instance.render(this.chestBasic, 0.0D, 0.0D, 0.0D, 0.0F, partialTicks);
         }
+    }
+
+    static
+    {
+        for (EnumDyeColor enumdyecolor : EnumDyeColor.values())
+        {
+            SHULKER_BOXES[enumdyecolor.getMetadata()] = new TileEntityShulkerBox(enumdyecolor);
+        }
+
+        instance = new TileEntityItemStackRenderer();
     }
 }

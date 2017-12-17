@@ -1,7 +1,24 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.event.entity.living;
 
-import net.minecraft.world.WorldEntitySpawner;
-import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
@@ -55,10 +72,34 @@ public class LivingSpawnEvent extends LivingEvent
     @HasResult
     public static class CheckSpawn extends LivingSpawnEvent
     {
-        public CheckSpawn(EntityLiving entity, World world, float x, float y, float z)
+        private final boolean isSpawner;
+
+        /**
+         * CheckSpawn is fired when an Entity is about to be spawned.
+         * @param entity the spawning entity
+         * @param world the world to spawn in
+         * @param x x coordinate
+         * @param y y coordinate
+         * @param z z coordinate
+         * @param isSpawner true if this spawn is done by a MobSpawner,
+         *                  false if it this spawn is coming from a WorldSpawner
+         */
+        public CheckSpawn(EntityLiving entity, World world, float x, float y, float z, boolean isSpawner)
         {
             super(entity, world, x, y, z);
+            this.isSpawner = isSpawner;
         }
+
+        /**
+         * @deprecated Use {@link CheckSpawn#CheckSpawn(EntityLiving, World, float, float, float, boolean)} instead
+         */
+        @Deprecated
+        public CheckSpawn(EntityLiving entity, World world, float x, float y, float z)
+        {
+            this(entity, world, x, y, z, true);
+        }
+
+        public boolean isSpawner() { return isSpawner; }
     }
 
     /**
@@ -101,7 +142,7 @@ public class LivingSpawnEvent extends LivingEvent
     {
         public AllowDespawn(EntityLiving entity)
         {
-            super(entity, entity.worldObj, (float)entity.posX, (float)entity.posY, (float)entity.posZ);
+            super(entity, entity.world, (float)entity.posX, (float)entity.posY, (float)entity.posZ);
         }
 
     }

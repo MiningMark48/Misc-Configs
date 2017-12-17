@@ -1,8 +1,8 @@
 package net.minecraft.entity.boss.dragon.phase;
 
 import javax.annotation.Nullable;
+import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.boss.EntityDragon;
-import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
@@ -76,14 +76,14 @@ public abstract class PhaseBase implements IPhase
      * Normally, just returns damage. If dragon is sitting and src is an arrow, arrow is enflamed and zero damage
      * returned.
      */
-    public float getAdjustedDamage(EntityDragonPart pt, DamageSource src, float damage)
+    public float getAdjustedDamage(MultiPartEntityPart pt, DamageSource src, float damage)
     {
         return damage;
     }
 
     public float getYawFactor()
     {
-        float f = MathHelper.sqrt_double(this.dragon.motionX * this.dragon.motionX + this.dragon.motionZ * this.dragon.motionZ) + 1.0F;
+        float f = MathHelper.sqrt(this.dragon.motionX * this.dragon.motionX + this.dragon.motionZ * this.dragon.motionZ) + 1.0F;
         float f1 = Math.min(f, 40.0F);
         return 0.7F / f1 / f;
     }

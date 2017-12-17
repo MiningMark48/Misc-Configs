@@ -12,31 +12,30 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelRabbit extends ModelBase
 {
     /** The Rabbit's Left Foot */
-    ModelRenderer rabbitLeftFoot;
+    private final ModelRenderer rabbitLeftFoot;
     /** The Rabbit's Right Foot */
-    ModelRenderer rabbitRightFoot;
+    private final ModelRenderer rabbitRightFoot;
     /** The Rabbit's Left Thigh */
-    ModelRenderer rabbitLeftThigh;
+    private final ModelRenderer rabbitLeftThigh;
     /** The Rabbit's Right Thigh */
-    ModelRenderer rabbitRightThigh;
+    private final ModelRenderer rabbitRightThigh;
     /** The Rabbit's Body */
-    ModelRenderer rabbitBody;
+    private final ModelRenderer rabbitBody;
     /** The Rabbit's Left Arm */
-    ModelRenderer rabbitLeftArm;
+    private final ModelRenderer rabbitLeftArm;
     /** The Rabbit's Right Arm */
-    ModelRenderer rabbitRightArm;
+    private final ModelRenderer rabbitRightArm;
     /** The Rabbit's Head */
-    ModelRenderer rabbitHead;
+    private final ModelRenderer rabbitHead;
     /** The Rabbit's Right Ear */
-    ModelRenderer rabbitRightEar;
+    private final ModelRenderer rabbitRightEar;
     /** The Rabbit's Left Ear */
-    ModelRenderer rabbitLeftEar;
+    private final ModelRenderer rabbitLeftEar;
     /** The Rabbit's Tail */
-    ModelRenderer rabbitTail;
+    private final ModelRenderer rabbitTail;
     /** The Rabbit's Nose */
-    ModelRenderer rabbitNose;
-    private float jumpRotation = 0.0F;
-    private float jump = 0.0F;
+    private final ModelRenderer rabbitNose;
+    private float jumpRotation;
 
     public ModelRabbit()
     {
@@ -124,7 +123,7 @@ public class ModelRabbit extends ModelBase
         {
             float f = 1.5F;
             GlStateManager.pushMatrix();
-            GlStateManager.scale(0.85F / f, 0.85F / f, 0.85F / f);
+            GlStateManager.scale(0.56666666F, 0.56666666F, 0.56666666F);
             GlStateManager.translate(0.0F, 22.0F * scale, 2.0F * scale);
             this.rabbitHead.render(scale);
             this.rabbitLeftEar.render(scale);
@@ -132,7 +131,7 @@ public class ModelRabbit extends ModelBase
             this.rabbitNose.render(scale);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.scale(0.6F / f, 0.6F / f, 0.6F / f);
+            GlStateManager.scale(0.4F, 0.4F, 0.4F);
             GlStateManager.translate(0.0F, 36.0F * scale, 0.0F);
             this.rabbitLeftFoot.render(scale);
             this.rabbitRightFoot.render(scale);
@@ -174,23 +173,30 @@ public class ModelRabbit extends ModelBase
     {
         float f = ageInTicks - (float)entityIn.ticksExisted;
         EntityRabbit entityrabbit = (EntityRabbit)entityIn;
-        this.rabbitNose.rotateAngleX = this.rabbitHead.rotateAngleX = this.rabbitRightEar.rotateAngleX = this.rabbitLeftEar.rotateAngleX = headPitch * 0.017453292F;
-        this.rabbitNose.rotateAngleY = this.rabbitHead.rotateAngleY = netHeadYaw * 0.017453292F;
+        this.rabbitNose.rotateAngleX = headPitch * 0.017453292F;
+        this.rabbitHead.rotateAngleX = headPitch * 0.017453292F;
+        this.rabbitRightEar.rotateAngleX = headPitch * 0.017453292F;
+        this.rabbitLeftEar.rotateAngleX = headPitch * 0.017453292F;
+        this.rabbitNose.rotateAngleY = netHeadYaw * 0.017453292F;
+        this.rabbitHead.rotateAngleY = netHeadYaw * 0.017453292F;
         this.rabbitRightEar.rotateAngleY = this.rabbitNose.rotateAngleY - 0.2617994F;
         this.rabbitLeftEar.rotateAngleY = this.rabbitNose.rotateAngleY + 0.2617994F;
         this.jumpRotation = MathHelper.sin(entityrabbit.setJumpCompletion(f) * (float)Math.PI);
-        this.rabbitLeftThigh.rotateAngleX = this.rabbitRightThigh.rotateAngleX = (this.jumpRotation * 50.0F - 21.0F) * 0.017453292F;
-        this.rabbitLeftFoot.rotateAngleX = this.rabbitRightFoot.rotateAngleX = this.jumpRotation * 50.0F * 0.017453292F;
-        this.rabbitLeftArm.rotateAngleX = this.rabbitRightArm.rotateAngleX = (this.jumpRotation * -40.0F - 11.0F) * 0.017453292F;
+        this.rabbitLeftThigh.rotateAngleX = (this.jumpRotation * 50.0F - 21.0F) * 0.017453292F;
+        this.rabbitRightThigh.rotateAngleX = (this.jumpRotation * 50.0F - 21.0F) * 0.017453292F;
+        this.rabbitLeftFoot.rotateAngleX = this.jumpRotation * 50.0F * 0.017453292F;
+        this.rabbitRightFoot.rotateAngleX = this.jumpRotation * 50.0F * 0.017453292F;
+        this.rabbitLeftArm.rotateAngleX = (this.jumpRotation * -40.0F - 11.0F) * 0.017453292F;
+        this.rabbitRightArm.rotateAngleX = (this.jumpRotation * -40.0F - 11.0F) * 0.017453292F;
     }
 
     /**
      * Used for easily adding entity-dependent animations. The second and third float params here are the same second
      * and third as in the setRotationAngles method.
      */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
+    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
     {
-        super.setLivingAnimations(entitylivingbaseIn, p_78086_2_, p_78086_3_, partialTickTime);
+        super.setLivingAnimations(entitylivingbaseIn, limbSwing, limbSwingAmount, partialTickTime);
         this.jumpRotation = MathHelper.sin(((EntityRabbit)entitylivingbaseIn).setJumpCompletion(partialTickTime) * (float)Math.PI);
     }
 }

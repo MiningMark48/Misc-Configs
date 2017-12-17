@@ -34,7 +34,7 @@ public class CPacketCustomPayload implements Packet<INetHandlerPlayServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.channel = buf.readStringFromBuffer(20);
+        this.channel = buf.readString(20);
         int i = buf.readableBytes();
 
         if (i >= 0 && i <= 32767)
@@ -66,6 +66,11 @@ public class CPacketCustomPayload implements Packet<INetHandlerPlayServer>
     public void processPacket(INetHandlerPlayServer handler)
     {
         handler.processCustomPayload(this);
+
+        if (this.data != null)
+        {
+            this.data.release();
+        }
     }
 
     public String getChannelName()

@@ -1,11 +1,14 @@
 package net.minecraft.entity.monster;
 
 import javax.annotation.Nullable;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTableList;
@@ -20,6 +23,11 @@ public class EntityMagmaCube extends EntitySlime
         this.isImmuneToFire = true;
     }
 
+    public static void registerFixesMagmaCube(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntityMagmaCube.class);
+    }
+
     protected void applyEntityAttributes()
     {
         super.applyEntityAttributes();
@@ -31,7 +39,7 @@ public class EntityMagmaCube extends EntitySlime
      */
     public boolean getCanSpawnHere()
     {
-        return this.worldObj.getDifficulty() != EnumDifficulty.PEACEFUL;
+        return this.world.getDifficulty() != EnumDifficulty.PEACEFUL;
     }
 
     /**
@@ -39,17 +47,17 @@ public class EntityMagmaCube extends EntitySlime
      */
     public boolean isNotColliding()
     {
-        return this.worldObj.checkNoEntityCollision(this.getEntityBoundingBox(), this) && this.worldObj.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && !this.worldObj.containsAnyLiquid(this.getEntityBoundingBox());
+        return this.world.checkNoEntityCollision(this.getEntityBoundingBox(), this) && this.world.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(this.getEntityBoundingBox());
     }
 
-    protected void setSlimeSize(int size)
+    protected void setSlimeSize(int size, boolean resetHealth)
     {
-        super.setSlimeSize(size);
+        super.setSlimeSize(size, resetHealth);
         this.getEntityAttribute(SharedMonsterAttributes.ARMOR).setBaseValue((double)(size * 3));
     }
 
     @SideOnly(Side.CLIENT)
-    public int getBrightnessForRender(float partialTicks)
+    public int getBrightnessForRender()
     {
         return 15728880;
     }
@@ -57,7 +65,7 @@ public class EntityMagmaCube extends EntitySlime
     /**
      * Gets how bright this entity is.
      */
-    public float getBrightness(float partialTicks)
+    public float getBrightness()
     {
         return 1.0F;
     }
@@ -69,13 +77,13 @@ public class EntityMagmaCube extends EntitySlime
 
     protected EntitySlime createInstance()
     {
-        return new EntityMagmaCube(this.worldObj);
+        return new EntityMagmaCube(this.world);
     }
 
     @Nullable
     protected ResourceLocation getLootTable()
     {
-        return !this.isSmallSlime() ? LootTableList.ENTITIES_MAGMA_CUBE : LootTableList.EMPTY;
+        return this.isSmallSlime() ? LootTableList.EMPTY : LootTableList.ENTITIES_MAGMA_CUBE;
     }
 
     /**
@@ -135,7 +143,7 @@ public class EntityMagmaCube extends EntitySlime
         return super.getAttackStrength() + 2;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return this.isSmallSlime() ? SoundEvents.ENTITY_SMALL_MAGMACUBE_HURT : SoundEvents.ENTITY_MAGMACUBE_HURT;
     }

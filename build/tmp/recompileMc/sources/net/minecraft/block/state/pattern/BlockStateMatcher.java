@@ -36,15 +36,22 @@ public class BlockStateMatcher implements Predicate<IBlockState>
     {
         if (p_apply_1_ != null && p_apply_1_.getBlock().equals(this.blockstate.getBlock()))
         {
-            for (Entry < IProperty<?>, Predicate<? >> entry : this.propertyPredicates.entrySet())
+            if (this.propertyPredicates.isEmpty())
             {
-                if (!this.matches(p_apply_1_, (IProperty)entry.getKey(), (Predicate)entry.getValue()))
-                {
-                    return false;
-                }
+                return true;
             }
+            else
+            {
+                for (Entry < IProperty<?>, Predicate<? >> entry : this.propertyPredicates.entrySet())
+                {
+                    if (!this.matches(p_apply_1_, (IProperty)entry.getKey(), (Predicate)entry.getValue()))
+                    {
+                        return false;
+                    }
+                }
 
-            return true;
+                return true;
+            }
         }
         else
         {

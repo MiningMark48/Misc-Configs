@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RenderLeashKnot extends Render<EntityLeashKnot>
 {
     private static final ResourceLocation LEASH_KNOT_TEXTURES = new ResourceLocation("textures/entity/lead_knot.png");
-    private ModelLeashKnot leashKnotModel = new ModelLeashKnot();
+    private final ModelLeashKnot leashKnotModel = new ModelLeashKnot();
 
     public RenderLeashKnot(RenderManager renderManagerIn)
     {
@@ -38,7 +38,7 @@ public class RenderLeashKnot extends Render<EntityLeashKnot>
             GlStateManager.enableOutlineMode(this.getTeamColor(entity));
         }
 
-        this.leashKnotModel.render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, f);
+        this.leashKnotModel.render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F);
 
         if (this.renderOutlines)
         {

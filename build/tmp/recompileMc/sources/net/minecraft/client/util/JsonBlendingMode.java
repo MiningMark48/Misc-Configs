@@ -1,6 +1,7 @@
 package net.minecraft.client.util;
 
 import com.google.gson.JsonObject;
+import java.util.Locale;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.JsonUtils;
 import net.minecraftforge.fml.relauncher.Side;
@@ -9,7 +10,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class JsonBlendingMode
 {
-    private static JsonBlendingMode lastApplied = null;
+    private static JsonBlendingMode lastApplied;
     private final int srcColorFactor;
     private final int srcAlphaFactor;
     private final int destColorFactor;
@@ -18,15 +19,15 @@ public class JsonBlendingMode
     private final boolean separateBlend;
     private final boolean opaque;
 
-    private JsonBlendingMode(boolean p_i45084_1_, boolean p_i45084_2_, int p_i45084_3_, int p_i45084_4_, int p_i45084_5_, int p_i45084_6_, int p_i45084_7_)
+    private JsonBlendingMode(boolean separateBlendIn, boolean opaqueIn, int srcColorFactorIn, int destColorFactorIn, int srcAlphaFactorIn, int destAlphaFactorIn, int blendFunctionIn)
     {
-        this.separateBlend = p_i45084_1_;
-        this.srcColorFactor = p_i45084_3_;
-        this.destColorFactor = p_i45084_4_;
-        this.srcAlphaFactor = p_i45084_5_;
-        this.destAlphaFactor = p_i45084_6_;
-        this.opaque = p_i45084_2_;
-        this.blendFunction = p_i45084_7_;
+        this.separateBlend = separateBlendIn;
+        this.srcColorFactor = srcColorFactorIn;
+        this.destColorFactor = destColorFactorIn;
+        this.srcAlphaFactor = srcAlphaFactorIn;
+        this.destAlphaFactor = destAlphaFactorIn;
+        this.opaque = opaqueIn;
+        this.blendFunction = blendFunctionIn;
     }
 
     public JsonBlendingMode()
@@ -34,14 +35,14 @@ public class JsonBlendingMode
         this(false, true, 1, 0, 1, 0, 32774);
     }
 
-    public JsonBlendingMode(int p_i45085_1_, int p_i45085_2_, int p_i45085_3_)
+    public JsonBlendingMode(int srcFactor, int dstFactor, int blendFunctionIn)
     {
-        this(false, false, p_i45085_1_, p_i45085_2_, p_i45085_1_, p_i45085_2_, p_i45085_3_);
+        this(false, false, srcFactor, dstFactor, srcFactor, dstFactor, blendFunctionIn);
     }
 
-    public JsonBlendingMode(int p_i45086_1_, int p_i45086_2_, int p_i45086_3_, int p_i45086_4_, int p_i45086_5_)
+    public JsonBlendingMode(int srcColorFactorIn, int destColorFactorIn, int srcAlphaFactorIn, int destAlphaFactorIn, int blendFunctionIn)
     {
-        this(true, false, p_i45086_1_, p_i45086_2_, p_i45086_3_, p_i45086_4_, p_i45086_5_);
+        this(true, false, srcColorFactorIn, destColorFactorIn, srcAlphaFactorIn, destAlphaFactorIn, blendFunctionIn);
     }
 
     public void apply()
@@ -87,7 +88,35 @@ public class JsonBlendingMode
         else
         {
             JsonBlendingMode jsonblendingmode = (JsonBlendingMode)p_equals_1_;
-            return this.blendFunction != jsonblendingmode.blendFunction ? false : (this.destAlphaFactor != jsonblendingmode.destAlphaFactor ? false : (this.destColorFactor != jsonblendingmode.destColorFactor ? false : (this.opaque != jsonblendingmode.opaque ? false : (this.separateBlend != jsonblendingmode.separateBlend ? false : (this.srcAlphaFactor != jsonblendingmode.srcAlphaFactor ? false : this.srcColorFactor == jsonblendingmode.srcColorFactor)))));
+
+            if (this.blendFunction != jsonblendingmode.blendFunction)
+            {
+                return false;
+            }
+            else if (this.destAlphaFactor != jsonblendingmode.destAlphaFactor)
+            {
+                return false;
+            }
+            else if (this.destColorFactor != jsonblendingmode.destColorFactor)
+            {
+                return false;
+            }
+            else if (this.opaque != jsonblendingmode.opaque)
+            {
+                return false;
+            }
+            else if (this.separateBlend != jsonblendingmode.separateBlend)
+            {
+                return false;
+            }
+            else if (this.srcAlphaFactor != jsonblendingmode.srcAlphaFactor)
+            {
+                return false;
+            }
+            else
+            {
+                return this.srcColorFactor == jsonblendingmode.srcColorFactor;
+            }
         }
     }
 
@@ -178,23 +207,97 @@ public class JsonBlendingMode
                 flag1 = true;
             }
 
-            return flag ? new JsonBlendingMode() : (flag1 ? new JsonBlendingMode(j, k, l, i1, i) : new JsonBlendingMode(j, k, i));
+            if (flag)
+            {
+                return new JsonBlendingMode();
+            }
+            else
+            {
+                return flag1 ? new JsonBlendingMode(j, k, l, i1, i) : new JsonBlendingMode(j, k, i);
+            }
         }
     }
 
-    private static int stringToBlendFunction(String p_148108_0_)
+    /**
+     * Converts a blend function name to an id, returning add (32774) if not recognized.
+     */
+    private static int stringToBlendFunction(String funcName)
     {
-        String s = p_148108_0_.trim().toLowerCase();
-        return s.equals("add") ? 32774 : (s.equals("subtract") ? 32778 : (s.equals("reversesubtract") ? 32779 : (s.equals("reverse_subtract") ? 32779 : (s.equals("min") ? 32775 : (s.equals("max") ? 32776 : 32774)))));
+        String s = funcName.trim().toLowerCase(Locale.ROOT);
+
+        if ("add".equals(s))
+        {
+            return 32774;
+        }
+        else if ("subtract".equals(s))
+        {
+            return 32778;
+        }
+        else if ("reversesubtract".equals(s))
+        {
+            return 32779;
+        }
+        else if ("reverse_subtract".equals(s))
+        {
+            return 32779;
+        }
+        else if ("min".equals(s))
+        {
+            return 32775;
+        }
+        else
+        {
+            return "max".equals(s) ? 32776 : 32774;
+        }
     }
 
-    private static int stringToBlendFactor(String p_148107_0_)
+    private static int stringToBlendFactor(String factorName)
     {
-        String s = p_148107_0_.trim().toLowerCase();
+        String s = factorName.trim().toLowerCase(Locale.ROOT);
         s = s.replaceAll("_", "");
         s = s.replaceAll("one", "1");
         s = s.replaceAll("zero", "0");
         s = s.replaceAll("minus", "-");
-        return s.equals("0") ? 0 : (s.equals("1") ? 1 : (s.equals("srccolor") ? 768 : (s.equals("1-srccolor") ? 769 : (s.equals("dstcolor") ? 774 : (s.equals("1-dstcolor") ? 775 : (s.equals("srcalpha") ? 770 : (s.equals("1-srcalpha") ? 771 : (s.equals("dstalpha") ? 772 : (s.equals("1-dstalpha") ? 773 : -1)))))))));
+
+        if ("0".equals(s))
+        {
+            return 0;
+        }
+        else if ("1".equals(s))
+        {
+            return 1;
+        }
+        else if ("srccolor".equals(s))
+        {
+            return 768;
+        }
+        else if ("1-srccolor".equals(s))
+        {
+            return 769;
+        }
+        else if ("dstcolor".equals(s))
+        {
+            return 774;
+        }
+        else if ("1-dstcolor".equals(s))
+        {
+            return 775;
+        }
+        else if ("srcalpha".equals(s))
+        {
+            return 770;
+        }
+        else if ("1-srcalpha".equals(s))
+        {
+            return 771;
+        }
+        else if ("dstalpha".equals(s))
+        {
+            return 772;
+        }
+        else
+        {
+            return "1-dstalpha".equals(s) ? 773 : -1;
+        }
     }
 }

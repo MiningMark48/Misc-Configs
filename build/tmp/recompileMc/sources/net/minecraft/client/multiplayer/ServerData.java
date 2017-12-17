@@ -23,9 +23,9 @@ public class ServerData
     public String serverMOTD;
     /** last server ping that showed up in the server browser */
     public long pingToServer;
-    public int version = 110;
+    public int version = 340;
     /** Game version for this server. */
-    public String gameVersion = "1.9.4";
+    public String gameVersion = "1.12.2";
     public boolean pinged;
     public String playerList;
     private ServerData.ServerResourceMode resourceMode = ServerData.ServerResourceMode.PROMPT;

@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
@@ -76,7 +75,6 @@ public class BlockGrass extends Block implements IGrowable
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Blocks.DIRT.getItemDropped(Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.DIRT), rand, fortune);
@@ -112,14 +110,7 @@ public class BlockGrass extends Block implements IGrowable
                     {
                         if (rand.nextInt(8) == 0)
                         {
-                            BlockFlower.EnumFlowerType blockflower$enumflowertype = worldIn.getBiomeGenForCoords(blockpos1).pickRandomFlower(rand, blockpos1);
-                            BlockFlower blockflower = blockflower$enumflowertype.getBlockType().getBlock();
-                            IBlockState iblockstate = blockflower.getDefaultState().withProperty(blockflower.getTypeProperty(), blockflower$enumflowertype);
-
-                            if (blockflower.canBlockStay(worldIn, blockpos1, iblockstate))
-                            {
-                                worldIn.setBlockState(blockpos1, iblockstate, 3);
-                            }
+                            worldIn.getBiome(blockpos1).plantFlower(worldIn, rand, blockpos1);
                         }
                         else
                         {

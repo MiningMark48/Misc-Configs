@@ -20,15 +20,15 @@ public class ResourcePackListEntryServer extends ResourcePackListEntry
     private final IResourcePack resourcePack;
     private final ResourceLocation resourcePackIcon;
 
-    public ResourcePackListEntryServer(GuiScreenResourcePacks p_i46594_1_, IResourcePack p_i46594_2_)
+    public ResourcePackListEntryServer(GuiScreenResourcePacks resourcePacksGUIIn, IResourcePack resourcePackIn)
     {
-        super(p_i46594_1_);
-        this.resourcePack = p_i46594_2_;
+        super(resourcePacksGUIIn);
+        this.resourcePack = resourcePackIn;
         DynamicTexture dynamictexture;
 
         try
         {
-            dynamictexture = new DynamicTexture(p_i46594_2_.getPackImage());
+            dynamictexture = new DynamicTexture(resourcePackIn.getPackImage());
         }
         catch (IOException var5)
         {
@@ -40,7 +40,7 @@ public class ResourcePackListEntryServer extends ResourcePackListEntry
 
     protected int getResourcePackFormat()
     {
-        return 2;
+        return 3;
     }
 
     protected String getResourcePackDescription()
@@ -56,11 +56,11 @@ public class ResourcePackListEntryServer extends ResourcePackListEntry
         }
         catch (JsonParseException jsonparseexception)
         {
-            LOGGER.error((String)"Couldn\'t load metadata info", (Throwable)jsonparseexception);
+            LOGGER.error("Couldn't load metadata info", (Throwable)jsonparseexception);
         }
         catch (IOException ioexception)
         {
-            LOGGER.error((String)"Couldn\'t load metadata info", (Throwable)ioexception);
+            LOGGER.error("Couldn't load metadata info", (Throwable)ioexception);
         }
 
         return TextFormatting.RED + "Missing " + "pack.mcmeta" + " :(";

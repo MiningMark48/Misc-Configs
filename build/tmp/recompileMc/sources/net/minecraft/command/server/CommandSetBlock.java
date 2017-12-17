@@ -25,7 +25,7 @@ public class CommandSetBlock extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "setblock";
     }
@@ -41,7 +41,7 @@ public class CommandSetBlock extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.setblock.usage";
     }
@@ -60,14 +60,16 @@ public class CommandSetBlock extends CommandBase
             sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, 0);
             BlockPos blockpos = parseBlockPos(sender, args, 0, false);
             Block block = CommandBase.getBlockByText(sender, args[3]);
-            int i = 0;
+            IBlockState iblockstate;
 
             if (args.length >= 5)
             {
-                i = parseInt(args[4], 0, 15);
+                iblockstate = convertArgToBlockState(block, args[4]);
             }
-
-            IBlockState state = block.getStateFromMeta(i);
+            else
+            {
+                iblockstate = block.getDefaultState();
+            }
 
             World world = sender.getEntityWorld();
 
@@ -80,9 +82,9 @@ public class CommandSetBlock extends CommandBase
                 NBTTagCompound nbttagcompound = new NBTTagCompound();
                 boolean flag = false;
 
-                if (args.length >= 7 && block.hasTileEntity(state))
+                if (args.length >= 7 && block.hasTileEntity(iblockstate))
                 {
-                    String s = getChatComponentFromNthArg(sender, args, 6).getUnformattedText();
+                    String s = buildString(args, 6);
 
                     try
                     {
@@ -97,7 +99,7 @@ public class CommandSetBlock extends CommandBase
 
                 if (args.length >= 6)
                 {
-                    if (args[5].equals("destroy"))
+                    if ("destroy".equals(args[5]))
                     {
                         world.destroyBlock(blockpos, true);
 
@@ -107,7 +109,7 @@ public class CommandSetBlock extends CommandBase
                             return;
                         }
                     }
-                    else if (args[5].equals("keep") && !world.isAirBlock(blockpos))
+                    else if ("keep".equals(args[5]) && !world.isAirBlock(blockpos))
                     {
                         throw new CommandException("commands.setblock.noChange", new Object[0]);
                     }
@@ -115,17 +117,10 @@ public class CommandSetBlock extends CommandBase
 
                 TileEntity tileentity1 = world.getTileEntity(blockpos);
 
-                if (tileentity1 != null)
+                if (tileentity1 != null && tileentity1 instanceof IInventory)
                 {
-                    if (tileentity1 instanceof IInventory)
-                    {
-                        ((IInventory)tileentity1).clear();
-                    }
-
-                    world.setBlockState(blockpos, Blocks.AIR.getDefaultState(), block == Blocks.AIR ? 2 : 4);
+                    ((IInventory)tileentity1).clear();
                 }
-
-                IBlockState iblockstate = block.getStateFromMeta(i);
 
                 if (!world.setBlockState(blockpos, iblockstate, 2))
                 {
@@ -146,7 +141,7 @@ public class CommandSetBlock extends CommandBase
                         }
                     }
 
-                    world.notifyNeighborsRespectDebug(blockpos, iblockstate.getBlock());
+                    world.notifyNeighborsRespectDebug(blockpos, iblockstate.getBlock(), false);
                     sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, 1);
                     notifyCommandListener(sender, this, "commands.setblock.success", new Object[0]);
                 }
@@ -154,8 +149,22 @@ public class CommandSetBlock extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : (args.length == 4 ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : (args.length == 6 ? getListOfStringsMatchingLastWord(args, new String[] {"replace", "destroy", "keep"}): Collections.<String>emptyList()));
+        if (args.length > 0 && args.length <= 3)
+        {
+            return getTabCompletionCoordinate(args, 0, targetPos);
+        }
+        else if (args.length == 4)
+        {
+            return getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys());
+        }
+        else
+        {
+            return args.length == 6 ? getListOfStringsMatchingLastWord(args, new String[] {"replace", "destroy", "keep"}) : Collections.emptyList();
+        }
     }
 }

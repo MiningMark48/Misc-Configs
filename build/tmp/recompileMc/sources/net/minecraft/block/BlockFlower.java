@@ -4,7 +4,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 import java.util.Collection;
-import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
@@ -12,11 +11,12 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IStringSerializable;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 public abstract class BlockFlower extends BlockBush
 {
@@ -25,6 +25,11 @@ public abstract class BlockFlower extends BlockBush
     protected BlockFlower()
     {
         this.setDefaultState(this.blockState.getBaseState().withProperty(this.getTypeProperty(), this.getBlockType() == BlockFlower.EnumFlowerColor.RED ? BlockFlower.EnumFlowerType.POPPY : BlockFlower.EnumFlowerType.DANDELION));
+    }
+
+    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
+    {
+        return super.getBoundingBox(state, source, pos).offset(state.getOffset(source, pos));
     }
 
     /**
@@ -39,12 +44,11 @@ public abstract class BlockFlower extends BlockBush
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (BlockFlower.EnumFlowerType blockflower$enumflowertype : BlockFlower.EnumFlowerType.getTypes(this.getBlockType()))
         {
-            list.add(new ItemStack(itemIn, 1, blockflower$enumflowertype.getMeta()));
+            items.add(new ItemStack(this, 1, blockflower$enumflowertype.getMeta()));
         }
     }
 
@@ -93,7 +97,6 @@ public abstract class BlockFlower extends BlockBush
     /**
      * Get the OffsetType for this Block. Determines if the model is rendered slightly offset.
      */
-    @SideOnly(Side.CLIENT)
     public Block.EnumOffsetType getOffsetType()
     {
         return Block.EnumOffsetType.XZ;
@@ -170,7 +173,6 @@ public abstract class BlockFlower extends BlockBush
         /**
          * Get all FlowerTypes that are applicable for the given Flower block ("yellow", "red")
          */
-        @SideOnly(Side.CLIENT)
         public static BlockFlower.EnumFlowerType[] getTypes(BlockFlower.EnumFlowerColor flowerColor)
         {
             return TYPES_FOR_BLOCK[flowerColor.ordinal()];

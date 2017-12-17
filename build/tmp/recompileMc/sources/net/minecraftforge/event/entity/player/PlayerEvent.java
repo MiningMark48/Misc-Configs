@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.event.entity.player;
 
 import java.io.File;
@@ -330,6 +349,38 @@ public class PlayerEvent extends LivingEvent
         public String getPlayerUUID()
         {
             return playerUUID;
+        }
+    }
+
+    /**
+     * Fired when the world checks if a player is near enough to be attacked by an entity.
+     * The resulting visibility modifier is multiplied by the one calculated by Minecraft (based on sneaking and more) and used to calculate the radius a player has to be in (targetDistance*modifier).
+     * This can also be used to increase the visibility of a player, if it was decreased by Minecraft or other mods. But the resulting value cannot be higher than the standard target distance.
+     */
+    public static class Visibility extends PlayerEvent
+    {
+
+        private double visibilityModifier = 1D;
+
+        public Visibility(EntityPlayer player)
+        {
+            super(player);
+        }
+
+        /**
+         * @param mod Is multiplied with the current modifier
+         */
+        public void modifyVisibility(double mod)
+        {
+            visibilityModifier *= mod;
+        }
+
+        /**
+         * @return The current modifier
+         */
+        public double getVisibilityModifier()
+        {
+            return visibilityModifier;
         }
     }
 }

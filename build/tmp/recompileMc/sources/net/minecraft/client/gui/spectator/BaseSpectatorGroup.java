@@ -5,7 +5,7 @@ import java.util.List;
 import net.minecraft.client.gui.spectator.categories.TeleportToPlayer;
 import net.minecraft.client.gui.spectator.categories.TeleportToTeam;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -27,6 +27,6 @@ public class BaseSpectatorGroup implements ISpectatorMenuView
 
     public ITextComponent getPrompt()
     {
-        return new TextComponentString("Press a key to select a command, and again to use it.");
+        return new TextComponentTranslation("spectatorMenu.root.prompt", new Object[0]);
     }
 }

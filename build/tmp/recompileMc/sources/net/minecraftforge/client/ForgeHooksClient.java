@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client;
 
 import static net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType.BOSSINFO;
@@ -10,9 +29,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.util.Collections;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
@@ -23,16 +42,17 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.SoundManager;
+import net.minecraft.client.gui.BossInfoClient;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockFaceUV;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -60,13 +80,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.MovementInput;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.registry.IRegistry;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.BossInfoLerping;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -74,15 +95,17 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.FOVUpdateEvent;
 import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.RenderSpecificHandEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.event.ScreenshotEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
-import net.minecraftforge.client.model.IPerspectiveAwareModel;
+import net.minecraftforge.client.model.ModelDynBucket;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.client.model.animation.Animation;
 import net.minecraftforge.common.ForgeModContainer;
@@ -93,17 +116,13 @@ import net.minecraftforge.common.model.IModelPart;
 import net.minecraftforge.common.model.ITransformation;
 import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.client.GuiJava8Error;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.Java8VersionException;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.BufferUtils;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 import com.google.common.collect.Maps;
 
 public class ForgeHooksClient
@@ -149,10 +168,16 @@ public class ForgeHooksClient
         return MinecraftForge.EVENT_BUS.post(new RenderHandEvent(context, partialTicks, renderPass));
     }
 
+    public static boolean renderSpecificFirstPersonHand(EnumHand hand, float partialTicks, float interpPitch, float swingProgress, float equipProgress, ItemStack stack)
+    {
+        return MinecraftForge.EVENT_BUS.post(new RenderSpecificHandEvent(hand, partialTicks, interpPitch, swingProgress, equipProgress, stack));
+    }
+
     public static void onTextureStitchedPre(TextureMap map)
     {
         MinecraftForge.EVENT_BUS.post(new TextureStitchEvent.Pre(map));
         ModelLoader.White.INSTANCE.register(map);
+        ModelDynBucket.LoaderDynBucket.INSTANCE.register(map);
     }
 
     public static void onTextureStitchedPost(TextureMap map)
@@ -234,9 +259,9 @@ public class ForgeHooksClient
         GameSettings settings = Minecraft.getMinecraft().gameSettings;
         int[] ranges = ForgeModContainer.blendRanges;
         int distance = 0;
-        if (settings.fancyGraphics && settings.renderDistanceChunks >= 0 && settings.renderDistanceChunks < ranges.length)
+        if (settings.fancyGraphics && ranges.length > 0)
         {
-            distance = ranges[settings.renderDistanceChunks];
+            distance = ranges[MathHelper.clamp(settings.renderDistanceChunks, 0, ranges.length-1)];
         }
 
         int r = 0;
@@ -249,8 +274,8 @@ public class ForgeHooksClient
             for (int z = -distance; z <= distance; ++z)
             {
                 BlockPos pos = center.add(x, 0, z);
-                Biome biome = world.getBiomeGenForCoords(pos);
-                int colour = biome.getSkyColorByTemp(biome.getFloatTemperature(pos));
+                Biome biome = world.getBiome(pos);
+                int colour = biome.getSkyColorByTemp(biome.getTemperature(pos));
                 r += (colour & 0xFF0000) >> 16;
                 g += (colour & 0x00FF00) >> 8;
                 b += colour & 0x0000FF;
@@ -261,7 +286,7 @@ public class ForgeHooksClient
         int multiplier = (r / divider & 255) << 16 | (g / divider & 255) << 8 | b / divider & 255;
 
         skyX = center.getX();
-        skyZ = center.getY();
+        skyZ = center.getZ();
         skyRGBMultiplier = multiplier;
         return skyRGBMultiplier;
     }
@@ -287,17 +312,6 @@ public class ForgeHooksClient
             gui.drawString(font, line, (width - font.getStringWidth(line)) / 2, 4 + (1 * (font.FONT_HEIGHT + 1)), -1);
         }
 
-        if (!Loader.instance().java8)
-        {
-            String line = I18n.format("fml.messages.java8warning.1", TextFormatting.RED, TextFormatting.RESET);
-            gui.drawString(font, line, (width - font.getStringWidth(line)) / 2, 4 + (8 * (font.FONT_HEIGHT + 1)), -1);
-            line = I18n.format("fml.messages.java8warning.2");
-            gui.drawString(font, line, (width - font.getStringWidth(line)) / 2, 4 + (9 * (font.FONT_HEIGHT + 1)), -1);
-            splashText = updatescrollcounter < 50 ? "UPDATE!" : "JAVA!";
-            updatescrollcounter+=1;
-            updatescrollcounter%=100;
-        }
-
         String line = null;
         switch(status)
         {
@@ -316,22 +330,6 @@ public class ForgeHooksClient
         }
 
         return splashText;
-    }
-
-    public static void mainMenuMouseClick(int mouseX, int mouseY, int mouseButton, FontRenderer font, int width)
-    {
-        if (!Loader.instance().java8)
-        {
-            if (mouseY >= (4 + (8 * 10)) && mouseY < (4 + (10 * 10)))
-            {
-                int w = font.getStringWidth(I18n.format("fml.messages.java8warning.1", TextFormatting.RED, TextFormatting.RESET));
-                w = Math.max(w, font.getStringWidth(I18n.format("fml.messages.java8warning.2")));
-                if (mouseX >= ((width - w) / 2) && mouseX <= ((width + w) / 2))
-                {
-                    FMLClientHandler.instance().showGuiScreen(new GuiJava8Error(new Java8VersionException(Collections.<ModContainer>emptyList())));
-                }
-            }
-        }
     }
 
     public static ISound playSound(SoundManager manager, ISound sound)
@@ -404,32 +402,21 @@ public class ForgeHooksClient
         flipX.m00 = -1;
     }
 
-    @SuppressWarnings("deprecation")
     public static IBakedModel handleCameraTransforms(IBakedModel model, ItemCameraTransforms.TransformType cameraTransformType, boolean leftHandHackery)
     {
-        if(model instanceof IPerspectiveAwareModel)
-        {
-            Pair<? extends IBakedModel, Matrix4f> pair = ((IPerspectiveAwareModel)model).handlePerspective(cameraTransformType);
+        Pair<? extends IBakedModel, Matrix4f> pair = model.handlePerspective(cameraTransformType);
 
-            if(pair.getRight() != null)
-            {
-                Matrix4f matrix = new Matrix4f(pair.getRight());
-                if(leftHandHackery)
-                {
-                    matrix.mul(flipX, matrix);
-                    matrix.mul(matrix, flipX);
-                }
-                multiplyCurrentGlMatrix(matrix);
-            }
-            return pair.getLeft();
-        }
-        else
+        if (pair.getRight() != null)
         {
-            //if(leftHandHackery) GlStateManager.scale(-1, 1, 1);
-            ItemCameraTransforms.applyTransformSide(model.getItemCameraTransforms().getTransform(cameraTransformType), leftHandHackery);
-            //if(leftHandHackery) GlStateManager.scale(-1, 1, 1);
+            Matrix4f matrix = new Matrix4f(pair.getRight());
+            if (leftHandHackery)
+            {
+                matrix.mul(flipX, matrix);
+                matrix.mul(matrix, flipX);
+            }
+            multiplyCurrentGlMatrix(matrix);
         }
-        return model;
+        return pair.getLeft();
     }
 
     private static final FloatBuffer matrixBuf = BufferUtils.createFloatBuffer(16);
@@ -485,7 +472,7 @@ public class ForgeHooksClient
                 glEnableVertexAttribArray(attr.getIndex());
                 glVertexAttribPointer(attr.getIndex(), count, constant, false, stride, buffer);
             default:
-                FMLLog.severe("Unimplemented vanilla attribute upload: %s", attrType.getDisplayName());
+                FMLLog.log.fatal("Unimplemented vanilla attribute upload: {}", attrType.getDisplayName());
         }
     }
 
@@ -515,7 +502,7 @@ public class ForgeHooksClient
             case GENERIC:
                 glDisableVertexAttribArray(attr.getIndex());
             default:
-                FMLLog.severe("Unimplemented vanilla attribute upload: %s", attrType.getDisplayName());
+                FMLLog.log.fatal("Unimplemented vanilla attribute upload: {}", attrType.getDisplayName());
         }
     }
 
@@ -539,7 +526,7 @@ public class ForgeHooksClient
         return ret;
     }
 
-    public static void putQuadColor(VertexBuffer renderer, BakedQuad quad, int color)
+    public static void putQuadColor(BufferBuilder renderer, BakedQuad quad, int color)
     {
         float cb = color & 0xFF;
         float cg = (color >>> 8) & 0xFF;
@@ -570,10 +557,10 @@ public class ForgeHooksClient
         Class<? extends TileEntity> tileClass = tileItemMap.get(Pair.of(item, metadata));
         if (tileClass != null)
         {
-            TileEntitySpecialRenderer<?> r = TileEntityRendererDispatcher.instance.getSpecialRendererByClass(tileClass);
+            TileEntitySpecialRenderer<?> r = TileEntityRendererDispatcher.instance.getRenderer(tileClass);
             if (r != null)
             {
-                r.renderTileEntityAt(null, 0, 0, 0, 0, -1);
+                r.render(null, 0, 0, 0, 0, -1, 0.0F);
             }
         }
     }
@@ -592,34 +579,48 @@ public class ForgeHooksClient
      */
     public static void fillNormal(int[] faceData, EnumFacing facing)
     {
-        Vector3f v1 = new Vector3f(faceData[3 * 7 + 0], faceData[3 * 7 + 1], faceData[3 * 7 + 2]);
-        Vector3f t = new Vector3f(faceData[1 * 7 + 0], faceData[1 * 7 + 1], faceData[1 * 7 + 2]);
-        Vector3f v2 = new Vector3f(faceData[2 * 7 + 0], faceData[2 * 7 + 1], faceData[2 * 7 + 2]);
+        Vector3f v1 = getVertexPos(faceData, 3);
+        Vector3f t  = getVertexPos(faceData, 1);
+        Vector3f v2 = getVertexPos(faceData, 2);
         v1.sub(t);
-        t.set(faceData[0 * 7 + 0], faceData[0 * 7 + 1], faceData[0 * 7 + 2]);
+        t.set(getVertexPos(faceData, 0));
         v2.sub(t);
         v1.cross(v2, v1);
         v1.normalize();
 
-        int x = ((byte)(v1.x * 127)) & 0xFF;
-        int y = ((byte)(v1.y * 127)) & 0xFF;
-        int z = ((byte)(v1.z * 127)) & 0xFF;
+        int x = ((byte) Math.round(v1.x * 127)) & 0xFF;
+        int y = ((byte) Math.round(v1.y * 127)) & 0xFF;
+        int z = ((byte) Math.round(v1.z * 127)) & 0xFF;
+
+        int normal = x | (y << 0x08) | (z << 0x10);
+
         for(int i = 0; i < 4; i++)
         {
-            faceData[i * 7 + 6] = x | (y << 0x08) | (z << 0x10);
+            faceData[i * 7 + 6] = normal;
         }
+    }
+
+    private static Vector3f getVertexPos(int[] data, int vertex)
+    {
+        int idx = vertex * 7;
+
+        float x = Float.intBitsToFloat(data[idx]);
+        float y = Float.intBitsToFloat(data[idx + 1]);
+        float z = Float.intBitsToFloat(data[idx + 2]);
+
+        return new Vector3f(x, y, z);
     }
 
     @SuppressWarnings("deprecation")
     public static Optional<TRSRTransformation> applyTransform(net.minecraft.client.renderer.block.model.ItemTransformVec3f transform, Optional<? extends IModelPart> part)
     {
-        if(part.isPresent()) return Optional.absent();
+        if(part.isPresent()) return Optional.empty();
         return Optional.of(TRSRTransformation.blockCenterToCorner(new TRSRTransformation(transform)));
     }
 
     public static Optional<TRSRTransformation> applyTransform(Matrix4f matrix, Optional<? extends IModelPart> part)
     {
-        if(part.isPresent()) return Optional.absent();
+        if(part.isPresent()) return Optional.empty();
         return Optional.of(new TRSRTransformation(matrix));
     }
 
@@ -637,18 +638,20 @@ public class ForgeHooksClient
 
     public static IBakedModel getDamageModel(IBakedModel ibakedmodel, TextureAtlasSprite texture, IBlockState state, IBlockAccess world, BlockPos pos)
     {
-        // TODO custom damage models
-        // state = state.block.getExtendedState(state, world, pos);
+        state = state.getBlock().getExtendedState(state, world, pos);
         return (new SimpleBakedModel.Builder(state, ibakedmodel, texture, pos)).makeBakedModel();
     }
 
     private static int slotMainHand = 0;
-    // FIXME
-    public static boolean shouldCauseReequipAnimation(ItemStack from, ItemStack to, int slot)
+
+    public static boolean shouldCauseReequipAnimation(@Nonnull ItemStack from, @Nonnull ItemStack to, int slot)
     {
-        if (from == null && to != null) return true;
-        if (from == null && to == null) return false;
-        if (from != null && to == null) return true;
+        boolean fromInvalid = from.isEmpty();
+        boolean toInvalid   = to.isEmpty();
+
+        if (fromInvalid && toInvalid) return false;
+        if (fromInvalid || toInvalid) return true;
+
         boolean changed = false;
         if (slot != -1)
         {
@@ -656,6 +659,11 @@ public class ForgeHooksClient
             slotMainHand = slot;
         }
         return from.getItem().shouldCauseReequipAnimation(from, to, changed);
+    }
+
+    public static boolean shouldCauseBlockBreakReset(@Nonnull ItemStack from, @Nonnull ItemStack to)
+    {
+        return from.getItem().shouldCauseBlockBreakReset(from, to);
     }
 
     public static BlockFaceUV applyUVLock(BlockFaceUV blockFaceUV, EnumFacing originalSide, ITransformation rotation)
@@ -696,7 +704,7 @@ public class ForgeHooksClient
         return new BlockFaceUV(new float[]{ uMin, vMin, uMax, vMax }, angle);
     }
 
-    public static RenderGameOverlayEvent.BossInfo bossBarRenderPre(ScaledResolution res, BossInfoLerping bossInfo, int x, int y, int increment)
+    public static RenderGameOverlayEvent.BossInfo bossBarRenderPre(ScaledResolution res, BossInfoClient bossInfo, int x, int y, int increment)
     {
         RenderGameOverlayEvent.BossInfo evt = new RenderGameOverlayEvent.BossInfo(new RenderGameOverlayEvent(Animation.getPartialTickTime(), res),
                 BOSSINFO, bossInfo, x, y, increment);
@@ -716,4 +724,17 @@ public class ForgeHooksClient
         return event;
     }
 
+    @SuppressWarnings("deprecation")
+    public static Pair<? extends IBakedModel,Matrix4f> handlePerspective(IBakedModel model, ItemCameraTransforms.TransformType type)
+    {
+        TRSRTransformation tr = new TRSRTransformation(model.getItemCameraTransforms().getTransform(type));
+        Matrix4f mat = null;
+        if(!tr.equals(TRSRTransformation.identity())) mat = tr.getMatrix();
+        return Pair.of(model, mat);
+    }
+
+    public static void onInputUpdate(EntityPlayer player, MovementInput movementInput)
+    {
+        MinecraftForge.EVENT_BUS.post(new InputUpdateEvent(player, movementInput));
+    }
 }

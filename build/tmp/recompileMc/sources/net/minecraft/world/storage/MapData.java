@@ -14,9 +14,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.SPacketMaps;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec4b;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldSavedData;
 
 public class MapData extends WorldSavedData
 {
@@ -24,12 +22,18 @@ public class MapData extends WorldSavedData
     public int zCenter;
     public int dimension; //FML byte -> int
     public boolean trackingPosition;
+    public boolean unlimitedTracking;
     public byte scale;
-    /** colours */
+    /**
+     * A flattened 128x128 grid representing the contents of the map. Each byte has format ([index into MapColor.COLORS]
+     * << 4 | brightness flag)
+     */
     public byte[] colors = new byte[16384];
+    /** Holds a reference to the MapInfo of the players who own a copy of the map */
     public List<MapData.MapInfo> playersArrayList = Lists.<MapData.MapInfo>newArrayList();
-    private Map<EntityPlayer, MapData.MapInfo> playersHashMap = Maps.<EntityPlayer, MapData.MapInfo>newHashMap();
-    public Map<String, Vec4b> mapDecorations = Maps.<String, Vec4b>newLinkedHashMap();
+    /** Holds a reference to the players who own a copy of the map and a reference to their MapInfo */
+    private final Map<EntityPlayer, MapData.MapInfo> playersHashMap = Maps.<EntityPlayer, MapData.MapInfo>newHashMap();
+    public Map<String, MapDecoration> mapDecorations = Maps.<String, MapDecoration>newLinkedHashMap();
 
     public MapData(String mapname)
     {
@@ -39,8 +43,8 @@ public class MapData extends WorldSavedData
     public void calculateMapCenter(double x, double z, int mapScale)
     {
         int i = 128 * (1 << mapScale);
-        int j = MathHelper.floor_double((x + 64.0D) / (double)i);
-        int k = MathHelper.floor_double((z + 64.0D) / (double)i);
+        int j = MathHelper.floor((x + 64.0D) / (double)i);
+        int k = MathHelper.floor((z + 64.0D) / (double)i);
         this.xCenter = j * i + i / 2 - 64;
         this.zCenter = k * i + i / 2 - 64;
     }
@@ -50,21 +54,11 @@ public class MapData extends WorldSavedData
      */
     public void readFromNBT(NBTTagCompound nbt)
     {
-        net.minecraft.nbt.NBTBase dimension = nbt.getTag("dimension");
-
-        if (dimension instanceof net.minecraft.nbt.NBTTagByte)
-        {
-            this.dimension = ((net.minecraft.nbt.NBTTagByte)dimension).getByte();
-        }
-        else
-        {
-            this.dimension = ((net.minecraft.nbt.NBTTagInt)dimension).getInt();
-        }
-
+        this.dimension = nbt.getInteger("dimension");
         this.xCenter = nbt.getInteger("xCenter");
         this.zCenter = nbt.getInteger("zCenter");
         this.scale = nbt.getByte("scale");
-        this.scale = (byte)MathHelper.clamp_int(this.scale, 0, 4);
+        this.scale = (byte)MathHelper.clamp(this.scale, 0, 4);
 
         if (nbt.hasKey("trackingPosition", 1))
         {
@@ -75,6 +69,7 @@ public class MapData extends WorldSavedData
             this.trackingPosition = true;
         }
 
+        this.unlimitedTracking = nbt.getBoolean("unlimitedTracking");
         int i = nbt.getShort("width");
         int j = nbt.getShort("height");
 
@@ -109,17 +104,18 @@ public class MapData extends WorldSavedData
         }
     }
 
-    public NBTTagCompound writeToNBT(NBTTagCompound p_189551_1_)
+    public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
-        p_189551_1_.setInteger("dimension", this.dimension);
-        p_189551_1_.setInteger("xCenter", this.xCenter);
-        p_189551_1_.setInteger("zCenter", this.zCenter);
-        p_189551_1_.setByte("scale", this.scale);
-        p_189551_1_.setShort("width", (short)128);
-        p_189551_1_.setShort("height", (short)128);
-        p_189551_1_.setByteArray("colors", this.colors);
-        p_189551_1_.setBoolean("trackingPosition", this.trackingPosition);
-        return p_189551_1_;
+        compound.setInteger("dimension", this.dimension);
+        compound.setInteger("xCenter", this.xCenter);
+        compound.setInteger("zCenter", this.zCenter);
+        compound.setByte("scale", this.scale);
+        compound.setShort("width", (short)128);
+        compound.setShort("height", (short)128);
+        compound.setByteArray("colors", this.colors);
+        compound.setBoolean("trackingPosition", this.trackingPosition);
+        compound.setBoolean("unlimitedTracking", this.unlimitedTracking);
+        return compound;
     }
 
     /**
@@ -141,18 +137,18 @@ public class MapData extends WorldSavedData
 
         for (int i = 0; i < this.playersArrayList.size(); ++i)
         {
-            MapData.MapInfo mapdata$mapinfo1 = (MapData.MapInfo)this.playersArrayList.get(i);
+            MapData.MapInfo mapdata$mapinfo1 = this.playersArrayList.get(i);
 
-            if (!mapdata$mapinfo1.entityplayerObj.isDead && (mapdata$mapinfo1.entityplayerObj.inventory.hasItemStack(mapStack) || mapStack.isOnItemFrame()))
+            if (!mapdata$mapinfo1.player.isDead && (mapdata$mapinfo1.player.inventory.hasItemStack(mapStack) || mapStack.isOnItemFrame()))
             {
-                if (!mapStack.isOnItemFrame() && mapdata$mapinfo1.entityplayerObj.dimension == this.dimension && this.trackingPosition)
+                if (!mapStack.isOnItemFrame() && mapdata$mapinfo1.player.dimension == this.dimension && this.trackingPosition)
                 {
-                    this.updateDecorations(0, mapdata$mapinfo1.entityplayerObj.worldObj, mapdata$mapinfo1.entityplayerObj.getName(), mapdata$mapinfo1.entityplayerObj.posX, mapdata$mapinfo1.entityplayerObj.posZ, (double)mapdata$mapinfo1.entityplayerObj.rotationYaw);
+                    this.updateDecorations(MapDecoration.Type.PLAYER, mapdata$mapinfo1.player.world, mapdata$mapinfo1.player.getName(), mapdata$mapinfo1.player.posX, mapdata$mapinfo1.player.posZ, (double)mapdata$mapinfo1.player.rotationYaw);
                 }
             }
             else
             {
-                this.playersHashMap.remove(mapdata$mapinfo1.entityplayerObj);
+                this.playersHashMap.remove(mapdata$mapinfo1.player);
                 this.playersArrayList.remove(mapdata$mapinfo1);
             }
         }
@@ -161,7 +157,7 @@ public class MapData extends WorldSavedData
         {
             EntityItemFrame entityitemframe = mapStack.getItemFrame();
             BlockPos blockpos = entityitemframe.getHangingPosition();
-            this.updateDecorations(1, player.worldObj, "frame-" + entityitemframe.getEntityId(), (double)blockpos.getX(), (double)blockpos.getZ(), (double)(entityitemframe.facingDirection.getHorizontalIndex() * 90));
+            this.updateDecorations(MapDecoration.Type.FRAME, player.world, "frame-" + entityitemframe.getEntityId(), (double)blockpos.getX(), (double)blockpos.getZ(), (double)(entityitemframe.facingDirection.getHorizontalIndex() * 90));
         }
 
         if (mapStack.hasTagCompound() && mapStack.getTagCompound().hasKey("Decorations", 9))
@@ -174,13 +170,42 @@ public class MapData extends WorldSavedData
 
                 if (!this.mapDecorations.containsKey(nbttagcompound.getString("id")))
                 {
-                    this.updateDecorations(nbttagcompound.getByte("type"), player.worldObj, nbttagcompound.getString("id"), nbttagcompound.getDouble("x"), nbttagcompound.getDouble("z"), nbttagcompound.getDouble("rot"));
+                    this.updateDecorations(MapDecoration.Type.byIcon(nbttagcompound.getByte("type")), player.world, nbttagcompound.getString("id"), nbttagcompound.getDouble("x"), nbttagcompound.getDouble("z"), nbttagcompound.getDouble("rot"));
                 }
             }
         }
     }
 
-    private void updateDecorations(int type, World worldIn, String entityIdentifier, double worldX, double worldZ, double rotation)
+    public static void addTargetDecoration(ItemStack map, BlockPos target, String decorationName, MapDecoration.Type type)
+    {
+        NBTTagList nbttaglist;
+
+        if (map.hasTagCompound() && map.getTagCompound().hasKey("Decorations", 9))
+        {
+            nbttaglist = map.getTagCompound().getTagList("Decorations", 10);
+        }
+        else
+        {
+            nbttaglist = new NBTTagList();
+            map.setTagInfo("Decorations", nbttaglist);
+        }
+
+        NBTTagCompound nbttagcompound = new NBTTagCompound();
+        nbttagcompound.setByte("type", type.getIcon());
+        nbttagcompound.setString("id", decorationName);
+        nbttagcompound.setDouble("x", (double)target.getX());
+        nbttagcompound.setDouble("z", (double)target.getZ());
+        nbttagcompound.setDouble("rot", 180.0D);
+        nbttaglist.appendTag(nbttagcompound);
+
+        if (type.hasMapColor())
+        {
+            NBTTagCompound nbttagcompound1 = map.getOrCreateSubCompound("display");
+            nbttagcompound1.setInteger("MapColor", type.getMapColor());
+        }
+    }
+
+    private void updateDecorations(MapDecoration.Type type, World worldIn, String decorationName, double worldX, double worldZ, double rotationIn)
     {
         int i = 1 << this.scale;
         float f = (float)(worldX - (double)this.xCenter) / (float)i;
@@ -190,56 +215,72 @@ public class MapData extends WorldSavedData
         int j = 63;
         byte b2;
 
-        if (f >= (float)(-j) && f1 >= (float)(-j) && f <= (float)j && f1 <= (float)j)
+        if (f >= -63.0F && f1 >= -63.0F && f <= 63.0F && f1 <= 63.0F)
         {
-            rotation = rotation + (rotation < 0.0D ? -8.0D : 8.0D);
-            b2 = (byte)((int)(rotation * 16.0D / 360.0D));
+            rotationIn = rotationIn + (rotationIn < 0.0D ? -8.0D : 8.0D);
+            b2 = (byte)((int)(rotationIn * 16.0D / 360.0D));
 
-            if (worldIn.provider.shouldMapSpin(entityIdentifier, worldX, worldZ, rotation))
+            if (worldIn.provider.shouldMapSpin(decorationName, worldX, worldZ, rotationIn))
             {
-                int k = (int)(worldIn.getWorldInfo().getWorldTime() / 10L);
-                b2 = (byte)(k * k * 34187121 + k * 121 >> 15 & 15);
+                int l = (int)(worldIn.getWorldTime() / 10L);
+                b2 = (byte)(l * l * 34187121 + l * 121 >> 15 & 15);
             }
         }
         else
         {
-            if (Math.abs(f) >= 320.0F || Math.abs(f1) >= 320.0F)
+            if (type != MapDecoration.Type.PLAYER)
             {
-                this.mapDecorations.remove(entityIdentifier);
+                this.mapDecorations.remove(decorationName);
                 return;
             }
 
-            type = 6;
+            int k = 320;
+
+            if (Math.abs(f) < 320.0F && Math.abs(f1) < 320.0F)
+            {
+                type = MapDecoration.Type.PLAYER_OFF_MAP;
+            }
+            else
+            {
+                if (!this.unlimitedTracking)
+                {
+                    this.mapDecorations.remove(decorationName);
+                    return;
+                }
+
+                type = MapDecoration.Type.PLAYER_OFF_LIMITS;
+            }
+
             b2 = 0;
 
-            if (f <= (float)(-j))
+            if (f <= -63.0F)
             {
-                b0 = (byte)((int)((double)(j * 2) + 2.5D));
+                b0 = -128;
             }
 
-            if (f1 <= (float)(-j))
+            if (f1 <= -63.0F)
             {
-                b1 = (byte)((int)((double)(j * 2) + 2.5D));
+                b1 = -128;
             }
 
-            if (f >= (float)j)
+            if (f >= 63.0F)
             {
-                b0 = (byte)(j * 2 + 1);
+                b0 = 127;
             }
 
-            if (f1 >= (float)j)
+            if (f1 >= 63.0F)
             {
-                b1 = (byte)(j * 2 + 1);
+                b1 = 127;
             }
         }
 
-        this.mapDecorations.put(entityIdentifier, new Vec4b((byte)type, b0, b1, b2));
+        this.mapDecorations.put(decorationName, new MapDecoration(type, b0, b1, b2));
     }
 
     @Nullable
     public Packet<?> getMapPacket(ItemStack mapStack, World worldIn, EntityPlayer player)
     {
-        MapData.MapInfo mapdata$mapinfo = (MapData.MapInfo)this.playersHashMap.get(player);
+        MapData.MapInfo mapdata$mapinfo = this.playersHashMap.get(player);
         return mapdata$mapinfo == null ? null : mapdata$mapinfo.getPacket(mapStack);
     }
 
@@ -255,7 +296,7 @@ public class MapData extends WorldSavedData
 
     public MapData.MapInfo getMapInfo(EntityPlayer player)
     {
-        MapData.MapInfo mapdata$mapinfo = (MapData.MapInfo)this.playersHashMap.get(player);
+        MapData.MapInfo mapdata$mapinfo = this.playersHashMap.get(player);
 
         if (mapdata$mapinfo == null)
         {
@@ -270,20 +311,29 @@ public class MapData extends WorldSavedData
     public class MapInfo
     {
         /** Reference for EntityPlayer object in MapInfo */
-        public final EntityPlayer entityplayerObj;
+        public final EntityPlayer player;
         private boolean isDirty = true;
-        private int minX = 0;
-        private int minY = 0;
+        /** The lowest dirty x value */
+        private int minX;
+        /** The lowest dirty z value */
+        private int minY;
+        /** The highest dirty x value */
         private int maxX = 127;
+        /** The highest dirty z value */
         private int maxY = 127;
         private int tick;
+        /**
+         * Incremented each time the map attempts to rescan its surroundings. Used to reveal new regions over several
+         * seconds instead of all at once.
+         */
         public int step;
 
         public MapInfo(EntityPlayer player)
         {
-            this.entityplayerObj = player;
+            this.player = player;
         }
 
+        @Nullable
         public Packet<?> getPacket(ItemStack stack)
         {
             if (this.isDirty)

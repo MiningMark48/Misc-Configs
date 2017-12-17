@@ -1,21 +1,39 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.event.entity.player;
 
 import com.google.common.base.Preconditions;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.relauncher.Side;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import static net.minecraftforge.fml.common.eventhandler.Event.Result.DEFAULT;
@@ -31,15 +49,15 @@ import net.minecraftforge.fml.common.eventhandler.Event.Result;
 public class PlayerInteractEvent extends PlayerEvent
 {
     private final EnumHand hand;
-    private final ItemStack stack;
     private final BlockPos pos;
+    @Nullable
     private final EnumFacing face;
+    private EnumActionResult cancellationResult = EnumActionResult.PASS;
 
-    private PlayerInteractEvent(EntityPlayer player, EnumHand hand, ItemStack stack, BlockPos pos, EnumFacing face)
+    private PlayerInteractEvent(EntityPlayer player, EnumHand hand, BlockPos pos, @Nullable EnumFacing face)
     {
         super(Preconditions.checkNotNull(player, "Null player in PlayerInteractEvent!"));
         this.hand = Preconditions.checkNotNull(hand, "Null hand in PlayerInteractEvent!");
-        this.stack = stack;
         this.pos = Preconditions.checkNotNull(pos, "Null position in PlayerInteractEvent!");
         this.face = face;
     }
@@ -49,11 +67,9 @@ public class PlayerInteractEvent extends PlayerEvent
      *
      * "Interact at" is an interact where the local vector (which part of the entity you clicked) is known.
      * The state of this event affects whether {@link Entity#applyPlayerInteraction} is called.
-     * If {@link Entity#applyPlayerInteraction} returns {@link net.minecraft.util.EnumActionResult#SUCCESS}, then processing ends.
-     * Otherwise processing will continue to {@link EntityInteract}
      *
-     * Canceling the event clientside will cause processing to continue to {@link EntityInteract},
-     * while canceling serverside will simply do no further processing.
+     * Let result be the return value of {@link Entity#applyPlayerInteraction}, or {@link #cancellationResult} if the event is cancelled.
+     * If we are on the client and result is not {@link EnumActionResult#SUCCESS}, the client will then try {@link EntityInteract}.
      */
     @Cancelable
     public static class EntityInteractSpecific extends PlayerInteractEvent
@@ -61,9 +77,9 @@ public class PlayerInteractEvent extends PlayerEvent
         private final Vec3d localPos;
         private final Entity target;
 
-        public EntityInteractSpecific(EntityPlayer player, EnumHand hand, ItemStack stack, Entity target, Vec3d localPos)
+        public EntityInteractSpecific(EntityPlayer player, EnumHand hand, Entity target, Vec3d localPos)
         {
-            super(player, hand, stack, new BlockPos(target), null);
+            super(player, hand, new BlockPos(target), null);
             this.localPos = localPos;
             this.target = target;
         }
@@ -89,23 +105,21 @@ public class PlayerInteractEvent extends PlayerEvent
      * This event is fired on both sides when the player right clicks an entity.
      * It is responsible for all general entity interactions.
      *
-     * This event is fired completely independently of the above {@link EntityInteractSpecific}, except for the case
-     * where the above call to {@link Entity#applyPlayerInteraction} returns {@link net.minecraft.util.EnumActionResult#SUCCESS}.
-     * In that case, general entity interactions, and hence this event, will not be called. See the above javadoc for more details.
-     *
+     * This event is fired only if the result of the above {@link EntityInteractSpecific} is not {@link EnumActionResult#SUCCESS}.
      * This event's state affects whether {@link Entity#processInitialInteract} and {@link net.minecraft.item.Item#itemInteractionForEntity} are called.
      *
-     * Canceling the event clientside will cause processing to continue to {@link RightClickItem},
-     * while canceling serverside will simply do no further processing.
+     * Let result be {@link EnumActionResult#SUCCESS} if {@link Entity#processInitialInteract} or {@link net.minecraft.item.Item#itemInteractionForEntity} return true,
+     * or {@link #cancellationResult} if the event is cancelled.
+     * If we are on the client and result is not {@link EnumActionResult#SUCCESS}, the client will then try {@link RightClickItem}.
      */
     @Cancelable
     public static class EntityInteract extends PlayerInteractEvent
     {
         private final Entity target;
 
-        public EntityInteract(EntityPlayer player, EnumHand hand, ItemStack stack, Entity target)
+        public EntityInteract(EntityPlayer player, EnumHand hand, Entity target)
         {
-            super(player, hand, stack, new BlockPos(target), null);
+            super(player, hand, new BlockPos(target), null);
             this.target = target;
         }
 
@@ -119,7 +133,11 @@ public class PlayerInteractEvent extends PlayerEvent
      * This event is fired on both sides whenever the player right clicks while targeting a block.
      * This event controls which of {@link net.minecraft.block.Block#onBlockActivated} and/or {@link net.minecraft.item.Item#onItemUse}
      * will be called after {@link net.minecraft.item.Item#onItemUseFirst} is called.
-     * Canceling the event will cause none of the above three to be called.
+     * Canceling the event will cause none of the above three to be called
+     *
+     * Let result be a return value of the above three methods, or {@link #cancellationResult} if the event is cancelled.
+     * If we are on the client and result is not {@link EnumActionResult#SUCCESS}, the client will then try {@link RightClickItem}.
+     *
      * There are various results to this event, see the getters below.
      * Note that handling things differently on the client vs server may cause desynchronizations!
      */
@@ -130,9 +148,8 @@ public class PlayerInteractEvent extends PlayerEvent
         private Result useItem = DEFAULT;
         private final Vec3d hitVec;
 
-        public RightClickBlock(EntityPlayer player, EnumHand hand, ItemStack stack,
-                               BlockPos pos, EnumFacing face, Vec3d hitVec) {
-            super(player, hand, stack, pos, face);
+        public RightClickBlock(EntityPlayer player, EnumHand hand, BlockPos pos, EnumFacing face, Vec3d hitVec) {
+            super(player, hand, pos, face);
             this.hitVec = hitVec;
         }
 
@@ -194,16 +211,17 @@ public class PlayerInteractEvent extends PlayerEvent
 
     /**
      * This event is fired on both sides before the player triggers {@link net.minecraft.item.Item#onItemRightClick}.
-     * Note that this is NOT fired if the player is targeting a block. For that case, see {@link RightClickBlock}.
-     * Canceling the event clientside causes processing to continue to the other hands,
-     * while canceling serverside will simply do no further processing.
+     * Note that this is NOT fired if the player is targeting a block {@link RightClickBlock} or entity {@link EntityInteract} {@link EntityInteractSpecific}.
+     *
+     * Let result be the return value of {@link net.minecraft.item.Item#onItemRightClick}, or {@link #cancellationResult} if the event is cancelled.
+     * If we are on the client and result is not {@link EnumActionResult#SUCCESS}, the client will then continue to other hands.
      */
     @Cancelable
     public static class RightClickItem extends PlayerInteractEvent
     {
-        public RightClickItem(EntityPlayer player, EnumHand hand, ItemStack stack)
+        public RightClickItem(EntityPlayer player, EnumHand hand)
         {
-            super(player, hand, stack, new BlockPos(player), null);
+            super(player, hand, new BlockPos(player), null);
         }
     }
 
@@ -216,7 +234,7 @@ public class PlayerInteractEvent extends PlayerEvent
     {
         public RightClickEmpty(EntityPlayer player, EnumHand hand)
         {
-            super(player, hand, null, new BlockPos(player), null);
+            super(player, hand, new BlockPos(player), null);
         }
     }
 
@@ -241,7 +259,7 @@ public class PlayerInteractEvent extends PlayerEvent
 
         public LeftClickBlock(EntityPlayer player, BlockPos pos, EnumFacing face, Vec3d hitVec)
         {
-            super(player, EnumHand.MAIN_HAND, player.getHeldItem(EnumHand.MAIN_HAND), pos, face);
+            super(player, EnumHand.MAIN_HAND, pos, face);
             this.hitVec = hitVec;
         }
 
@@ -298,27 +316,28 @@ public class PlayerInteractEvent extends PlayerEvent
      */
     public static class LeftClickEmpty extends PlayerInteractEvent
     {
-        public LeftClickEmpty(EntityPlayer player, ItemStack stack)
+        public LeftClickEmpty(EntityPlayer player)
         {
-            super(player, EnumHand.MAIN_HAND, stack, new BlockPos(player), null);
+            super(player, EnumHand.MAIN_HAND, new BlockPos(player), null);
         }
     }
 
     /**
      * @return The hand involved in this interaction. Will never be null.
      */
+    @Nonnull
     public EnumHand getHand()
     {
         return hand;
     }
 
     /**
-     * @return The itemstack involved in this interaction, or null if the hand was empty.
+     * @return The itemstack involved in this interaction, {@code ItemStack.EMPTY} if the hand was empty.
      */
-    @Nullable
+    @Nonnull
     public ItemStack getItemStack()
     {
-        return stack;
+        return getEntityPlayer().getHeldItem(hand);
     }
 
     /**
@@ -328,6 +347,7 @@ public class PlayerInteractEvent extends PlayerEvent
      * Will never be null.
      * @return The position involved in this interaction.
      */
+    @Nonnull
     public BlockPos getPos()
     {
         return pos;
@@ -356,6 +376,26 @@ public class PlayerInteractEvent extends PlayerEvent
     public Side getSide()
     {
         return getWorld().isRemote ? Side.CLIENT : Side.SERVER;
+    }
+
+    /**
+     * @return The EnumActionResult that will be returned to vanilla if the event is cancelled, instead of calling the relevant
+     * method of the event. By default, this is {@link EnumActionResult#PASS}, meaning cancelled events will cause
+     * the client to keep trying more interactions until something works.
+     */
+    public EnumActionResult getCancellationResult()
+    {
+        return cancellationResult;
+    }
+
+    /**
+     * Set the EnumActionResult that will be returned to vanilla if the event is cancelled, instead of calling the relevant
+     * method of the event.
+     * Note that this only has an effect on {@link RightClickBlock}, {@link RightClickItem}, {@link EntityInteract}, and {@link EntityInteractSpecific}.
+     */
+    public void setCancellationResult(EnumActionResult result)
+    {
+        this.cancellationResult = result;
     }
 
 }

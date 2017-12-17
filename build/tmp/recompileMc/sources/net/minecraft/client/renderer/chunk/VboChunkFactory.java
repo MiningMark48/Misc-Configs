@@ -8,8 +8,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class VboChunkFactory implements IRenderChunkFactory
 {
-    public RenderChunk create(World p_189565_1_, RenderGlobal p_189565_2_, int p_189565_3_)
+    public RenderChunk create(World worldIn, RenderGlobal renderGlobalIn, int index)
     {
-        return new RenderChunk(p_189565_1_, p_189565_2_, p_189565_3_);
+        return new RenderChunk(worldIn, renderGlobalIn, index);
     }
 }

@@ -17,11 +17,13 @@ import net.minecraft.world.storage.loot.conditions.LootCondition;
 public class LootingEnchantBonus extends LootFunction
 {
     private final RandomValueRange count;
+    private final int limit;
 
-    public LootingEnchantBonus(LootCondition[] conditionsIn, RandomValueRange randomRange)
+    public LootingEnchantBonus(LootCondition[] conditions, RandomValueRange countIn, int limitIn)
     {
-        super(conditionsIn);
-        this.count = randomRange;
+        super(conditions);
+        this.count = countIn;
+        this.limit = limitIn;
     }
 
     public ItemStack apply(ItemStack stack, Random rand, LootContext context)
@@ -30,7 +32,7 @@ public class LootingEnchantBonus extends LootFunction
 
         if (entity instanceof EntityLivingBase)
         {
-            int i = EnchantmentHelper.getLootingModifier((EntityLivingBase)entity);
+            int i = context.getLootingModifier();
 
             if (i == 0)
             {
@@ -38,7 +40,12 @@ public class LootingEnchantBonus extends LootFunction
             }
 
             float f = (float)i * this.count.generateFloat(rand);
-            stack.stackSize += Math.round(f);
+            stack.grow(Math.round(f));
+
+            if (this.limit != 0 && stack.getCount() > this.limit)
+            {
+                stack.setCount(this.limit);
+            }
         }
 
         return stack;
@@ -54,11 +61,17 @@ public class LootingEnchantBonus extends LootFunction
             public void serialize(JsonObject object, LootingEnchantBonus functionClazz, JsonSerializationContext serializationContext)
             {
                 object.add("count", serializationContext.serialize(functionClazz.count));
+
+                if (functionClazz.limit > 0)
+                {
+                    object.add("limit", serializationContext.serialize(Integer.valueOf(functionClazz.limit)));
+                }
             }
 
             public LootingEnchantBonus deserialize(JsonObject object, JsonDeserializationContext deserializationContext, LootCondition[] conditionsIn)
             {
-                return new LootingEnchantBonus(conditionsIn, (RandomValueRange)JsonUtils.deserializeClass(object, "count", deserializationContext, RandomValueRange.class));
+                int i = JsonUtils.getInt(object, "limit", 0);
+                return new LootingEnchantBonus(conditionsIn, (RandomValueRange)JsonUtils.deserializeClass(object, "count", deserializationContext, RandomValueRange.class), i);
             }
         }
 }

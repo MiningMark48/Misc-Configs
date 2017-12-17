@@ -77,7 +77,7 @@ public class ConfigurationHandler {
 
         //Window Name
         setWindowName = configuration.getBoolean(Translate.translateToLocal("config.setWindowName.title"), Translate.translateToLocal("config.category.windowName.title"), false, Translate.translateToLocal("config.setWindowName.desc"));
-        windowName = configuration.getString(Translate.translateToLocal("config.windowName.title"), Translate.translateToLocal("config.category.windowName.title"), new String(Translate.translateToLocal("config.windowName.default")), Translate.translateToLocal("config.windowName.desc"));
+        windowName = configuration.getString(Translate.translateToLocal("config.windowName.title"), Translate.translateToLocal("config.category.windowName.title"), Translate.translateToLocal("config.windowName.default"), Translate.translateToLocal("config.windowName.desc"));
 
 
         if (configuration.hasChanged()){

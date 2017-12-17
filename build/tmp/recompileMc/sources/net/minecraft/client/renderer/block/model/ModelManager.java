@@ -26,7 +26,7 @@ public class ModelManager implements IResourceManagerReloadListener
     {
         net.minecraftforge.client.model.ModelLoader modelbakery = new net.minecraftforge.client.model.ModelLoader(resourceManager, this.texMap, this.modelProvider);
         this.modelRegistry = modelbakery.setupModelRegistry();
-        this.defaultModel = (IBakedModel)this.modelRegistry.getObject(ModelBakery.MODEL_MISSING);
+        this.defaultModel = this.modelRegistry.getObject(ModelBakery.MODEL_MISSING);
         net.minecraftforge.client.ForgeHooksClient.onModelBake(this, this.modelRegistry, modelbakery);
         this.modelProvider.reloadModels();
     }
@@ -39,7 +39,7 @@ public class ModelManager implements IResourceManagerReloadListener
         }
         else
         {
-            IBakedModel ibakedmodel = (IBakedModel)this.modelRegistry.getObject(modelLocation);
+            IBakedModel ibakedmodel = this.modelRegistry.getObject(modelLocation);
             return ibakedmodel == null ? this.defaultModel : ibakedmodel;
         }
     }

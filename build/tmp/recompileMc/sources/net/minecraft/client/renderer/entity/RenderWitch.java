@@ -19,12 +19,17 @@ public class RenderWitch extends RenderLiving<EntityWitch>
         this.addLayer(new LayerHeldItemWitch(this));
     }
 
+    public ModelWitch getMainModel()
+    {
+        return (ModelWitch)super.getMainModel();
+    }
+
     /**
      * Renders the desired {@code T} type Entity.
      */
     public void doRender(EntityWitch entity, double x, double y, double z, float entityYaw, float partialTicks)
     {
-        ((ModelWitch)this.mainModel).holdingItem = entity.getHeldItemMainhand() != null;
+        ((ModelWitch)this.mainModel).holdingItem = !entity.getHeldItemMainhand().isEmpty();
         super.doRender(entity, x, y, z, entityYaw, partialTicks);
     }
 
@@ -47,6 +52,6 @@ public class RenderWitch extends RenderLiving<EntityWitch>
     protected void preRenderCallback(EntityWitch entitylivingbaseIn, float partialTickTime)
     {
         float f = 0.9375F;
-        GlStateManager.scale(f, f, f);
+        GlStateManager.scale(0.9375F, 0.9375F, 0.9375F);
     }
 }

@@ -5,12 +5,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.IllegalFormatException;
 import java.util.Map;
 import java.util.regex.Pattern;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 
 public class LanguageMap
@@ -20,14 +20,14 @@ public class LanguageMap
     /** A Splitter that splits a string on the first "=".  For example, "a=b=c" would split into ["a", "b=c"]. */
     private static final Splitter EQUAL_SIGN_SPLITTER = Splitter.on('=').limit(2);
     /** Is the private singleton instance of StringTranslate. */
-    private static LanguageMap instance = new LanguageMap();
+    private static final LanguageMap instance = new LanguageMap();
     private final Map<String, String> languageList = Maps.<String, String>newHashMap();
     /** The time, in milliseconds since epoch, that this instance was last updated */
     private long lastUpdateTimeInMilliseconds;
 
     public LanguageMap()
     {
-        InputStream inputstream = LanguageMap.class.getResourceAsStream("/assets/minecraft/lang/en_US.lang");
+        InputStream inputstream = LanguageMap.class.getResourceAsStream("/assets/minecraft/lang/en_us.lang");
         inject(this, inputstream);
     }
 
@@ -51,9 +51,9 @@ public class LanguageMap
             inputstream = net.minecraftforge.fml.common.FMLCommonHandler.instance().loadLanguage(table, inputstream);
             if (inputstream == null) return table;
 
-            for (String s : IOUtils.readLines(inputstream, Charsets.UTF_8))
+            for (String s : IOUtils.readLines(inputstream, StandardCharsets.UTF_8))
             {
-                if (!s.isEmpty() && s.charAt(0) != 35)
+                if (!s.isEmpty() && s.charAt(0) != '#')
                 {
                     String[] astring = (String[])Iterables.toArray(EQUAL_SIGN_SPLITTER.split(s), String.class);
 
@@ -126,7 +126,7 @@ public class LanguageMap
      */
     private String tryTranslateKey(String key)
     {
-        String s = (String)this.languageList.get(key);
+        String s = this.languageList.get(key);
         return s == null ? key : s;
     }
 

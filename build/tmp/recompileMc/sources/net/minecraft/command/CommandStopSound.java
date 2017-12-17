@@ -17,7 +17,7 @@ public class CommandStopSound extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "stopsound";
     }
@@ -33,7 +33,7 @@ public class CommandStopSound extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.stopsound.usage";
     }
@@ -88,13 +88,27 @@ public class CommandStopSound extends CommandBase
         }
         else
         {
-            throw new WrongUsageException(this.getCommandUsage(sender), new Object[0]);
+            throw new WrongUsageException(this.getUsage(sender), new Object[0]);
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length == 2 ? getListOfStringsMatchingLastWord(args, SoundCategory.getSoundCategoryNames()) : (args.length == 3 ? getListOfStringsMatchingLastWord(args, SoundEvent.REGISTRY.getKeys()) : Collections.<String>emptyList()));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else if (args.length == 2)
+        {
+            return getListOfStringsMatchingLastWord(args, SoundCategory.getSoundCategoryNames());
+        }
+        else
+        {
+            return args.length == 3 ? getListOfStringsMatchingLastWord(args, SoundEvent.REGISTRY.getKeys()) : Collections.emptyList();
+        }
     }
 
     /**

@@ -1,13 +1,8 @@
 package net.minecraft.network.rcon;
 
-import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -32,17 +27,9 @@ public class RConConsoleSource implements ICommandSender
     }
 
     /**
-     * Get the formatted ChatComponent that will be used for the sender's username in chat
-     */
-    public ITextComponent getDisplayName()
-    {
-        return new TextComponentString(this.getName());
-    }
-
-    /**
      * Send a chat message to the CommandSender
      */
-    public void addChatMessage(ITextComponent component)
+    public void sendMessage(ITextComponent component)
     {
         this.buffer.append(component.getUnformattedText());
     }
@@ -50,27 +37,9 @@ public class RConConsoleSource implements ICommandSender
     /**
      * Returns {@code true} if the CommandSender is allowed to execute the command, {@code false} if not
      */
-    public boolean canCommandSenderUseCommand(int permLevel, String commandName)
+    public boolean canUseCommand(int permLevel, String commandName)
     {
         return true;
-    }
-
-    /**
-     * Get the position in the world. <b>{@code null} is not allowed!</b> If you are not an entity in the world, return
-     * the coordinates 0, 0, 0
-     */
-    public BlockPos getPosition()
-    {
-        return BlockPos.ORIGIN;
-    }
-
-    /**
-     * Get the position vector. <b>{@code null} is not allowed!</b> If you are not an entity in the world, return 0.0D,
-     * 0.0D, 0.0D
-     */
-    public Vec3d getPositionVector()
-    {
-        return Vec3d.ZERO;
     }
 
     /**
@@ -83,23 +52,11 @@ public class RConConsoleSource implements ICommandSender
     }
 
     /**
-     * Returns the entity associated with the command sender. MAY BE NULL!
-     */
-    public Entity getCommandSenderEntity()
-    {
-        return null;
-    }
-
-    /**
      * Returns true if the command sender should be sent feedback about executed commands
      */
     public boolean sendCommandFeedback()
     {
         return true;
-    }
-
-    public void setCommandStat(CommandResultStats.Type type, int amount)
-    {
     }
 
     /**

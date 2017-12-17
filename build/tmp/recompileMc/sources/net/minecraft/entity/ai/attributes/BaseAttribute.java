@@ -9,9 +9,9 @@ public abstract class BaseAttribute implements IAttribute
     private final double defaultValue;
     private boolean shouldWatch;
 
-    protected BaseAttribute(@Nullable IAttribute p_i45892_1_, String unlocalizedNameIn, double defaultValueIn)
+    protected BaseAttribute(@Nullable IAttribute parentIn, String unlocalizedNameIn, double defaultValueIn)
     {
-        this.parent = p_i45892_1_;
+        this.parent = parentIn;
         this.unlocalizedName = unlocalizedNameIn;
         this.defaultValue = defaultValueIn;
 
@@ -21,7 +21,7 @@ public abstract class BaseAttribute implements IAttribute
         }
     }
 
-    public String getAttributeUnlocalizedName()
+    public String getName()
     {
         return this.unlocalizedName;
     }
@@ -55,6 +55,6 @@ public abstract class BaseAttribute implements IAttribute
 
     public boolean equals(Object p_equals_1_)
     {
-        return p_equals_1_ instanceof IAttribute && this.unlocalizedName.equals(((IAttribute)p_equals_1_).getAttributeUnlocalizedName());
+        return p_equals_1_ instanceof IAttribute && this.unlocalizedName.equals(((IAttribute)p_equals_1_).getName());
     }
 }

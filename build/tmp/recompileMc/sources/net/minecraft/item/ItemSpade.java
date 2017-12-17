@@ -17,7 +17,7 @@ import net.minecraft.world.World;
 
 public class ItemSpade extends ItemTool
 {
-    private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet(new Block[] {Blocks.CLAY, Blocks.DIRT, Blocks.FARMLAND, Blocks.GRASS, Blocks.GRAVEL, Blocks.MYCELIUM, Blocks.SAND, Blocks.SNOW, Blocks.SNOW_LAYER, Blocks.SOUL_SAND, Blocks.GRASS_PATH});
+    private static final Set<Block> EFFECTIVE_ON = Sets.newHashSet(Blocks.CLAY, Blocks.DIRT, Blocks.FARMLAND, Blocks.GRASS, Blocks.GRAVEL, Blocks.MYCELIUM, Blocks.SAND, Blocks.SNOW, Blocks.SNOW_LAYER, Blocks.SOUL_SAND, Blocks.GRASS_PATH, Blocks.CONCRETE_POWDER);
 
     public ItemSpade(Item.ToolMaterial material)
     {
@@ -30,15 +30,25 @@ public class ItemSpade extends ItemTool
     public boolean canHarvestBlock(IBlockState blockIn)
     {
         Block block = blockIn.getBlock();
-        return block == Blocks.SNOW_LAYER ? true : block == Blocks.SNOW;
+
+        if (block == Blocks.SNOW_LAYER)
+        {
+            return true;
+        }
+        else
+        {
+            return block == Blocks.SNOW;
+        }
     }
 
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        if (!playerIn.canPlayerEdit(pos.offset(facing), facing, stack))
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (!player.canPlayerEdit(pos.offset(facing), facing, itemstack))
         {
             return EnumActionResult.FAIL;
         }
@@ -50,12 +60,12 @@ public class ItemSpade extends ItemTool
             if (facing != EnumFacing.DOWN && worldIn.getBlockState(pos.up()).getMaterial() == Material.AIR && block == Blocks.GRASS)
             {
                 IBlockState iblockstate1 = Blocks.GRASS_PATH.getDefaultState();
-                worldIn.playSound(playerIn, pos, SoundEvents.ITEM_SHOVEL_FLATTEN, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                worldIn.playSound(player, pos, SoundEvents.ITEM_SHOVEL_FLATTEN, SoundCategory.BLOCKS, 1.0F, 1.0F);
 
                 if (!worldIn.isRemote)
                 {
                     worldIn.setBlockState(pos, iblockstate1, 11);
-                    stack.damageItem(1, playerIn);
+                    itemstack.damageItem(1, player);
                 }
 
                 return EnumActionResult.SUCCESS;

@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.items;
 
 import net.minecraft.block.Block;
@@ -12,6 +31,9 @@ import java.lang.ref.WeakReference;
 
 import com.google.common.base.Objects;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest> implements IItemHandlerModifiable
 {
     // Dummy cache value to signify that we have checked and definitely found no adjacent chests
@@ -20,7 +42,7 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
     private final TileEntityChest mainChest;
     private final int hashCode;
 
-    public VanillaDoubleChestItemHandler(TileEntityChest mainChest, TileEntityChest other, boolean mainChestIsUpper)
+    public VanillaDoubleChestItemHandler(@Nullable TileEntityChest mainChest, @Nullable TileEntityChest other, boolean mainChestIsUpper)
     {
         super(other);
         this.mainChest = mainChest;
@@ -28,6 +50,7 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
         hashCode = Objects.hashCode(mainChestIsUpper ? mainChest : other) * 31 + Objects.hashCode(!mainChestIsUpper ? mainChest : other);
     }
 
+    @Nullable
     public static VanillaDoubleChestItemHandler get(TileEntityChest chest)
     {
         World world = chest.getWorld();
@@ -60,6 +83,7 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
         return NO_ADJACENT_CHESTS_INSTANCE; //All alone
     }
 
+    @Nullable
     public TileEntityChest getChest(boolean accessingUpper)
     {
         if (accessingUpper == mainChestIsUpper)
@@ -70,6 +94,7 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
         }
     }
 
+    @Nullable
     private TileEntityChest getOtherChest()
     {
         TileEntityChest tileEntityChest = get();
@@ -83,16 +108,17 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
     }
 
     @Override
+    @Nonnull
     public ItemStack getStackInSlot(int slot)
     {
         boolean accessingUpperChest = slot < 27;
         int targetSlot = accessingUpperChest ? slot : slot - 27;
         TileEntityChest chest = getChest(accessingUpperChest);
-        return chest != null ? chest.getStackInSlot(targetSlot) : null;
+        return chest != null ? chest.getStackInSlot(targetSlot) : ItemStack.EMPTY;
     }
 
     @Override
-    public void setStackInSlot(int slot, ItemStack stack)
+    public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {
         boolean accessingUpperChest = slot < 27;
         int targetSlot = accessingUpperChest ? slot : slot - 27;
@@ -105,24 +131,60 @@ public class VanillaDoubleChestItemHandler extends WeakReference<TileEntityChest
                 ((IItemHandlerModifiable) singleHandler).setStackInSlot(targetSlot, stack);
             }
         }
+
+        chest = getChest(!accessingUpperChest);
+        if (chest != null)
+            chest.markDirty();
     }
 
     @Override
-    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)
+    @Nonnull
+    public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate)
     {
         boolean accessingUpperChest = slot < 27;
         int targetSlot = accessingUpperChest ? slot : slot - 27;
         TileEntityChest chest = getChest(accessingUpperChest);
-        return chest != null ? chest.getSingleChestHandler().insertItem(targetSlot, stack, simulate) : stack;
+        if (chest == null)
+            return stack;
+
+        int starting = stack.getCount();
+        ItemStack ret = chest.getSingleChestHandler().insertItem(targetSlot, stack, simulate);
+        if (ret.getCount() != starting && !simulate)
+        {
+            chest = getChest(!accessingUpperChest);
+            if (chest != null)
+                chest.markDirty();
+        }
+
+        return ret;
     }
 
     @Override
+    @Nonnull
     public ItemStack extractItem(int slot, int amount, boolean simulate)
     {
         boolean accessingUpperChest = slot < 27;
         int targetSlot = accessingUpperChest ? slot : slot - 27;
         TileEntityChest chest = getChest(accessingUpperChest);
-        return chest != null ? chest.getSingleChestHandler().extractItem(targetSlot, amount, simulate) : null;
+        if (chest == null)
+            return ItemStack.EMPTY;
+
+        ItemStack ret = chest.getSingleChestHandler().extractItem(targetSlot, amount, simulate);
+        if (!ret.isEmpty() && !simulate)
+        {
+            chest = getChest(!accessingUpperChest);
+            if (chest != null)
+                chest.markDirty();
+        }
+
+        return ret;
+    }
+
+    @Override
+    public int getSlotLimit(int slot)
+    {
+        boolean accessingUpperChest = slot < 27;
+        return getChest(accessingUpperChest).getInventoryStackLimit();
     }
 
     @Override

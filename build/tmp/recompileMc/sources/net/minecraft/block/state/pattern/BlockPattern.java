@@ -1,6 +1,6 @@
 package net.minecraft.block.state.pattern;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
@@ -164,15 +164,15 @@ public class BlockPattern
             private final int height;
             private final int depth;
 
-            public PatternHelper(BlockPos posIn, EnumFacing fingerIn, EnumFacing thumbIn, LoadingCache<BlockPos, BlockWorldState> lcacheIn, int p_i46378_5_, int p_i46378_6_, int p_i46378_7_)
+            public PatternHelper(BlockPos posIn, EnumFacing fingerIn, EnumFacing thumbIn, LoadingCache<BlockPos, BlockWorldState> lcacheIn, int widthIn, int heightIn, int depthIn)
             {
                 this.frontTopLeft = posIn;
                 this.forwards = fingerIn;
                 this.up = thumbIn;
                 this.lcache = lcacheIn;
-                this.width = p_i46378_5_;
-                this.height = p_i46378_6_;
-                this.depth = p_i46378_7_;
+                this.width = widthIn;
+                this.height = heightIn;
+                this.depth = depthIn;
             }
 
             /**
@@ -205,12 +205,12 @@ public class BlockPattern
 
             public BlockWorldState translateOffset(int palmOffset, int thumbOffset, int fingerOffset)
             {
-                return (BlockWorldState)this.lcache.getUnchecked(BlockPattern.translateOffset(this.frontTopLeft, this.getForwards(), this.getUp(), palmOffset, thumbOffset, fingerOffset));
+                return this.lcache.getUnchecked(BlockPattern.translateOffset(this.frontTopLeft, this.getForwards(), this.getUp(), palmOffset, thumbOffset, fingerOffset));
             }
 
             public String toString()
             {
-                return Objects.toStringHelper(this).add("up", this.up).add("forwards", this.forwards).add("frontTopLeft", this.frontTopLeft).toString();
+                return MoreObjects.toStringHelper(this).add("up", this.up).add("forwards", this.forwards).add("frontTopLeft", this.frontTopLeft).toString();
             }
         }
 }

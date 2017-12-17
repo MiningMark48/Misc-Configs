@@ -14,7 +14,7 @@ public class DataFixer implements IDataFixer
     private static final Logger LOGGER = LogManager.getLogger();
     private final Map<IFixType, List<IDataWalker>> walkerMap = Maps.<IFixType, List<IDataWalker>>newHashMap();
     private final Map<IFixType, List<IFixableData>> fixMap = Maps.<IFixType, List<IFixableData>>newHashMap();
-    private final int version;
+    public final int version;
 
     public DataFixer(int versionIn)
     {
@@ -24,7 +24,7 @@ public class DataFixer implements IDataFixer
     public NBTTagCompound process(IFixType type, NBTTagCompound compound)
     {
         int i = compound.hasKey("DataVersion", 99) ? compound.getInteger("DataVersion") : -1;
-        return i >= 184 ? compound : this.process(type, compound, i);
+        return i >= 1343 ? compound : this.process(type, compound, i);
     }
 
     public NBTTagCompound process(IFixType type, NBTTagCompound compound, int versionIn)
@@ -46,7 +46,7 @@ public class DataFixer implements IDataFixer
         {
             for (int i = 0; i < list.size(); ++i)
             {
-                IFixableData ifixabledata = (IFixableData)list.get(i);
+                IFixableData ifixabledata = list.get(i);
 
                 if (ifixabledata.getFixVersion() > versionIn)
                 {
@@ -75,10 +75,13 @@ public class DataFixer implements IDataFixer
 
     public void registerWalker(FixTypes type, IDataWalker walker)
     {
-        this.registerWalkerAdd(type, walker);
+        this.registerVanillaWalker(type, walker);
     }
 
-    public void registerWalkerAdd(IFixType type, IDataWalker walker)
+    /**
+     * Do not invoke this method, use registerWalker instead. It is expected to be removed in future versions.
+     */
+    public void registerVanillaWalker(IFixType type, IDataWalker walker)
     {
         this.getTypeList(this.walkerMap, type).add(walker);
     }
@@ -90,7 +93,7 @@ public class DataFixer implements IDataFixer
 
         if (i > this.version)
         {
-            LOGGER.warn("Ignored fix registered for version: {} as the DataVersion of the game is: {}", new Object[] {Integer.valueOf(i), Integer.valueOf(this.version)});
+            LOGGER.warn("Ignored fix registered for version: {} as the DataVersion of the game is: {}", Integer.valueOf(i), Integer.valueOf(this.version));
         }
         else
         {

@@ -18,7 +18,6 @@ import net.minecraft.network.play.server.SPacketStatistics;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.IJsonSerializable;
 import net.minecraft.util.TupleIntJsonSerializable;
-import net.minecraft.util.text.TextComponentTranslation;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +29,6 @@ public class StatisticsManagerServer extends StatisticsManager
     private final File statsFile;
     private final Set<StatBase> dirty = Sets.<StatBase>newHashSet();
     private int lastStatRequest = -300;
-    private boolean hasUnsentAchievement = false;
 
     public StatisticsManagerServer(MinecraftServer serverIn, File statsFileIn)
     {
@@ -49,11 +47,11 @@ public class StatisticsManagerServer extends StatisticsManager
             }
             catch (IOException ioexception)
             {
-                LOGGER.error((String)("Couldn\'t read statistics file " + this.statsFile), (Throwable)ioexception);
+                LOGGER.error("Couldn't read statistics file {}", this.statsFile, ioexception);
             }
             catch (JsonParseException jsonparseexception)
             {
-                LOGGER.error((String)("Couldn\'t parse statistics file " + this.statsFile), (Throwable)jsonparseexception);
+                LOGGER.error("Couldn't parse statistics file {}", this.statsFile, jsonparseexception);
             }
         }
     }
@@ -66,7 +64,7 @@ public class StatisticsManagerServer extends StatisticsManager
         }
         catch (IOException ioexception)
         {
-            LOGGER.error((String)"Couldn\'t save stats", (Throwable)ioexception);
+            LOGGER.error("Couldn't save stats", (Throwable)ioexception);
         }
     }
 
@@ -75,36 +73,14 @@ public class StatisticsManagerServer extends StatisticsManager
      */
     public void unlockAchievement(EntityPlayer playerIn, StatBase statIn, int p_150873_3_)
     {
-        int i = statIn.isAchievement() ? this.readStat(statIn) : 0;
         super.unlockAchievement(playerIn, statIn, p_150873_3_);
         this.dirty.add(statIn);
-
-        if (statIn.isAchievement() && i == 0 && p_150873_3_ > 0)
-        {
-            this.hasUnsentAchievement = true;
-
-            if (this.mcServer.isAnnouncingPlayerAchievements())
-            {
-                this.mcServer.getPlayerList().sendChatMsg(new TextComponentTranslation("chat.type.achievement", new Object[] {playerIn.getDisplayName(), statIn.createChatComponent()}));
-            }
-        }
-
-        if (statIn.isAchievement() && i > 0 && p_150873_3_ == 0)
-        {
-            this.hasUnsentAchievement = true;
-
-            if (this.mcServer.isAnnouncingPlayerAchievements())
-            {
-                this.mcServer.getPlayerList().sendChatMsg(new TextComponentTranslation("chat.type.achievement.taken", new Object[] {playerIn.getDisplayName(), statIn.createChatComponent()}));
-            }
-        }
     }
 
-    public Set<StatBase> getDirty()
+    private Set<StatBase> getDirty()
     {
         Set<StatBase> set = Sets.newHashSet(this.dirty);
         this.dirty.clear();
-        this.hasUnsentAchievement = false;
         return set;
     }
 
@@ -123,7 +99,7 @@ public class StatisticsManagerServer extends StatisticsManager
 
             for (Entry<String, JsonElement> entry : jsonobject.entrySet())
             {
-                StatBase statbase = StatList.getOneShotStat((String)entry.getKey());
+                StatBase statbase = StatList.getOneShotStat(entry.getKey());
 
                 if (statbase != null)
                 {
@@ -146,14 +122,14 @@ public class StatisticsManagerServer extends StatisticsManager
                         {
                             try
                             {
-                                Constructor <? extends IJsonSerializable > constructor = statbase.getSerializableClazz().getConstructor(new Class[0]);
-                                IJsonSerializable ijsonserializable = (IJsonSerializable)constructor.newInstance(new Object[0]);
+                                Constructor <? extends IJsonSerializable > constructor = statbase.getSerializableClazz().getConstructor();
+                                IJsonSerializable ijsonserializable = constructor.newInstance();
                                 ijsonserializable.fromJson(jsonobject1.get("progress"));
                                 tupleintjsonserializable.setJsonSerializableValue(ijsonserializable);
                             }
                             catch (Throwable throwable)
                             {
-                                LOGGER.warn("Invalid statistic progress in " + this.statsFile, throwable);
+                                LOGGER.warn("Invalid statistic progress in {}", this.statsFile, throwable);
                             }
                         }
                     }
@@ -162,7 +138,7 @@ public class StatisticsManagerServer extends StatisticsManager
                 }
                 else
                 {
-                    LOGGER.warn("Invalid statistic in " + this.statsFile + ": Don\'t know what " + (String)entry.getKey() + " is");
+                    LOGGER.warn("Invalid statistic in {}: Don't know what {} is", this.statsFile, entry.getKey());
                 }
             }
 
@@ -179,7 +155,7 @@ public class StatisticsManagerServer extends StatisticsManager
             if (((TupleIntJsonSerializable)entry.getValue()).getJsonSerializableValue() != null)
             {
                 JsonObject jsonobject1 = new JsonObject();
-                jsonobject1.addProperty("value", (Number)Integer.valueOf(((TupleIntJsonSerializable)entry.getValue()).getIntegerValue()));
+                jsonobject1.addProperty("value", Integer.valueOf(((TupleIntJsonSerializable)entry.getValue()).getIntegerValue()));
 
                 try
                 {
@@ -187,14 +163,14 @@ public class StatisticsManagerServer extends StatisticsManager
                 }
                 catch (Throwable throwable)
                 {
-                    LOGGER.warn("Couldn\'t save statistic " + ((StatBase)entry.getKey()).getStatName() + ": error serializing progress", throwable);
+                    LOGGER.warn("Couldn't save statistic {}: error serializing progress", ((StatBase)entry.getKey()).getStatName(), throwable);
                 }
 
-                jsonobject.add(((StatBase)entry.getKey()).statId, jsonobject1);
+                jsonobject.add((entry.getKey()).statId, jsonobject1);
             }
             else
             {
-                jsonobject.addProperty(((StatBase)entry.getKey()).statId, (Number)Integer.valueOf(((TupleIntJsonSerializable)entry.getValue()).getIntegerValue()));
+                jsonobject.addProperty((entry.getKey()).statId, Integer.valueOf(((TupleIntJsonSerializable)entry.getValue()).getIntegerValue()));
             }
         }
 
@@ -203,10 +179,7 @@ public class StatisticsManagerServer extends StatisticsManager
 
     public void markAllDirty()
     {
-        for (StatBase statbase : this.statsData.keySet())
-        {
-            this.dirty.add(statbase);
-        }
+        this.dirty.addAll(this.statsData.keySet());
     }
 
     public void sendStats(EntityPlayerMP player)
@@ -214,7 +187,7 @@ public class StatisticsManagerServer extends StatisticsManager
         int i = this.mcServer.getTickCounter();
         Map<StatBase, Integer> map = Maps.<StatBase, Integer>newHashMap();
 
-        if (this.hasUnsentAchievement || i - this.lastStatRequest > 300)
+        if (i - this.lastStatRequest > 300)
         {
             this.lastStatRequest = i;
 
@@ -225,26 +198,5 @@ public class StatisticsManagerServer extends StatisticsManager
         }
 
         player.connection.sendPacket(new SPacketStatistics(map));
-    }
-
-    public void sendAchievements(EntityPlayerMP player)
-    {
-        Map<StatBase, Integer> map = Maps.<StatBase, Integer>newHashMap();
-
-        for (Achievement achievement : AchievementList.ACHIEVEMENTS)
-        {
-            if (this.hasAchievementUnlocked(achievement))
-            {
-                map.put(achievement, Integer.valueOf(this.readStat(achievement)));
-                this.dirty.remove(achievement);
-            }
-        }
-
-        player.connection.sendPacket(new SPacketStatistics(map));
-    }
-
-    public boolean hasUnsentAchievement()
-    {
-        return this.hasUnsentAchievement;
     }
 }

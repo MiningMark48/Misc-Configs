@@ -15,8 +15,8 @@ import net.minecraft.client.gui.spectator.PlayerMenuObject;
 import net.minecraft.client.gui.spectator.SpectatorMenu;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.WorldSettings;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.GameType;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -34,16 +34,16 @@ public class TeleportToPlayer implements ISpectatorMenuView, ISpectatorMenuObjec
 
     public TeleportToPlayer()
     {
-        this(PROFILE_ORDER.<NetworkPlayerInfo>sortedCopy(Minecraft.getMinecraft().getConnection().getPlayerInfoMap()));
+        this(PROFILE_ORDER.sortedCopy(Minecraft.getMinecraft().getConnection().getPlayerInfoMap()));
     }
 
-    public TeleportToPlayer(Collection<NetworkPlayerInfo> p_i45493_1_)
+    public TeleportToPlayer(Collection<NetworkPlayerInfo> profiles)
     {
         this.items = Lists.<ISpectatorMenuObject>newArrayList();
 
-        for (NetworkPlayerInfo networkplayerinfo : PROFILE_ORDER.sortedCopy(p_i45493_1_))
+        for (NetworkPlayerInfo networkplayerinfo : PROFILE_ORDER.sortedCopy(profiles))
         {
-            if (networkplayerinfo.getGameType() != WorldSettings.GameType.SPECTATOR)
+            if (networkplayerinfo.getGameType() != GameType.SPECTATOR)
             {
                 this.items.add(new PlayerMenuObject(networkplayerinfo.getGameProfile()));
             }
@@ -57,7 +57,7 @@ public class TeleportToPlayer implements ISpectatorMenuView, ISpectatorMenuObjec
 
     public ITextComponent getPrompt()
     {
-        return new TextComponentString("Select a player to teleport to");
+        return new TextComponentTranslation("spectatorMenu.teleport.prompt", new Object[0]);
     }
 
     public void selectItem(SpectatorMenu menu)
@@ -67,10 +67,10 @@ public class TeleportToPlayer implements ISpectatorMenuView, ISpectatorMenuObjec
 
     public ITextComponent getSpectatorName()
     {
-        return new TextComponentString("Teleport to player");
+        return new TextComponentTranslation("spectatorMenu.teleport", new Object[0]);
     }
 
-    public void renderIcon(float p_178663_1_, int alpha)
+    public void renderIcon(float brightness, int alpha)
     {
         Minecraft.getMinecraft().getTextureManager().bindTexture(GuiSpectator.SPECTATOR_WIDGETS);
         Gui.drawModalRectWithCustomSizedTexture(0, 0, 0.0F, 0.0F, 16, 16, 256.0F, 256.0F);

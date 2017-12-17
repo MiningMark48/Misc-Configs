@@ -93,14 +93,21 @@ public class BlockRailDetector extends BlockRailBase
 
     public int getStrongPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side)
     {
-        return !((Boolean)blockState.getValue(POWERED)).booleanValue() ? 0 : (side == EnumFacing.UP ? 15 : 0);
+        if (!((Boolean)blockState.getValue(POWERED)).booleanValue())
+        {
+            return 0;
+        }
+        else
+        {
+            return side == EnumFacing.UP ? 15 : 0;
+        }
     }
 
     private void updatePoweredState(World worldIn, BlockPos pos, IBlockState state)
     {
         boolean flag = ((Boolean)state.getValue(POWERED)).booleanValue();
         boolean flag1 = false;
-        List<EntityMinecart> list = this.<EntityMinecart>findMinecarts(worldIn, pos, EntityMinecart.class, new Predicate[0]);
+        List<EntityMinecart> list = this.<EntityMinecart>findMinecarts(worldIn, pos, EntityMinecart.class);
 
         if (!list.isEmpty())
         {
@@ -111,8 +118,8 @@ public class BlockRailDetector extends BlockRailBase
         {
             worldIn.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(true)), 3);
             this.updateConnectedRails(worldIn, pos, state, true);
-            worldIn.notifyNeighborsOfStateChange(pos, this);
-            worldIn.notifyNeighborsOfStateChange(pos.down(), this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
+            worldIn.notifyNeighborsOfStateChange(pos.down(), this, false);
             worldIn.markBlockRangeForRenderUpdate(pos, pos);
         }
 
@@ -120,8 +127,8 @@ public class BlockRailDetector extends BlockRailBase
         {
             worldIn.setBlockState(pos, state.withProperty(POWERED, Boolean.valueOf(false)), 3);
             this.updateConnectedRails(worldIn, pos, state, false);
-            worldIn.notifyNeighborsOfStateChange(pos, this);
-            worldIn.notifyNeighborsOfStateChange(pos.down(), this);
+            worldIn.notifyNeighborsOfStateChange(pos, this, false);
+            worldIn.notifyNeighborsOfStateChange(pos.down(), this, false);
             worldIn.markBlockRangeForRenderUpdate(pos, pos);
         }
 
@@ -133,7 +140,7 @@ public class BlockRailDetector extends BlockRailBase
         worldIn.updateComparatorOutputLevel(pos, this);
     }
 
-    protected void updateConnectedRails(World worldIn, BlockPos pos, IBlockState state, boolean p_185592_4_)
+    protected void updateConnectedRails(World worldIn, BlockPos pos, IBlockState state, boolean powered)
     {
         BlockRailBase.Rail blockrailbase$rail = new BlockRailBase.Rail(worldIn, pos, state);
 
@@ -143,11 +150,14 @@ public class BlockRailDetector extends BlockRailBase
 
             if (iblockstate != null)
             {
-                iblockstate.neighborChanged(worldIn, blockpos, iblockstate.getBlock());
+                iblockstate.neighborChanged(worldIn, blockpos, iblockstate.getBlock(), pos);
             }
         }
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         super.onBlockAdded(worldIn, pos, state);
@@ -168,14 +178,16 @@ public class BlockRailDetector extends BlockRailBase
     {
         if (((Boolean)blockState.getValue(POWERED)).booleanValue())
         {
-            List<EntityMinecartCommandBlock> list = this.<EntityMinecartCommandBlock>findMinecarts(worldIn, pos, EntityMinecartCommandBlock.class, new Predicate[0]);
+            List<EntityMinecart> carts = this.findMinecarts(worldIn, pos, EntityMinecart.class);
+            if (!carts.isEmpty() && carts.get(0).getComparatorLevel() > -1) return carts.get(0).getComparatorLevel();
+            List<EntityMinecartCommandBlock> list = this.<EntityMinecartCommandBlock>findMinecarts(worldIn, pos, EntityMinecartCommandBlock.class);
 
             if (!list.isEmpty())
             {
                 return ((EntityMinecartCommandBlock)list.get(0)).getCommandBlockLogic().getSuccessCount();
             }
 
-            List<EntityMinecart> list1 = this.<EntityMinecart>findMinecarts(worldIn, pos, EntityMinecart.class, new Predicate[] {EntitySelectors.HAS_INVENTORY});
+            List<EntityMinecart> list1 = this.<EntityMinecart>findMinecarts(worldIn, pos, EntityMinecart.class, EntitySelectors.HAS_INVENTORY);
 
             if (!list1.isEmpty())
             {

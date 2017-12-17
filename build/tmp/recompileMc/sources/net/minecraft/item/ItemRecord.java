@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockJukebox;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -38,7 +39,7 @@ public class ItemRecord extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
 
@@ -46,10 +47,11 @@ public class ItemRecord extends Item
         {
             if (!worldIn.isRemote)
             {
-                ((BlockJukebox)Blocks.JUKEBOX).insertRecord(worldIn, pos, iblockstate, stack);
+                ItemStack itemstack = player.getHeldItem(hand);
+                ((BlockJukebox)Blocks.JUKEBOX).insertRecord(worldIn, pos, iblockstate, itemstack);
                 worldIn.playEvent((EntityPlayer)null, 1010, pos, Item.getIdFromItem(this));
-                --stack.stackSize;
-                playerIn.addStat(StatList.RECORD_PLAYED);
+                itemstack.shrink(1);
+                player.addStat(StatList.RECORD_PLAYED);
             }
 
             return EnumActionResult.SUCCESS;
@@ -64,20 +66,9 @@ public class ItemRecord extends Item
      * allows items to add custom lines of information to the mouseover description
      */
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced)
+    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
     {
         tooltip.add(this.getRecordNameLocal());
-    }
-
-    /**
-     * Retrieves the resource location of the sound to play for this record.
-     *
-     * @param name The name of the record to play
-     * @return The resource location for the audio, null to use default.
-     */
-    public net.minecraft.util.ResourceLocation getRecordResource(String name)
-    {
-        return new net.minecraft.util.ResourceLocation(name);
     }
 
     @SideOnly(Side.CLIENT)
@@ -98,7 +89,7 @@ public class ItemRecord extends Item
     @SideOnly(Side.CLIENT)
     public static ItemRecord getBySound(SoundEvent soundIn)
     {
-        return (ItemRecord)RECORDS.get(soundIn);
+        return RECORDS.get(soundIn);
     }
 
     @SideOnly(Side.CLIENT)

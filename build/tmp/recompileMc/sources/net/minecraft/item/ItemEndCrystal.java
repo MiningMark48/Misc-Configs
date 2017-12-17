@@ -29,7 +29,7 @@ public class ItemEndCrystal extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
 
@@ -40,8 +40,9 @@ public class ItemEndCrystal extends Item
         else
         {
             BlockPos blockpos = pos.up();
+            ItemStack itemstack = player.getHeldItem(hand);
 
-            if (!playerIn.canPlayerEdit(blockpos, facing, stack))
+            if (!player.canPlayerEdit(blockpos, facing, itemstack))
             {
                 return EnumActionResult.FAIL;
             }
@@ -72,7 +73,7 @@ public class ItemEndCrystal extends Item
                         {
                             EntityEnderCrystal entityendercrystal = new EntityEnderCrystal(worldIn, (double)((float)pos.getX() + 0.5F), (double)(pos.getY() + 1), (double)((float)pos.getZ() + 0.5F));
                             entityendercrystal.setShowBottom(false);
-                            worldIn.spawnEntityInWorld(entityendercrystal);
+                            worldIn.spawnEntity(entityendercrystal);
 
                             if (worldIn.provider instanceof WorldProviderEnd)
                             {
@@ -81,7 +82,7 @@ public class ItemEndCrystal extends Item
                             }
                         }
 
-                        --stack.stackSize;
+                        itemstack.shrink(1);
                         return EnumActionResult.SUCCESS;
                     }
                 }
@@ -89,6 +90,14 @@ public class ItemEndCrystal extends Item
         }
     }
 
+    /**
+     * Returns true if this item has an enchantment glint. By default, this returns
+     * <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return
+     * true).
+     *  
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get
+     * the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
     @SideOnly(Side.CLIENT)
     public boolean hasEffect(ItemStack stack)
     {

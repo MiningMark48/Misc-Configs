@@ -16,9 +16,9 @@ import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
 
@@ -27,7 +27,7 @@ public class CommandSummon extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "summon";
     }
@@ -43,7 +43,7 @@ public class CommandSummon extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.summon.usage";
     }
@@ -62,9 +62,9 @@ public class CommandSummon extends CommandBase
             String s = args[0];
             BlockPos blockpos = sender.getPosition();
             Vec3d vec3d = sender.getPositionVector();
-            double d0 = vec3d.xCoord;
-            double d1 = vec3d.yCoord;
-            double d2 = vec3d.zCoord;
+            double d0 = vec3d.x;
+            double d1 = vec3d.y;
+            double d2 = vec3d.z;
 
             if (args.length >= 4)
             {
@@ -80,7 +80,7 @@ public class CommandSummon extends CommandBase
             {
                 throw new CommandException("commands.summon.outOfWorld", new Object[0]);
             }
-            else if ("LightningBolt".equals(s))
+            else if (EntityList.LIGHTNING_BOLT.equals(new ResourceLocation(s)))
             {
                 world.addWeatherEffect(new EntityLightningBolt(world, d0, d1, d2, false));
                 notifyCommandListener(sender, this, "commands.summon.success", new Object[0]);
@@ -92,11 +92,11 @@ public class CommandSummon extends CommandBase
 
                 if (args.length >= 5)
                 {
-                    ITextComponent itextcomponent = getChatComponentFromNthArg(sender, args, 4);
+                    String s1 = buildString(args, 4);
 
                     try
                     {
-                        nbttagcompound = JsonToNBT.getTagFromJson(itextcomponent.getUnformattedText());
+                        nbttagcompound = JsonToNBT.getTagFromJson(s1);
                         flag = true;
                     }
                     catch (NBTException nbtexception)
@@ -127,8 +127,18 @@ public class CommandSummon extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, EntityList.getEntityNameList()) : (args.length > 1 && args.length <= 4 ? getTabCompletionCoordinate(args, 1, pos) : Collections.<String>emptyList());
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, EntityList.getEntityNameList());
+        }
+        else
+        {
+            return args.length > 1 && args.length <= 4 ? getTabCompletionCoordinate(args, 1, targetPos) : Collections.emptyList();
+        }
     }
 }

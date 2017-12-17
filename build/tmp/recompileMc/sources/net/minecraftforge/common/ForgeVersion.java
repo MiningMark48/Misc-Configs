@@ -1,9 +1,24 @@
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.common;
+
 import static net.minecraftforge.common.ForgeVersion.Status.*;
 
 import java.io.InputStream;
@@ -18,6 +33,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -28,24 +45,30 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
 
+import javax.annotation.Nullable;
+
 public class ForgeVersion
 {
+    // This is Forge's Mod Id, used for the ForgeModContainer and resource locations
+    public static final String MOD_ID = "forge";
     //This number is incremented every time we remove deprecated code/major API changes, never reset
-    public static final int majorVersion    = 12;
+    public static final int majorVersion    = 14;
     //This number is incremented every minecraft release, never reset
-    public static final int minorVersion    = 17;
+    public static final int minorVersion    = 23;
     //This number is incremented every time a interface changes or new major feature is added, and reset every Minecraft version
-    public static final int revisionVersion = 0;
+    public static final int revisionVersion = 1;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
-    public static final int buildVersion    = 1976;
+    public static final int buildVersion    = 2564;
     // This is the minecraft version we're building for - used in various places in Forge/FML code
-    public static final String mcVersion = "1.9.4";
+    public static final String mcVersion = "1.12.2";
     // This is the MCP data version we're using
-    public static final String mcpVersion = "9.28";
+    public static final String mcpVersion = "9.42";
     @SuppressWarnings("unused")
     private static Status status = PENDING;
     @SuppressWarnings("unused")
     private static String target = null;
+
+    private static final Logger log = LogManager.getLogger("ForgeVersionCheck");
 
     public static int getMajorVersion()
     {
@@ -72,6 +95,7 @@ public class ForgeVersion
         return getResult(ForgeModContainer.getInstance()).status;
     }
 
+    @Nullable
     public static String getTarget()
     {
         CheckResult res = getResult(ForgeModContainer.getInstance());
@@ -138,15 +162,17 @@ public class ForgeVersion
     public static class CheckResult
     {
         public final Status status;
+        @Nullable
         public final ComparableVersion target;
         public final Map<ComparableVersion, String> changes;
+        @Nullable
         public final String url;
 
-        private CheckResult(Status status, ComparableVersion target, Map<ComparableVersion, String> changes, String url)
+        private CheckResult(Status status, @Nullable ComparableVersion target, @Nullable Map<ComparableVersion, String> changes, @Nullable String url)
         {
             this.status = status;
             this.target = target;
-            this.changes = changes == null ? null : Collections.unmodifiableMap(changes);
+            this.changes = changes == null ? Collections.<ComparableVersion, String>emptyMap() : Collections.unmodifiableMap(changes);
             this.url = url;
         }
     }
@@ -160,7 +186,7 @@ public class ForgeVersion
             {
                 if (!ForgeModContainer.getConfig().get(ForgeModContainer.VERSION_CHECK_CAT, "Global", true).getBoolean())
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "Global Forge version check system disabled, no further processing.");
+                    log.info("Global Forge version check system disabled, no further processing.");
                     return;
                 }
 
@@ -173,7 +199,7 @@ public class ForgeVersion
                     }
                     else
                     {
-                        FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Skipped version check", mod.getModId());
+                        log.info("[{}] Skipped version check", mod.getModId());
                     }
                 }
             }
@@ -182,7 +208,7 @@ public class ForgeVersion
             {
                 try
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Starting version check at %s", mod.getModId(), url.toString());
+                    log.info("[{}] Starting version check at {}", mod.getModId(), url.toString());
                     Status status = PENDING;
                     ComparableVersion target = null;
 
@@ -190,7 +216,7 @@ public class ForgeVersion
                     String data = new String(ByteStreams.toByteArray(con), "UTF-8");
                     con.close();
 
-                    FMLLog.log("ForgeVersionCheck", Level.DEBUG, "[%s] Received version check data:\n%s", mod.getModId(), data);
+                    log.debug("[{}] Received version check data:\n{}", mod.getModId(), data);
 
 
                     @SuppressWarnings("unchecked")
@@ -243,7 +269,7 @@ public class ForgeVersion
                     else
                         status = BETA;
 
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Found status: %s Target: %s", mod.getModId(), status, target);
+                    log.info("[{}] Found status: {} Target: {}", mod.getModId(), status, target);
 
                     Map<ComparableVersion, String> changes = new LinkedHashMap<ComparableVersion, String>();
                     @SuppressWarnings("unchecked")
@@ -272,7 +298,7 @@ public class ForgeVersion
                 }
                 catch (Exception e)
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.DEBUG, e, "Failed to process update information");
+                    log.debug("Failed to process update information", e);
                     status = FAILED;
                 }
             }

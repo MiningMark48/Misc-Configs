@@ -5,8 +5,8 @@ import java.util.Collection;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.math.Vec4b;
 import net.minecraft.world.storage.MapData;
+import net.minecraft.world.storage.MapDecoration;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -15,7 +15,7 @@ public class SPacketMaps implements Packet<INetHandlerPlayClient>
     private int mapId;
     private byte mapScale;
     private boolean trackingPosition;
-    private Vec4b[] icons;
+    private MapDecoration[] icons;
     private int minX;
     private int minZ;
     private int columns;
@@ -26,12 +26,12 @@ public class SPacketMaps implements Packet<INetHandlerPlayClient>
     {
     }
 
-    public SPacketMaps(int mapIdIn, byte mapScaleIn, boolean trackingPositionIn, Collection<Vec4b> iconsIn, byte[] p_i46937_5_, int minXIn, int minZIn, int columnsIn, int rowsIn)
+    public SPacketMaps(int mapIdIn, byte mapScaleIn, boolean trackingPositionIn, Collection<MapDecoration> iconsIn, byte[] p_i46937_5_, int minXIn, int minZIn, int columnsIn, int rowsIn)
     {
         this.mapId = mapIdIn;
         this.mapScale = mapScaleIn;
         this.trackingPosition = trackingPositionIn;
-        this.icons = (Vec4b[])iconsIn.toArray(new Vec4b[iconsIn.size()]);
+        this.icons = (MapDecoration[])iconsIn.toArray(new MapDecoration[iconsIn.size()]);
         this.minX = minXIn;
         this.minZ = minZIn;
         this.columns = columnsIn;
@@ -52,15 +52,15 @@ public class SPacketMaps implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.mapId = buf.readVarIntFromBuffer();
+        this.mapId = buf.readVarInt();
         this.mapScale = buf.readByte();
         this.trackingPosition = buf.readBoolean();
-        this.icons = new Vec4b[buf.readVarIntFromBuffer()];
+        this.icons = new MapDecoration[buf.readVarInt()];
 
         for (int i = 0; i < this.icons.length; ++i)
         {
             short short1 = (short)buf.readByte();
-            this.icons[i] = new Vec4b((byte)(short1 >> 4 & 15), buf.readByte(), buf.readByte(), (byte)(short1 & 15));
+            this.icons[i] = new MapDecoration(MapDecoration.Type.byIcon((byte)(short1 >> 4 & 15)), buf.readByte(), buf.readByte(), (byte)(short1 & 15));
         }
 
         this.columns = buf.readUnsignedByte();
@@ -79,16 +79,16 @@ public class SPacketMaps implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.mapId);
+        buf.writeVarInt(this.mapId);
         buf.writeByte(this.mapScale);
         buf.writeBoolean(this.trackingPosition);
-        buf.writeVarIntToBuffer(this.icons.length);
+        buf.writeVarInt(this.icons.length);
 
-        for (Vec4b vec4b : this.icons)
+        for (MapDecoration mapdecoration : this.icons)
         {
-            buf.writeByte((vec4b.getType() & 15) << 4 | vec4b.getRotation() & 15);
-            buf.writeByte(vec4b.getX());
-            buf.writeByte(vec4b.getY());
+            buf.writeByte((mapdecoration.getImage() & 15) << 4 | mapdecoration.getRotation() & 15);
+            buf.writeByte(mapdecoration.getX());
+            buf.writeByte(mapdecoration.getY());
         }
 
         buf.writeByte(this.columns);
@@ -128,8 +128,8 @@ public class SPacketMaps implements Packet<INetHandlerPlayClient>
 
         for (int i = 0; i < this.icons.length; ++i)
         {
-            Vec4b vec4b = this.icons[i];
-            mapdataIn.mapDecorations.put("icon-" + i, vec4b);
+            MapDecoration mapdecoration = this.icons[i];
+            mapdataIn.mapDecorations.put("icon-" + i, mapdecoration);
         }
 
         for (int j = 0; j < this.columns; ++j)

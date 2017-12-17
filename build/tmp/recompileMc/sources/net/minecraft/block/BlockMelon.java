@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +19,6 @@ public class BlockMelon extends Block
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.MELON;

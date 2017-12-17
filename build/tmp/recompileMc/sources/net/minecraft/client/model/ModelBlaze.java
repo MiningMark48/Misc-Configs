@@ -9,8 +9,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelBlaze extends ModelBase
 {
     /** The sticks that fly around the Blaze. */
-    private ModelRenderer[] blazeSticks = new ModelRenderer[12];
-    private ModelRenderer blazeHead;
+    private final ModelRenderer[] blazeSticks = new ModelRenderer[12];
+    private final ModelRenderer blazeHead;
 
     public ModelBlaze()
     {
@@ -32,9 +32,9 @@ public class ModelBlaze extends ModelBase
         this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
         this.blazeHead.render(scale);
 
-        for (int i = 0; i < this.blazeSticks.length; ++i)
+        for (ModelRenderer modelrenderer : this.blazeSticks)
         {
-            this.blazeSticks[i].render(scale);
+            modelrenderer.render(scale);
         }
     }
 

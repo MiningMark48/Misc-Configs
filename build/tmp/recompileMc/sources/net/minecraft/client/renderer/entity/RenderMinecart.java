@@ -49,8 +49,8 @@ public class RenderMinecart<T extends EntityMinecart> extends Render<T>
 
         if (vec3d != null)
         {
-            Vec3d vec3d1 = entity.getPosOffset(d0, d1, d2, d3);
-            Vec3d vec3d2 = entity.getPosOffset(d0, d1, d2, -d3);
+            Vec3d vec3d1 = entity.getPosOffset(d0, d1, d2, 0.30000001192092896D);
+            Vec3d vec3d2 = entity.getPosOffset(d0, d1, d2, -0.30000001192092896D);
 
             if (vec3d1 == null)
             {
@@ -62,16 +62,16 @@ public class RenderMinecart<T extends EntityMinecart> extends Render<T>
                 vec3d2 = vec3d;
             }
 
-            x += vec3d.xCoord - d0;
-            y += (vec3d1.yCoord + vec3d2.yCoord) / 2.0D - d1;
-            z += vec3d.zCoord - d2;
-            Vec3d vec3d3 = vec3d2.addVector(-vec3d1.xCoord, -vec3d1.yCoord, -vec3d1.zCoord);
+            x += vec3d.x - d0;
+            y += (vec3d1.y + vec3d2.y) / 2.0D - d1;
+            z += vec3d.z - d2;
+            Vec3d vec3d3 = vec3d2.addVector(-vec3d1.x, -vec3d1.y, -vec3d1.z);
 
             if (vec3d3.lengthVector() != 0.0D)
             {
                 vec3d3 = vec3d3.normalize();
-                entityYaw = (float)(Math.atan2(vec3d3.zCoord, vec3d3.xCoord) * 180.0D / Math.PI);
-                f3 = (float)(Math.atan(vec3d3.yCoord) * 73.0D);
+                entityYaw = (float)(Math.atan2(vec3d3.z, vec3d3.x) * 180.0D / Math.PI);
+                f3 = (float)(Math.atan(vec3d3.y) * 73.0D);
             }
         }
 
@@ -106,7 +106,7 @@ public class RenderMinecart<T extends EntityMinecart> extends Render<T>
             GlStateManager.pushMatrix();
             this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
             float f4 = 0.75F;
-            GlStateManager.scale(f4, f4, f4);
+            GlStateManager.scale(0.75F, 0.75F, 0.75F);
             GlStateManager.translate(-0.5F, (float)(j - 8) / 16.0F, 0.5F);
             this.renderCartContents(entity, partialTicks, iblockstate);
             GlStateManager.popMatrix();
@@ -135,10 +135,10 @@ public class RenderMinecart<T extends EntityMinecart> extends Render<T>
         return MINECART_TEXTURES;
     }
 
-    protected void renderCartContents(T p_188319_1_, float p_188319_2_, IBlockState p_188319_3_)
+    protected void renderCartContents(T p_188319_1_, float partialTicks, IBlockState p_188319_3_)
     {
         GlStateManager.pushMatrix();
-        Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlockBrightness(p_188319_3_, p_188319_1_.getBrightness(p_188319_2_));
+        Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlockBrightness(p_188319_3_, p_188319_1_.getBrightness());
         GlStateManager.popMatrix();
     }
 }

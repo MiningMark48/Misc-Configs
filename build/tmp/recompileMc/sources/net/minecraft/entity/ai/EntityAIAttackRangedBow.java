@@ -1,14 +1,15 @@
 package net.minecraft.entity.ai;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntitySkeleton;
+import net.minecraft.entity.IRangedAttackMob;
+import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemBow;
 import net.minecraft.util.EnumHand;
 
-public class EntityAIAttackRangedBow extends EntityAIBase
+public class EntityAIAttackRangedBow<T extends EntityMob & IRangedAttackMob> extends EntityAIBase
 {
-    private final EntitySkeleton entity;
+    private final T entity;
     private final double moveSpeedAmp;
     private int attackCooldown;
     private final float maxAttackDistance;
@@ -18,12 +19,12 @@ public class EntityAIAttackRangedBow extends EntityAIBase
     private boolean strafingBackwards;
     private int strafingTime = -1;
 
-    public EntityAIAttackRangedBow(EntitySkeleton skeleton, double speedAmplifier, int delay, float maxDistance)
+    public EntityAIAttackRangedBow(T p_i47515_1_, double p_i47515_2_, int p_i47515_4_, float p_i47515_5_)
     {
-        this.entity = skeleton;
-        this.moveSpeedAmp = speedAmplifier;
-        this.attackCooldown = delay;
-        this.maxAttackDistance = maxDistance * maxDistance;
+        this.entity = p_i47515_1_;
+        this.moveSpeedAmp = p_i47515_2_;
+        this.attackCooldown = p_i47515_4_;
+        this.maxAttackDistance = p_i47515_5_ * p_i47515_5_;
         this.setMutexBits(3);
     }
 
@@ -42,13 +43,13 @@ public class EntityAIAttackRangedBow extends EntityAIBase
 
     protected boolean isBowInMainhand()
     {
-        return this.entity.getHeldItemMainhand() != null && this.entity.getHeldItemMainhand().getItem() == Items.BOW;
+        return !this.entity.getHeldItemMainhand().isEmpty() && this.entity.getHeldItemMainhand().getItem() == Items.BOW;
     }
 
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
         return (this.shouldExecute() || !this.entity.getNavigator().noPath()) && this.isBowInMainhand();
     }
@@ -59,23 +60,23 @@ public class EntityAIAttackRangedBow extends EntityAIBase
     public void startExecuting()
     {
         super.startExecuting();
-        this.entity.setSwingingArms(true);
+        ((IRangedAttackMob)this.entity).setSwingingArms(true);
     }
 
     /**
-     * Resets the task
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     public void resetTask()
     {
-        super.startExecuting();
-        this.entity.setSwingingArms(false);
+        super.resetTask();
+        ((IRangedAttackMob)this.entity).setSwingingArms(false);
         this.seeTime = 0;
         this.attackTime = -1;
         this.entity.resetActiveHand();
     }
 
     /**
-     * Updates the task
+     * Keep ticking a continuous task that has already been started
      */
     public void updateTask()
     {
@@ -103,7 +104,7 @@ public class EntityAIAttackRangedBow extends EntityAIBase
 
             if (d0 <= (double)this.maxAttackDistance && this.seeTime >= 20)
             {
-                this.entity.getNavigator().clearPathEntity();
+                this.entity.getNavigator().clearPath();
                 ++this.strafingTime;
             }
             else
@@ -159,7 +160,7 @@ public class EntityAIAttackRangedBow extends EntityAIBase
                     if (i >= 20)
                     {
                         this.entity.resetActiveHand();
-                        this.entity.attackEntityWithRangedAttack(entitylivingbase, ItemBow.getArrowVelocity(i));
+                        ((IRangedAttackMob)this.entity).attackEntityWithRangedAttack(entitylivingbase, ItemBow.getArrowVelocity(i));
                         this.attackTime = this.attackCooldown;
                     }
                 }

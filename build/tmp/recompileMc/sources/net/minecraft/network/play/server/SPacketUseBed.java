@@ -31,7 +31,7 @@ public class SPacketUseBed implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.playerID = buf.readVarIntFromBuffer();
+        this.playerID = buf.readVarInt();
         this.bedPos = buf.readBlockPos();
     }
 
@@ -40,7 +40,7 @@ public class SPacketUseBed implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.playerID);
+        buf.writeVarInt(this.playerID);
         buf.writeBlockPos(this.bedPos);
     }
 

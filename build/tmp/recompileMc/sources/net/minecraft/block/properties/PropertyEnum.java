@@ -10,12 +10,11 @@ import com.google.common.collect.Maps;
 import java.util.Collection;
 import java.util.Map;
 import net.minecraft.util.IStringSerializable;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PropertyEnum<T extends Enum<T> & IStringSerializable> extends PropertyHelper<T>
 {
     private final ImmutableSet<T> allowedValues;
+    /** Map of names to Enum values */
     private final Map<String, T> nameToValue = Maps.<String, T>newHashMap();
 
     protected PropertyEnum(String name, Class<T> valueClass, Collection<T> allowedValues)
@@ -29,7 +28,7 @@ public class PropertyEnum<T extends Enum<T> & IStringSerializable> extends Prope
 
             if (this.nameToValue.containsKey(s))
             {
-                throw new IllegalArgumentException("Multiple values have the same name \'" + s + "\'");
+                throw new IllegalArgumentException("Multiple values have the same name '" + s + "'");
             }
 
             this.nameToValue.put(s, t);
@@ -41,7 +40,6 @@ public class PropertyEnum<T extends Enum<T> & IStringSerializable> extends Prope
         return this.allowedValues;
     }
 
-    @SideOnly(Side.CLIENT)
     public Optional<T> parseValue(String value)
     {
         return Optional.<T>fromNullable(this.nameToValue.get(value));
@@ -80,32 +78,35 @@ public class PropertyEnum<T extends Enum<T> & IStringSerializable> extends Prope
         return i;
     }
 
+    /**
+     * Create a new PropertyEnum with all Enum constants of the given class.
+     */
     public static <T extends Enum<T> & IStringSerializable> PropertyEnum<T> create(String name, Class<T> clazz)
     {
-        /**
-         * Create a new PropertyEnum with all Enum constants of the given class that match the given Predicate.
-         */
-        return create(name, clazz, Predicates.<T>alwaysTrue());
+        return create(name, clazz, Predicates.alwaysTrue());
     }
 
+    /**
+     * Create a new PropertyEnum with all Enum constants of the given class that match the given Predicate.
+     */
     public static <T extends Enum<T> & IStringSerializable> PropertyEnum<T> create(String name, Class<T> clazz, Predicate<T> filter)
     {
-        /**
-         * Create a new PropertyEnum with the specified values
-         */
-        return create(name, clazz, Collections2.<T>filter(Lists.newArrayList(clazz.getEnumConstants()), filter));
+        return create(name, clazz, Collections2.filter(Lists.newArrayList(clazz.getEnumConstants()), filter));
     }
 
+    /**
+     * Create a new PropertyEnum with the specified values
+     */
     public static <T extends Enum<T> & IStringSerializable> PropertyEnum<T> create(String name, Class<T> clazz, T... values)
     {
-        /**
-         * Create a new PropertyEnum with the specified values
-         */
         return create(name, clazz, Lists.newArrayList(values));
     }
 
+    /**
+     * Create a new PropertyEnum with the specified values
+     */
     public static <T extends Enum<T> & IStringSerializable> PropertyEnum<T> create(String name, Class<T> clazz, Collection<T> values)
     {
-        return new PropertyEnum(name, clazz, values);
+        return new PropertyEnum<T>(name, clazz, values);
     }
 }

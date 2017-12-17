@@ -1,6 +1,6 @@
 package net.minecraft.client.gui.spectator;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiSpectator;
 import net.minecraft.client.gui.spectator.categories.SpectatorDetails;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -28,7 +29,7 @@ public class SpectatorMenu
         {
             return new TextComponentString("");
         }
-        public void renderIcon(float p_178663_1_, int alpha)
+        public void renderIcon(float brightness, int alpha)
         {
         }
         public boolean isEnabled()
@@ -42,15 +43,31 @@ public class SpectatorMenu
     private int selectedSlot = -1;
     private int page;
 
-    public SpectatorMenu(ISpectatorMenuRecipient p_i45497_1_)
+    public SpectatorMenu(ISpectatorMenuRecipient menu)
     {
-        this.listener = p_i45497_1_;
+        this.listener = menu;
     }
 
-    public ISpectatorMenuObject getItem(int p_178643_1_)
+    public ISpectatorMenuObject getItem(int index)
     {
-        int i = p_178643_1_ + this.page * 6;
-        return this.page > 0 && p_178643_1_ == 0 ? SCROLL_LEFT : (p_178643_1_ == 7 ? (i < this.category.getItems().size() ? SCROLL_RIGHT_ENABLED : SCROLL_RIGHT_DISABLED) : (p_178643_1_ == 8 ? CLOSE_ITEM : (i >= 0 && i < this.category.getItems().size() ? (ISpectatorMenuObject)Objects.firstNonNull(this.category.getItems().get(i), EMPTY_SLOT) : EMPTY_SLOT)));
+        int i = index + this.page * 6;
+
+        if (this.page > 0 && index == 0)
+        {
+            return SCROLL_LEFT;
+        }
+        else if (index == 7)
+        {
+            return i < this.category.getItems().size() ? SCROLL_RIGHT_ENABLED : SCROLL_RIGHT_DISABLED;
+        }
+        else if (index == 8)
+        {
+            return CLOSE_ITEM;
+        }
+        else
+        {
+            return i >= 0 && i < this.category.getItems().size() ? (ISpectatorMenuObject)MoreObjects.firstNonNull(this.category.getItems().get(i), EMPTY_SLOT) : EMPTY_SLOT;
+        }
     }
 
     public List<ISpectatorMenuObject> getItems()
@@ -129,10 +146,10 @@ public class SpectatorMenu
 
             public ITextComponent getSpectatorName()
             {
-                return new TextComponentString("Close menu");
+                return new TextComponentTranslation("spectatorMenu.close", new Object[0]);
             }
 
-            public void renderIcon(float p_178663_1_, int alpha)
+            public void renderIcon(float brightness, int alpha)
             {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(GuiSpectator.SPECTATOR_WIDGETS);
                 Gui.drawModalRectWithCustomSizedTexture(0, 0, 128.0F, 0.0F, 16, 16, 256.0F, 256.0F);
@@ -158,15 +175,15 @@ public class SpectatorMenu
 
             public void selectItem(SpectatorMenu menu)
             {
-                menu.page = this.direction;
+                menu.page = menu.page + this.direction;
             }
 
             public ITextComponent getSpectatorName()
             {
-                return this.direction < 0 ? new TextComponentString("Previous Page") : new TextComponentString("Next Page");
+                return this.direction < 0 ? new TextComponentTranslation("spectatorMenu.previous_page", new Object[0]) : new TextComponentTranslation("spectatorMenu.next_page", new Object[0]);
             }
 
-            public void renderIcon(float p_178663_1_, int alpha)
+            public void renderIcon(float brightness, int alpha)
             {
                 Minecraft.getMinecraft().getTextureManager().bindTexture(GuiSpectator.SPECTATOR_WIDGETS);
 

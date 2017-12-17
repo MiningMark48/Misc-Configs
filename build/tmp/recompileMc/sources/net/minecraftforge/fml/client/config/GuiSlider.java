@@ -1,7 +1,28 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.client.config;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
+
+import javax.annotation.Nullable;
 
 /**
  * This class is blatantly stolen from iChunUtils with permission.
@@ -23,6 +44,7 @@ public class GuiSlider extends GuiButtonExt
     public double maxValue = 5.0D;
     public int precision = 1;
 
+    @Nullable
     public ISlider parent = null;
 
     public String suffix = "";
@@ -34,7 +56,7 @@ public class GuiSlider extends GuiButtonExt
         this(id, xPos, yPos, width, height, prefix, suf, minVal, maxVal, currentVal, showDec, drawStr, null);
     }
 
-    public GuiSlider(int id, int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, ISlider par)
+    public GuiSlider(int id, int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, @Nullable ISlider par)
     {
         super(id, xPos, yPos, width, height, prefix);
         minValue = minVal;
@@ -98,13 +120,13 @@ public class GuiSlider extends GuiButtonExt
         {
             if (this.dragging)
             {
-                this.sliderValue = (par2 - (this.xPosition + 4)) / (float)(this.width - 8);
+                this.sliderValue = (par2 - (this.x + 4)) / (float)(this.width - 8);
                 updateSlider();
             }
 
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)), this.yPosition, 0, 66, 4, 20);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.yPosition, 196, 66, 4, 20);
+            this.drawTexturedModalRect(this.x + (int)(this.sliderValue * (float)(this.width - 8)), this.y, 0, 66, 4, 20);
+            this.drawTexturedModalRect(this.x + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.y, 196, 66, 4, 20);
         }
     }
 
@@ -121,7 +143,7 @@ public class GuiSlider extends GuiButtonExt
     {
         if (super.mousePressed(par1Minecraft, par2, par3))
         {
-            this.sliderValue = (float)(par2 - (this.xPosition + 4)) / (float)(this.width - 8);
+            this.sliderValue = (float)(par2 - (this.x + 4)) / (float)(this.width - 8);
             updateSlider();
             this.dragging = true;
             return true;

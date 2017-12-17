@@ -17,7 +17,7 @@ public class GuiSleepMP extends GuiChat
     public void initGui()
     {
         super.initGui();
-        this.buttonList.add(new GuiButton(1, this.width / 2 - 100, this.height - 40, I18n.format("multiplayer.stopSleeping", new Object[0])));
+        this.buttonList.add(new GuiButton(1, this.width / 2 - 100, this.height - 40, I18n.format("multiplayer.stopSleeping")));
     }
 
     /**
@@ -65,7 +65,7 @@ public class GuiSleepMP extends GuiChat
 
     private void wakeFromSleep()
     {
-        NetHandlerPlayClient nethandlerplayclient = this.mc.thePlayer.connection;
-        nethandlerplayclient.sendPacket(new CPacketEntityAction(this.mc.thePlayer, CPacketEntityAction.Action.STOP_SLEEPING));
+        NetHandlerPlayClient nethandlerplayclient = this.mc.player.connection;
+        nethandlerplayclient.sendPacket(new CPacketEntityAction(this.mc.player, CPacketEntityAction.Action.STOP_SLEEPING));
     }
 }

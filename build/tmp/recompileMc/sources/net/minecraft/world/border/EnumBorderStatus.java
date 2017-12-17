@@ -9,20 +9,19 @@ public enum EnumBorderStatus
     SHRINKING(16724016),
     STATIONARY(2138367);
 
-    private final int id;
+    private final int color;
 
-    private EnumBorderStatus(int id)
+    private EnumBorderStatus(int color)
     {
-        this.id = id;
+        this.color = color;
     }
 
     /**
-     * Returns an integer that represents the state of the world border. Growing, Shrinking and Stationary all have
-     * unique values.
+     * Retrieve the color that the border should be while in this state
      */
     @SideOnly(Side.CLIENT)
-    public int getID()
+    public int getColor()
     {
-        return this.id;
+        return this.color;
     }
 }

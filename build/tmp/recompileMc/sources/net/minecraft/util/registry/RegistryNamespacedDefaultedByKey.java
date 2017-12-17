@@ -32,7 +32,7 @@ public class RegistryNamespacedDefaultedByKey<K, V> extends RegistryNamespaced<K
      */
     public void validateKey()
     {
-        Validate.notNull(this.defaultValue, "Missing default of DefaultedMappedRegistry: " + this.defaultValueKey, new Object[0]);
+        Validate.notNull(this.defaultValue, "Missing default of DefaultedMappedRegistry: " + this.defaultValueKey);
     }
 
     /**
@@ -50,14 +50,14 @@ public class RegistryNamespacedDefaultedByKey<K, V> extends RegistryNamespaced<K
     @Nonnull
     public K getNameForObject(V value)
     {
-        K k = super.getNameForObject(value);
+        K k = (K)super.getNameForObject(value);
         return (K)(k == null ? this.defaultValueKey : k);
     }
 
     @Nonnull
     public V getObject(@Nullable K name)
     {
-        V v = super.getObject(name);
+        V v = (V)super.getObject(name);
         return (V)(v == null ? this.defaultValue : v);
     }
 
@@ -67,21 +67,14 @@ public class RegistryNamespacedDefaultedByKey<K, V> extends RegistryNamespaced<K
     @Nonnull
     public V getObjectById(int id)
     {
-        V v = super.getObjectById(id);
+        V v = (V)super.getObjectById(id);
         return (V)(v == null ? this.defaultValue : v);
     }
 
     @Nonnull
     public V getRandomObject(Random random)
     {
-        V v = super.getRandomObject(random);
+        V v = (V)super.getRandomObject(random);
         return (V)(v == null ? this.defaultValue : v);
     }
-
-    //Bypass functions to allow querying this registry WITHOUT getting the defaulted value.
-    // MODDERS DO NOT USE THIS IS FOR FORGE INTERNAL CHECKS
-    public int getIDForObjectBypass(V bypass) { return super.getIDForObject(bypass); }
-    public K getNameForObjectBypass(V value) { return super.getNameForObject(value); }
-    public V getObjectBypass(K name) { return super.getObject(name); }
-    public V getObjectByIdBypass(int id){ return super.getObjectById(id); }
 }

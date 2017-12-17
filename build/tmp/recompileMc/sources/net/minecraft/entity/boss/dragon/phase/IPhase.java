@@ -1,7 +1,7 @@
 package net.minecraft.entity.boss.dragon.phase;
 
 import javax.annotation.Nullable;
-import net.minecraft.entity.boss.EntityDragonPart;
+import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
@@ -40,7 +40,7 @@ public interface IPhase
 
     float getYawFactor();
 
-    PhaseList <? extends IPhase > getPhaseList();
+    PhaseList <? extends IPhase > getType();
 
     /**
      * Returns the location the dragon is flying toward
@@ -52,5 +52,5 @@ public interface IPhase
      * Normally, just returns damage. If dragon is sitting and src is an arrow, arrow is enflamed and zero damage
      * returned.
      */
-    float getAdjustedDamage(EntityDragonPart pt, DamageSource src, float damage);
+    float getAdjustedDamage(MultiPartEntityPart pt, DamageSource src, float damage);
 }

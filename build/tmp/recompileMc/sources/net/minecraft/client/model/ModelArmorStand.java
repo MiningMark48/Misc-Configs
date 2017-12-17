@@ -85,9 +85,6 @@ public class ModelArmorStand extends ModelArmorStandArmor
             this.standWaist.rotateAngleX = 0.017453292F * entityarmorstand.getBodyRotation().getX();
             this.standWaist.rotateAngleY = 0.017453292F * entityarmorstand.getBodyRotation().getY();
             this.standWaist.rotateAngleZ = 0.017453292F * entityarmorstand.getBodyRotation().getZ();
-            float f = (entityarmorstand.getLeftLegRotation().getX() + entityarmorstand.getRightLegRotation().getX()) / 2.0F;
-            float f1 = (entityarmorstand.getLeftLegRotation().getY() + entityarmorstand.getRightLegRotation().getY()) / 2.0F;
-            float f2 = (entityarmorstand.getLeftLegRotation().getZ() + entityarmorstand.getRightLegRotation().getZ()) / 2.0F;
             this.standBase.rotateAngleX = 0.0F;
             this.standBase.rotateAngleY = 0.017453292F * -entityIn.rotationYaw;
             this.standBase.rotateAngleZ = 0.0F;
@@ -105,7 +102,7 @@ public class ModelArmorStand extends ModelArmorStandArmor
         if (this.isChild)
         {
             float f = 2.0F;
-            GlStateManager.scale(1.0F / f, 1.0F / f, 1.0F / f);
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
             GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
             this.standRightSide.render(scale);
             this.standLeftSide.render(scale);

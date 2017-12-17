@@ -1,11 +1,10 @@
 package net.minecraft.entity;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.block.BlockFence;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -31,6 +30,7 @@ public class EntityLeashKnot extends EntityHanging
         float f1 = 0.1875F;
         float f2 = 0.25F;
         this.setEntityBoundingBox(new AxisAlignedBB(this.posX - 0.1875D, this.posY - 0.25D + 0.125D, this.posZ - 0.1875D, this.posX + 0.1875D, this.posY + 0.25D + 0.125D, this.posZ + 0.1875D));
+        this.forceSpawn = true;
     }
 
     /**
@@ -38,7 +38,7 @@ public class EntityLeashKnot extends EntityHanging
      */
     public void setPosition(double x, double y, double z)
     {
-        super.setPosition((double)MathHelper.floor_double(x) + 0.5D, (double)MathHelper.floor_double(y) + 0.5D, (double)MathHelper.floor_double(z) + 0.5D);
+        super.setPosition((double)MathHelper.floor(x) + 0.5D, (double)MathHelper.floor(y) + 0.5D, (double)MathHelper.floor(z) + 0.5D);
     }
 
     /**
@@ -92,8 +92,8 @@ public class EntityLeashKnot extends EntityHanging
 
     /**
      * Either write this entity to the NBT tag given and return true, or return false without doing anything. If this
-     * returns false the entity is not saved on disk. Ridden entities return false here as they are saved with their
-     * rider.
+     * returns false the entity is not saved on disk. Riding entities return false here as they are saved with their
+     * mount.
      */
     public boolean writeToNBTOptional(NBTTagCompound compound)
     {
@@ -114,27 +114,24 @@ public class EntityLeashKnot extends EntityHanging
     {
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
     {
-        if (this.worldObj.isRemote)
+        if (this.world.isRemote)
         {
             return true;
         }
         else
         {
             boolean flag = false;
+            double d0 = 7.0D;
+            List<EntityLiving> list = this.world.<EntityLiving>getEntitiesWithinAABB(EntityLiving.class, new AxisAlignedBB(this.posX - 7.0D, this.posY - 7.0D, this.posZ - 7.0D, this.posX + 7.0D, this.posY + 7.0D, this.posZ + 7.0D));
 
-            if (stack != null && stack.getItem() == Items.LEAD)
+            for (EntityLiving entityliving : list)
             {
-                double d0 = 7.0D;
-
-                for (EntityLiving entityliving : this.worldObj.getEntitiesWithinAABB(EntityLiving.class, new AxisAlignedBB(this.posX - d0, this.posY - d0, this.posZ - d0, this.posX + d0, this.posY + d0, this.posZ + d0)))
+                if (entityliving.getLeashed() && entityliving.getLeashHolder() == player)
                 {
-                    if (entityliving.getLeashed() && entityliving.getLeashedToEntity() == player)
-                    {
-                        entityliving.setLeashedToEntity(this, true);
-                        flag = true;
-                    }
+                    entityliving.setLeashHolder(this, true);
+                    flag = true;
                 }
             }
 
@@ -144,11 +141,9 @@ public class EntityLeashKnot extends EntityHanging
 
                 if (player.capabilities.isCreativeMode)
                 {
-                    double d1 = 7.0D;
-
-                    for (EntityLiving entityliving1 : this.worldObj.getEntitiesWithinAABB(EntityLiving.class, new AxisAlignedBB(this.posX - d1, this.posY - d1, this.posZ - d1, this.posX + d1, this.posY + d1, this.posZ + d1)))
+                    for (EntityLiving entityliving1 : list)
                     {
-                        if (entityliving1.getLeashed() && entityliving1.getLeashedToEntity() == this)
+                        if (entityliving1.getLeashed() && entityliving1.getLeashHolder() == this)
                         {
                             entityliving1.clearLeashed(true, false);
                         }
@@ -165,18 +160,18 @@ public class EntityLeashKnot extends EntityHanging
      */
     public boolean onValidSurface()
     {
-        return this.worldObj.getBlockState(this.hangingPosition).getBlock() instanceof BlockFence;
+        return this.world.getBlockState(this.hangingPosition).getBlock() instanceof BlockFence;
     }
 
     public static EntityLeashKnot createKnot(World worldIn, BlockPos fence)
     {
         EntityLeashKnot entityleashknot = new EntityLeashKnot(worldIn, fence);
-        entityleashknot.forceSpawn = true;
-        worldIn.spawnEntityInWorld(entityleashknot);
+        worldIn.spawnEntity(entityleashknot);
         entityleashknot.playPlaceSound();
         return entityleashknot;
     }
 
+    @Nullable
     public static EntityLeashKnot getKnotForPosition(World worldIn, BlockPos pos)
     {
         int i = pos.getX();

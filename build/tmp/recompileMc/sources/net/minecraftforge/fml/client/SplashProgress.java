@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.client;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -9,8 +28,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.IntBuffer;
 import java.util.Iterator;
@@ -19,6 +36,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
@@ -45,7 +64,7 @@ import net.minecraftforge.fml.common.ProgressManager.ProgressBar;
 import net.minecraftforge.fml.common.asm.FMLSanityChecker;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
@@ -89,6 +108,16 @@ public class SplashProgress
     private static int barBorderColor;
     private static int barColor;
     private static int barBackgroundColor;
+    private static boolean showMemory;
+    private static int memoryGoodColor;
+    private static int memoryWarnColor;
+    private static int memoryLowColor;
+    private static float memoryColorPercent;
+    private static long memoryColorChangeTime;
+    static boolean isDisplayVSyncForced = false;
+    private static final int TIMING_FRAME_COUNT = 200;
+    private static final int TIMING_FRAME_THRESHOLD = TIMING_FRAME_COUNT * 5 * 1000000; // 5 ms per frame, scaled to nanos
+
     static final Semaphore mutex = new Semaphore(1);
 
     private static String getString(String name, String def)
@@ -121,57 +150,49 @@ public class SplashProgress
         if (!parent.exists())
             parent.mkdirs();
 
-        FileReader r = null;
         config = new Properties();
-        try
+        try (FileReader r = new FileReader(configFile))
         {
-            r = new FileReader(configFile);
             config.load(r);
         }
         catch(IOException e)
         {
-            FMLLog.info("Could not load splash.properties, will create a default one");
-        }
-        finally
-        {
-            IOUtils.closeQuietly(r);
+            FMLLog.log.info("Could not load splash.properties, will create a default one");
         }
 
-        //Some system do not support this and have weird effects so we need to detect and disable by default.
+        //Some systems do not support this and have weird effects, so we need to detect and disable them by default.
         //The user can always force enable it if they want to take the responsibility for bugs.
-        //For now macs derp so disable them.
-        boolean defaultEnabled = !System.getProperty("os.name").toLowerCase().contains("mac");
+        boolean defaultEnabled = true;
 
         // Enable if we have the flag, and there's either no optifine, or optifine has added a key to the blackboard ("optifine.ForgeSplashCompatible")
         // Optifine authors - add this key to the blackboard if you feel your modifications are now compatible with this code.
         enabled =            getBool("enabled",      defaultEnabled) && ( (!FMLClientHandler.instance().hasOptifine()) || Launch.blackboard.containsKey("optifine.ForgeSplashCompatible"));
         rotate =             getBool("rotate",       false);
+        showMemory =         getBool("showMemory",   true);
         logoOffset =         getInt("logoOffset",    0);
         backgroundColor =    getHex("background",    0xFFFFFF);
         fontColor =          getHex("font",          0x000000);
         barBorderColor =     getHex("barBorder",     0xC0C0C0);
         barColor =           getHex("bar",           0xCB3D35);
         barBackgroundColor = getHex("barBackground", 0xFFFFFF);
+        memoryGoodColor =    getHex("memoryGood",    0x78CB34);
+        memoryWarnColor =    getHex("memoryWarn",    0xE6E84A);
+        memoryLowColor =     getHex("memoryLow",     0xE42F2F);
 
         final ResourceLocation fontLoc = new ResourceLocation(getString("fontTexture", "textures/font/ascii.png"));
-        final ResourceLocation logoLoc = new ResourceLocation(getString("logoTexture", "textures/gui/title/mojang.png"));
-        final ResourceLocation forgeLoc = new ResourceLocation(getString("forgeTexture", "fml:textures/gui/forge.gif"));
+        final ResourceLocation logoLoc = new ResourceLocation("textures/gui/title/mojang.png");
+        final ResourceLocation forgeLoc = new ResourceLocation(getString("forgeTexture", "fml:textures/gui/forge.png"));
+        final ResourceLocation forgeFallbackLoc = new ResourceLocation("fml:textures/gui/forge.png");
 
         File miscPackFile = new File(Minecraft.getMinecraft().mcDataDir, getString("resourcePackPath", "resources"));
 
-        FileWriter w = null;
-        try
+        try (FileWriter w = new FileWriter(configFile))
         {
-            w = new FileWriter(configFile);
             config.store(w, "Splash screen properties");
         }
         catch(IOException e)
         {
-            FMLLog.log(Level.ERROR, e, "Could not save the splash.properties file");
-        }
-        finally
-        {
-            IOUtils.closeQuietly(w);
+            FMLLog.log.error("Could not save the splash.properties file", e);
         }
 
         miscPack = createResourcePack(miscPackFile);
@@ -180,6 +201,7 @@ public class SplashProgress
         // getting debug info out of the way, while we still can
         FMLCommonHandler.instance().registerCrashCallable(new ICrashCallable()
         {
+            @Override
             public String call() throws Exception
             {
                 return "' Vendor: '" + glGetString(GL_VENDOR) +
@@ -188,18 +210,16 @@ public class SplashProgress
                        "'";
             }
 
+            @Override
             public String getLabel()
             {
                 return "GL info";
             }
         });
-        CrashReport report = CrashReport.makeCrashReport(new Throwable()
-        {
-            @Override public String getMessage(){ return "This is just a prompt for computer specs to be printed. THIS IS NOT A ERROR"; }
-            @Override public void printStackTrace(final PrintWriter s){ s.println(getMessage()); }
-            @Override public void printStackTrace(final PrintStream s) { s.println(getMessage()); }
-        }, "Loading screen debug info");
-        System.out.println(report.getCompleteReport());
+        CrashReport report = CrashReport.makeCrashReport(new Throwable(), "Loading screen debug info");
+        StringBuilder systemDetailsBuilder = new StringBuilder();
+        report.getCategory().appendToStringBuilder(systemDetailsBuilder);
+        FMLLog.log.info(systemDetailsBuilder.toString());
 
         try
         {
@@ -209,7 +229,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error starting SplashProgress:", e);
             disableSplash(e);
         }
 
@@ -223,18 +243,21 @@ public class SplashProgress
             private final int barHeight = 20;
             private final int textHeight2 = 20;
             private final int barOffset = 55;
-
+            private long updateTiming;
+            private long framecount;
+            @Override
             public void run()
             {
                 setGL();
-                fontTexture = new Texture(fontLoc);
-                logoTexture = new Texture(logoLoc);
-                forgeTexture = new Texture(forgeLoc);
+                fontTexture = new Texture(fontLoc, null);
+                logoTexture = new Texture(logoLoc, null, false);
+                forgeTexture = new Texture(forgeLoc, forgeFallbackLoc);
                 glEnable(GL_TEXTURE_2D);
                 fontRenderer = new SplashFontRenderer();
                 glDisable(GL_TEXTURE_2D);
                 while(!done)
                 {
+                    framecount++;
                     ProgressBar first = null, penult = null, last = null;
                     Iterator<ProgressBar> i = ProgressManager.barIterator();
                     while(i.hasNext())
@@ -275,6 +298,15 @@ public class SplashProgress
                     glEnd();
                     glDisable(GL_TEXTURE_2D);
 
+                    // memory usage
+                    if (showMemory)
+                    {
+                        glPushMatrix();
+                        glTranslatef(320 - (float) barWidth / 2, 20, 0);
+                        drawMemoryBar();
+                        glPopMatrix();
+                    }
+
                     // bars
                     if(first != null)
                     {
@@ -297,9 +329,9 @@ public class SplashProgress
                     angle += 1;
 
                     // forge logo
-                    setColor(backgroundColor);
-                    float fw = (float)forgeTexture.getWidth() / 2 / 2;
-                    float fh = (float)forgeTexture.getHeight() / 2 / 2;
+                    glColor4f(1, 1, 1, 1);
+                    float fw = (float)forgeTexture.getWidth() / 2;
+                    float fh = (float)forgeTexture.getHeight() / 2;
                     if(rotate)
                     {
                         float sh = Math.max(fw, fh);
@@ -310,7 +342,7 @@ public class SplashProgress
                     {
                         glTranslatef(320 + w/2 - fw - logoOffset, 240 + h/2 - fh - logoOffset, 0);
                     }
-                    int f = (angle / 10) % forgeTexture.getFrames();
+                    int f = (angle / 5) % forgeTexture.getFrames();
                     glEnable(GL_TEXTURE_2D);
                     forgeTexture.bind();
                     glBegin(GL_QUADS);
@@ -331,16 +363,40 @@ public class SplashProgress
                     // is trying to impose a framerate or other thing is occurring. Without the mutex, the main
                     // thread would delay waiting for the same global display lock
                     mutex.acquireUninterruptibly();
+                    long updateStart = System.nanoTime();
                     Display.update();
                     // As soon as we're done, we release the mutex. The other thread can now ping the processmessages
                     // call as often as it wants until we get get back here again
+                    long dur = System.nanoTime() - updateStart;
+                    if (framecount < TIMING_FRAME_COUNT) {
+                        updateTiming += dur;
+                    }
                     mutex.release();
                     if(pause)
                     {
                         clearGL();
                         setGL();
                     }
-                    Display.sync(100);
+                    // Such a hack - if the time taken is greater than 10 milliseconds, we're gonna guess that we're on a
+                    // system where vsync is forced through the swapBuffers call - so we have to force a sleep and let the
+                    // loading thread have a turn - some badly designed mods access Keyboard and therefore GlobalLock.lock
+                    // during splash screen, and mutex against the above Display.update call as a result.
+                    // 4 milliseconds is a guess - but it should be enough to trigger in most circumstances. (Maybe if
+                    // 240FPS is possible, this won't fire?)
+                    if (framecount >= TIMING_FRAME_COUNT && updateTiming > TIMING_FRAME_THRESHOLD) {
+                        if (!isDisplayVSyncForced)
+                        {
+                            isDisplayVSyncForced = true;
+                            FMLLog.log.info("Using alternative sync timing : {} frames of Display.update took {} nanos", TIMING_FRAME_COUNT, updateTiming);
+                        }
+                        try { Thread.sleep(16); } catch (InterruptedException ie) {}
+                    } else
+                    {
+                        if (framecount ==TIMING_FRAME_COUNT) {
+                            FMLLog.log.info("Using sync timing. {} frames of Display.update took {} nanos", TIMING_FRAME_COUNT, updateTiming);
+                        }
+                        Display.sync(100);
+                    }
                 }
                 clearGL();
             }
@@ -392,6 +448,75 @@ public class SplashProgress
                 glPopMatrix();
             }
 
+            private void drawMemoryBar() {
+                int maxMemory = bytesToMb(Runtime.getRuntime().maxMemory());
+                int totalMemory = bytesToMb(Runtime.getRuntime().totalMemory());
+                int freeMemory = bytesToMb(Runtime.getRuntime().freeMemory());
+                int usedMemory = totalMemory - freeMemory;
+                float usedMemoryPercent = usedMemory / (float) maxMemory;
+
+                glPushMatrix();
+                // title - message
+                setColor(fontColor);
+                glScalef(2, 2, 1);
+                glEnable(GL_TEXTURE_2D);
+                fontRenderer.drawString("Memory Used / Total", 0, 0, 0x000000);
+                glDisable(GL_TEXTURE_2D);
+                glPopMatrix();
+                // border
+                glPushMatrix();
+                glTranslatef(0, textHeight2, 0);
+                setColor(barBorderColor);
+                drawBox(barWidth, barHeight);
+                // interior
+                setColor(barBackgroundColor);
+                glTranslatef(1, 1, 0);
+                drawBox(barWidth - 2, barHeight - 2);
+                // slidy part
+
+                long time = System.currentTimeMillis();
+                if (usedMemoryPercent > memoryColorPercent || (time - memoryColorChangeTime > 1000))
+                {
+                    memoryColorChangeTime = time;
+                    memoryColorPercent = usedMemoryPercent;
+                }
+
+                int memoryBarColor;
+                if (memoryColorPercent < 0.75f)
+                {
+                    memoryBarColor = memoryGoodColor;
+                }
+                else if (memoryColorPercent < 0.85f)
+                {
+                    memoryBarColor = memoryWarnColor;
+                }
+                else
+                {
+                    memoryBarColor = memoryLowColor;
+                }
+                setColor(memoryLowColor);
+                glPushMatrix();
+                glTranslatef((barWidth - 2) * (totalMemory) / (maxMemory) - 2, 0, 0);
+                drawBox(2, barHeight - 2);
+                glPopMatrix();
+                setColor(memoryBarColor);
+                drawBox((barWidth - 2) * (usedMemory) / (maxMemory), barHeight - 2);
+
+                // progress text
+                String progress = getMemoryString(usedMemory) + " / " + getMemoryString(maxMemory);
+                glTranslatef(((float)barWidth - 2) / 2 - fontRenderer.getStringWidth(progress), 2, 0);
+                setColor(fontColor);
+                glScalef(2, 2, 1);
+                glEnable(GL_TEXTURE_2D);
+                fontRenderer.drawString(progress, 0, 0, 0x000000);
+                glPopMatrix();
+            }
+
+            private String getMemoryString(int memory)
+            {
+                return StringUtils.leftPad(Integer.toString(memory), 4, ' ') + " MB";
+            }
+
             private void setGL()
             {
                 lock.lock();
@@ -401,7 +526,7 @@ public class SplashProgress
                 }
                 catch (LWJGLException e)
                 {
-                    e.printStackTrace();
+                    FMLLog.log.error("Error setting GL context:", e);
                     throw new RuntimeException(e);
                 }
                 glClearColor((float)((backgroundColor >> 16) & 0xFF) / 0xFF, (float)((backgroundColor >> 8) & 0xFF) / 0xFF, (float)(backgroundColor & 0xFF) / 0xFF, 1);
@@ -428,7 +553,7 @@ public class SplashProgress
                 }
                 catch (LWJGLException e)
                 {
-                    e.printStackTrace();
+                    FMLLog.log.error("Error releasing GL context:", e);
                     throw new RuntimeException(e);
                 }
                 finally
@@ -439,9 +564,10 @@ public class SplashProgress
         });
         thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler()
         {
+            @Override
             public void uncaughtException(Thread t, Throwable e)
             {
-                FMLLog.log(Level.ERROR, e, "Splash thread Exception");
+                FMLLog.log.error("Splash thread Exception", e);
                 threadError = e;
             }
         });
@@ -492,7 +618,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error setting GL context:", e);
             throw new RuntimeException(e);
         }
     }
@@ -513,7 +639,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error releasing GL context:", e);
             throw new RuntimeException(e);
         }
         lock.unlock();
@@ -535,7 +661,7 @@ public class SplashProgress
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error finishing SplashProgress:", e);
             disableSplash(e);
         }
     }
@@ -582,20 +708,14 @@ public class SplashProgress
         enabled = false;
         config.setProperty("enabled", "false");
 
-        FileWriter w = null;
-        try
+        try (FileWriter w = new FileWriter(configFile))
         {
-            w = new FileWriter(configFile);
             config.store(w, "Splash screen properties");
         }
         catch(IOException e)
         {
-            FMLLog.log(Level.ERROR, e, "Could not save the splash.properties file");
+            FMLLog.log.error("Could not save the splash.properties file", e);
             return false;
-        }
-        finally
-        {
-            IOUtils.closeQuietly(w);
         }
         return true;
     }
@@ -624,28 +744,47 @@ public class SplashProgress
         private final int frames;
         private final int size;
 
-        public Texture(ResourceLocation location)
+        public Texture(ResourceLocation location, @Nullable ResourceLocation fallback)
+        {
+            this(location, fallback, true);
+        }
+
+        public Texture(ResourceLocation location, @Nullable ResourceLocation fallback, boolean allowRP)
         {
             InputStream s = null;
             try
             {
                 this.location = location;
-                s = open(location);
+                s = open(location, fallback, allowRP);
                 ImageInputStream stream = ImageIO.createImageInputStream(s);
                 Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
                 if(!readers.hasNext()) throw new IOException("No suitable reader found for image" + location);
                 ImageReader reader = readers.next();
                 reader.setInput(stream);
-                frames = reader.getNumImages(true);
+                int frames = reader.getNumImages(true);
                 BufferedImage[] images = new BufferedImage[frames];
                 for(int i = 0; i < frames; i++)
                 {
                     images[i] = reader.read(i);
                 }
                 reader.dispose();
-                int size = 1;
                 width = images[0].getWidth();
-                height = images[0].getHeight();
+                int height = images[0].getHeight();
+                // Animation strip
+                if (height > width && height % width == 0)
+                {
+                    frames = height / width;
+                    BufferedImage original = images[0];
+                    height = width;
+                    images = new BufferedImage[frames];
+                    for (int i = 0; i < frames; i++)
+                    {
+                        images[i] = original.getSubimage(0, i * height, width, height);
+                    }
+                }
+                this.frames = frames;
+                this.height = height;
+                int size = 1;
                 while((size / width) * (size / height) < frames) size *= 2;
                 this.size = size;
                 glEnable(GL_TEXTURE_2D);
@@ -681,7 +820,7 @@ public class SplashProgress
             }
             catch(IOException e)
             {
-                e.printStackTrace();
+                FMLLog.log.error("Error reading texture from file: {}", location, e);
                 throw new RuntimeException(e);
             }
             finally
@@ -755,14 +894,15 @@ public class SplashProgress
         }
 
         @Override
-        protected void bindTexture(ResourceLocation location)
+        protected void bindTexture(@Nonnull ResourceLocation location)
         {
             if(location != locationFontTexture) throw new IllegalArgumentException();
             fontTexture.bind();
         }
 
+        @Nonnull
         @Override
-        protected IResource getResource(ResourceLocation location) throws IOException
+        protected IResource getResource(@Nonnull ResourceLocation location) throws IOException
         {
             DefaultResourcePack pack = Minecraft.getMinecraft().mcDefaultResourcePack;
             return new SimpleResource(pack.getPackName(), location, pack.getInputStream(location), null, null);
@@ -794,8 +934,11 @@ public class SplashProgress
         }
     }
 
-    private static InputStream open(ResourceLocation loc) throws IOException
+    private static InputStream open(ResourceLocation loc, @Nullable ResourceLocation fallback, boolean allowResourcePack) throws IOException
     {
+        if (!allowResourcePack)
+            return mcPack.getInputStream(loc);
+
         if(miscPack.resourceExists(loc))
         {
             return miscPack.getInputStream(loc);
@@ -804,6 +947,15 @@ public class SplashProgress
         {
             return fmlPack.getInputStream(loc);
         }
+        else if(!mcPack.resourceExists(loc) && fallback != null)
+        {
+            return open(fallback, null, true);
+        }
         return mcPack.getInputStream(loc);
+    }
+
+    private static int bytesToMb(long bytes)
+    {
+        return (int) (bytes / 1024L / 1024L);
     }
 }

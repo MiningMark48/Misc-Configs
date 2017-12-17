@@ -40,28 +40,40 @@ public class ItemCarrotOnAStick extends Item
         return true;
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
-        if (playerIn.isRiding() && playerIn.getRidingEntity() instanceof EntityPig)
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+
+        if (worldIn.isRemote)
         {
-            EntityPig entitypig = (EntityPig)playerIn.getRidingEntity();
-
-            if (itemStackIn.getMaxDamage() - itemStackIn.getMetadata() >= 7 && entitypig.boost())
-            {
-                itemStackIn.damageItem(7, playerIn);
-
-                if (itemStackIn.stackSize == 0)
-                {
-                    ItemStack itemstack = new ItemStack(Items.FISHING_ROD);
-                    itemstack.setTagCompound(itemStackIn.getTagCompound());
-                    return new ActionResult(EnumActionResult.SUCCESS, itemstack);
-                }
-
-                return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
-            }
+            return new ActionResult<ItemStack>(EnumActionResult.PASS, itemstack);
         }
+        else
+        {
+            if (playerIn.isRiding() && playerIn.getRidingEntity() instanceof EntityPig)
+            {
+                EntityPig entitypig = (EntityPig)playerIn.getRidingEntity();
 
-        playerIn.addStat(StatList.getObjectUseStats(this));
-        return new ActionResult(EnumActionResult.PASS, itemStackIn);
+                if (itemstack.getMaxDamage() - itemstack.getMetadata() >= 7 && entitypig.boost())
+                {
+                    itemstack.damageItem(7, playerIn);
+
+                    if (itemstack.isEmpty())
+                    {
+                        ItemStack itemstack1 = new ItemStack(Items.FISHING_ROD);
+                        itemstack1.setTagCompound(itemstack.getTagCompound());
+                        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack1);
+                    }
+
+                    return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
+                }
+            }
+
+            playerIn.addStat(StatList.getObjectUseStats(this));
+            return new ActionResult<ItemStack>(EnumActionResult.PASS, itemstack);
+        }
     }
 }

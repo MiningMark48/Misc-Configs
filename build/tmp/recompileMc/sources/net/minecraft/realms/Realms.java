@@ -13,7 +13,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Session;
-import net.minecraft.world.WorldSettings;
+import net.minecraft.world.GameType;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -79,22 +79,22 @@ public class Realms
 
     public static int survivalId()
     {
-        return WorldSettings.GameType.SURVIVAL.getID();
+        return GameType.SURVIVAL.getID();
     }
 
     public static int creativeId()
     {
-        return WorldSettings.GameType.CREATIVE.getID();
+        return GameType.CREATIVE.getID();
     }
 
     public static int adventureId()
     {
-        return WorldSettings.GameType.ADVENTURE.getID();
+        return GameType.ADVENTURE.getID();
     }
 
     public static int spectatorId()
     {
-        return WorldSettings.GameType.SPECTATOR.getID();
+        return GameType.SPECTATOR.getID();
     }
 
     public static void setConnectedToRealms(boolean p_setConnectedToRealms_0_)

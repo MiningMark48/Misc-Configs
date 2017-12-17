@@ -35,11 +35,9 @@ public class EntityHasProperty implements LootCondition
         }
         else
         {
-            int i = 0;
-
-            for (int j = this.properties.length; i < j; ++i)
+            for (EntityProperty entityproperty : this.properties)
             {
-                if (!this.properties[i].testProperty(rand, entity))
+                if (!entityproperty.testProperty(rand, entity))
                 {
                     return false;
                 }
@@ -78,7 +76,7 @@ public class EntityHasProperty implements LootCondition
 
                 for (Entry<String, JsonElement> entry : set)
                 {
-                    aentityproperty[i++] = EntityPropertyManager.getSerializerForName(new ResourceLocation((String)entry.getKey())).deserialize((JsonElement)entry.getValue(), context);
+                    aentityproperty[i++] = EntityPropertyManager.getSerializerForName(new ResourceLocation(entry.getKey())).deserialize(entry.getValue(), context);
                 }
 
                 return new EntityHasProperty(aentityproperty, (LootContext.EntityTarget)JsonUtils.deserializeClass(json, "entity", context, LootContext.EntityTarget.class));

@@ -7,22 +7,22 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class RegionRenderCacheBuilder
 {
-    private final VertexBuffer[] worldRenderers = new VertexBuffer[BlockRenderLayer.values().length];
+    private final BufferBuilder[] worldRenderers = new BufferBuilder[BlockRenderLayer.values().length];
 
     public RegionRenderCacheBuilder()
     {
-        this.worldRenderers[BlockRenderLayer.SOLID.ordinal()] = new VertexBuffer(2097152);
-        this.worldRenderers[BlockRenderLayer.CUTOUT.ordinal()] = new VertexBuffer(131072);
-        this.worldRenderers[BlockRenderLayer.CUTOUT_MIPPED.ordinal()] = new VertexBuffer(131072);
-        this.worldRenderers[BlockRenderLayer.TRANSLUCENT.ordinal()] = new VertexBuffer(262144);
+        this.worldRenderers[BlockRenderLayer.SOLID.ordinal()] = new BufferBuilder(2097152);
+        this.worldRenderers[BlockRenderLayer.CUTOUT.ordinal()] = new BufferBuilder(131072);
+        this.worldRenderers[BlockRenderLayer.CUTOUT_MIPPED.ordinal()] = new BufferBuilder(131072);
+        this.worldRenderers[BlockRenderLayer.TRANSLUCENT.ordinal()] = new BufferBuilder(262144);
     }
 
-    public VertexBuffer getWorldRendererByLayer(BlockRenderLayer layer)
+    public BufferBuilder getWorldRendererByLayer(BlockRenderLayer layer)
     {
         return this.worldRenderers[layer.ordinal()];
     }
 
-    public VertexBuffer getWorldRendererByLayerId(int id)
+    public BufferBuilder getWorldRendererByLayerId(int id)
     {
         return this.worldRenderers[id];
     }

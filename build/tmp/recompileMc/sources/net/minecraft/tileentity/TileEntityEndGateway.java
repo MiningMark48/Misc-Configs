@@ -25,11 +25,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TileEntityEndGateway extends TileEntity implements ITickable
+public class TileEntityEndGateway extends TileEntityEndPortal implements ITickable
 {
-    private static final Logger LOG = LogManager.getLogger();
-    private long age = 0L;
-    private int teleportCooldown = 0;
+    private static final Logger LOGGER = LogManager.getLogger();
+    private long age;
+    private int teleportCooldown;
     private BlockPos exitPortal;
     private boolean exactTeleport;
 
@@ -83,13 +83,18 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
         {
             --this.teleportCooldown;
         }
-        else if (!this.worldObj.isRemote)
+        else if (!this.world.isRemote)
         {
-            List<Entity> list = this.worldObj.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(this.getPos()));
+            List<Entity> list = this.world.<Entity>getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(this.getPos()));
 
             if (!list.isEmpty())
             {
-                this.teleportEntity((Entity)list.get(0));
+                this.teleportEntity(list.get(0));
+            }
+
+            if (this.age % 2400L == 0L)
+            {
+                this.triggerCooldown();
             }
         }
 
@@ -110,15 +115,15 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
     }
 
     @SideOnly(Side.CLIENT)
-    public float getSpawnPercent()
+    public float getSpawnPercent(float p_184302_1_)
     {
-        return MathHelper.clamp_float((float)this.age / 200.0F, 0.0F, 1.0F);
+        return MathHelper.clamp(((float)this.age + p_184302_1_) / 200.0F, 0.0F, 1.0F);
     }
 
     @SideOnly(Side.CLIENT)
-    public float getCooldownPercent()
+    public float getCooldownPercent(float p_184305_1_)
     {
-        return 1.0F - MathHelper.clamp_float((float)this.teleportCooldown / 20.0F, 0.0F, 1.0F);
+        return 1.0F - MathHelper.clamp(((float)this.teleportCooldown - p_184305_1_) / 40.0F, 0.0F, 1.0F);
     }
 
     @Nullable
@@ -134,10 +139,10 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
 
     public void triggerCooldown()
     {
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
-            this.teleportCooldown = 20;
-            this.worldObj.addBlockEvent(this.getPos(), this.getBlockType(), 1, 0);
+            this.teleportCooldown = 40;
+            this.world.addBlockEvent(this.getPos(), this.getBlockType(), 1, 0);
             this.markDirty();
         }
     }
@@ -146,7 +151,7 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
     {
         if (id == 1)
         {
-            this.teleportCooldown = 20;
+            this.teleportCooldown = 40;
             return true;
         }
         else
@@ -157,11 +162,11 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
 
     public void teleportEntity(Entity entityIn)
     {
-        if (!this.worldObj.isRemote && !this.isCoolingDown())
+        if (!this.world.isRemote && !this.isCoolingDown())
         {
             this.teleportCooldown = 100;
 
-            if (this.exitPortal == null && this.worldObj.provider instanceof WorldProviderEnd)
+            if (this.exitPortal == null && this.world.provider instanceof WorldProviderEnd)
             {
                 this.findExitPortal();
             }
@@ -178,8 +183,8 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
 
     private BlockPos findExitPosition()
     {
-        BlockPos blockpos = findHighestBlock(this.worldObj, this.exitPortal, 5, false);
-        LOG.debug("Best exit position for portal at " + this.exitPortal + " is " + blockpos);
+        BlockPos blockpos = findHighestBlock(this.world, this.exitPortal, 5, false);
+        LOGGER.debug("Best exit position for portal at {} is {}", this.exitPortal, blockpos);
         return blockpos.up();
     }
 
@@ -188,33 +193,33 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
         Vec3d vec3d = (new Vec3d((double)this.getPos().getX(), 0.0D, (double)this.getPos().getZ())).normalize();
         Vec3d vec3d1 = vec3d.scale(1024.0D);
 
-        for (int i = 16; getChunk(this.worldObj, vec3d1).getTopFilledSegment() > 0 && i-- > 0; vec3d1 = vec3d1.add(vec3d.scale(-16.0D)))
+        for (int i = 16; getChunk(this.world, vec3d1).getTopFilledSegment() > 0 && i-- > 0; vec3d1 = vec3d1.add(vec3d.scale(-16.0D)))
         {
-            LOG.debug("Skipping backwards past nonempty chunk at " + vec3d1);
+            LOGGER.debug("Skipping backwards past nonempty chunk at {}", (Object)vec3d1);
         }
 
-        for (int j = 16; getChunk(this.worldObj, vec3d1).getTopFilledSegment() == 0 && j-- > 0; vec3d1 = vec3d1.add(vec3d.scale(16.0D)))
+        for (int j = 16; getChunk(this.world, vec3d1).getTopFilledSegment() == 0 && j-- > 0; vec3d1 = vec3d1.add(vec3d.scale(16.0D)))
         {
-            LOG.debug("Skipping forward past empty chunk at " + vec3d1);
+            LOGGER.debug("Skipping forward past empty chunk at {}", (Object)vec3d1);
         }
 
-        LOG.debug("Found chunk at " + vec3d1);
-        Chunk chunk = getChunk(this.worldObj, vec3d1);
+        LOGGER.debug("Found chunk at {}", (Object)vec3d1);
+        Chunk chunk = getChunk(this.world, vec3d1);
         this.exitPortal = findSpawnpointInChunk(chunk);
 
         if (this.exitPortal == null)
         {
-            this.exitPortal = new BlockPos(vec3d1.xCoord + 0.5D, 75.0D, vec3d1.zCoord + 0.5D);
-            LOG.debug("Failed to find suitable block, settling on " + this.exitPortal);
-            (new WorldGenEndIsland()).generate(this.worldObj, new Random(this.exitPortal.toLong()), this.exitPortal);
+            this.exitPortal = new BlockPos(vec3d1.x + 0.5D, 75.0D, vec3d1.z + 0.5D);
+            LOGGER.debug("Failed to find suitable block, settling on {}", (Object)this.exitPortal);
+            (new WorldGenEndIsland()).generate(this.world, new Random(this.exitPortal.toLong()), this.exitPortal);
         }
         else
         {
-            LOG.debug("Found block at " + this.exitPortal);
+            LOGGER.debug("Found block at {}", (Object)this.exitPortal);
         }
 
-        this.exitPortal = findHighestBlock(this.worldObj, this.exitPortal, 16, true);
-        LOG.debug("Creating portal at " + this.exitPortal);
+        this.exitPortal = findHighestBlock(this.world, this.exitPortal, 16, true);
+        LOGGER.debug("Creating portal at {}", (Object)this.exitPortal);
         this.exitPortal = this.exitPortal.up(10);
         this.createExitPortal(this.exitPortal);
         this.markDirty();
@@ -250,15 +255,15 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
 
     private static Chunk getChunk(World worldIn, Vec3d vec3)
     {
-        return worldIn.getChunkFromChunkCoords(MathHelper.floor_double(vec3.xCoord / 16.0D), MathHelper.floor_double(vec3.zCoord / 16.0D));
+        return worldIn.getChunkFromChunkCoords(MathHelper.floor(vec3.x / 16.0D), MathHelper.floor(vec3.z / 16.0D));
     }
 
     @Nullable
     private static BlockPos findSpawnpointInChunk(Chunk chunkIn)
     {
-        BlockPos blockpos = new BlockPos(chunkIn.xPosition * 16, 30, chunkIn.zPosition * 16);
+        BlockPos blockpos = new BlockPos(chunkIn.x * 16, 30, chunkIn.z * 16);
         int i = chunkIn.getTopFilledSegment() + 16 - 1;
-        BlockPos blockpos1 = new BlockPos(chunkIn.xPosition * 16 + 16 - 1, i, chunkIn.zPosition * 16 + 16 - 1);
+        BlockPos blockpos1 = new BlockPos(chunkIn.x * 16 + 16 - 1, i, chunkIn.z * 16 + 16 - 1);
         BlockPos blockpos2 = null;
         double d0 = 0.0D;
 
@@ -283,8 +288,8 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
 
     private void createExitPortal(BlockPos posIn)
     {
-        (new WorldGenEndGateway()).generate(this.worldObj, new Random(), posIn);
-        TileEntity tileentity = this.worldObj.getTileEntity(posIn);
+        (new WorldGenEndGateway()).generate(this.world, new Random(), posIn);
+        TileEntity tileentity = this.world.getTileEntity(posIn);
 
         if (tileentity instanceof TileEntityEndGateway)
         {
@@ -294,14 +299,14 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
         }
         else
         {
-            LOG.warn("Couldn\'t save exit portal at " + posIn);
+            LOGGER.warn("Couldn't save exit portal at {}", (Object)posIn);
         }
     }
 
     @SideOnly(Side.CLIENT)
     public boolean shouldRenderFace(EnumFacing p_184313_1_)
     {
-        return this.getBlockType().getDefaultState().shouldSideBeRendered(this.worldObj, this.getPos(), p_184313_1_);
+        return this.getBlockType().getDefaultState().shouldSideBeRendered(this.world, this.getPos(), p_184313_1_);
     }
 
     @SideOnly(Side.CLIENT)
@@ -315,5 +320,11 @@ public class TileEntityEndGateway extends TileEntity implements ITickable
         }
 
         return i;
+    }
+
+    public void setExactPosition(BlockPos p_190603_1_)
+    {
+        this.exactTeleport = true;
+        this.exitPortal = p_190603_1_;
     }
 }

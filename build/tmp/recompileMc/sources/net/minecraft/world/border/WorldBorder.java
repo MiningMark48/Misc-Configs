@@ -12,8 +12,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class WorldBorder
 {
     private final List<IBorderListener> listeners = Lists.<IBorderListener>newArrayList();
-    private double centerX = 0.0D;
-    private double centerZ = 0.0D;
+    private double centerX;
+    private double centerZ;
     private double startDiameter = 6.0E7D;
     private double endDiameter;
     private long endTime;
@@ -67,7 +67,14 @@ public class WorldBorder
 
     public EnumBorderStatus getStatus()
     {
-        return this.endDiameter < this.startDiameter ? EnumBorderStatus.SHRINKING : (this.endDiameter > this.startDiameter ? EnumBorderStatus.GROWING : EnumBorderStatus.STATIONARY);
+        if (this.endDiameter < this.startDiameter)
+        {
+            return EnumBorderStatus.SHRINKING;
+        }
+        else
+        {
+            return this.endDiameter > this.startDiameter ? EnumBorderStatus.GROWING : EnumBorderStatus.STATIONARY;
+        }
     }
 
     public double minX()
@@ -158,7 +165,7 @@ public class WorldBorder
 
     public long getTimeUntilTarget()
     {
-        return this.getStatus() != EnumBorderStatus.STATIONARY ? this.endTime - System.currentTimeMillis() : 0L;
+        return this.getStatus() == EnumBorderStatus.STATIONARY ? 0L : this.endTime - System.currentTimeMillis();
     }
 
     public double getTargetSize()

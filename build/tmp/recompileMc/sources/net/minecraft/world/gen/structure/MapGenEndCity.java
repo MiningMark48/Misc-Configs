@@ -1,20 +1,19 @@
 package net.minecraft.world.gen.structure;
 
 import java.util.Random;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
-import net.minecraft.world.gen.ChunkProviderEnd;
+import net.minecraft.world.gen.ChunkGeneratorEnd;
 
 public class MapGenEndCity extends MapGenStructure
 {
-    private int citySpacing = 20;
-    private int minCitySeparation = 11;
-    private final ChunkProviderEnd endProvider;
+    private final int citySpacing = 20;
+    private final int minCitySeparation = 11;
+    private final ChunkGeneratorEnd endProvider;
 
-    public MapGenEndCity(ChunkProviderEnd p_i46665_1_)
+    public MapGenEndCity(ChunkGeneratorEnd p_i46665_1_)
     {
         this.endProvider = p_i46665_1_;
     }
@@ -31,27 +30,73 @@ public class MapGenEndCity extends MapGenStructure
 
         if (chunkX < 0)
         {
-            chunkX -= this.citySpacing - 1;
+            chunkX -= 19;
         }
 
         if (chunkZ < 0)
         {
-            chunkZ -= this.citySpacing - 1;
+            chunkZ -= 19;
         }
 
-        int k = chunkX / this.citySpacing;
-        int l = chunkZ / this.citySpacing;
-        Random random = this.worldObj.setRandomSeed(k, l, 10387313);
-        k = k * this.citySpacing;
-        l = l * this.citySpacing;
-        k = k + (random.nextInt(this.citySpacing - this.minCitySeparation) + random.nextInt(this.citySpacing - this.minCitySeparation)) / 2;
-        l = l + (random.nextInt(this.citySpacing - this.minCitySeparation) + random.nextInt(this.citySpacing - this.minCitySeparation)) / 2;
-        return i == k && j == l && this.endProvider.isIslandChunk(i, j);
+        int k = chunkX / 20;
+        int l = chunkZ / 20;
+        Random random = this.world.setRandomSeed(k, l, 10387313);
+        k = k * 20;
+        l = l * 20;
+        k = k + (random.nextInt(9) + random.nextInt(9)) / 2;
+        l = l + (random.nextInt(9) + random.nextInt(9)) / 2;
+
+        if (i == k && j == l && this.endProvider.isIslandChunk(i, j))
+        {
+            int i1 = getYPosForStructure(i, j, this.endProvider);
+            return i1 >= 60;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     protected StructureStart getStructureStart(int chunkX, int chunkZ)
     {
-        return new MapGenEndCity.Start(this.worldObj, this.endProvider, this.rand, chunkX, chunkZ);
+        return new MapGenEndCity.Start(this.world, this.endProvider, this.rand, chunkX, chunkZ);
+    }
+
+    public BlockPos getNearestStructurePos(World worldIn, BlockPos pos, boolean findUnexplored)
+    {
+        this.world = worldIn;
+        return findNearestStructurePosBySpacing(worldIn, this, pos, 20, 11, 10387313, true, 100, findUnexplored);
+    }
+
+    private static int getYPosForStructure(int p_191070_0_, int p_191070_1_, ChunkGeneratorEnd p_191070_2_)
+    {
+        Random random = new Random((long)(p_191070_0_ + p_191070_1_ * 10387313));
+        Rotation rotation = Rotation.values()[random.nextInt(Rotation.values().length)];
+        ChunkPrimer chunkprimer = new ChunkPrimer();
+        p_191070_2_.setBlocksInChunk(p_191070_0_, p_191070_1_, chunkprimer);
+        int i = 5;
+        int j = 5;
+
+        if (rotation == Rotation.CLOCKWISE_90)
+        {
+            i = -5;
+        }
+        else if (rotation == Rotation.CLOCKWISE_180)
+        {
+            i = -5;
+            j = -5;
+        }
+        else if (rotation == Rotation.COUNTERCLOCKWISE_90)
+        {
+            j = -5;
+        }
+
+        int k = chunkprimer.findGroundBlockIdx(7, 7);
+        int l = chunkprimer.findGroundBlockIdx(7, 7 + j);
+        int i1 = chunkprimer.findGroundBlockIdx(7 + i, 7);
+        int j1 = chunkprimer.findGroundBlockIdx(7 + i, 7 + j);
+        int k1 = Math.min(Math.min(k, l), Math.min(i1, j1));
+        return k1;
     }
 
     public static class Start extends StructureStart
@@ -62,48 +107,26 @@ public class MapGenEndCity extends MapGenStructure
             {
             }
 
-            public Start(World worldIn, ChunkProviderEnd chunkProvider, Random random, int chunkX, int chunkZ)
+            public Start(World worldIn, ChunkGeneratorEnd chunkProvider, Random random, int chunkX, int chunkZ)
             {
                 super(chunkX, chunkZ);
                 this.create(worldIn, chunkProvider, random, chunkX, chunkZ);
             }
 
-            private void create(World worldIn, ChunkProviderEnd chunkProvider, Random random, int chunkX, int chunkZ)
+            private void create(World worldIn, ChunkGeneratorEnd chunkProvider, Random rnd, int chunkX, int chunkZ)
             {
+                Random random = new Random((long)(chunkX + chunkZ * 10387313));
                 Rotation rotation = Rotation.values()[random.nextInt(Rotation.values().length)];
-                ChunkPrimer chunkprimer = new ChunkPrimer();
-                chunkProvider.setBlocksInChunk(chunkX, chunkZ, chunkprimer);
-                int i = 5;
-                int j = 5;
+                int i = MapGenEndCity.getYPosForStructure(chunkX, chunkZ, chunkProvider);
 
-                if (rotation == Rotation.CLOCKWISE_90)
-                {
-                    i = -5;
-                }
-                else if (rotation == Rotation.CLOCKWISE_180)
-                {
-                    i = -5;
-                    j = -5;
-                }
-                else if (rotation == Rotation.COUNTERCLOCKWISE_90)
-                {
-                    j = -5;
-                }
-
-                int k = chunkprimer.findGroundBlockIdx(7, 7);
-                int l = chunkprimer.findGroundBlockIdx(7, 7 + j);
-                int i1 = chunkprimer.findGroundBlockIdx(7 + i, 7);
-                int j1 = chunkprimer.findGroundBlockIdx(7 + i, 7 + j);
-                int k1 = Math.min(Math.min(k, l), Math.min(i1, j1));
-
-                if (k1 < 60)
+                if (i < 60)
                 {
                     this.isSizeable = false;
                 }
                 else
                 {
-                    BlockPos blockpos = new BlockPos(chunkX * 16 + 8, k1, chunkZ * 16 + 8);
-                    StructureEndCityPieces.beginHouseTower(blockpos, rotation, this.components, random);
+                    BlockPos blockpos = new BlockPos(chunkX * 16 + 8, i, chunkZ * 16 + 8);
+                    StructureEndCityPieces.startHouseTower(worldIn.getSaveHandler().getStructureTemplateManager(), blockpos, rotation, this.components, rnd);
                     this.updateBoundingBox();
                     this.isSizeable = true;
                 }
@@ -115,16 +138,6 @@ public class MapGenEndCity extends MapGenStructure
             public boolean isSizeableStructure()
             {
                 return this.isSizeable;
-            }
-
-            public void writeToNBT(NBTTagCompound tagCompound)
-            {
-                super.writeToNBT(tagCompound);
-            }
-
-            public void readFromNBT(NBTTagCompound tagCompound)
-            {
-                super.readFromNBT(tagCompound);
             }
         }
 }

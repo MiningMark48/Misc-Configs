@@ -26,18 +26,22 @@ import net.minecraft.network.play.client.CPacketEntityAction;
 import net.minecraft.network.play.client.CPacketHeldItemChange;
 import net.minecraft.network.play.client.CPacketInput;
 import net.minecraft.network.play.client.CPacketKeepAlive;
+import net.minecraft.network.play.client.CPacketPlaceRecipe;
 import net.minecraft.network.play.client.CPacketPlayer;
 import net.minecraft.network.play.client.CPacketPlayerAbilities;
 import net.minecraft.network.play.client.CPacketPlayerDigging;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItem;
 import net.minecraft.network.play.client.CPacketPlayerTryUseItemOnBlock;
+import net.minecraft.network.play.client.CPacketRecipeInfo;
 import net.minecraft.network.play.client.CPacketResourcePackStatus;
+import net.minecraft.network.play.client.CPacketSeenAdvancements;
 import net.minecraft.network.play.client.CPacketSpectate;
 import net.minecraft.network.play.client.CPacketSteerBoat;
 import net.minecraft.network.play.client.CPacketTabComplete;
 import net.minecraft.network.play.client.CPacketUpdateSign;
 import net.minecraft.network.play.client.CPacketUseEntity;
 import net.minecraft.network.play.client.CPacketVehicleMove;
+import net.minecraft.network.play.server.SPacketAdvancementInfo;
 import net.minecraft.network.play.server.SPacketAnimation;
 import net.minecraft.network.play.server.SPacketBlockAction;
 import net.minecraft.network.play.server.SPacketBlockBreakAnim;
@@ -76,14 +80,17 @@ import net.minecraft.network.play.server.SPacketMoveVehicle;
 import net.minecraft.network.play.server.SPacketMultiBlockChange;
 import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.network.play.server.SPacketParticles;
+import net.minecraft.network.play.server.SPacketPlaceGhostRecipe;
 import net.minecraft.network.play.server.SPacketPlayerAbilities;
 import net.minecraft.network.play.server.SPacketPlayerListHeaderFooter;
 import net.minecraft.network.play.server.SPacketPlayerListItem;
 import net.minecraft.network.play.server.SPacketPlayerPosLook;
+import net.minecraft.network.play.server.SPacketRecipeBook;
 import net.minecraft.network.play.server.SPacketRemoveEntityEffect;
 import net.minecraft.network.play.server.SPacketResourcePackSend;
 import net.minecraft.network.play.server.SPacketRespawn;
 import net.minecraft.network.play.server.SPacketScoreboardObjective;
+import net.minecraft.network.play.server.SPacketSelectAdvancementsTab;
 import net.minecraft.network.play.server.SPacketServerDifficulty;
 import net.minecraft.network.play.server.SPacketSetExperience;
 import net.minecraft.network.play.server.SPacketSetPassengers;
@@ -165,22 +172,25 @@ public enum EnumConnectionState
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketParticles.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketJoinGame.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketMaps.class);
+            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntity.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntity.S15PacketEntityRelMove.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntity.S17PacketEntityLookMove.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntity.S16PacketEntityLook.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntity.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketMoveVehicle.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketSignEditorOpen.class);
+            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketPlaceGhostRecipe.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketPlayerAbilities.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketCombatEvent.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketPlayerListItem.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketPlayerPosLook.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketUseBed.class);
+            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketRecipeBook.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketDestroyEntities.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketRemoveEntityEffect.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketResourcePackSend.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketRespawn.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntityHeadLook.class);
+            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketSelectAdvancementsTab.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketWorldBorder.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketCamera.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketHeldItemChange.class);
@@ -202,6 +212,7 @@ public enum EnumConnectionState
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketPlayerListHeaderFooter.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketCollectItem.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntityTeleport.class);
+            this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketAdvancementInfo.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntityProperties.class);
             this.registerPacket(EnumPacketDirection.CLIENTBOUND, SPacketEntityEffect.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketConfirmTeleport.class);
@@ -216,17 +227,20 @@ public enum EnumConnectionState
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketCustomPayload.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketUseEntity.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketKeepAlive.class);
+            this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayer.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayer.Position.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayer.PositionRotation.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayer.Rotation.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayer.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketVehicleMove.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketSteerBoat.class);
+            this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlaceRecipe.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayerAbilities.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketPlayerDigging.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketEntityAction.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketInput.class);
+            this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketRecipeInfo.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketResourcePackStatus.class);
+            this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketSeenAdvancements.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketHeldItemChange.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketCreativeInventoryAction.class);
             this.registerPacket(EnumPacketDirection.SERVERBOUND, CPacketUpdateSign.class);
@@ -257,9 +271,7 @@ public enum EnumConnectionState
         }
     };
 
-    private static int MIN_PROTOCOL_ID = -1;
-    private static int MAX_PROTOCOL_ID = 2;
-    private static final EnumConnectionState[] STATES_BY_ID = new EnumConnectionState[MAX_PROTOCOL_ID - MIN_PROTOCOL_ID + 1];
+    private static final EnumConnectionState[] STATES_BY_ID = new EnumConnectionState[4];
     private static final Map < Class <? extends Packet<? >> , EnumConnectionState > STATES_BY_CLASS = Maps. < Class <? extends Packet<? >> , EnumConnectionState > newHashMap();
     private final int id;
     private final Map < EnumPacketDirection, BiMap < Integer, Class <? extends Packet<? >>> > directionMaps;
@@ -293,7 +305,7 @@ public enum EnumConnectionState
         }
     }
 
-    public Integer getPacketId(EnumPacketDirection direction, Packet<?> packetIn)
+    public Integer getPacketId(EnumPacketDirection direction, Packet<?> packetIn) throws Exception
     {
         return (Integer)((BiMap)this.directionMaps.get(direction)).inverse().get(packetIn.getClass());
     }
@@ -312,12 +324,12 @@ public enum EnumConnectionState
 
     public static EnumConnectionState getById(int stateId)
     {
-        return stateId >= MIN_PROTOCOL_ID && stateId <= MAX_PROTOCOL_ID ? STATES_BY_ID[stateId - MIN_PROTOCOL_ID] : null;
+        return stateId >= -1 && stateId <= 2 ? STATES_BY_ID[stateId - -1] : null;
     }
 
     public static EnumConnectionState getFromPacket(Packet<?> packetIn)
     {
-        return (EnumConnectionState)STATES_BY_CLASS.get(packetIn.getClass());
+        return STATES_BY_CLASS.get(packetIn.getClass());
     }
 
     static
@@ -326,20 +338,20 @@ public enum EnumConnectionState
         {
             int i = enumconnectionstate.getId();
 
-            if (i < MIN_PROTOCOL_ID || i > MAX_PROTOCOL_ID)
+            if (i < -1 || i > 2)
             {
                 throw new Error("Invalid protocol ID " + Integer.toString(i));
             }
 
-            STATES_BY_ID[i - MIN_PROTOCOL_ID] = enumconnectionstate;
+            STATES_BY_ID[i - -1] = enumconnectionstate;
 
             for (EnumPacketDirection enumpacketdirection : enumconnectionstate.directionMaps.keySet())
             {
-                for (Class <? extends Packet<? >> oclass : (enumconnectionstate.directionMaps.get(enumpacketdirection)).values())
+                for (Class <? extends Packet<? >> oclass : enumconnectionstate.directionMaps.get(enumpacketdirection).values())
                 {
                     if (STATES_BY_CLASS.containsKey(oclass) && STATES_BY_CLASS.get(oclass) != enumconnectionstate)
                     {
-                        throw new Error("Packet " + oclass + " is already assigned to protocol " + STATES_BY_CLASS.get(oclass) + " - can\'t reassign to " + enumconnectionstate);
+                        throw new Error("Packet " + oclass + " is already assigned to protocol " + STATES_BY_CLASS.get(oclass) + " - can't reassign to " + enumconnectionstate);
                     }
 
                     try

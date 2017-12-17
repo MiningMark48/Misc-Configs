@@ -19,7 +19,7 @@ public class PhaseLandingApproach extends PhaseBase
         super(dragonIn);
     }
 
-    public PhaseList<PhaseLandingApproach> getPhaseList()
+    public PhaseList<PhaseLandingApproach> getType()
     {
         return PhaseList.LANDING_APPROACH;
     }
@@ -41,7 +41,7 @@ public class PhaseLandingApproach extends PhaseBase
     {
         double d0 = this.targetLocation == null ? 0.0D : this.targetLocation.squareDistanceTo(this.dragon.posX, this.dragon.posY, this.dragon.posZ);
 
-        if (d0 < 100.0D || d0 > 22500.0D || this.dragon.isCollidedHorizontally || this.dragon.isCollidedVertically)
+        if (d0 < 100.0D || d0 > 22500.0D || this.dragon.collidedHorizontally || this.dragon.collidedVertically)
         {
             this.findNewTarget();
         }
@@ -61,14 +61,14 @@ public class PhaseLandingApproach extends PhaseBase
         if (this.currentPath == null || this.currentPath.isFinished())
         {
             int i = this.dragon.initPathPoints();
-            BlockPos blockpos = this.dragon.worldObj.getTopSolidOrLiquidBlock(WorldGenEndPodium.END_PODIUM_LOCATION);
-            EntityPlayer entityplayer = this.dragon.worldObj.getNearestAttackablePlayer(blockpos, 128.0D, 128.0D);
+            BlockPos blockpos = this.dragon.world.getTopSolidOrLiquidBlock(WorldGenEndPodium.END_PODIUM_LOCATION);
+            EntityPlayer entityplayer = this.dragon.world.getNearestAttackablePlayer(blockpos, 128.0D, 128.0D);
             int j;
 
             if (entityplayer != null)
             {
                 Vec3d vec3d = (new Vec3d(entityplayer.posX, 0.0D, entityplayer.posZ)).normalize();
-                j = this.dragon.getNearestPpIdx(-vec3d.xCoord * 40.0D, 105.0D, -vec3d.zCoord * 40.0D);
+                j = this.dragon.getNearestPpIdx(-vec3d.x * 40.0D, 105.0D, -vec3d.z * 40.0D);
             }
             else
             {
@@ -98,15 +98,15 @@ public class PhaseLandingApproach extends PhaseBase
         {
             Vec3d vec3d = this.currentPath.getCurrentPos();
             this.currentPath.incrementPathIndex();
-            double d0 = vec3d.xCoord;
-            double d1 = vec3d.zCoord;
+            double d0 = vec3d.x;
+            double d1 = vec3d.z;
             double d2;
 
             while (true)
             {
-                d2 = vec3d.yCoord + (double)(this.dragon.getRNG().nextFloat() * 20.0F);
+                d2 = vec3d.y + (double)(this.dragon.getRNG().nextFloat() * 20.0F);
 
-                if (d2 >= vec3d.yCoord)
+                if (d2 >= vec3d.y)
                 {
                     break;
                 }

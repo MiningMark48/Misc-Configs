@@ -23,7 +23,7 @@ public class WeightedBakedModel implements IBakedModel
     {
         this.models = modelsIn;
         this.totalWeight = WeightedRandom.getTotalWeight(modelsIn);
-        this.baseModel = ((WeightedBakedModel.WeightedModel)modelsIn.get(0)).model;
+        this.baseModel = (modelsIn.get(0)).model;
     }
 
     private IBakedModel getRandomModel(long p_188627_1_)
@@ -69,11 +69,11 @@ public class WeightedBakedModel implements IBakedModel
     @SideOnly(Side.CLIENT)
     public static class Builder
         {
-            private List<WeightedBakedModel.WeightedModel> listItems = Lists.<WeightedBakedModel.WeightedModel>newArrayList();
+            private final List<WeightedBakedModel.WeightedModel> listItems = Lists.<WeightedBakedModel.WeightedModel>newArrayList();
 
-            public WeightedBakedModel.Builder add(IBakedModel p_177677_1_, int p_177677_2_)
+            public WeightedBakedModel.Builder add(IBakedModel model, int weight)
             {
-                this.listItems.add(new WeightedBakedModel.WeightedModel(p_177677_1_, p_177677_2_));
+                this.listItems.add(new WeightedBakedModel.WeightedModel(model, weight));
                 return this;
             }
 
@@ -85,7 +85,7 @@ public class WeightedBakedModel implements IBakedModel
 
             public IBakedModel first()
             {
-                return ((WeightedBakedModel.WeightedModel)this.listItems.get(0)).model;
+                return (this.listItems.get(0)).model;
             }
         }
 

@@ -2,6 +2,7 @@ package net.minecraft.block;
 
 import java.util.Random;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
@@ -39,12 +40,12 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
     {
-        return worldIn.getBlockState(pos.down()).isFullyOpaque() ? super.canPlaceBlockAt(worldIn, pos) : false;
+        return worldIn.getBlockState(pos.down()).isTopSolid() ? super.canPlaceBlockAt(worldIn, pos) : false;
     }
 
     public boolean canBlockStay(World worldIn, BlockPos pos)
     {
-        return worldIn.getBlockState(pos.down()).isFullyOpaque();
+        return worldIn.getBlockState(pos.down()).isTopSolid();
     }
 
     /**
@@ -94,7 +95,14 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
 
     public int getWeakPower(IBlockState blockState, IBlockAccess blockAccess, BlockPos pos, EnumFacing side)
     {
-        return !this.isPowered(blockState) ? 0 : (blockState.getValue(FACING) == side ? this.getActiveSignal(blockAccess, pos, blockState) : 0);
+        if (!this.isPowered(blockState))
+        {
+            return 0;
+        }
+        else
+        {
+            return blockState.getValue(FACING) == side ? this.getActiveSignal(blockAccess, pos, blockState) : 0;
+        }
     }
 
     /**
@@ -102,7 +110,7 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (this.canBlockStay(worldIn, pos))
         {
@@ -115,7 +123,7 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
 
             for (EnumFacing enumfacing : EnumFacing.values())
             {
-                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this);
+                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this, false);
             }
         }
     }
@@ -126,7 +134,7 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
         {
             boolean flag = this.shouldBePowered(worldIn, pos, state);
 
-            if ((this.isRepeaterPowered && !flag || !this.isRepeaterPowered && flag) && !worldIn.isBlockTickPending(pos, this))
+            if (this.isRepeaterPowered != flag && !worldIn.isBlockTickPending(pos, this))
             {
                 int i = -1;
 
@@ -183,7 +191,22 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
         Block block = iblockstate.getBlock();
-        return this.isAlternateInput(iblockstate) ? (block == Blocks.REDSTONE_BLOCK ? 15 : (block == Blocks.REDSTONE_WIRE ? ((Integer)iblockstate.getValue(BlockRedstoneWire.POWER)).intValue() : worldIn.getStrongPower(pos, side))) : 0;
+
+        if (this.isAlternateInput(iblockstate))
+        {
+            if (block == Blocks.REDSTONE_BLOCK)
+            {
+                return 15;
+            }
+            else
+            {
+                return block == Blocks.REDSTONE_WIRE ? ((Integer)iblockstate.getValue(BlockRedstoneWire.POWER)).intValue() : worldIn.getStrongPower(pos, side);
+            }
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     /**
@@ -198,7 +221,7 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         return this.getDefaultState().withProperty(FACING, placer.getHorizontalFacing().getOpposite());
     }
@@ -214,6 +237,9 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
         }
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         this.notifyNeighbors(worldIn, pos, state);
@@ -223,14 +249,14 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
     {
         EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
         BlockPos blockpos = pos.offset(enumfacing.getOpposite());
-        if(net.minecraftforge.event.ForgeEventFactory.onNeighborNotify(worldIn, pos, worldIn.getBlockState(pos), java.util.EnumSet.of(enumfacing.getOpposite())).isCanceled())
+        if(net.minecraftforge.event.ForgeEventFactory.onNeighborNotify(worldIn, pos, worldIn.getBlockState(pos), java.util.EnumSet.of(enumfacing.getOpposite()), false).isCanceled())
             return;
-        worldIn.notifyBlockOfStateChange(blockpos, this);
+        worldIn.neighborChanged(blockpos, this, pos);
         worldIn.notifyNeighborsOfStateExcept(blockpos, this, enumfacing);
     }
 
     /**
-     * Called when a player destroys this Block
+     * Called after a player destroys this Block - the posiiton pos may no longer hold the state indicated.
      */
     public void onBlockDestroyedByPlayer(World worldIn, BlockPos pos, IBlockState state)
     {
@@ -238,7 +264,7 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
         {
             for (EnumFacing enumfacing : EnumFacing.values())
             {
-                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this);
+                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this, false);
             }
         }
 
@@ -278,7 +304,15 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
     {
         EnumFacing enumfacing = ((EnumFacing)state.getValue(FACING)).getOpposite();
         BlockPos blockpos = pos.offset(enumfacing);
-        return isDiode(worldIn.getBlockState(blockpos)) ? worldIn.getBlockState(blockpos).getValue(FACING) != enumfacing : false;
+
+        if (isDiode(worldIn.getBlockState(blockpos)))
+        {
+            return worldIn.getBlockState(blockpos).getValue(FACING) != enumfacing;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     protected int getTickDelay(IBlockState state)
@@ -301,5 +335,38 @@ public abstract class BlockRedstoneDiode extends BlockHorizontal
     public BlockRenderLayer getBlockLayer()
     {
         return BlockRenderLayer.CUTOUT;
+    }
+
+    /* ======================================== FORGE START =====================================*/
+    @Override
+    public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis)
+    {
+        if (super.rotateBlock(world, pos, axis))
+        {
+            IBlockState state = world.getBlockState(pos);
+            state = getUnpoweredState(state);
+            world.setBlockState(pos, state);
+
+            if (shouldBePowered(world, pos, state))
+            {
+                world.scheduleUpdate(pos, this, 1);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return face == EnumFacing.DOWN ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
     }
 }

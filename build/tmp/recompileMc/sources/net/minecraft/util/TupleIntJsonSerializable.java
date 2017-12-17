@@ -21,6 +21,9 @@ public class TupleIntJsonSerializable
         this.integerValue = integerValueIn;
     }
 
+    /**
+     * Gets the JsonSerializable value stored in this tuple.
+     */
     public <T extends IJsonSerializable> T getJsonSerializableValue()
     {
         return (T)this.jsonSerializableValue;

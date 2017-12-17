@@ -17,17 +17,16 @@ public class EnchantWithLevels extends LootFunction
     private final RandomValueRange randomLevel;
     private final boolean isTreasure;
 
-    public EnchantWithLevels(LootCondition[] conditionsIn, RandomValueRange randomRange, boolean p_i46627_3_)
+    public EnchantWithLevels(LootCondition[] conditionsIn, RandomValueRange randomRange, boolean isTreasureIn)
     {
         super(conditionsIn);
         this.randomLevel = randomRange;
-        this.isTreasure = p_i46627_3_;
+        this.isTreasure = isTreasureIn;
     }
 
     public ItemStack apply(ItemStack stack, Random rand, LootContext context)
     {
-        EnchantmentHelper.addRandomEnchantment(rand, stack, this.randomLevel.generateInt(rand), this.isTreasure);
-        return stack;
+        return EnchantmentHelper.addRandomEnchantment(rand, stack, this.randomLevel.generateInt(rand), this.isTreasure);
     }
 
     public static class Serializer extends LootFunction.Serializer<EnchantWithLevels>

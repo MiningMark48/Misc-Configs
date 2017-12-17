@@ -15,9 +15,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class TileEntityBannerRenderer extends TileEntitySpecialRenderer<TileEntityBanner>
 {
-    private ModelBanner bannerModel = new ModelBanner();
+    private final ModelBanner bannerModel = new ModelBanner();
 
-    public void renderTileEntityAt(TileEntityBanner te, double x, double y, double z, float partialTicks, int destroyStage)
+    public void render(TileEntityBanner te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
     {
         boolean flag = te.getWorld() != null;
         boolean flag1 = !flag || te.getBlockType() == Blocks.STANDING_BANNER;
@@ -28,7 +28,7 @@ public class TileEntityBannerRenderer extends TileEntitySpecialRenderer<TileEnti
 
         if (flag1)
         {
-            GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F * f, (float)z + 0.5F);
+            GlStateManager.translate((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
             float f1 = (float)(i * 360) / 16.0F;
             GlStateManager.rotate(-f1, 0.0F, 1.0F, 0.0F);
             this.bannerModel.bannerStand.showModel = true;
@@ -52,7 +52,7 @@ public class TileEntityBannerRenderer extends TileEntitySpecialRenderer<TileEnti
                 f2 = -90.0F;
             }
 
-            GlStateManager.translate((float)x + 0.5F, (float)y - 0.25F * f, (float)z + 0.5F);
+            GlStateManager.translate((float)x + 0.5F, (float)y - 0.16666667F, (float)z + 0.5F);
             GlStateManager.rotate(-f2, 0.0F, 1.0F, 0.0F);
             GlStateManager.translate(0.0F, -0.3125F, -0.4375F);
             this.bannerModel.bannerStand.showModel = false;
@@ -68,12 +68,12 @@ public class TileEntityBannerRenderer extends TileEntitySpecialRenderer<TileEnti
         {
             this.bindTexture(resourcelocation);
             GlStateManager.pushMatrix();
-            GlStateManager.scale(f, -f, -f);
+            GlStateManager.scale(0.6666667F, -0.6666667F, -0.6666667F);
             this.bannerModel.renderBanner();
             GlStateManager.popMatrix();
         }
 
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
         GlStateManager.popMatrix();
     }
 

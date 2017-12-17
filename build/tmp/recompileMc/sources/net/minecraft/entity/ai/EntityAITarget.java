@@ -1,5 +1,6 @@
 package net.minecraft.entity.ai;
 
+import javax.annotation.Nullable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -20,7 +21,7 @@ public abstract class EntityAITarget extends EntityAIBase
     /** If true, EntityAI targets must be able to be seen (cannot be blocked by walls) to be suitable targets. */
     protected boolean shouldCheckSight;
     /** When true, only entities that can be reached with minimal effort will be targetted. */
-    private boolean nearbyOnly;
+    private final boolean nearbyOnly;
     /** When nearbyOnly is true: 0 -> No target, but OK to search; 1 -> Nearby target found; 2 -> Target too far. */
     private int targetSearchStatus;
     /** When nearbyOnly is true, this throttles target searching to avoid excessive pathfinding. */
@@ -49,7 +50,7 @@ public abstract class EntityAITarget extends EntityAIBase
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
         EntityLivingBase entitylivingbase = this.taskOwner.getAttackTarget();
 
@@ -79,7 +80,7 @@ public abstract class EntityAITarget extends EntityAIBase
             {
                 double d0 = this.getTargetDistance();
 
-                if (this.taskOwner.getDistanceSqToEntity(entitylivingbase) > d0 * d0)
+                if (this.taskOwner.getDistanceSq(entitylivingbase) > d0 * d0)
                 {
                     return false;
                 }
@@ -128,7 +129,7 @@ public abstract class EntityAITarget extends EntityAIBase
     }
 
     /**
-     * Resets the task
+     * Reset the task's internal state. Called when this task is interrupted by another one
      */
     public void resetTask()
     {
@@ -139,7 +140,7 @@ public abstract class EntityAITarget extends EntityAIBase
     /**
      * A static method used to see if an entity is a suitable target through a number of checks.
      */
-    public static boolean isSuitableTarget(EntityLiving attacker, EntityLivingBase target, boolean includeInvincibles, boolean checkSight)
+    public static boolean isSuitableTarget(EntityLiving attacker, @Nullable EntityLivingBase target, boolean includeInvincibles, boolean checkSight)
     {
         if (target == null)
         {
@@ -165,7 +166,7 @@ public abstract class EntityAITarget extends EntityAIBase
         {
             if (attacker instanceof IEntityOwnable && ((IEntityOwnable)attacker).getOwnerId() != null)
             {
-                if (target instanceof IEntityOwnable && ((IEntityOwnable)attacker).getOwnerId().equals(target.getUniqueID()))
+                if (target instanceof IEntityOwnable && ((IEntityOwnable)attacker).getOwnerId().equals(((IEntityOwnable)target).getOwnerId()))
                 {
                     return false;
                 }
@@ -188,7 +189,7 @@ public abstract class EntityAITarget extends EntityAIBase
      * A method used to see if an entity is a suitable target through a number of checks. Args : entity,
      * canTargetInvinciblePlayer
      */
-    protected boolean isSuitableTarget(EntityLivingBase target, boolean includeInvincibles)
+    protected boolean isSuitableTarget(@Nullable EntityLivingBase target, boolean includeInvincibles)
     {
         if (!isSuitableTarget(this.taskOwner, target, includeInvincibles, this.shouldCheckSight))
         {
@@ -244,10 +245,16 @@ public abstract class EntityAITarget extends EntityAIBase
             }
             else
             {
-                int i = pathpoint.xCoord - MathHelper.floor_double(target.posX);
-                int j = pathpoint.zCoord - MathHelper.floor_double(target.posZ);
+                int i = pathpoint.x - MathHelper.floor(target.posX);
+                int j = pathpoint.z - MathHelper.floor(target.posZ);
                 return (double)(i * i + j * j) <= 2.25D;
             }
         }
+    }
+
+    public EntityAITarget setUnseenMemoryTicks(int p_190882_1_)
+    {
+        this.unseenMemoryTicks = p_190882_1_;
+        return this;
     }
 }

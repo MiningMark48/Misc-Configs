@@ -2,6 +2,9 @@ package net.minecraft.entity.item;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.projectile.EntityThrowable;
+import net.minecraft.init.PotionTypes;
+import net.minecraft.potion.PotionUtils;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
@@ -23,6 +26,11 @@ public class EntityExpBottle extends EntityThrowable
         super(worldIn, x, y, z);
     }
 
+    public static void registerFixesExpBottle(DataFixer fixer)
+    {
+        EntityThrowable.registerFixesThrowable(fixer, "ThrowableExpBottle");
+    }
+
     /**
      * Gets the amount of gravity to apply to the thrown entity with each tick.
      */
@@ -36,16 +44,16 @@ public class EntityExpBottle extends EntityThrowable
      */
     protected void onImpact(RayTraceResult result)
     {
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
-            this.worldObj.playEvent(2002, new BlockPos(this), 0);
-            int i = 3 + this.worldObj.rand.nextInt(5) + this.worldObj.rand.nextInt(5);
+            this.world.playEvent(2002, new BlockPos(this), PotionUtils.getPotionColor(PotionTypes.WATER));
+            int i = 3 + this.world.rand.nextInt(5) + this.world.rand.nextInt(5);
 
             while (i > 0)
             {
                 int j = EntityXPOrb.getXPSplit(i);
                 i -= j;
-                this.worldObj.spawnEntityInWorld(new EntityXPOrb(this.worldObj, this.posX, this.posY, this.posZ, j));
+                this.world.spawnEntity(new EntityXPOrb(this.world, this.posX, this.posY, this.posZ, j));
             }
 
             this.setDead();

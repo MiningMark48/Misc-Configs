@@ -34,9 +34,9 @@ public class GuiScreenOptionsSounds extends GuiScreen
      */
     public void initGui()
     {
+        this.title = I18n.format("options.sounds.title");
+        this.offDisplayString = I18n.format("options.off");
         int i = 0;
-        this.title = I18n.format("options.sounds.title", new Object[0]);
-        this.offDisplayString = I18n.format("options.off", new Object[0]);
         this.buttonList.add(new GuiScreenOptionsSounds.Button(SoundCategory.MASTER.ordinal(), this.width / 2 - 155 + i % 2 * 160, this.height / 6 - 12 + 24 * (i >> 1), SoundCategory.MASTER, true));
         i = i + 2;
 
@@ -53,7 +53,21 @@ public class GuiScreenOptionsSounds extends GuiScreen
         int k = this.height / 6 - 12;
         ++i;
         this.buttonList.add(new GuiOptionButton(201, j, k + 24 * (i >> 1), GameSettings.Options.SHOW_SUBTITLES, this.game_settings_4.getKeyBinding(GameSettings.Options.SHOW_SUBTITLES)));
-        this.buttonList.add(new GuiButton(200, this.width / 2 - 100, this.height / 6 + 168, I18n.format("gui.done", new Object[0])));
+        this.buttonList.add(new GuiButton(200, this.width / 2 - 100, this.height / 6 + 168, I18n.format("gui.done")));
+    }
+
+    /**
+     * Fired when a key is typed (except F11 which toggles full screen). This is the equivalent of
+     * KeyListener.keyTyped(KeyEvent e). Args : character (character on the key), keyCode (lwjgl Keyboard key code)
+     */
+    protected void keyTyped(char typedChar, int keyCode) throws IOException
+    {
+        if (keyCode == 1)
+        {
+            this.mc.gameSettings.saveOptions();
+        }
+
+        super.keyTyped(typedChar, keyCode);
     }
 
     /**
@@ -83,7 +97,7 @@ public class GuiScreenOptionsSounds extends GuiScreen
     public void drawScreen(int mouseX, int mouseY, float partialTicks)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, this.title, this.width / 2, 15, 16777215);
+        this.drawCenteredString(this.fontRenderer, this.title, this.width / 2, 15, 16777215);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -101,11 +115,11 @@ public class GuiScreenOptionsSounds extends GuiScreen
         public float volume = 1.0F;
         public boolean pressed;
 
-        public Button(int p_i46744_2_, int x, int y, SoundCategory categoryIn, boolean master)
+        public Button(int buttonId, int x, int y, SoundCategory categoryIn, boolean master)
         {
-            super(p_i46744_2_, x, y, master ? 310 : 150, 20, "");
+            super(buttonId, x, y, master ? 310 : 150, 20, "");
             this.category = categoryIn;
-            this.categoryName = I18n.format("soundCategory." + categoryIn.getName(), new Object[0]);
+            this.categoryName = I18n.format("soundCategory." + categoryIn.getName());
             this.displayString = this.categoryName + ": " + GuiScreenOptionsSounds.this.getDisplayString(categoryIn);
             this.volume = GuiScreenOptionsSounds.this.game_settings_4.getSoundLevel(categoryIn);
         }
@@ -128,16 +142,16 @@ public class GuiScreenOptionsSounds extends GuiScreen
             {
                 if (this.pressed)
                 {
-                    this.volume = (float)(mouseX - (this.xPosition + 4)) / (float)(this.width - 8);
-                    this.volume = MathHelper.clamp_float(this.volume, 0.0F, 1.0F);
+                    this.volume = (float)(mouseX - (this.x + 4)) / (float)(this.width - 8);
+                    this.volume = MathHelper.clamp(this.volume, 0.0F, 1.0F);
                     mc.gameSettings.setSoundLevel(this.category, this.volume);
                     mc.gameSettings.saveOptions();
                     this.displayString = this.categoryName + ": " + GuiScreenOptionsSounds.this.getDisplayString(this.category);
                 }
 
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-                this.drawTexturedModalRect(this.xPosition + (int)(this.volume * (float)(this.width - 8)), this.yPosition, 0, 66, 4, 20);
-                this.drawTexturedModalRect(this.xPosition + (int)(this.volume * (float)(this.width - 8)) + 4, this.yPosition, 196, 66, 4, 20);
+                this.drawTexturedModalRect(this.x + (int)(this.volume * (float)(this.width - 8)), this.y, 0, 66, 4, 20);
+                this.drawTexturedModalRect(this.x + (int)(this.volume * (float)(this.width - 8)) + 4, this.y, 196, 66, 4, 20);
             }
         }
 
@@ -149,8 +163,8 @@ public class GuiScreenOptionsSounds extends GuiScreen
         {
             if (super.mousePressed(mc, mouseX, mouseY))
             {
-                this.volume = (float)(mouseX - (this.xPosition + 4)) / (float)(this.width - 8);
-                this.volume = MathHelper.clamp_float(this.volume, 0.0F, 1.0F);
+                this.volume = (float)(mouseX - (this.x + 4)) / (float)(this.width - 8);
+                this.volume = MathHelper.clamp(this.volume, 0.0F, 1.0F);
                 mc.gameSettings.setSoundLevel(this.category, this.volume);
                 mc.gameSettings.saveOptions();
                 this.displayString = this.categoryName + ": " + GuiScreenOptionsSounds.this.getDisplayString(this.category);

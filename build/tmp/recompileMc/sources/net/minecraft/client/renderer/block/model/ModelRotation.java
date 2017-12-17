@@ -40,18 +40,18 @@ public enum ModelRotation implements net.minecraftforge.common.model.IModelState
         return p_177521_0_ * 360 + p_177521_1_;
     }
 
-    private ModelRotation(int p_i46087_3_, int p_i46087_4_)
+    private ModelRotation(int x, int y)
     {
-        this.combinedXY = combineXY(p_i46087_3_, p_i46087_4_);
+        this.combinedXY = combineXY(x, y);
         this.matrix4d = new Matrix4f();
         Matrix4f matrix4f = new Matrix4f();
         matrix4f.setIdentity();
-        Matrix4f.rotate((float)(-p_i46087_3_) * 0.017453292F, new Vector3f(1.0F, 0.0F, 0.0F), matrix4f, matrix4f);
-        this.quartersX = MathHelper.abs_int(p_i46087_3_ / 90);
+        Matrix4f.rotate((float)(-x) * 0.017453292F, new Vector3f(1.0F, 0.0F, 0.0F), matrix4f, matrix4f);
+        this.quartersX = MathHelper.abs(x / 90);
         Matrix4f matrix4f1 = new Matrix4f();
         matrix4f1.setIdentity();
-        Matrix4f.rotate((float)(-p_i46087_4_) * 0.017453292F, new Vector3f(0.0F, 1.0F, 0.0F), matrix4f1, matrix4f1);
-        this.quartersY = MathHelper.abs_int(p_i46087_4_ / 90);
+        Matrix4f.rotate((float)(-y) * 0.017453292F, new Vector3f(0.0F, 1.0F, 0.0F), matrix4f1, matrix4f1);
+        this.quartersY = MathHelper.abs(y / 90);
         Matrix4f.mul(matrix4f1, matrix4f, this.matrix4d);
     }
 
@@ -106,7 +106,7 @@ public enum ModelRotation implements net.minecraftforge.common.model.IModelState
 
     public static ModelRotation getModelRotation(int x, int y)
     {
-        return (ModelRotation)MAP_ROTATIONS.get(Integer.valueOf(combineXY(MathHelper.normalizeAngle(x, 360), MathHelper.normalizeAngle(y, 360))));
+        return MAP_ROTATIONS.get(Integer.valueOf(combineXY(MathHelper.normalizeAngle(x, 360), MathHelper.normalizeAngle(y, 360))));
     }
 
     static
@@ -117,7 +117,7 @@ public enum ModelRotation implements net.minecraftforge.common.model.IModelState
         }
     }
 
-    public com.google.common.base.Optional<net.minecraftforge.common.model.TRSRTransformation> apply(com.google.common.base.Optional<? extends net.minecraftforge.common.model.IModelPart> part) { return net.minecraftforge.client.ForgeHooksClient.applyTransform(getMatrix(), part); }
+    public java.util.Optional<net.minecraftforge.common.model.TRSRTransformation> apply(java.util.Optional<? extends net.minecraftforge.common.model.IModelPart> part) { return net.minecraftforge.client.ForgeHooksClient.applyTransform(getMatrix(), part); }
     public javax.vecmath.Matrix4f getMatrix() { return net.minecraftforge.client.ForgeHooksClient.getMatrix(this); }
     public EnumFacing rotate(EnumFacing facing) { return rotateFace(facing); }
     public int rotate(EnumFacing facing, int vertexIndex) { return rotateVertex(facing, vertexIndex); }

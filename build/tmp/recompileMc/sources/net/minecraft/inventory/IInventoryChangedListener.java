@@ -5,5 +5,5 @@ public interface IInventoryChangedListener
     /**
      * Called by InventoryBasic.onInventoryChanged() on a array that is never filled.
      */
-    void onInventoryChanged(InventoryBasic invBasic);
+    void onInventoryChanged(IInventory invBasic);
 }

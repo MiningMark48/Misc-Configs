@@ -20,23 +20,23 @@ public class LootFunctionManager
     private static final Map < ResourceLocation, LootFunction.Serializer<? >> NAME_TO_SERIALIZER_MAP = Maps. < ResourceLocation, LootFunction.Serializer<? >> newHashMap();
     private static final Map < Class <? extends LootFunction > , LootFunction.Serializer<? >> CLASS_TO_SERIALIZER_MAP = Maps. < Class <? extends LootFunction > , LootFunction.Serializer<? >> newHashMap();
 
-    public static <T extends LootFunction> void registerFunction(LootFunction.Serializer <? extends T > p_186582_0_)
+    public static <T extends LootFunction> void registerFunction(LootFunction.Serializer <? extends T > serializer)
     {
-        ResourceLocation resourcelocation = p_186582_0_.getFunctionName();
-        Class<T> oclass = (Class<T>)p_186582_0_.getFunctionClass();
+        ResourceLocation resourcelocation = serializer.getFunctionName();
+        Class<T> oclass = (Class<T>)serializer.getFunctionClass();
 
         if (NAME_TO_SERIALIZER_MAP.containsKey(resourcelocation))
         {
-            throw new IllegalArgumentException("Can\'t re-register item function name " + resourcelocation);
+            throw new IllegalArgumentException("Can't re-register item function name " + resourcelocation);
         }
         else if (CLASS_TO_SERIALIZER_MAP.containsKey(oclass))
         {
-            throw new IllegalArgumentException("Can\'t re-register item function class " + oclass.getName());
+            throw new IllegalArgumentException("Can't re-register item function class " + oclass.getName());
         }
         else
         {
-            NAME_TO_SERIALIZER_MAP.put(resourcelocation, p_186582_0_);
-            CLASS_TO_SERIALIZER_MAP.put(oclass, p_186582_0_);
+            NAME_TO_SERIALIZER_MAP.put(resourcelocation, serializer);
+            CLASS_TO_SERIALIZER_MAP.put(oclass, serializer);
         }
     }
 
@@ -46,7 +46,7 @@ public class LootFunctionManager
 
         if (serializer == null)
         {
-            throw new IllegalArgumentException("Unknown loot item function \'" + location + "\'");
+            throw new IllegalArgumentException("Unknown loot item function '" + location + "'");
         }
         else
         {
@@ -95,7 +95,7 @@ public class LootFunctionManager
                 }
                 catch (IllegalArgumentException var8)
                 {
-                    throw new JsonSyntaxException("Unknown function \'" + resourcelocation + "\'");
+                    throw new JsonSyntaxException("Unknown function '" + resourcelocation + "'");
                 }
 
                 return serializer.deserialize(jsonobject, p_deserialize_3_, (LootCondition[])JsonUtils.deserializeClass(jsonobject, "conditions", new LootCondition[0], p_deserialize_3_, LootCondition[].class));

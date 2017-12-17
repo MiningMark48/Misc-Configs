@@ -10,19 +10,22 @@ import net.minecraft.init.Biomes;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldType;
+import net.minecraft.world.gen.ChunkGeneratorSettings;
 import net.minecraft.world.gen.layer.GenLayer;
 import net.minecraft.world.gen.layer.IntCache;
 import net.minecraft.world.storage.WorldInfo;
 
 public class BiomeProvider
 {
-    public static List<Biome> allowedBiomes = Lists.newArrayList(Biomes.FOREST, Biomes.PLAINS, Biomes.TAIGA, Biomes.TAIGA_HILLS, Biomes.FOREST_HILLS, Biomes.JUNGLE, Biomes.JUNGLE_HILLS);
+    private ChunkGeneratorSettings settings;
     private GenLayer genBiomes;
     /** A GenLayer containing the indices into BiomeGenBase.biomeList[] */
     private GenLayer biomeIndexLayer;
     /** The biome list. */
     private final BiomeCache biomeCache;
+    /** A list of biomes that the player can spawn in. */
     private final List<Biome> biomesToSpawnIn;
+    public static List<Biome> allowedBiomes = Lists.newArrayList(Biomes.FOREST, Biomes.PLAINS, Biomes.TAIGA, Biomes.TAIGA_HILLS, Biomes.FOREST_HILLS, Biomes.JUNGLE, Biomes.JUNGLE_HILLS);
 
     protected BiomeProvider()
     {
@@ -33,7 +36,13 @@ public class BiomeProvider
     private BiomeProvider(long seed, WorldType worldTypeIn, String options)
     {
         this();
-        GenLayer[] agenlayer = GenLayer.initializeAllBiomeGenerators(seed, worldTypeIn, options);
+
+        if (worldTypeIn == WorldType.CUSTOMIZED && !options.isEmpty())
+        {
+            this.settings = ChunkGeneratorSettings.Factory.jsonToFactory(options).build();
+        }
+
+        GenLayer[] agenlayer = GenLayer.initializeAllBiomeGenerators(seed, worldTypeIn, this.settings);
         agenlayer = getModdedBiomeGenerators(worldTypeIn, seed, agenlayer);
         this.genBiomes = agenlayer[0];
         this.biomeIndexLayer = agenlayer[1];
@@ -44,6 +53,9 @@ public class BiomeProvider
         this(info.getSeed(), info.getTerrainType(), info.getGeneratorOptions());
     }
 
+    /**
+     * Gets the list of valid biomes for the player to spawn in.
+     */
     public List<Biome> getBiomesToSpawnIn()
     {
         return this.biomesToSpawnIn;
@@ -52,14 +64,14 @@ public class BiomeProvider
     /**
      * Returns the biome generator
      */
-    public Biome getBiomeGenerator(BlockPos pos)
+    public Biome getBiome(BlockPos pos)
     {
-        return this.getBiomeGenerator(pos, (Biome)null);
+        return this.getBiome(pos, (Biome)null);
     }
 
-    public Biome getBiomeGenerator(BlockPos pos, Biome biomeGenBaseIn)
+    public Biome getBiome(BlockPos pos, Biome defaultBiome)
     {
-        return this.biomeCache.getBiome(pos.getX(), pos.getZ(), biomeGenBaseIn);
+        return this.biomeCache.getBiome(pos.getX(), pos.getZ(), defaultBiome);
     }
 
     /**
@@ -110,15 +122,15 @@ public class BiomeProvider
      * Gets biomes to use for the blocks and loads the other data like temperature and humidity onto the
      * WorldChunkManager.
      */
-    public Biome[] loadBlockGeneratorData(@Nullable Biome[] oldBiomeList, int x, int z, int width, int depth)
+    public Biome[] getBiomes(@Nullable Biome[] oldBiomeList, int x, int z, int width, int depth)
     {
-        return this.getBiomeGenAt(oldBiomeList, x, z, width, depth, true);
+        return this.getBiomes(oldBiomeList, x, z, width, depth, true);
     }
 
     /**
      * Gets a list of biomes for the specified blocks.
      */
-    public Biome[] getBiomeGenAt(@Nullable Biome[] listToReuse, int x, int z, int width, int length, boolean cacheFlag)
+    public Biome[] getBiomes(@Nullable Biome[] listToReuse, int x, int z, int width, int length, boolean cacheFlag)
     {
         IntCache.resetIntCache();
 
@@ -230,5 +242,15 @@ public class BiomeProvider
         net.minecraftforge.event.terraingen.WorldTypeEvent.InitBiomeGens event = new net.minecraftforge.event.terraingen.WorldTypeEvent.InitBiomeGens(worldType, seed, original);
         net.minecraftforge.common.MinecraftForge.TERRAIN_GEN_BUS.post(event);
         return event.getNewBiomeGens();
+    }
+
+    public boolean isFixedBiome()
+    {
+        return this.settings != null && this.settings.fixedBiome >= 0;
+    }
+
+    public Biome getFixedBiome()
+    {
+        return this.settings != null && this.settings.fixedBiome >= 0 ? Biome.getBiomeForId(this.settings.fixedBiome) : null;
     }
 }

@@ -42,24 +42,24 @@ public class GuiSlotRealmsProxy extends GuiSlot
         this.selectionList.renderBackground();
     }
 
-    protected void drawSlot(int entryID, int insideLeft, int yPos, int insideSlotHeight, int mouseXIn, int mouseYIn)
+    protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks)
     {
-        this.selectionList.renderItem(entryID, insideLeft, yPos, insideSlotHeight, mouseXIn, mouseYIn);
+        this.selectionList.renderItem(slotIndex, xPos, yPos, heightIn, mouseXIn, mouseYIn);
     }
 
     public int getWidth()
     {
-        return super.width;
+        return this.width;
     }
 
     public int getMouseY()
     {
-        return super.mouseY;
+        return this.mouseY;
     }
 
     public int getMouseX()
     {
-        return super.mouseX;
+        return this.mouseX;
     }
 
     /**

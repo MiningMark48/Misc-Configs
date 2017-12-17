@@ -13,12 +13,12 @@ public class NextTickListEntry implements Comparable<NextTickListEntry>
     public long scheduledTime;
     public int priority;
     /** The id of the tick entry */
-    private long tickEntryID;
+    private final long tickEntryID;
 
     public NextTickListEntry(BlockPos positionIn, Block blockIn)
     {
         this.tickEntryID = (long)(nextTickEntryID++);
-        this.position = positionIn;
+        this.position = positionIn.toImmutable();
         this.block = blockIn;
     }
 
@@ -56,7 +56,26 @@ public class NextTickListEntry implements Comparable<NextTickListEntry>
 
     public int compareTo(NextTickListEntry p_compareTo_1_)
     {
-        return this.scheduledTime < p_compareTo_1_.scheduledTime ? -1 : (this.scheduledTime > p_compareTo_1_.scheduledTime ? 1 : (this.priority != p_compareTo_1_.priority ? this.priority - p_compareTo_1_.priority : (this.tickEntryID < p_compareTo_1_.tickEntryID ? -1 : (this.tickEntryID > p_compareTo_1_.tickEntryID ? 1 : 0))));
+        if (this.scheduledTime < p_compareTo_1_.scheduledTime)
+        {
+            return -1;
+        }
+        else if (this.scheduledTime > p_compareTo_1_.scheduledTime)
+        {
+            return 1;
+        }
+        else if (this.priority != p_compareTo_1_.priority)
+        {
+            return this.priority - p_compareTo_1_.priority;
+        }
+        else if (this.tickEntryID < p_compareTo_1_.tickEntryID)
+        {
+            return -1;
+        }
+        else
+        {
+            return this.tickEntryID > p_compareTo_1_.tickEntryID ? 1 : 0;
+        }
     }
 
     public String toString()

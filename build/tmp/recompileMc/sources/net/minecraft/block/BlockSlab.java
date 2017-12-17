@@ -1,9 +1,11 @@
 package net.minecraft.block;
 
 import java.util.Random;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
@@ -25,7 +27,12 @@ public abstract class BlockSlab extends Block
 
     public BlockSlab(Material materialIn)
     {
-        super(materialIn);
+        this(materialIn, materialIn.getMaterialMapColor());
+    }
+
+    public BlockSlab(Material p_i47249_1_, MapColor p_i47249_2_)
+    {
+        super(p_i47249_1_, p_i47249_2_);
         this.fullBlock = this.isDouble();
         this.setLightOpacity(255);
     }
@@ -37,15 +44,47 @@ public abstract class BlockSlab extends Block
 
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
-        return this.isDouble() ? FULL_BLOCK_AABB : (state.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP ? AABB_TOP_HALF : AABB_BOTTOM_HALF);
+        if (this.isDouble())
+        {
+            return FULL_BLOCK_AABB;
+        }
+        else
+        {
+            return state.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP ? AABB_TOP_HALF : AABB_BOTTOM_HALF;
+        }
     }
 
     /**
-     * Checks if an IBlockState represents a block that is opaque and a full cube.
+     * Determines if the block is solid enough on the top side to support other blocks, like redstone components.
      */
-    public boolean isFullyOpaque(IBlockState state)
+    public boolean isTopSolid(IBlockState state)
     {
         return ((BlockSlab)state.getBlock()).isDouble() || state.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP;
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        if (((BlockSlab)state.getBlock()).isDouble())
+        {
+            return BlockFaceShape.SOLID;
+        }
+        else if (face == EnumFacing.UP && state.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP)
+        {
+            return BlockFaceShape.SOLID;
+        }
+        else
+        {
+            return face == EnumFacing.DOWN && state.getValue(HALF) == BlockSlab.EnumBlockHalf.BOTTOM ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
+        }
     }
 
     /**
@@ -59,6 +98,9 @@ public abstract class BlockSlab extends Block
     @Override
     public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face)
     {
+        if (net.minecraftforge.common.ForgeModContainer.disableStairSlabCulling)
+            return super.doesSideBlockRendering(state, world, pos, face);
+
         if ( state.isOpaqueCube() )
             return true;
 
@@ -70,10 +112,18 @@ public abstract class BlockSlab extends Block
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        IBlockState iblockstate = super.onBlockPlaced(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer).withProperty(HALF, BlockSlab.EnumBlockHalf.BOTTOM);
-        return this.isDouble() ? iblockstate : (facing != EnumFacing.DOWN && (facing == EnumFacing.UP || (double)hitY <= 0.5D) ? iblockstate : iblockstate.withProperty(HALF, BlockSlab.EnumBlockHalf.TOP));
+        IBlockState iblockstate = super.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer).withProperty(HALF, BlockSlab.EnumBlockHalf.BOTTOM);
+
+        if (this.isDouble())
+        {
+            return iblockstate;
+        }
+        else
+        {
+            return facing != EnumFacing.DOWN && (facing == EnumFacing.UP || (double)hitY <= 0.5D) ? iblockstate : iblockstate.withProperty(HALF, BlockSlab.EnumBlockHalf.TOP);
+        }
     }
 
     /**
@@ -105,7 +155,34 @@ public abstract class BlockSlab extends Block
             IBlockState iblockstate = blockAccess.getBlockState(pos.offset(side));
             boolean flag = isHalfSlab(iblockstate) && iblockstate.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP;
             boolean flag1 = isHalfSlab(blockState) && blockState.getValue(HALF) == BlockSlab.EnumBlockHalf.TOP;
-            return flag1 ? (side == EnumFacing.DOWN ? true : (side == EnumFacing.UP && super.shouldSideBeRendered(blockState, blockAccess, pos, side) ? true : !isHalfSlab(iblockstate) || !flag)) : (side == EnumFacing.UP ? true : (side == EnumFacing.DOWN && super.shouldSideBeRendered(blockState, blockAccess, pos, side) ? true : !isHalfSlab(iblockstate) || flag));
+
+            if (flag1)
+            {
+                if (side == EnumFacing.DOWN)
+                {
+                    return true;
+                }
+                else if (side == EnumFacing.UP && super.shouldSideBeRendered(blockState, blockAccess, pos, side))
+                {
+                    return true;
+                }
+                else
+                {
+                    return !isHalfSlab(iblockstate) || !flag;
+                }
+            }
+            else if (side == EnumFacing.UP)
+            {
+                return true;
+            }
+            else if (side == EnumFacing.DOWN && super.shouldSideBeRendered(blockState, blockAccess, pos, side))
+            {
+                return true;
+            }
+            else
+            {
+                return !isHalfSlab(iblockstate) || flag;
+            }
         }
         return super.shouldSideBeRendered(blockState, blockAccess, pos, side);
     }

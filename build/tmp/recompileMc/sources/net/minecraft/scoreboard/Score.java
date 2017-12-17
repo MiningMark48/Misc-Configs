@@ -4,31 +4,39 @@ import java.util.Comparator;
 
 public class Score
 {
+    /** Used for sorting score by points */
     public static final Comparator<Score> SCORE_COMPARATOR = new Comparator<Score>()
     {
         public int compare(Score p_compare_1_, Score p_compare_2_)
         {
-            return p_compare_1_.getScorePoints() > p_compare_2_.getScorePoints() ? 1 : (p_compare_1_.getScorePoints() < p_compare_2_.getScorePoints() ? -1 : p_compare_2_.getPlayerName().compareToIgnoreCase(p_compare_1_.getPlayerName()));
+            if (p_compare_1_.getScorePoints() > p_compare_2_.getScorePoints())
+            {
+                return 1;
+            }
+            else
+            {
+                return p_compare_1_.getScorePoints() < p_compare_2_.getScorePoints() ? -1 : p_compare_2_.getPlayerName().compareToIgnoreCase(p_compare_1_.getPlayerName());
+            }
         }
     };
-    private final Scoreboard theScoreboard;
-    private final ScoreObjective theScoreObjective;
+    private final Scoreboard scoreboard;
+    private final ScoreObjective objective;
     private final String scorePlayerName;
     private int scorePoints;
     private boolean locked;
     private boolean forceUpdate;
 
-    public Score(Scoreboard theScoreboardIn, ScoreObjective theScoreObjectiveIn, String scorePlayerNameIn)
+    public Score(Scoreboard scoreboard, ScoreObjective objective, String playerName)
     {
-        this.theScoreboard = theScoreboardIn;
-        this.theScoreObjective = theScoreObjectiveIn;
-        this.scorePlayerName = scorePlayerNameIn;
+        this.scoreboard = scoreboard;
+        this.objective = objective;
+        this.scorePlayerName = playerName;
         this.forceUpdate = true;
     }
 
     public void increaseScore(int amount)
     {
-        if (this.theScoreObjective.getCriteria().isReadOnly())
+        if (this.objective.getCriteria().isReadOnly())
         {
             throw new IllegalStateException("Cannot modify read-only score");
         }
@@ -40,7 +48,7 @@ public class Score
 
     public void decreaseScore(int amount)
     {
-        if (this.theScoreObjective.getCriteria().isReadOnly())
+        if (this.objective.getCriteria().isReadOnly())
         {
             throw new IllegalStateException("Cannot modify read-only score");
         }
@@ -52,7 +60,7 @@ public class Score
 
     public void incrementScore()
     {
-        if (this.theScoreObjective.getCriteria().isReadOnly())
+        if (this.objective.getCriteria().isReadOnly())
         {
             throw new IllegalStateException("Cannot modify read-only score");
         }
@@ -81,7 +89,7 @@ public class Score
 
     public ScoreObjective getObjective()
     {
-        return this.theScoreObjective;
+        return this.objective;
     }
 
     /**
@@ -94,7 +102,7 @@ public class Score
 
     public Scoreboard getScoreScoreboard()
     {
-        return this.theScoreboard;
+        return this.scoreboard;
     }
 
     public boolean isLocked()

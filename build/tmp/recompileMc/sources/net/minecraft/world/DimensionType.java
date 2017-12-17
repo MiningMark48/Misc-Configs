@@ -5,9 +5,9 @@ import java.lang.reflect.InvocationTargetException;
 
 public enum DimensionType
 {
-    OVERWORLD(0, "Overworld", "", WorldProviderSurface.class),
-    NETHER(-1, "Nether", "_nether", WorldProviderHell.class),
-    THE_END(1, "The End", "_end", WorldProviderEnd.class);
+    OVERWORLD(0, "overworld", "", WorldProviderSurface.class),
+    NETHER(-1, "the_nether", "_nether", WorldProviderHell.class),
+    THE_END(1, "the_end", "_end", WorldProviderEnd.class);
 
     private final int id;
     private final String name;
@@ -43,8 +43,8 @@ public enum DimensionType
     {
         try
         {
-            Constructor <? extends WorldProvider > constructor = this.clazz.getConstructor(new Class[0]);
-            return (WorldProvider)constructor.newInstance(new Object[0]);
+            Constructor <? extends WorldProvider > constructor = this.clazz.getConstructor();
+            return constructor.newInstance();
         }
         catch (NoSuchMethodException nosuchmethodexception)
         {
@@ -90,4 +90,17 @@ public enum DimensionType
         return ret.setLoadSpawn(keepLoaded);
     }
     //TODO: Unregister? There is no way to really delete a enum value...
+
+    public static DimensionType byName(String p_193417_0_)
+    {
+        for (DimensionType dimensiontype : values())
+        {
+            if (dimensiontype.getName().equals(p_193417_0_))
+            {
+                return dimensiontype;
+            }
+        }
+
+        throw new IllegalArgumentException("Invalid dimension " + p_193417_0_);
+    }
 }

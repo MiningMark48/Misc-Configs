@@ -1,8 +1,26 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.server.console;
 
 import static jline.TerminalFactory.OFF;
 import static jline.console.ConsoleReader.RESET_LINE;
-import static org.apache.logging.log4j.core.helpers.Booleans.parseBoolean;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -21,11 +39,13 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.util.PropertiesUtil;
 import org.fusesource.jansi.AnsiConsole;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 import com.google.common.base.Functions;
 
 import jline.TerminalFactory;
 import jline.console.ConsoleReader;
+
+import javax.annotation.Nullable;
 
 @Plugin(name = "TerminalConsole", category = "Core", elementType = "appender", printObject = true)
 public class TerminalConsoleAppender extends AbstractAppender
@@ -56,6 +76,7 @@ public class TerminalConsoleAppender extends AbstractAppender
     }
 
     @PluginFactory
+    @Nullable
     public static TerminalConsoleAppender createAppender(@PluginAttribute("name") String name, @PluginElement("Filters") Filter filter,
             @PluginElement("Layout") Layout<? extends Serializable> layout, @PluginAttribute("ignoreExceptions") String ignore)
     {
@@ -67,10 +88,10 @@ public class TerminalConsoleAppender extends AbstractAppender
         }
         if (layout == null)
         {
-            layout = PatternLayout.createLayout(null, null, null, null, null);
+            layout = PatternLayout.newBuilder().build();
         }
 
-        boolean ignoreExceptions = parseBoolean(ignore, true);
+        boolean ignoreExceptions = Boolean.parseBoolean(ignore);
 
         // This is handled by jline
         System.setProperty("log4j.skipJansi", "true");

@@ -2,10 +2,10 @@ package net.minecraft.client.model;
 
 import com.google.common.collect.Lists;
 import java.util.List;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -35,7 +35,7 @@ public class ModelRenderer
     public List<ModelBox> cubeList;
     public List<ModelRenderer> childModels;
     public final String boxName;
-    private ModelBase baseModel;
+    private final ModelBase baseModel;
     public float offsetX;
     public float offsetY;
     public float offsetZ;
@@ -290,11 +290,11 @@ public class ModelRenderer
     {
         this.displayList = GLAllocation.generateDisplayLists(1);
         GlStateManager.glNewList(this.displayList, 4864);
-        VertexBuffer vertexbuffer = Tessellator.getInstance().getBuffer();
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
 
         for (int i = 0; i < this.cubeList.size(); ++i)
         {
-            ((ModelBox)this.cubeList.get(i)).render(vertexbuffer, scale);
+            ((ModelBox)this.cubeList.get(i)).render(bufferbuilder, scale);
         }
 
         GlStateManager.glEndList();

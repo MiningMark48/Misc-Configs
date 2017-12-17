@@ -7,12 +7,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStainedGlass;
 import net.minecraft.block.BlockStainedGlassPane;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -26,7 +27,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.stats.AchievementList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -39,6 +39,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
     /** List of effects that Beacon can apply */
     public static final Potion[][] EFFECTS_LIST = new Potion[][] {{MobEffects.SPEED, MobEffects.HASTE}, {MobEffects.RESISTANCE, MobEffects.JUMP_BOOST}, {MobEffects.STRENGTH}, {MobEffects.REGENERATION}};
     private static final Set<Potion> VALID_EFFECTS = Sets.<Potion>newHashSet();
+    /** A list of beam segments for this beacon */
     private final List<TileEntityBeacon.BeamSegment> beamSegments = Lists.<TileEntityBeacon.BeamSegment>newArrayList();
     @SideOnly(Side.CLIENT)
     private long beamRenderCounter;
@@ -54,7 +55,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
     @Nullable
     private Potion secondaryEffect;
     /** Item given to this beacon as payment. */
-    private ItemStack payment;
+    private ItemStack payment = ItemStack.EMPTY;
     private String customName;
 
     /**
@@ -62,7 +63,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
      */
     public void update()
     {
-        if (this.worldObj.getTotalWorldTime() % 80L == 0L)
+        if (this.world.getTotalWorldTime() % 80L == 0L)
         {
             this.updateBeacon();
         }
@@ -70,7 +71,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
     public void updateBeacon()
     {
-        if (this.worldObj != null)
+        if (this.world != null)
         {
             this.updateSegmentColors();
             this.addEffectsToPlayers();
@@ -79,7 +80,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
     private void addEffectsToPlayers()
     {
-        if (this.isComplete && this.levels > 0 && !this.worldObj.isRemote && this.primaryEffect != null)
+        if (this.isComplete && this.levels > 0 && !this.world.isRemote && this.primaryEffect != null)
         {
             double d0 = (double)(this.levels * 10 + 10);
             int i = 0;
@@ -93,8 +94,8 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
             int k = this.pos.getX();
             int l = this.pos.getY();
             int i1 = this.pos.getZ();
-            AxisAlignedBB axisalignedbb = (new AxisAlignedBB((double)k, (double)l, (double)i1, (double)(k + 1), (double)(l + 1), (double)(i1 + 1))).expandXyz(d0).addCoord(0.0D, (double)this.worldObj.getHeight(), 0.0D);
-            List<EntityPlayer> list = this.worldObj.<EntityPlayer>getEntitiesWithinAABB(EntityPlayer.class, axisalignedbb);
+            AxisAlignedBB axisalignedbb = (new AxisAlignedBB((double)k, (double)l, (double)i1, (double)(k + 1), (double)(l + 1), (double)(i1 + 1))).grow(d0).expand(0.0D, (double)this.world.getHeight(), 0.0D);
+            List<EntityPlayer> list = this.world.<EntityPlayer>getEntitiesWithinAABB(EntityPlayer.class, axisalignedbb);
 
             for (EntityPlayer entityplayer : list)
             {
@@ -113,43 +114,47 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
     private void updateSegmentColors()
     {
-        int i = this.levels;
-        int j = this.pos.getX();
-        int k = this.pos.getY();
-        int l = this.pos.getZ();
+        int i = this.pos.getX();
+        int j = this.pos.getY();
+        int k = this.pos.getZ();
+        int l = this.levels;
         this.levels = 0;
         this.beamSegments.clear();
         this.isComplete = true;
-        TileEntityBeacon.BeamSegment tileentitybeacon$beamsegment = new TileEntityBeacon.BeamSegment(EntitySheep.getDyeRgb(EnumDyeColor.WHITE));
+        TileEntityBeacon.BeamSegment tileentitybeacon$beamsegment = new TileEntityBeacon.BeamSegment(EnumDyeColor.WHITE.getColorComponentValues());
         this.beamSegments.add(tileentitybeacon$beamsegment);
         boolean flag = true;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
-        for (int i1 = k + 1; i1 < 256; ++i1)
+        for (int i1 = j + 1; i1 < 256; ++i1)
         {
-            IBlockState iblockstate = this.worldObj.getBlockState(blockpos$mutableblockpos.setPos(j, i1, l));
+            IBlockState iblockstate = this.world.getBlockState(blockpos$mutableblockpos.setPos(i, i1, k));
             float[] afloat;
 
             if (iblockstate.getBlock() == Blocks.STAINED_GLASS)
             {
-                afloat = EntitySheep.getDyeRgb((EnumDyeColor)iblockstate.getValue(BlockStainedGlass.COLOR));
+                afloat = ((EnumDyeColor)iblockstate.getValue(BlockStainedGlass.COLOR)).getColorComponentValues();
             }
             else
             {
                 if (iblockstate.getBlock() != Blocks.STAINED_GLASS_PANE)
                 {
-                    if (iblockstate.getLightOpacity(this.worldObj, blockpos$mutableblockpos) >= 15 && iblockstate.getBlock() != Blocks.BEDROCK)
+                    if (iblockstate.getLightOpacity(world, blockpos$mutableblockpos) >= 15 && iblockstate.getBlock() != Blocks.BEDROCK)
                     {
                         this.isComplete = false;
                         this.beamSegments.clear();
                         break;
                     }
-
+                    float[] customColor = iblockstate.getBlock().getBeaconColorMultiplier(iblockstate, this.world, blockpos$mutableblockpos, getPos());
+                    if (customColor != null)
+                        afloat = customColor;
+                    else {
                     tileentitybeacon$beamsegment.incrementHeight();
                     continue;
+                    }
                 }
-
-                afloat = EntitySheep.getDyeRgb((EnumDyeColor)iblockstate.getValue(BlockStainedGlassPane.COLOR));
+                else
+                afloat = ((EnumDyeColor)iblockstate.getValue(BlockStainedGlassPane.COLOR)).getColorComponentValues();
             }
 
             if (!flag)
@@ -174,7 +179,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
         {
             for (int l1 = 1; l1 <= 4; this.levels = l1++)
             {
-                int i2 = k - l1;
+                int i2 = j - l1;
 
                 if (i2 < 0)
                 {
@@ -183,13 +188,13 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
                 boolean flag1 = true;
 
-                for (int j1 = j - l1; j1 <= j + l1 && flag1; ++j1)
+                for (int j1 = i - l1; j1 <= i + l1 && flag1; ++j1)
                 {
-                    for (int k1 = l - l1; k1 <= l + l1; ++k1)
+                    for (int k1 = k - l1; k1 <= k + l1; ++k1)
                     {
-                        Block block = this.worldObj.getBlockState(new BlockPos(j1, i2, k1)).getBlock();
+                        Block block = this.world.getBlockState(new BlockPos(j1, i2, k1)).getBlock();
 
-                        if (!block.isBeaconBase(this.worldObj, new BlockPos(j1, i2, k1), getPos()))
+                        if (!block.isBeaconBase(this.world, new BlockPos(j1, i2, k1), getPos()))
                         {
                             flag1 = false;
                             break;
@@ -209,11 +214,11 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
             }
         }
 
-        if (!this.worldObj.isRemote && this.levels == 4 && i < this.levels)
+        if (!this.world.isRemote && l < this.levels)
         {
-            for (EntityPlayer entityplayer : this.worldObj.getEntitiesWithinAABB(EntityPlayer.class, (new AxisAlignedBB((double)j, (double)k, (double)l, (double)j, (double)(k - 4), (double)l)).expand(10.0D, 5.0D, 10.0D)))
+            for (EntityPlayerMP entityplayermp : this.world.getEntitiesWithinAABB(EntityPlayerMP.class, (new AxisAlignedBB((double)i, (double)j, (double)k, (double)i, (double)(j - 4), (double)k)).grow(10.0D, 5.0D, 10.0D)))
             {
-                entityplayer.addStat(AchievementList.FULL_BEACON);
+                CriteriaTriggers.CONSTRUCT_BEACON.trigger(entityplayermp, this);
             }
         }
     }
@@ -233,8 +238,8 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
         }
         else
         {
-            int i = (int)(this.worldObj.getTotalWorldTime() - this.beamRenderCounter);
-            this.beamRenderCounter = this.worldObj.getTotalWorldTime();
+            int i = (int)(this.world.getTotalWorldTime() - this.beamRenderCounter);
+            this.beamRenderCounter = this.world.getTotalWorldTime();
 
             if (i > 1)
             {
@@ -255,6 +260,11 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
             return this.beamRenderScale;
         }
+    }
+
+    public int getLevels()
+    {
+        return this.levels;
     }
 
     @Nullable
@@ -306,63 +316,64 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
         return 1;
     }
 
+    public boolean isEmpty()
+    {
+        return this.payment.isEmpty();
+    }
+
     /**
      * Returns the stack in the given slot.
      */
-    @Nullable
     public ItemStack getStackInSlot(int index)
     {
-        return index == 0 ? this.payment : null;
+        return index == 0 ? this.payment : ItemStack.EMPTY;
     }
 
     /**
      * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
      */
-    @Nullable
     public ItemStack decrStackSize(int index, int count)
     {
-        if (index == 0 && this.payment != null)
+        if (index == 0 && !this.payment.isEmpty())
         {
-            if (count >= this.payment.stackSize)
+            if (count >= this.payment.getCount())
             {
                 ItemStack itemstack = this.payment;
-                this.payment = null;
+                this.payment = ItemStack.EMPTY;
                 return itemstack;
             }
             else
             {
-                this.payment.stackSize -= count;
-                return new ItemStack(this.payment.getItem(), count, this.payment.getMetadata());
+                return this.payment.splitStack(count);
             }
         }
         else
         {
-            return null;
+            return ItemStack.EMPTY;
         }
     }
 
     /**
      * Removes a stack from the given slot and returns it.
      */
-    @Nullable
     public ItemStack removeStackFromSlot(int index)
     {
         if (index == 0)
         {
             ItemStack itemstack = this.payment;
-            this.payment = null;
+            this.payment = ItemStack.EMPTY;
             return itemstack;
         }
         else
         {
-            return null;
+            return ItemStack.EMPTY;
         }
     }
 
     /**
      * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
      */
-    public void setInventorySlotContents(int index, @Nullable ItemStack stack)
+    public void setInventorySlotContents(int index, ItemStack stack)
     {
         if (index == 0)
         {
@@ -400,11 +411,18 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
     }
 
     /**
-     * Do not make give this method the name canInteractWith because it clashes with Container
+     * Don't rename this method to canInteractWith due to conflicts with Container
      */
-    public boolean isUseableByPlayer(EntityPlayer player)
+    public boolean isUsableByPlayer(EntityPlayer player)
     {
-        return this.worldObj.getTileEntity(this.pos) != this ? false : player.getDistanceSq((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
+        if (this.world.getTileEntity(this.pos) != this)
+        {
+            return false;
+        }
+        else
+        {
+            return player.getDistanceSq((double)this.pos.getX() + 0.5D, (double)this.pos.getY() + 0.5D, (double)this.pos.getZ() + 0.5D) <= 64.0D;
+        }
     }
 
     public void openInventory(EntityPlayer player)
@@ -416,7 +434,8 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
     }
 
     /**
-     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot.
+     * Returns true if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For
+     * guis use Slot.isItemValid
      */
     public boolean isItemValidForSlot(int index, ItemStack stack)
     {
@@ -470,7 +489,7 @@ public class TileEntityBeacon extends TileEntityLockable implements ITickable, I
 
     public void clear()
     {
-        this.payment = null;
+        this.payment = ItemStack.EMPTY;
     }
 
     public boolean receiveClientEvent(int id, int type)

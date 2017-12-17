@@ -27,9 +27,9 @@ public class SPacketLoginSuccess implements Packet<INetHandlerLoginClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        String s = buf.readStringFromBuffer(36);
-        String s1 = buf.readStringFromBuffer(16);
-        UUID uuid = UUID.fromString(s);
+        String s = buf.readString(36);
+        String s1 = buf.readString(16);
+        UUID uuid = s.length() > 0 ? UUID.fromString(s) : null;
         this.profile = new GameProfile(uuid, s1);
     }
 

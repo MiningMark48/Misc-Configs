@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.eventhandler;
 
 import static java.lang.annotation.ElementType.TYPE;
@@ -60,8 +79,9 @@ public class Event
     }
 
     /**
-     * Sets the state of this event, not all events are cancelable, and any attempt to
-     * cancel a event that can't be will result in a IllegalArgumentException.
+     * Sets the cancel state of this event. Note, not all events are cancelable, and any attempt to
+     * invoke this method on an event that is not cancelable (as determined by {@link #isCancelable}
+     * will result in an {@link UnsupportedOperationException}.
      *
      * The functionality of setting the canceled state is defined on a per-event bases.
      *
@@ -71,7 +91,10 @@ public class Event
     {
         if (!isCancelable())
         {
-            throw new IllegalArgumentException("Attempted to cancel a non cancellable event");
+            throw new UnsupportedOperationException(
+                "Attempted to call Event#setCanceled() on a non-cancelable event of type: "
+                + this.getClass().getCanonicalName()
+            );
         }
         isCanceled = cancel;
     }
@@ -107,6 +130,7 @@ public class Event
     {
         result = value;
     }
+
     /**
      * Called by the base constructor, this is used by ASM generated
      * event classes to setup various functionality such as the listener list.
@@ -134,7 +158,7 @@ public class Event
 
     public void setPhase(@Nonnull EventPriority value)
     {
-        Preconditions.checkArgument(value != null, "setPhase argument must not be null");
+        Preconditions.checkNotNull(value, "setPhase argument must not be null");
         int prev = phase == null ? -1 : phase.ordinal();
         Preconditions.checkArgument(prev < value.ordinal(), "Attempted to set event phase to %s when already %s", value, phase);
         phase = value;

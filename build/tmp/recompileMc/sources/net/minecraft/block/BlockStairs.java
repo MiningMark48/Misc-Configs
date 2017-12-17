@@ -8,6 +8,7 @@ import net.minecraft.block.material.MapColor;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
@@ -15,7 +16,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -143,9 +143,12 @@ public class BlockStairs extends Block
         this.setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
     }
 
-    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn)
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
     {
-        state = this.getActualState(state, worldIn, pos);
+        if (!isActualState)
+        {
+            state = this.getActualState(state, worldIn, pos);
+        }
 
         for (AxisAlignedBB axisalignedbb : getCollisionBoxList(state))
         {
@@ -238,6 +241,50 @@ public class BlockStairs extends Block
     }
 
     /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        state = this.getActualState(state, worldIn, pos);
+
+        if (face.getAxis() == EnumFacing.Axis.Y)
+        {
+            return face == EnumFacing.UP == (state.getValue(HALF) == BlockStairs.EnumHalf.TOP) ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
+        }
+        else
+        {
+            BlockStairs.EnumShape blockstairs$enumshape = (BlockStairs.EnumShape)state.getValue(SHAPE);
+
+            if (blockstairs$enumshape != BlockStairs.EnumShape.OUTER_LEFT && blockstairs$enumshape != BlockStairs.EnumShape.OUTER_RIGHT)
+            {
+                EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
+
+                switch (blockstairs$enumshape)
+                {
+                    case INNER_RIGHT:
+                        return enumfacing != face && enumfacing != face.rotateYCCW() ? BlockFaceShape.UNDEFINED : BlockFaceShape.SOLID;
+                    case INNER_LEFT:
+                        return enumfacing != face && enumfacing != face.rotateY() ? BlockFaceShape.UNDEFINED : BlockFaceShape.SOLID;
+                    case STRAIGHT:
+                        return enumfacing == face ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
+                    default:
+                        return BlockFaceShape.UNDEFINED;
+                }
+            }
+            else
+            {
+                return BlockFaceShape.UNDEFINED;
+            }
+        }
+    }
+
+    /**
      * Used to determine ambient occlusion and culling when rebuilding chunks for render
      */
     public boolean isOpaqueCube(IBlockState state)
@@ -262,7 +309,7 @@ public class BlockStairs extends Block
     }
 
     /**
-     * Called when a player destroys this Block
+     * Called after a player destroys this Block - the posiiton pos may no longer hold the state indicated.
      */
     public void onBlockDestroyedByPlayer(World worldIn, BlockPos pos, IBlockState state)
     {
@@ -302,6 +349,9 @@ public class BlockStairs extends Block
         return this.modelBlock.getBlockLayer();
     }
 
+    /**
+     * Return an AABB (in world coords!) that should be highlighted when the player is targeting this Block
+     */
     @SideOnly(Side.CLIENT)
     public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World worldIn, BlockPos pos)
     {
@@ -327,19 +377,25 @@ public class BlockStairs extends Block
         return this.modelBlock.canPlaceBlockAt(worldIn, pos);
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
-        this.modelState.neighborChanged(worldIn, pos, Blocks.AIR);
+        this.modelState.neighborChanged(worldIn, pos, Blocks.AIR, pos);
         this.modelBlock.onBlockAdded(worldIn, pos, this.modelState);
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         this.modelBlock.breakBlock(worldIn, pos, this.modelState);
     }
 
     /**
-     * Triggered whenever an entity collides with this block (enters into the block)
+     * Called when the given entity walks on this Block
      */
     public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn)
     {
@@ -351,9 +407,12 @@ public class BlockStairs extends Block
         this.modelBlock.updateTick(worldIn, pos, state, rand);
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        return this.modelBlock.onBlockActivated(worldIn, pos, this.modelState, playerIn, hand, heldItem, EnumFacing.DOWN, 0.0F, 0.0F, 0.0F);
+        return this.modelBlock.onBlockActivated(worldIn, pos, this.modelState, playerIn, hand, EnumFacing.DOWN, 0.0F, 0.0F, 0.0F);
     }
 
     /**
@@ -365,9 +424,9 @@ public class BlockStairs extends Block
     }
 
     /**
-     * Checks if an IBlockState represents a block that is opaque and a full cube.
+     * Determines if the block is solid enough on the top side to support other blocks, like redstone components.
      */
-    public boolean isFullyOpaque(IBlockState state)
+    public boolean isTopSolid(IBlockState state)
     {
         return state.getValue(HALF) == BlockStairs.EnumHalf.TOP;
     }
@@ -375,18 +434,18 @@ public class BlockStairs extends Block
     /**
      * Get the MapColor for this Block and the given BlockState
      */
-    public MapColor getMapColor(IBlockState state)
+    public MapColor getMapColor(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
-        return this.modelBlock.getMapColor(this.modelState);
+        return this.modelBlock.getMapColor(this.modelState, worldIn, pos);
     }
 
     /**
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        IBlockState iblockstate = super.onBlockPlaced(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer);
+        IBlockState iblockstate = super.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer);
         iblockstate = iblockstate.withProperty(FACING, placer.getHorizontalFacing()).withProperty(SHAPE, BlockStairs.EnumShape.STRAIGHT);
         return facing != EnumFacing.DOWN && (facing == EnumFacing.UP || (double)hitY <= 0.5D) ? iblockstate.withProperty(HALF, BlockStairs.EnumHalf.BOTTOM) : iblockstate.withProperty(HALF, BlockStairs.EnumHalf.TOP);
     }
@@ -582,12 +641,24 @@ public class BlockStairs extends Block
     @Override
     public boolean doesSideBlockRendering(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing face)
     {
+        if (net.minecraftforge.common.ForgeModContainer.disableStairSlabCulling)
+            return super.doesSideBlockRendering(state, world, pos, face);
+
         if ( state.isOpaqueCube() )
             return true;
 
+        state = this.getActualState(state, world, pos);
+
         EnumHalf half = state.getValue(HALF);
         EnumFacing side = state.getValue(FACING);
-        return side == face || (half == EnumHalf.TOP && face == EnumFacing.UP) || (half == EnumHalf.BOTTOM && face == EnumFacing.DOWN);
+        EnumShape shape = state.getValue(SHAPE);
+        if (face == EnumFacing.UP) return half == EnumHalf.TOP;
+        if (face == EnumFacing.DOWN) return half == EnumHalf.BOTTOM;
+        if (shape == EnumShape.OUTER_LEFT || shape == EnumShape.OUTER_RIGHT) return false;
+        if (face == side) return true;
+        if (shape == EnumShape.INNER_LEFT && face.rotateY() == side) return true;
+        if (shape == EnumShape.INNER_RIGHT && face.rotateYCCW() == side) return true;
+        return false;
     }
 
     public static enum EnumHalf implements IStringSerializable

@@ -21,17 +21,17 @@ public class C00Handshake implements Packet<INetHandlerHandshakeServer>
     }
 
     @SideOnly(Side.CLIENT)
-    public C00Handshake(int version, String ip, int port, EnumConnectionState requestedState)
+    public C00Handshake(String p_i47613_1_, int p_i47613_2_, EnumConnectionState p_i47613_3_)
     {
-        this.protocolVersion = version;
-        this.ip = ip;
-        this.port = port;
-        this.requestedState = requestedState;
+        this.protocolVersion = 340;
+        this.ip = p_i47613_1_;
+        this.port = p_i47613_2_;
+        this.requestedState = p_i47613_3_;
     }
 
-    public C00Handshake(int protocol, String address, int port, EnumConnectionState state, boolean addFMLMarker)
+    public C00Handshake(String address, int port, EnumConnectionState state, boolean addFMLMarker)
     {
-        this(protocol, address, port, state);
+        this(address, port, state);
         this.hasFMLMarker = addFMLMarker;
     }
 
@@ -40,10 +40,10 @@ public class C00Handshake implements Packet<INetHandlerHandshakeServer>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.protocolVersion = buf.readVarIntFromBuffer();
-        this.ip = buf.readStringFromBuffer(255);
+        this.protocolVersion = buf.readVarInt();
+        this.ip = buf.readString(255);
         this.port = buf.readUnsignedShort();
-        this.requestedState = EnumConnectionState.getById(buf.readVarIntFromBuffer());
+        this.requestedState = EnumConnectionState.getById(buf.readVarInt());
         this.hasFMLMarker = this.ip.contains("\0FML\0");
         this.ip = this.ip.split("\0")[0];
     }
@@ -53,10 +53,10 @@ public class C00Handshake implements Packet<INetHandlerHandshakeServer>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.protocolVersion);
+        buf.writeVarInt(this.protocolVersion);
         buf.writeString(this.ip + "\0FML\0");
         buf.writeShort(this.port);
-        buf.writeVarIntToBuffer(this.requestedState.getId());
+        buf.writeVarInt(this.requestedState.getId());
     }
 
     /**

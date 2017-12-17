@@ -12,7 +12,7 @@ public class CommandXP extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "xp";
     }
@@ -28,7 +28,7 @@ public class CommandXP extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.xp.usage";
     }
@@ -69,12 +69,12 @@ public class CommandXP extends CommandBase
                 if (flag1)
                 {
                     entityplayer.addExperienceLevel(-i);
-                    notifyCommandListener(sender, this, "commands.xp.success.negative.levels", new Object[] {Integer.valueOf(i), entityplayer.getName()});
+                    notifyCommandListener(sender, this, "commands.xp.success.negative.levels", new Object[] {i, entityplayer.getName()});
                 }
                 else
                 {
                     entityplayer.addExperienceLevel(i);
-                    notifyCommandListener(sender, this, "commands.xp.success.levels", new Object[] {Integer.valueOf(i), entityplayer.getName()});
+                    notifyCommandListener(sender, this, "commands.xp.success.levels", new Object[] {i, entityplayer.getName()});
                 }
             }
             else
@@ -87,14 +87,17 @@ public class CommandXP extends CommandBase
                 }
 
                 entityplayer.addExperience(i);
-                notifyCommandListener(sender, this, "commands.xp.success", new Object[] {Integer.valueOf(i), entityplayer.getName()});
+                notifyCommandListener(sender, this, "commands.xp.success", new Object[] {i, entityplayer.getName()});
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 2 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : Collections.<String>emptyList();
+        return args.length == 2 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
     }
 
     /**

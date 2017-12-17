@@ -25,7 +25,7 @@ public abstract class BlockStateBase implements IBlockState
             else
             {
                 IProperty<?> iproperty = (IProperty)p_apply_1_.getKey();
-                return iproperty.getName() + "=" + this.getPropertyName(iproperty, (Comparable)p_apply_1_.getValue());
+                return iproperty.getName() + "=" + this.getPropertyName(iproperty, p_apply_1_.getValue());
             }
         }
         private <T extends Comparable<T>> String getPropertyName(IProperty<T> property, Comparable<?> entry)
@@ -34,11 +34,18 @@ public abstract class BlockStateBase implements IBlockState
         }
     };
 
+    /**
+     * Create a version of this BlockState with the given property cycled to the next value in order. If the property
+     * was at the highest possible value, it is set to the lowest one instead.
+     */
     public <T extends Comparable<T>> IBlockState cycleProperty(IProperty<T> property)
     {
         return this.withProperty(property, cyclePropertyValue(property.getAllowedValues(), this.getValue(property)));
     }
 
+    /**
+     * Helper method for cycleProperty.
+     */
     protected static <T> T cyclePropertyValue(Collection<T> values, T currentValue)
     {
         Iterator<T> iterator = values.iterator();
@@ -49,14 +56,14 @@ public abstract class BlockStateBase implements IBlockState
             {
                 if (iterator.hasNext())
                 {
-                    return (T)iterator.next();
+                    return iterator.next();
                 }
 
-                return (T)values.iterator().next();
+                return values.iterator().next();
             }
         }
 
-        return (T)iterator.next();
+        return iterator.next();
     }
 
     public String toString()

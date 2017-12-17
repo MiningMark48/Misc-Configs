@@ -5,7 +5,6 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.Validate;
@@ -18,7 +17,7 @@ public class SPacketCustomSound implements Packet<INetHandlerPlayClient>
     private int y = Integer.MAX_VALUE;
     private int z;
     private float volume;
-    private int pitch;
+    private float pitch;
 
     public SPacketCustomSound()
     {
@@ -26,15 +25,14 @@ public class SPacketCustomSound implements Packet<INetHandlerPlayClient>
 
     public SPacketCustomSound(String soundNameIn, SoundCategory categoryIn, double xIn, double yIn, double zIn, float volumeIn, float pitchIn)
     {
-        Validate.notNull(soundNameIn, "name", new Object[0]);
+        Validate.notNull(soundNameIn, "name");
         this.soundName = soundNameIn;
         this.category = categoryIn;
         this.x = (int)(xIn * 8.0D);
         this.y = (int)(yIn * 8.0D);
         this.z = (int)(zIn * 8.0D);
         this.volume = volumeIn;
-        this.pitch = (int)(pitchIn * 63.0F);
-        pitchIn = MathHelper.clamp_float(pitchIn, 0.0F, 255.0F);
+        this.pitch = pitchIn;
     }
 
     /**
@@ -42,13 +40,13 @@ public class SPacketCustomSound implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.soundName = buf.readStringFromBuffer(256);
+        this.soundName = buf.readString(256);
         this.category = (SoundCategory)buf.readEnumValue(SoundCategory.class);
         this.x = buf.readInt();
         this.y = buf.readInt();
         this.z = buf.readInt();
         this.volume = buf.readFloat();
-        this.pitch = buf.readUnsignedByte();
+        this.pitch = buf.readFloat();
     }
 
     /**
@@ -62,7 +60,7 @@ public class SPacketCustomSound implements Packet<INetHandlerPlayClient>
         buf.writeInt(this.y);
         buf.writeInt(this.z);
         buf.writeFloat(this.volume);
-        buf.writeByte(this.pitch);
+        buf.writeFloat(this.pitch);
     }
 
     @SideOnly(Side.CLIENT)
@@ -112,6 +110,6 @@ public class SPacketCustomSound implements Packet<INetHandlerPlayClient>
     @SideOnly(Side.CLIENT)
     public float getPitch()
     {
-        return (float)this.pitch / 63.0F;
+        return this.pitch;
     }
 }

@@ -13,15 +13,6 @@ public class SPacketPlayerListHeaderFooter implements Packet<INetHandlerPlayClie
     private ITextComponent header;
     private ITextComponent footer;
 
-    public SPacketPlayerListHeaderFooter()
-    {
-    }
-
-    public SPacketPlayerListHeaderFooter(ITextComponent headerIn)
-    {
-        this.header = headerIn;
-    }
-
     /**
      * Reads the raw packet data from the data stream.
      */

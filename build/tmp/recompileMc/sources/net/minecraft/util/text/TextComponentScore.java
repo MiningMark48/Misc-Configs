@@ -20,18 +20,25 @@ public class TextComponentScore extends TextComponentBase
         this.objective = objectiveIn;
     }
 
+    /**
+     * Gets the name of the entity who owns this score.
+     */
     public String getName()
     {
         return this.name;
     }
 
+    /**
+     * Gets the name of the objective for this score.
+     */
     public String getObjective()
     {
         return this.objective;
     }
 
     /**
-     * Sets the value displayed instead of the real score.
+     * Sets the value that is displayed for the score. Generally, you do not want to call this as the score is resolved
+     * automatically. (If you want to manually set text, use a {@link TextComponentString})
      */
     public void setValue(String valueIn)
     {
@@ -39,32 +46,37 @@ public class TextComponentScore extends TextComponentBase
     }
 
     /**
-     * Gets the text of this component, without any special formatting codes added, for chat.  TODO: why is this two
-     * different methods?
+     * Gets the raw content of this component (but not its sibling components), without any formatting codes. For
+     * example, this is the raw text in a {@link TextComponentString}, but it's the translated text for a {@link
+     * TextComponentTranslation} and it's the score value for a {@link TextComponentScore}.
      */
     public String getUnformattedComponentText()
     {
         return this.value;
     }
 
+    /**
+     * Resolves the value of the score on this component.
+     */
     public void resolve(ICommandSender sender)
     {
         MinecraftServer minecraftserver = sender.getServer();
 
         if (minecraftserver != null && minecraftserver.isAnvilFileSet() && StringUtils.isNullOrEmpty(this.value))
         {
-            Scoreboard scoreboard = minecraftserver.worldServerForDimension(0).getScoreboard();
+            Scoreboard scoreboard = minecraftserver.getWorld(0).getScoreboard();
             ScoreObjective scoreobjective = scoreboard.getObjective(this.objective);
 
             if (scoreboard.entityHasObjective(this.name, scoreobjective))
             {
                 Score score = scoreboard.getOrCreateScore(this.name, scoreobjective);
-                this.setValue(String.format("%d", new Object[] {Integer.valueOf(score.getScorePoints())}));
-                return;
+                this.setValue(String.format("%d", score.getScorePoints()));
+            }
+            else
+            {
+                this.value = "";
             }
         }
-
-        this.value = "";
     }
 
     /**
@@ -103,6 +115,6 @@ public class TextComponentScore extends TextComponentBase
 
     public String toString()
     {
-        return "ScoreComponent{name=\'" + this.name + '\'' + "objective=\'" + this.objective + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
+        return "ScoreComponent{name='" + this.name + '\'' + "objective='" + this.objective + '\'' + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
     }
 }

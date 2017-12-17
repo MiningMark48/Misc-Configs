@@ -10,7 +10,7 @@ public class NoiseGeneratorImproved extends NoiseGenerator
      *  
      * Effectively a shuffled 0..255 that wraps once.
      */
-    private int[] permutations;
+    private final int[] permutations;
     public double xCoord;
     public double yCoord;
     public double zCoord;

@@ -17,7 +17,7 @@ public class CommandBlockData extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "blockdata";
     }
@@ -33,7 +33,7 @@ public class CommandBlockData extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.blockdata.usage";
     }
@@ -69,12 +69,12 @@ public class CommandBlockData extends CommandBase
                 else
                 {
                     NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
-                    NBTTagCompound nbttagcompound1 = (NBTTagCompound)nbttagcompound.copy();
+                    NBTTagCompound nbttagcompound1 = nbttagcompound.copy();
                     NBTTagCompound nbttagcompound2;
 
                     try
                     {
-                        nbttagcompound2 = JsonToNBT.getTagFromJson(getChatComponentFromNthArg(sender, args, 3).getUnformattedText());
+                        nbttagcompound2 = JsonToNBT.getTagFromJson(buildString(args, 3));
                     }
                     catch (NBTException nbtexception)
                     {
@@ -103,8 +103,11 @@ public class CommandBlockData extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : Collections.<String>emptyList();
+        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, targetPos) : Collections.emptyList();
     }
 }

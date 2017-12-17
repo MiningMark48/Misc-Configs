@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.network.simpleimpl;
 
 import io.netty.channel.ChannelFutureListener;
@@ -5,9 +24,7 @@ import io.netty.channel.ChannelFutureListener;
 import java.lang.reflect.Method;
 import java.util.EnumMap;
 
-import com.google.common.base.Throwables;
-
-import org.apache.logging.log4j.Level;
+import net.minecraft.util.IThreadListener;
 
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelPipeline;
@@ -15,7 +32,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.network.FMLEmbeddedChannel;
@@ -85,6 +101,10 @@ import net.minecraftforge.fml.relauncher.Side;
  *  </pre>
  * </code>
  *
+ * Note: As of Minecraft 1.8 packets are by default handled on the network thread.
+ * That means that your {@link IMessageHandler} can not interact with most game objects directly.
+ * Minecraft provides a convenient way to make your code execute on the main thread instead using {@link IThreadListener#addScheduledTask(Runnable)}.
+ * The way to obtain an {@link IThreadListener} is using either the {@link net.minecraft.client.Minecraft} instance (client side) or a {@link net.minecraft.world.WorldServer} instance (server side).
  *
  * @author cpw
  *
@@ -104,8 +124,7 @@ public class SimpleNetworkWrapper {
         catch (Exception e)
         {
             // How is this possible?
-            FMLLog.log(Level.FATAL, e, "What? Netty isn't installed, what magic is this?");
-            throw Throwables.propagate(e);
+            throw new RuntimeException("What? Netty isn't installed, what magic is this?", e);
         }
     }
     public SimpleNetworkWrapper(String channelName)
@@ -122,8 +141,7 @@ public class SimpleNetworkWrapper {
         }
         catch (Exception e)
         {
-            FMLLog.log(Level.FATAL, e, "It appears we somehow have a not-standard pipeline. Huh");
-            throw Throwables.propagate(e);
+            throw new RuntimeException("It appears we somehow have a not-standard pipeline. Huh", e);
         }
     }
     /**
@@ -145,9 +163,10 @@ public class SimpleNetworkWrapper {
         try
         {
             return handler.newInstance();
-        } catch (Exception e)
+        }
+        catch (ReflectiveOperationException e)
         {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
     

@@ -26,7 +26,7 @@ public class MultipartBakedModel implements IBakedModel
     public MultipartBakedModel(Map<Predicate<IBlockState>, IBakedModel> selectorsIn)
     {
         this.selectors = selectorsIn;
-        IBakedModel ibakedmodel = (IBakedModel)selectorsIn.values().iterator().next();
+        IBakedModel ibakedmodel = selectorsIn.values().iterator().next();
         this.ambientOcclusion = ibakedmodel.isAmbientOcclusion();
         this.gui3D = ibakedmodel.isGui3d();
         this.particleTexture = ibakedmodel.getParticleTexture();
@@ -44,7 +44,7 @@ public class MultipartBakedModel implements IBakedModel
             {
                 if (((Predicate)entry.getKey()).apply(state))
                 {
-                    list.addAll(((IBakedModel)entry.getValue()).getQuads(state, side, rand++));
+                    list.addAll((entry.getValue()).getQuads(state, side, rand++));
                 }
             }
         }
@@ -85,11 +85,11 @@ public class MultipartBakedModel implements IBakedModel
     @SideOnly(Side.CLIENT)
     public static class Builder
         {
-            private Map<Predicate<IBlockState>, IBakedModel> builderSelectors = Maps.<Predicate<IBlockState>, IBakedModel>newLinkedHashMap();
+            private final Map<Predicate<IBlockState>, IBakedModel> builderSelectors = Maps.<Predicate<IBlockState>, IBakedModel>newLinkedHashMap();
 
-            public void putModel(Predicate<IBlockState> p_188648_1_, IBakedModel p_188648_2_)
+            public void putModel(Predicate<IBlockState> predicate, IBakedModel model)
             {
-                this.builderSelectors.put(p_188648_1_, p_188648_2_);
+                this.builderSelectors.put(predicate, model);
             }
 
             public IBakedModel makeMultipartModel()

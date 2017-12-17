@@ -1,6 +1,5 @@
 package net.minecraft.village;
 
-import javax.annotation.Nullable;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -23,16 +22,22 @@ public class MerchantRecipe
 
     public MerchantRecipe(NBTTagCompound tagCompound)
     {
+        this.itemToBuy = ItemStack.EMPTY;
+        this.secondItemToBuy = ItemStack.EMPTY;
+        this.itemToSell = ItemStack.EMPTY;
         this.readFromTags(tagCompound);
     }
 
-    public MerchantRecipe(ItemStack buy1, @Nullable ItemStack buy2, ItemStack sell)
+    public MerchantRecipe(ItemStack buy1, ItemStack buy2, ItemStack sell)
     {
         this(buy1, buy2, sell, 0, 7);
     }
 
-    public MerchantRecipe(ItemStack buy1, @Nullable ItemStack buy2, ItemStack sell, int toolUsesIn, int maxTradeUsesIn)
+    public MerchantRecipe(ItemStack buy1, ItemStack buy2, ItemStack sell, int toolUsesIn, int maxTradeUsesIn)
     {
+        this.itemToBuy = ItemStack.EMPTY;
+        this.secondItemToBuy = ItemStack.EMPTY;
+        this.itemToSell = ItemStack.EMPTY;
         this.itemToBuy = buy1;
         this.secondItemToBuy = buy2;
         this.itemToSell = sell;
@@ -43,7 +48,7 @@ public class MerchantRecipe
 
     public MerchantRecipe(ItemStack buy1, ItemStack sell)
     {
-        this(buy1, (ItemStack)null, sell);
+        this(buy1, ItemStack.EMPTY, sell);
     }
 
     public MerchantRecipe(ItemStack buy1, Item sellItem)
@@ -72,7 +77,7 @@ public class MerchantRecipe
      */
     public boolean hasSecondItemToBuy()
     {
-        return this.secondItemToBuy != null;
+        return !this.secondItemToBuy.isEmpty();
     }
 
     /**
@@ -126,13 +131,13 @@ public class MerchantRecipe
     public void readFromTags(NBTTagCompound tagCompound)
     {
         NBTTagCompound nbttagcompound = tagCompound.getCompoundTag("buy");
-        this.itemToBuy = ItemStack.loadItemStackFromNBT(nbttagcompound);
+        this.itemToBuy = new ItemStack(nbttagcompound);
         NBTTagCompound nbttagcompound1 = tagCompound.getCompoundTag("sell");
-        this.itemToSell = ItemStack.loadItemStackFromNBT(nbttagcompound1);
+        this.itemToSell = new ItemStack(nbttagcompound1);
 
         if (tagCompound.hasKey("buyB", 10))
         {
-            this.secondItemToBuy = ItemStack.loadItemStackFromNBT(tagCompound.getCompoundTag("buyB"));
+            this.secondItemToBuy = new ItemStack(tagCompound.getCompoundTag("buyB"));
         }
 
         if (tagCompound.hasKey("uses", 99))
@@ -165,7 +170,7 @@ public class MerchantRecipe
         nbttagcompound.setTag("buy", this.itemToBuy.writeToNBT(new NBTTagCompound()));
         nbttagcompound.setTag("sell", this.itemToSell.writeToNBT(new NBTTagCompound()));
 
-        if (this.secondItemToBuy != null)
+        if (!this.secondItemToBuy.isEmpty())
         {
             nbttagcompound.setTag("buyB", this.secondItemToBuy.writeToNBT(new NBTTagCompound()));
         }

@@ -30,6 +30,8 @@ public class EntityAreaEffectCloud extends Entity
     private static final DataParameter<Integer> COLOR = EntityDataManager.<Integer>createKey(EntityAreaEffectCloud.class, DataSerializers.VARINT);
     private static final DataParameter<Boolean> IGNORE_RADIUS = EntityDataManager.<Boolean>createKey(EntityAreaEffectCloud.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Integer> PARTICLE = EntityDataManager.<Integer>createKey(EntityAreaEffectCloud.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> PARTICLE_PARAM_1 = EntityDataManager.<Integer>createKey(EntityAreaEffectCloud.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> PARTICLE_PARAM_2 = EntityDataManager.<Integer>createKey(EntityAreaEffectCloud.class, DataSerializers.VARINT);
     private PotionType potion;
     private final List<PotionEffect> effects;
     private final Map<Entity, Integer> reapplicationDelayMap;
@@ -69,6 +71,8 @@ public class EntityAreaEffectCloud extends Entity
         this.getDataManager().register(RADIUS, Float.valueOf(0.5F));
         this.getDataManager().register(IGNORE_RADIUS, Boolean.valueOf(false));
         this.getDataManager().register(PARTICLE, Integer.valueOf(EnumParticleTypes.SPELL_MOB.getParticleID()));
+        this.getDataManager().register(PARTICLE_PARAM_1, Integer.valueOf(0));
+        this.getDataManager().register(PARTICLE_PARAM_2, Integer.valueOf(0));
     }
 
     public void setRadius(float radiusIn)
@@ -79,7 +83,7 @@ public class EntityAreaEffectCloud extends Entity
         this.setSize(radiusIn * 2.0F, 0.5F);
         this.setPosition(d0, d1, d2);
 
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
             this.getDataManager().set(RADIUS, Float.valueOf(radiusIn));
         }
@@ -96,14 +100,19 @@ public class EntityAreaEffectCloud extends Entity
 
         if (!this.colorSet)
         {
-            if (potionIn == PotionTypes.EMPTY && this.effects.isEmpty())
-            {
-                this.getDataManager().set(COLOR, Integer.valueOf(0));
-            }
-            else
-            {
-                this.getDataManager().set(COLOR, Integer.valueOf(PotionUtils.getPotionColorFromEffectList(PotionUtils.mergeEffects(potionIn, this.effects))));
-            }
+            this.updateFixedColor();
+        }
+    }
+
+    private void updateFixedColor()
+    {
+        if (this.potion == PotionTypes.EMPTY && this.effects.isEmpty())
+        {
+            this.getDataManager().set(COLOR, Integer.valueOf(0));
+        }
+        else
+        {
+            this.getDataManager().set(COLOR, Integer.valueOf(PotionUtils.getPotionColorFromEffectList(PotionUtils.mergeEffects(this.potion, this.effects))));
         }
     }
 
@@ -113,7 +122,7 @@ public class EntityAreaEffectCloud extends Entity
 
         if (!this.colorSet)
         {
-            this.getDataManager().set(COLOR, Integer.valueOf(PotionUtils.getPotionColorFromEffectList(PotionUtils.mergeEffects(this.potion, this.effects))));
+            this.updateFixedColor();
         }
     }
 
@@ -136,6 +145,26 @@ public class EntityAreaEffectCloud extends Entity
     public void setParticle(EnumParticleTypes particleIn)
     {
         this.getDataManager().set(PARTICLE, Integer.valueOf(particleIn.getParticleID()));
+    }
+
+    public int getParticleParam1()
+    {
+        return ((Integer)this.getDataManager().get(PARTICLE_PARAM_1)).intValue();
+    }
+
+    public void setParticleParam1(int particleParam)
+    {
+        this.getDataManager().set(PARTICLE_PARAM_1, Integer.valueOf(particleParam));
+    }
+
+    public int getParticleParam2()
+    {
+        return ((Integer)this.getDataManager().get(PARTICLE_PARAM_2)).intValue();
+    }
+
+    public void setParticleParam2(int particleParam)
+    {
+        this.getDataManager().set(PARTICLE_PARAM_2, Integer.valueOf(particleParam));
     }
 
     /**
@@ -173,20 +202,29 @@ public class EntityAreaEffectCloud extends Entity
         boolean flag = this.shouldIgnoreRadius();
         float f = this.getRadius();
 
-        if (this.worldObj.isRemote)
+        if (this.world.isRemote)
         {
             EnumParticleTypes enumparticletypes = this.getParticle();
+            int[] aint = new int[enumparticletypes.getArgumentCount()];
+
+            if (aint.length > 0)
+            {
+                aint[0] = this.getParticleParam1();
+            }
+
+            if (aint.length > 1)
+            {
+                aint[1] = this.getParticleParam2();
+            }
 
             if (flag)
             {
                 if (this.rand.nextBoolean())
                 {
-                    int[] aint = new int[enumparticletypes.getArgumentCount()];
-
                     for (int i = 0; i < 2; ++i)
                     {
                         float f1 = this.rand.nextFloat() * ((float)Math.PI * 2F);
-                        float f2 = MathHelper.sqrt_float(this.rand.nextFloat()) * 0.2F;
+                        float f2 = MathHelper.sqrt(this.rand.nextFloat()) * 0.2F;
                         float f3 = MathHelper.cos(f1) * f2;
                         float f4 = MathHelper.sin(f1) * f2;
 
@@ -196,11 +234,11 @@ public class EntityAreaEffectCloud extends Entity
                             int k = j >> 16 & 255;
                             int l = j >> 8 & 255;
                             int i1 = j & 255;
-                            this.worldObj.spawnParticle(EnumParticleTypes.SPELL_MOB, this.posX + (double)f3, this.posY, this.posZ + (double)f4, (double)((float)k / 255.0F), (double)((float)l / 255.0F), (double)((float)i1 / 255.0F), new int[0]);
+                            this.world.spawnAlwaysVisibleParticle(EnumParticleTypes.SPELL_MOB.getParticleID(), this.posX + (double)f3, this.posY, this.posZ + (double)f4, (double)((float)k / 255.0F), (double)((float)l / 255.0F), (double)((float)i1 / 255.0F));
                         }
                         else
                         {
-                            this.worldObj.spawnParticle(enumparticletypes, this.posX + (double)f3, this.posY, this.posZ + (double)f4, 0.0D, 0.0D, 0.0D, aint);
+                            this.world.spawnAlwaysVisibleParticle(enumparticletypes.getParticleID(), this.posX + (double)f3, this.posY, this.posZ + (double)f4, 0.0D, 0.0D, 0.0D, aint);
                         }
                     }
                 }
@@ -208,12 +246,11 @@ public class EntityAreaEffectCloud extends Entity
             else
             {
                 float f5 = (float)Math.PI * f * f;
-                int[] aint1 = new int[enumparticletypes.getArgumentCount()];
 
                 for (int k1 = 0; (float)k1 < f5; ++k1)
                 {
                     float f6 = this.rand.nextFloat() * ((float)Math.PI * 2F);
-                    float f7 = MathHelper.sqrt_float(this.rand.nextFloat()) * f;
+                    float f7 = MathHelper.sqrt(this.rand.nextFloat()) * f;
                     float f8 = MathHelper.cos(f6) * f7;
                     float f9 = MathHelper.sin(f6) * f7;
 
@@ -223,11 +260,11 @@ public class EntityAreaEffectCloud extends Entity
                         int i2 = l1 >> 16 & 255;
                         int j2 = l1 >> 8 & 255;
                         int j1 = l1 & 255;
-                        this.worldObj.spawnParticle(EnumParticleTypes.SPELL_MOB, this.posX + (double)f8, this.posY, this.posZ + (double)f9, (double)((float)i2 / 255.0F), (double)((float)j2 / 255.0F), (double)((float)j1 / 255.0F), new int[0]);
+                        this.world.spawnAlwaysVisibleParticle(EnumParticleTypes.SPELL_MOB.getParticleID(), this.posX + (double)f8, this.posY, this.posZ + (double)f9, (double)((float)i2 / 255.0F), (double)((float)j2 / 255.0F), (double)((float)j1 / 255.0F));
                     }
                     else
                     {
-                        this.worldObj.spawnParticle(enumparticletypes, this.posX + (double)f8, this.posY, this.posZ + (double)f9, (0.5D - this.rand.nextDouble()) * 0.15D, 0.009999999776482582D, (0.5D - this.rand.nextDouble()) * 0.15D, aint1);
+                        this.world.spawnAlwaysVisibleParticle(enumparticletypes.getParticleID(), this.posX + (double)f8, this.posY, this.posZ + (double)f9, (0.5D - this.rand.nextDouble()) * 0.15D, 0.009999999776482582D, (0.5D - this.rand.nextDouble()) * 0.15D, aint);
                     }
                 }
             }
@@ -279,7 +316,7 @@ public class EntityAreaEffectCloud extends Entity
                     }
                 }
 
-                List<PotionEffect> potions = Lists.newArrayList();
+                List<PotionEffect> potions = Lists.<PotionEffect>newArrayList();
 
                 for (PotionEffect potioneffect1 : this.potion.getEffects())
                 {
@@ -294,7 +331,7 @@ public class EntityAreaEffectCloud extends Entity
                 }
                 else
                 {
-                    List<EntityLivingBase> list = this.worldObj.<EntityLivingBase>getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox());
+                    List<EntityLivingBase> list = this.world.<EntityLivingBase>getEntitiesWithinAABB(EntityLivingBase.class, this.getEntityBoundingBox());
 
                     if (!list.isEmpty())
                     {
@@ -378,9 +415,9 @@ public class EntityAreaEffectCloud extends Entity
     @Nullable
     public EntityLivingBase getOwner()
     {
-        if (this.owner == null && this.ownerUniqueId != null && this.worldObj instanceof WorldServer)
+        if (this.owner == null && this.ownerUniqueId != null && this.world instanceof WorldServer)
         {
-            Entity entity = ((WorldServer)this.worldObj).getEntityFromUuid(this.ownerUniqueId);
+            Entity entity = ((WorldServer)this.world).getEntityFromUuid(this.ownerUniqueId);
 
             if (entity instanceof EntityLivingBase)
             {
@@ -413,6 +450,8 @@ public class EntityAreaEffectCloud extends Entity
             if (enumparticletypes != null)
             {
                 this.setParticle(enumparticletypes);
+                this.setParticleParam1(compound.getInteger("ParticleParam1"));
+                this.setParticleParam2(compound.getInteger("ParticleParam2"));
             }
         }
 
@@ -457,6 +496,8 @@ public class EntityAreaEffectCloud extends Entity
         compound.setFloat("RadiusPerTick", this.radiusPerTick);
         compound.setFloat("Radius", this.getRadius());
         compound.setString("Particle", this.getParticle().getParticleName());
+        compound.setInteger("ParticleParam1", this.getParticleParam1());
+        compound.setInteger("ParticleParam2", this.getParticleParam2());
 
         if (this.ownerUniqueId != null)
         {

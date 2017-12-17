@@ -16,23 +16,23 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemTool extends Item
 {
-    private Set<Block> effectiveBlocks;
-    protected float efficiencyOnProperMaterial;
+    private final Set<Block> effectiveBlocks;
+    protected float efficiency;
     /** Damage versus entities. */
-    protected float damageVsEntity;
+    protected float attackDamage;
     protected float attackSpeed;
     /** The material this tool is made from. */
     protected Item.ToolMaterial toolMaterial;
 
     protected ItemTool(float attackDamageIn, float attackSpeedIn, Item.ToolMaterial materialIn, Set<Block> effectiveBlocksIn)
     {
-        this.efficiencyOnProperMaterial = 4.0F;
+        this.efficiency = 4.0F;
         this.toolMaterial = materialIn;
         this.effectiveBlocks = effectiveBlocksIn;
         this.maxStackSize = 1;
         this.setMaxDamage(materialIn.getMaxUses());
-        this.efficiencyOnProperMaterial = materialIn.getEfficiencyOnProperMaterial();
-        this.damageVsEntity = attackDamageIn + materialIn.getDamageVsEntity();
+        this.efficiency = materialIn.getEfficiency();
+        this.attackDamage = attackDamageIn + materialIn.getAttackDamage();
         this.attackSpeed = attackSpeedIn;
         this.setCreativeTab(CreativeTabs.TOOLS);
         if (this instanceof ItemPickaxe)
@@ -54,14 +54,14 @@ public class ItemTool extends Item
         this(0.0F, 0.0F, materialIn, effectiveBlocksIn);
     }
 
-    public float getStrVsBlock(ItemStack stack, IBlockState state)
+    public float getDestroySpeed(ItemStack stack, IBlockState state)
     {
         for (String type : getToolClasses(stack))
         {
             if (state.getBlock().isToolEffective(type, state))
-                return efficiencyOnProperMaterial;
+                return efficiency;
         }
-        return this.effectiveBlocks.contains(state.getBlock()) ? this.efficiencyOnProperMaterial : 1.0F;
+        return this.effectiveBlocks.contains(state.getBlock()) ? this.efficiency : 1.0F;
     }
 
     /**
@@ -79,7 +79,7 @@ public class ItemTool extends Item
      */
     public boolean onBlockDestroyed(ItemStack stack, World worldIn, IBlockState state, BlockPos pos, EntityLivingBase entityLiving)
     {
-        if ((double)state.getBlockHardness(worldIn, pos) != 0.0D)
+        if (!worldIn.isRemote && (double)state.getBlockHardness(worldIn, pos) != 0.0D)
         {
             stack.damageItem(1, entityLiving);
         }
@@ -94,11 +94,6 @@ public class ItemTool extends Item
     public boolean isFull3D()
     {
         return true;
-    }
-
-    public Item.ToolMaterial getToolMaterial()
-    {
-        return this.toolMaterial;
     }
 
     /**
@@ -119,34 +114,41 @@ public class ItemTool extends Item
 
     /**
      * Return whether this item is repairable in an anvil.
+     *  
+     * @param toRepair the {@code ItemStack} being repaired
+     * @param repair the {@code ItemStack} being used to perform the repair
      */
     public boolean getIsRepairable(ItemStack toRepair, ItemStack repair)
     {
         ItemStack mat = this.toolMaterial.getRepairItemStack();
-        if (mat != null && net.minecraftforge.oredict.OreDictionary.itemMatches(mat, repair, false)) return true;
+        if (!mat.isEmpty() && net.minecraftforge.oredict.OreDictionary.itemMatches(mat, repair, false)) return true;
         return super.getIsRepairable(toRepair, repair);
     }
 
+    /**
+     * Gets a map of item attribute modifiers, used by ItemSword to increase hit damage.
+     */
     public Multimap<String, AttributeModifier> getItemAttributeModifiers(EntityEquipmentSlot equipmentSlot)
     {
         Multimap<String, AttributeModifier> multimap = super.getItemAttributeModifiers(equipmentSlot);
 
         if (equipmentSlot == EntityEquipmentSlot.MAINHAND)
         {
-            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getAttributeUnlocalizedName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", (double)this.damageVsEntity, 0));
-            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getAttributeUnlocalizedName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", (double)this.attackSpeed, 0));
+            multimap.put(SharedMonsterAttributes.ATTACK_DAMAGE.getName(), new AttributeModifier(ATTACK_DAMAGE_MODIFIER, "Tool modifier", (double)this.attackDamage, 0));
+            multimap.put(SharedMonsterAttributes.ATTACK_SPEED.getName(), new AttributeModifier(ATTACK_SPEED_MODIFIER, "Tool modifier", (double)this.attackSpeed, 0));
         }
 
         return multimap;
     }
 
     /*===================================== FORGE START =================================*/
+    @javax.annotation.Nullable
     private String toolClass;
     @Override
-    public int getHarvestLevel(ItemStack stack, String toolClass)
+    public int getHarvestLevel(ItemStack stack, String toolClass, @javax.annotation.Nullable net.minecraft.entity.player.EntityPlayer player, @javax.annotation.Nullable IBlockState blockState)
     {
-        int level = super.getHarvestLevel(stack, toolClass);
-        if (level == -1 && toolClass != null && toolClass.equals(this.toolClass))
+        int level = super.getHarvestLevel(stack, toolClass,  player, blockState);
+        if (level == -1 && toolClass.equals(this.toolClass))
         {
             return this.toolMaterial.getHarvestLevel();
         }

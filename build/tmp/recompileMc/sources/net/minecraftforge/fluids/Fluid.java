@@ -1,6 +1,27 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fluids;
 
 import javax.annotation.Nullable;
+
+import java.awt.Color;
 import java.util.Locale;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -106,7 +127,29 @@ public class Fluid
      * The default value of null should remain for any Fluid without a Block implementation.
      */
     protected Block block = null;
+    
+    /**
+     * Color used by universal bucket and the ModelFluid baked model.
+     * Note that this int includes the alpha so converting this to RGB with alpha would be
+     *   float r = ((color >> 16) & 0xFF) / 255f; // red
+     *   float g = ((color >> 8) & 0xFF) / 255f; // green
+     *   float b = ((color >> 0) & 0xFF) / 255f; // blue
+     *   float a = ((color >> 24) & 0xFF) / 255f; // alpha
+     */
+    protected int color = 0xFFFFFFFF;
 
+    public Fluid(String fluidName, ResourceLocation still, ResourceLocation flowing, Color color)
+    {
+        this(fluidName, still, flowing);
+        this.setColor(color);
+    }
+
+    public Fluid(String fluidName, ResourceLocation still, ResourceLocation flowing, int color)
+    {
+        this(fluidName, still, flowing);
+        this.setColor(color);
+    }
+    
     public Fluid(String fluidName, ResourceLocation still, ResourceLocation flowing)
     {
         this.fluidName = fluidName.toLowerCase(Locale.ENGLISH);
@@ -129,8 +172,8 @@ public class Fluid
         }
         else
         {
-            FMLLog.warning("A mod has attempted to assign Block " + block + " to the Fluid '" + fluidName + "' but this Fluid has already been linked to the Block "
-                    + this.block + ". You may have duplicate Fluid Blocks as a result. It *may* be possible to configure your mods to avoid this.");
+            FMLLog.log.warn("A mod has attempted to assign Block {} to the Fluid '{}' but this Fluid has already been linked to the Block {}. "
+                    + "You may have duplicate Fluid Blocks as a result. It *may* be possible to configure your mods to avoid this.", block, fluidName, this.block);
         }
         return this;
     }
@@ -180,6 +223,18 @@ public class Fluid
     public Fluid setEmptySound(SoundEvent emptySound)
     {
         this.emptySound = emptySound;
+        return this;
+    }
+    
+    public Fluid setColor(Color color)
+    {
+        this.color = color.getRGB();
+        return this;
+    }
+    
+    public Fluid setColor(int color)
+    {
+        this.color = color;
         return this;
     }
 
@@ -292,7 +347,7 @@ public class Fluid
 
     public int getColor()
     {
-        return 0xFFFFFFFF;
+        return color;
     }
 
     public ResourceLocation getStill()

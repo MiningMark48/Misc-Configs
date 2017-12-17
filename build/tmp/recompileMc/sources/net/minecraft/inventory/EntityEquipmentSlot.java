@@ -55,7 +55,7 @@ public enum EntityEquipmentSlot
             }
         }
 
-        throw new IllegalArgumentException("Invalid slot \'" + targetName + "\'");
+        throw new IllegalArgumentException("Invalid slot '" + targetName + "'");
     }
 
     public static enum Type {

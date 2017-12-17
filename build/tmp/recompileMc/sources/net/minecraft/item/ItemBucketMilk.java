@@ -1,9 +1,10 @@
 package net.minecraft.item;
 
-import javax.annotation.Nullable;
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.ActionResult;
@@ -23,25 +24,22 @@ public class ItemBucketMilk extends Item
      * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using
      * the Item before the action is complete.
      */
-    @Nullable
     public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving)
     {
+        if (!worldIn.isRemote) entityLiving.curePotionEffects(stack); // FORGE - move up so stack.shrink does not turn stack into air
+        if (entityLiving instanceof EntityPlayerMP)
+        {
+            EntityPlayerMP entityplayermp = (EntityPlayerMP)entityLiving;
+            CriteriaTriggers.CONSUME_ITEM.trigger(entityplayermp, stack);
+            entityplayermp.addStat(StatList.getObjectUseStats(this));
+        }
+
         if (entityLiving instanceof EntityPlayer && !((EntityPlayer)entityLiving).capabilities.isCreativeMode)
         {
-            --stack.stackSize;
+            stack.shrink(1);
         }
 
-        if (!worldIn.isRemote)
-        {
-            entityLiving.curePotionEffects(stack);
-        }
-
-        if (entityLiving instanceof EntityPlayer)
-        {
-            ((EntityPlayer)entityLiving).addStat(StatList.getObjectUseStats(this));
-        }
-
-        return stack.stackSize <= 0 ? new ItemStack(Items.BUCKET) : stack;
+        return stack.isEmpty() ? new ItemStack(Items.BUCKET) : stack;
     }
 
     /**
@@ -60,14 +58,17 @@ public class ItemBucketMilk extends Item
         return EnumAction.DRINK;
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
-    {
-        playerIn.setActiveHand(hand);
-        return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
-    }
-
     @Override
     public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, net.minecraft.nbt.NBTTagCompound nbt) {
         return new net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper(stack);
+    }
+
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
+    {
+        playerIn.setActiveHand(handIn);
+        return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, playerIn.getHeldItem(handIn));
     }
 }

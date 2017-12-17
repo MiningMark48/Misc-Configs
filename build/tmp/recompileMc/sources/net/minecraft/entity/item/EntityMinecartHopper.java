@@ -1,21 +1,21 @@
 package net.minecraft.entity.item;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerHopper;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.IHopper;
 import net.minecraft.tileentity.TileEntityHopper;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntitySelectors;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -24,7 +24,7 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
     /** Whether this hopper minecart is being blocked by an activator rail. */
     private boolean isBlocked = true;
     private int transferTicker = -1;
-    private BlockPos lastPosition = BlockPos.ORIGIN;
+    private final BlockPos lastPosition = BlockPos.ORIGIN;
 
     public EntityMinecartHopper(World worldIn)
     {
@@ -59,10 +59,10 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
         return 5;
     }
 
-    public boolean processInitialInteract(EntityPlayer player, @Nullable ItemStack stack, EnumHand hand)
+    public boolean processInitialInteract(EntityPlayer player, EnumHand hand)
     {
-        if(net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, stack, hand))) return true;
-        if (!this.worldObj.isRemote)
+        if(net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, hand))) return true;
+        if (!this.world.isRemote)
         {
             player.displayGUIChest(this);
         }
@@ -104,7 +104,7 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
      */
     public World getWorld()
     {
-        return this.worldObj;
+        return this.world;
     }
 
     /**
@@ -138,7 +138,7 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
     {
         super.onUpdate();
 
-        if (!this.worldObj.isRemote && this.isEntityAlive() && this.getBlocked())
+        if (!this.world.isRemote && this.isEntityAlive() && this.getBlocked())
         {
             BlockPos blockpos = new BlockPos(this);
 
@@ -166,17 +166,17 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
 
     public boolean captureDroppedItems()
     {
-        if (TileEntityHopper.captureDroppedItems(this))
+        if (TileEntityHopper.pullItems(this))
         {
             return true;
         }
         else
         {
-            List<EntityItem> list = this.worldObj.<EntityItem>getEntitiesWithinAABB(EntityItem.class, this.getEntityBoundingBox().expand(0.25D, 0.0D, 0.25D), EntitySelectors.IS_ALIVE);
+            List<EntityItem> list = this.world.<EntityItem>getEntitiesWithinAABB(EntityItem.class, this.getEntityBoundingBox().grow(0.25D, 0.0D, 0.25D), EntitySelectors.IS_ALIVE);
 
             if (!list.isEmpty())
             {
-                TileEntityHopper.putDropInInventoryAllSlots(this, (EntityItem)list.get(0));
+                TileEntityHopper.putDropInInventoryAllSlots((IInventory)null, this, list.get(0));
             }
 
             return false;
@@ -187,10 +187,15 @@ public class EntityMinecartHopper extends EntityMinecartContainer implements IHo
     {
         super.killMinecart(source);
 
-        if (this.worldObj.getGameRules().getBoolean("doEntityDrops"))
+        if (this.world.getGameRules().getBoolean("doEntityDrops"))
         {
             this.dropItemWithOffset(Item.getItemFromBlock(Blocks.HOPPER), 1, 0.0F);
         }
+    }
+
+    public static void registerFixesMinecartHopper(DataFixer fixer)
+    {
+        EntityMinecartContainer.addDataFixers(fixer, EntityMinecartHopper.class);
     }
 
     /**

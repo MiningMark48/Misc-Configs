@@ -32,7 +32,7 @@ public class EntityOnFire implements EntityProperty
 
             public JsonElement serialize(EntityOnFire property, JsonSerializationContext serializationContext)
             {
-                return new JsonPrimitive(Boolean.valueOf(property.onFire));
+                return new JsonPrimitive(property.onFire);
             }
 
             public EntityOnFire deserialize(JsonElement element, JsonDeserializationContext deserializationContext)

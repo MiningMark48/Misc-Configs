@@ -2,7 +2,6 @@ package net.minecraft.client.resources.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumTypeAdapterFactory;
 import net.minecraft.util.registry.IRegistry;
@@ -15,7 +14,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class MetadataSerializer
 {
-    private final IRegistry < String, MetadataSerializer.Registration <? extends IMetadataSection >> metadataSectionSerializerRegistry = new RegistrySimple();
+    private final IRegistry < String, MetadataSerializer.Registration <? extends IMetadataSection >> metadataSectionSerializerRegistry = new RegistrySimple < String, MetadataSerializer.Registration <? extends IMetadataSection >> ();
     private final GsonBuilder gsonBuilder = new GsonBuilder();
     /** Cached Gson instance. Set to null when more sections are registered, and then re-created from the builder. */
     private Gson gson;
@@ -46,7 +45,7 @@ public class MetadataSerializer
         }
         else if (!json.get(sectionName).isJsonObject())
         {
-            throw new IllegalArgumentException("Invalid metadata for \'" + sectionName + "\' - expected object, found " + json.get(sectionName));
+            throw new IllegalArgumentException("Invalid metadata for '" + sectionName + "' - expected object, found " + json.get(sectionName));
         }
         else
         {
@@ -54,11 +53,11 @@ public class MetadataSerializer
 
             if (registration == null)
             {
-                throw new IllegalArgumentException("Don\'t know how to handle metadata section \'" + sectionName + "\'");
+                throw new IllegalArgumentException("Don't know how to handle metadata section '" + sectionName + "'");
             }
             else
             {
-                return (T)((IMetadataSection)this.getGson().fromJson((JsonElement)json.getAsJsonObject(sectionName), registration.clazz));
+                return (T)(this.getGson().fromJson(json.getAsJsonObject(sectionName), registration.clazz));
             }
         }
     }
@@ -79,7 +78,9 @@ public class MetadataSerializer
     @SideOnly(Side.CLIENT)
     class Registration<T extends IMetadataSection>
     {
+        /** The IMetadataSectionSerializer associated with the class registered */
         final IMetadataSectionSerializer<T> section;
+        /** The class registered */
         final Class<T> clazz;
 
         private Registration(IMetadataSectionSerializer<T> metadataSectionSerializer, Class<T> clazzToRegister)

@@ -20,7 +20,7 @@ public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntity
     /** The ModelSign instance for use in this renderer */
     private final ModelSign model = new ModelSign();
 
-    public void renderTileEntityAt(TileEntitySign te, double x, double y, double z, float partialTicks, int destroyStage)
+    public void render(TileEntitySign te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
     {
         Block block = te.getBlockType();
         GlStateManager.pushMatrix();
@@ -28,7 +28,7 @@ public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntity
 
         if (block == Blocks.STANDING_SIGN)
         {
-            GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F * f, (float)z + 0.5F);
+            GlStateManager.translate((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
             float f1 = (float)(te.getBlockMetadata() * 360) / 16.0F;
             GlStateManager.rotate(-f1, 0.0F, 1.0F, 0.0F);
             this.model.signStick.showModel = true;
@@ -53,7 +53,7 @@ public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntity
                 f2 = -90.0F;
             }
 
-            GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F * f, (float)z + 0.5F);
+            GlStateManager.translate((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
             GlStateManager.rotate(-f2, 0.0F, 1.0F, 0.0F);
             GlStateManager.translate(0.0F, -0.3125F, -0.4375F);
             this.model.signStick.showModel = false;
@@ -75,14 +75,14 @@ public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntity
 
         GlStateManager.enableRescaleNormal();
         GlStateManager.pushMatrix();
-        GlStateManager.scale(f, -f, -f);
+        GlStateManager.scale(0.6666667F, -0.6666667F, -0.6666667F);
         this.model.renderSign();
         GlStateManager.popMatrix();
         FontRenderer fontrenderer = this.getFontRenderer();
-        float f3 = 0.015625F * f;
-        GlStateManager.translate(0.0F, 0.5F * f, 0.07F * f);
-        GlStateManager.scale(f3, -f3, f3);
-        GlStateManager.glNormal3f(0.0F, 0.0F, -1.0F * f3);
+        float f3 = 0.010416667F;
+        GlStateManager.translate(0.0F, 0.33333334F, 0.046666667F);
+        GlStateManager.scale(0.010416667F, -0.010416667F, 0.010416667F);
+        GlStateManager.glNormal3f(0.0F, 0.0F, -0.010416667F);
         GlStateManager.depthMask(false);
         int i = 0;
 
@@ -99,11 +99,11 @@ public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntity
                     if (j == te.lineBeingEdited)
                     {
                         s = "> " + s + " <";
-                        fontrenderer.drawString(s, -fontrenderer.getStringWidth(s) / 2, j * 10 - te.signText.length * 5, i);
+                        fontrenderer.drawString(s, -fontrenderer.getStringWidth(s) / 2, j * 10 - te.signText.length * 5, 0);
                     }
                     else
                     {
-                        fontrenderer.drawString(s, -fontrenderer.getStringWidth(s) / 2, j * 10 - te.signText.length * 5, i);
+                        fontrenderer.drawString(s, -fontrenderer.getStringWidth(s) / 2, j * 10 - te.signText.length * 5, 0);
                     }
                 }
             }

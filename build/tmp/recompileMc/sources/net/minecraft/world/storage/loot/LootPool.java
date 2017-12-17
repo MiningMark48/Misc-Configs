@@ -85,7 +85,7 @@ public class LootPool
     {
         if (LootConditionManager.testAllConditions(this.poolConditions, rand, context))
         {
-            int i = this.rolls.generateInt(rand) + MathHelper.floor_float(this.bonusRolls.generateFloat(rand) * context.getLuck());
+            int i = this.rolls.generateInt(rand) + MathHelper.floor(this.bonusRolls.generateFloat(rand) * context.getLuck());
 
             for (int j = 0; j < i; ++j)
             {

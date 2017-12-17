@@ -26,12 +26,12 @@ public class MerchantRecipeList extends ArrayList<MerchantRecipe>
      * can par1,par2 be used to in crafting recipe par3
      */
     @Nullable
-    public MerchantRecipe canRecipeBeUsed(ItemStack p_77203_1_, @Nullable ItemStack p_77203_2_, int p_77203_3_)
+    public MerchantRecipe canRecipeBeUsed(ItemStack stack0, ItemStack stack1, int index)
     {
-        if (p_77203_3_ > 0 && p_77203_3_ < this.size())
+        if (index > 0 && index < this.size())
         {
-            MerchantRecipe merchantrecipe1 = (MerchantRecipe)this.get(p_77203_3_);
-            return !this.areItemStacksExactlyEqual(p_77203_1_, merchantrecipe1.getItemToBuy()) || (p_77203_2_ != null || merchantrecipe1.hasSecondItemToBuy()) && (!merchantrecipe1.hasSecondItemToBuy() || !this.areItemStacksExactlyEqual(p_77203_2_, merchantrecipe1.getSecondItemToBuy())) || p_77203_1_.stackSize < merchantrecipe1.getItemToBuy().stackSize || merchantrecipe1.hasSecondItemToBuy() && p_77203_2_.stackSize < merchantrecipe1.getSecondItemToBuy().stackSize ? null : merchantrecipe1;
+            MerchantRecipe merchantrecipe1 = (MerchantRecipe)this.get(index);
+            return !this.areItemStacksExactlyEqual(stack0, merchantrecipe1.getItemToBuy()) || (!stack1.isEmpty() || merchantrecipe1.hasSecondItemToBuy()) && (!merchantrecipe1.hasSecondItemToBuy() || !this.areItemStacksExactlyEqual(stack1, merchantrecipe1.getSecondItemToBuy())) || stack0.getCount() < merchantrecipe1.getItemToBuy().getCount() || merchantrecipe1.hasSecondItemToBuy() && stack1.getCount() < merchantrecipe1.getSecondItemToBuy().getCount() ? null : merchantrecipe1;
         }
         else
         {
@@ -39,7 +39,7 @@ public class MerchantRecipeList extends ArrayList<MerchantRecipe>
             {
                 MerchantRecipe merchantrecipe = (MerchantRecipe)this.get(i);
 
-                if (this.areItemStacksExactlyEqual(p_77203_1_, merchantrecipe.getItemToBuy()) && p_77203_1_.stackSize >= merchantrecipe.getItemToBuy().stackSize && (!merchantrecipe.hasSecondItemToBuy() && p_77203_2_ == null || merchantrecipe.hasSecondItemToBuy() && this.areItemStacksExactlyEqual(p_77203_2_, merchantrecipe.getSecondItemToBuy()) && p_77203_2_.stackSize >= merchantrecipe.getSecondItemToBuy().stackSize))
+                if (this.areItemStacksExactlyEqual(stack0, merchantrecipe.getItemToBuy()) && stack0.getCount() >= merchantrecipe.getItemToBuy().getCount() && (!merchantrecipe.hasSecondItemToBuy() && stack1.isEmpty() || merchantrecipe.hasSecondItemToBuy() && this.areItemStacksExactlyEqual(stack1, merchantrecipe.getSecondItemToBuy()) && stack1.getCount() >= merchantrecipe.getSecondItemToBuy().getCount()))
                 {
                     return merchantrecipe;
                 }
@@ -61,14 +61,14 @@ public class MerchantRecipeList extends ArrayList<MerchantRecipe>
         for (int i = 0; i < this.size(); ++i)
         {
             MerchantRecipe merchantrecipe = (MerchantRecipe)this.get(i);
-            buffer.writeItemStackToBuffer(merchantrecipe.getItemToBuy());
-            buffer.writeItemStackToBuffer(merchantrecipe.getItemToSell());
+            buffer.writeItemStack(merchantrecipe.getItemToBuy());
+            buffer.writeItemStack(merchantrecipe.getItemToSell());
             ItemStack itemstack = merchantrecipe.getSecondItemToBuy();
-            buffer.writeBoolean(itemstack != null);
+            buffer.writeBoolean(!itemstack.isEmpty());
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
-                buffer.writeItemStackToBuffer(itemstack);
+                buffer.writeItemStack(itemstack);
             }
 
             buffer.writeBoolean(merchantrecipe.isRecipeDisabled());
@@ -111,13 +111,13 @@ public class MerchantRecipeList extends ArrayList<MerchantRecipe>
 
         for (int j = 0; j < i; ++j)
         {
-            ItemStack itemstack = buffer.readItemStackFromBuffer();
-            ItemStack itemstack1 = buffer.readItemStackFromBuffer();
-            ItemStack itemstack2 = null;
+            ItemStack itemstack = buffer.readItemStack();
+            ItemStack itemstack1 = buffer.readItemStack();
+            ItemStack itemstack2 = ItemStack.EMPTY;
 
             if (buffer.readBoolean())
             {
-                itemstack2 = buffer.readItemStackFromBuffer();
+                itemstack2 = buffer.readItemStack();
             }
 
             boolean flag = buffer.readBoolean();

@@ -20,7 +20,9 @@ import org.apache.logging.log4j.Logger;
 public abstract class CommandHandler implements ICommandManager
 {
     private static final Logger LOGGER = LogManager.getLogger();
+    /** Map of Strings to the ICommand objects they represent */
     private final Map<String, ICommand> commandMap = Maps.<String, ICommand>newHashMap();
+    /** The set of ICommand objects currently loaded. */
     private final Set<ICommand> commandSet = Sets.<ICommand>newHashSet();
 
     /**
@@ -40,65 +42,81 @@ public abstract class CommandHandler implements ICommandManager
         String[] astring = rawCommand.split(" ");
         String s = astring[0];
         astring = dropFirstString(astring);
-        ICommand icommand = (ICommand)this.commandMap.get(s);
-        int i = this.getUsernameIndex(icommand, astring);
-        int j = 0;
+        ICommand icommand = this.commandMap.get(s);
+        int i = 0;
 
-        if (icommand == null)
+        try
         {
-            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.generic.notFound", new Object[0]);
-            textcomponenttranslation.getStyle().setColor(TextFormatting.RED);
-            sender.addChatMessage(textcomponenttranslation);
-        }
-        else if (icommand.checkPermission(this.getServer(), sender))
-        {
-            net.minecraftforge.event.CommandEvent event = new net.minecraftforge.event.CommandEvent(icommand, sender, astring);
-            if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event))
+            int j = this.getUsernameIndex(icommand, astring);
+
+            if (icommand == null)
             {
-                if (event.getException() != null)
-                {
-                    com.google.common.base.Throwables.propagateIfPossible(event.getException());
-                }
-                return 1;
+                TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.generic.notFound", new Object[0]);
+                textcomponenttranslation1.getStyle().setColor(TextFormatting.RED);
+                sender.sendMessage(textcomponenttranslation1);
             }
-
-            if (i > -1)
+            else if (icommand.checkPermission(this.getServer(), sender))
             {
-                List<Entity> list = EntitySelector.<Entity>matchEntities(sender, astring[i], Entity.class);
-                String s1 = astring[i];
-                sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, list.size());
-
-                for (Entity entity : list)
+                net.minecraftforge.event.CommandEvent event = new net.minecraftforge.event.CommandEvent(icommand, sender, astring);
+                if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event))
                 {
-                    astring[i] = entity.getCachedUniqueIdString();
+                    if (event.getException() != null)
+                    {
+                        com.google.common.base.Throwables.throwIfUnchecked(event.getException());
+                    }
+                    return 1;
+                }
+                if (event.getParameters() != null) astring = event.getParameters();
+
+                if (j > -1)
+                {
+                    List<Entity> list = EntitySelector.<Entity>matchEntities(sender, astring[j], Entity.class);
+                    String s1 = astring[j];
+                    sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, list.size());
+
+                    if (list.isEmpty())
+                    {
+                        throw new PlayerNotFoundException("commands.generic.selector.notFound", new Object[] {astring[j]});
+                    }
+
+                    for (Entity entity : list)
+                    {
+                        astring[j] = entity.getCachedUniqueIdString();
+
+                        if (this.tryExecute(sender, astring, icommand, rawCommand))
+                        {
+                            ++i;
+                        }
+                    }
+
+                    astring[j] = s1;
+                }
+                else
+                {
+                    sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, 1);
 
                     if (this.tryExecute(sender, astring, icommand, rawCommand))
                     {
-                        ++j;
+                        ++i;
                     }
                 }
-
-                astring[i] = s1;
             }
             else
             {
-                sender.setCommandStat(CommandResultStats.Type.AFFECTED_ENTITIES, 1);
-
-                if (this.tryExecute(sender, astring, icommand, rawCommand))
-                {
-                    ++j;
-                }
+                TextComponentTranslation textcomponenttranslation2 = new TextComponentTranslation("commands.generic.permission", new Object[0]);
+                textcomponenttranslation2.getStyle().setColor(TextFormatting.RED);
+                sender.sendMessage(textcomponenttranslation2);
             }
         }
-        else
+        catch (CommandException commandexception)
         {
-            TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.generic.permission", new Object[0]);
-            textcomponenttranslation1.getStyle().setColor(TextFormatting.RED);
-            sender.addChatMessage(textcomponenttranslation1);
+            TextComponentTranslation textcomponenttranslation = new TextComponentTranslation(commandexception.getMessage(), commandexception.getErrorObjects());
+            textcomponenttranslation.getStyle().setColor(TextFormatting.RED);
+            sender.sendMessage(textcomponenttranslation);
         }
 
-        sender.setCommandStat(CommandResultStats.Type.SUCCESS_COUNT, j);
-        return j;
+        sender.setCommandStat(CommandResultStats.Type.SUCCESS_COUNT, i);
+        return i;
     }
 
     protected boolean tryExecute(ICommandSender sender, String[] args, ICommand command, String input)
@@ -112,20 +130,20 @@ public abstract class CommandHandler implements ICommandManager
         {
             TextComponentTranslation textcomponenttranslation2 = new TextComponentTranslation("commands.generic.usage", new Object[] {new TextComponentTranslation(wrongusageexception.getMessage(), wrongusageexception.getErrorObjects())});
             textcomponenttranslation2.getStyle().setColor(TextFormatting.RED);
-            sender.addChatMessage(textcomponenttranslation2);
+            sender.sendMessage(textcomponenttranslation2);
         }
         catch (CommandException commandexception)
         {
             TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation(commandexception.getMessage(), commandexception.getErrorObjects());
             textcomponenttranslation1.getStyle().setColor(TextFormatting.RED);
-            sender.addChatMessage(textcomponenttranslation1);
+            sender.sendMessage(textcomponenttranslation1);
         }
-        catch (Throwable var9)
+        catch (Throwable throwable)
         {
             TextComponentTranslation textcomponenttranslation = new TextComponentTranslation("commands.generic.exception", new Object[0]);
             textcomponenttranslation.getStyle().setColor(TextFormatting.RED);
-            sender.addChatMessage(textcomponenttranslation);
-            LOGGER.warn("Couldn\'t process command: \'" + input + "\'", var9);
+            sender.sendMessage(textcomponenttranslation);
+            LOGGER.warn("Couldn't process command: " + input, throwable);
         }
 
         return false;
@@ -138,14 +156,14 @@ public abstract class CommandHandler implements ICommandManager
      */
     public ICommand registerCommand(ICommand command)
     {
-        this.commandMap.put(command.getCommandName(), command);
+        this.commandMap.put(command.getName(), command);
         this.commandSet.add(command);
 
-        for (String s : command.getCommandAliases())
+        for (String s : command.getAliases())
         {
-            ICommand icommand = (ICommand)this.commandMap.get(s);
+            ICommand icommand = this.commandMap.get(s);
 
-            if (icommand == null || !icommand.getCommandName().equals(s))
+            if (icommand == null || !icommand.getName().equals(s))
             {
                 this.commandMap.put(s, command);
             }
@@ -164,7 +182,12 @@ public abstract class CommandHandler implements ICommandManager
         return astring;
     }
 
-    public List<String> getTabCompletionOptions(ICommandSender sender, String input, @Nullable BlockPos pos)
+    /**
+     * Get a list of possible completion options for when the TAB key is pressed. This can be a list of commands if no
+     * command is specified or a partial command is specified. It could also be a list of arguments for the command that
+     * is specified.
+     */
+    public List<String> getTabCompletions(ICommandSender sender, String input, @Nullable BlockPos pos)
     {
         String[] astring = input.split(" ", -1);
         String s = astring[0];
@@ -175,7 +198,7 @@ public abstract class CommandHandler implements ICommandManager
 
             for (Entry<String, ICommand> entry : this.commandMap.entrySet())
             {
-                if (CommandBase.doesStringStartWith(s, (String)entry.getKey()) && ((ICommand)entry.getValue()).checkPermission(this.getServer(), sender))
+                if (CommandBase.doesStringStartWith(s, entry.getKey()) && ((ICommand)entry.getValue()).checkPermission(this.getServer(), sender))
                 {
                     list.add(entry.getKey());
                 }
@@ -187,11 +210,11 @@ public abstract class CommandHandler implements ICommandManager
         {
             if (astring.length > 1)
             {
-                ICommand icommand = (ICommand)this.commandMap.get(s);
+                ICommand icommand = this.commandMap.get(s);
 
                 if (icommand != null && icommand.checkPermission(this.getServer(), sender))
                 {
-                    return icommand.getTabCompletionOptions(this.getServer(), sender, dropFirstString(astring), pos);
+                    return icommand.getTabCompletions(this.getServer(), sender, dropFirstString(astring), pos);
                 }
             }
 
@@ -199,6 +222,9 @@ public abstract class CommandHandler implements ICommandManager
         }
     }
 
+    /**
+     * Get a list of commands that the given command sender has access to execute.
+     */
     public List<ICommand> getPossibleCommands(ICommandSender sender)
     {
         List<ICommand> list = Lists.<ICommand>newArrayList();
@@ -214,6 +240,9 @@ public abstract class CommandHandler implements ICommandManager
         return list;
     }
 
+    /**
+     * Get a Map of all the name to command pairs stored in this command manager.
+     */
     public Map<String, ICommand> getCommands()
     {
         return this.commandMap;
@@ -222,7 +251,7 @@ public abstract class CommandHandler implements ICommandManager
     /**
      * Return a command's first parameter index containing a valid username.
      */
-    private int getUsernameIndex(ICommand command, String[] args)
+    private int getUsernameIndex(ICommand command, String[] args) throws CommandException
     {
         if (command == null)
         {

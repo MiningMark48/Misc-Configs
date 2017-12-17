@@ -1,7 +1,8 @@
 package net.minecraft.client.particle;
 
+import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemDye;
@@ -20,7 +21,7 @@ public class ParticleFirework
     @SideOnly(Side.CLIENT)
     public static class Factory implements IParticleFactory
         {
-            public Particle getEntityFX(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
+            public Particle createParticle(int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... p_178902_15_)
             {
                 ParticleFirework.Spark particlefirework$spark = new ParticleFirework.Spark(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn, Minecraft.getMinecraft().effectRenderer);
                 particlefirework$spark.setAlphaF(0.99F);
@@ -40,7 +41,7 @@ public class ParticleFirework
             /**
              * Renders the particle
              */
-            public void renderParticle(VertexBuffer worldRendererIn, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
+            public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
             {
                 float f = 0.25F;
                 float f1 = 0.5F;
@@ -54,10 +55,10 @@ public class ParticleFirework
                 int i = this.getBrightnessForRender(partialTicks);
                 int j = i >> 16 & 65535;
                 int k = i & 65535;
-                worldRendererIn.pos((double)(f5 - rotationX * f4 - rotationXY * f4), (double)(f6 - rotationZ * f4), (double)(f7 - rotationYZ * f4 - rotationXZ * f4)).tex(0.5D, 0.375D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-                worldRendererIn.pos((double)(f5 - rotationX * f4 + rotationXY * f4), (double)(f6 + rotationZ * f4), (double)(f7 - rotationYZ * f4 + rotationXZ * f4)).tex(0.5D, 0.125D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-                worldRendererIn.pos((double)(f5 + rotationX * f4 + rotationXY * f4), (double)(f6 + rotationZ * f4), (double)(f7 + rotationYZ * f4 + rotationXZ * f4)).tex(0.25D, 0.125D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
-                worldRendererIn.pos((double)(f5 + rotationX * f4 - rotationXY * f4), (double)(f6 - rotationZ * f4), (double)(f7 + rotationYZ * f4 - rotationXZ * f4)).tex(0.25D, 0.375D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
+                buffer.pos((double)(f5 - rotationX * f4 - rotationXY * f4), (double)(f6 - rotationZ * f4), (double)(f7 - rotationYZ * f4 - rotationXZ * f4)).tex(0.5D, 0.375D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
+                buffer.pos((double)(f5 - rotationX * f4 + rotationXY * f4), (double)(f6 + rotationZ * f4), (double)(f7 - rotationYZ * f4 + rotationXZ * f4)).tex(0.5D, 0.125D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
+                buffer.pos((double)(f5 + rotationX * f4 + rotationXY * f4), (double)(f6 + rotationZ * f4), (double)(f7 + rotationYZ * f4 + rotationXZ * f4)).tex(0.25D, 0.125D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
+                buffer.pos((double)(f5 + rotationX * f4 - rotationXY * f4), (double)(f6 - rotationZ * f4), (double)(f7 + rotationYZ * f4 - rotationXZ * f4)).tex(0.25D, 0.375D).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha).lightmap(j, k).endVertex();
             }
         }
 
@@ -93,7 +94,7 @@ public class ParticleFirework
                 this.twinkle = twinkleIn;
             }
 
-            public boolean isTransparent()
+            public boolean shouldDisableDepth()
             {
                 return true;
             }
@@ -101,11 +102,11 @@ public class ParticleFirework
             /**
              * Renders the particle
              */
-            public void renderParticle(VertexBuffer worldRendererIn, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
+            public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
             {
                 if (!this.twinkle || this.particleAge < this.particleMaxAge / 3 || (this.particleAge + this.particleMaxAge) / 3 % 2 == 0)
                 {
-                    super.renderParticle(worldRendererIn, entityIn, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);
+                    super.renderParticle(buffer, entityIn, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);
                 }
             }
 
@@ -115,7 +116,7 @@ public class ParticleFirework
 
                 if (this.trail && this.particleAge < this.particleMaxAge / 2 && (this.particleAge + this.particleMaxAge) % 2 == 0)
                 {
-                    ParticleFirework.Spark particlefirework$spark = new ParticleFirework.Spark(this.worldObj, this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D, this.effectRenderer);
+                    ParticleFirework.Spark particlefirework$spark = new ParticleFirework.Spark(this.world, this.posX, this.posY, this.posZ, 0.0D, 0.0D, 0.0D, this.effectRenderer);
                     particlefirework$spark.setAlphaF(0.99F);
                     particlefirework$spark.setRBGColorF(this.particleRed, this.particleGreen, this.particleBlue);
                     particlefirework$spark.particleAge = particlefirework$spark.particleMaxAge / 2;
@@ -138,17 +139,17 @@ public class ParticleFirework
     public static class Starter extends Particle
         {
             private int fireworkAge;
-            private final ParticleManager theEffectRenderer;
+            private final ParticleManager manager;
             private NBTTagList fireworkExplosions;
             boolean twinkle;
 
-            public Starter(World p_i46464_1_, double p_i46464_2_, double p_i46464_4_, double p_i46464_6_, double p_i46464_8_, double p_i46464_10_, double p_i46464_12_, ParticleManager p_i46464_14_, NBTTagCompound p_i46464_15_)
+            public Starter(World p_i46464_1_, double p_i46464_2_, double p_i46464_4_, double p_i46464_6_, double p_i46464_8_, double p_i46464_10_, double p_i46464_12_, ParticleManager p_i46464_14_, @Nullable NBTTagCompound p_i46464_15_)
             {
                 super(p_i46464_1_, p_i46464_2_, p_i46464_4_, p_i46464_6_, 0.0D, 0.0D, 0.0D);
                 this.motionX = p_i46464_8_;
                 this.motionY = p_i46464_10_;
                 this.motionZ = p_i46464_12_;
-                this.theEffectRenderer = p_i46464_14_;
+                this.manager = p_i46464_14_;
                 this.particleMaxAge = 8;
 
                 if (p_i46464_15_ != null)
@@ -181,7 +182,7 @@ public class ParticleFirework
             /**
              * Renders the particle
              */
-            public void renderParticle(VertexBuffer worldRendererIn, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
+            public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialTicks, float rotationX, float rotationZ, float rotationYZ, float rotationXY, float rotationXZ)
             {
             }
 
@@ -221,7 +222,7 @@ public class ParticleFirework
                         soundevent1 = flag ? SoundEvents.ENTITY_FIREWORK_BLAST_FAR : SoundEvents.ENTITY_FIREWORK_BLAST;
                     }
 
-                    this.worldObj.playSound(this.posX, this.posY, this.posZ, soundevent1, SoundCategory.AMBIENT, 20.0F, 0.95F + this.rand.nextFloat() * 0.1F, true);
+                    this.world.playSound(this.posX, this.posY, this.posZ, soundevent1, SoundCategory.AMBIENT, 20.0F, 0.95F + this.rand.nextFloat() * 0.1F, true);
                 }
 
                 if (this.fireworkAge % 2 == 0 && this.fireworkExplosions != null && this.fireworkAge / 2 < this.fireworkExplosions.tagCount())
@@ -264,9 +265,9 @@ public class ParticleFirework
                     float f = (float)((j & 16711680) >> 16) / 255.0F;
                     float f1 = (float)((j & 65280) >> 8) / 255.0F;
                     float f2 = (float)((j & 255) >> 0) / 255.0F;
-                    ParticleFirework.Overlay particlefirework$overlay = new ParticleFirework.Overlay(this.worldObj, this.posX, this.posY, this.posZ);
+                    ParticleFirework.Overlay particlefirework$overlay = new ParticleFirework.Overlay(this.world, this.posX, this.posY, this.posZ);
                     particlefirework$overlay.setRBGColorF(f, f1, f2);
-                    this.theEffectRenderer.addEffect(particlefirework$overlay);
+                    this.manager.addEffect(particlefirework$overlay);
                 }
 
                 ++this.fireworkAge;
@@ -277,7 +278,7 @@ public class ParticleFirework
                     {
                         boolean flag3 = this.isFarFromCamera();
                         SoundEvent soundevent = flag3 ? SoundEvents.ENTITY_FIREWORK_TWINKLE_FAR : SoundEvents.ENTITY_FIREWORK_TWINKLE;
-                        this.worldObj.playSound(this.posX, this.posY, this.posZ, soundevent, SoundCategory.AMBIENT, 20.0F, 0.9F + this.rand.nextFloat() * 0.15F, true);
+                        this.world.playSound(this.posX, this.posY, this.posZ, soundevent, SoundCategory.AMBIENT, 20.0F, 0.9F + this.rand.nextFloat() * 0.15F, true);
                     }
 
                     this.setExpired();
@@ -295,7 +296,7 @@ public class ParticleFirework
              */
             private void createParticle(double p_92034_1_, double p_92034_3_, double p_92034_5_, double p_92034_7_, double p_92034_9_, double p_92034_11_, int[] p_92034_13_, int[] p_92034_14_, boolean p_92034_15_, boolean p_92034_16_)
             {
-                ParticleFirework.Spark particlefirework$spark = new ParticleFirework.Spark(this.worldObj, p_92034_1_, p_92034_3_, p_92034_5_, p_92034_7_, p_92034_9_, p_92034_11_, this.theEffectRenderer);
+                ParticleFirework.Spark particlefirework$spark = new ParticleFirework.Spark(this.world, p_92034_1_, p_92034_3_, p_92034_5_, p_92034_7_, p_92034_9_, p_92034_11_, this.manager);
                 particlefirework$spark.setAlphaF(0.99F);
                 particlefirework$spark.setTrail(p_92034_15_);
                 particlefirework$spark.setTwinkle(p_92034_16_);
@@ -307,7 +308,7 @@ public class ParticleFirework
                     particlefirework$spark.setColorFade(p_92034_14_[this.rand.nextInt(p_92034_14_.length)]);
                 }
 
-                this.theEffectRenderer.addEffect(particlefirework$spark);
+                this.manager.addEffect(particlefirework$spark);
             }
 
             /**
@@ -328,7 +329,7 @@ public class ParticleFirework
                             double d3 = (double)j + (this.rand.nextDouble() - this.rand.nextDouble()) * 0.5D;
                             double d4 = (double)i + (this.rand.nextDouble() - this.rand.nextDouble()) * 0.5D;
                             double d5 = (double)k + (this.rand.nextDouble() - this.rand.nextDouble()) * 0.5D;
-                            double d6 = (double)MathHelper.sqrt_double(d3 * d3 + d4 * d4 + d5 * d5) / speed + this.rand.nextGaussian() * 0.05D;
+                            double d6 = (double)MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5) / speed + this.rand.nextGaussian() * 0.05D;
                             this.createParticle(d0, d1, d2, d3 / d6, d4 / d6, d5 / d6, colours, fadeColours, trail, twinkleIn);
 
                             if (i != -size && i != size && j != -size && j != size)
@@ -398,6 +399,10 @@ public class ParticleFirework
                 }
             }
 
+            /**
+             * Retrieve what effect layer (what texture) the particle should be rendered with. 0 for the particle sprite
+             * sheet, 1 for the main Texture atlas, and 3 for a custom texture
+             */
             public int getFXLayer()
             {
                 return 0;

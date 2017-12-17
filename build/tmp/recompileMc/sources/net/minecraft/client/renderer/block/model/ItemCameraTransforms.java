@@ -19,15 +19,15 @@ import org.lwjgl.util.vector.Quaternion;
 public class ItemCameraTransforms
 {
     public static final ItemCameraTransforms DEFAULT = new ItemCameraTransforms();
-    public static float offsetTranslateX = 0.0F;
-    public static float offsetTranslateY = 0.0F;
-    public static float offsetTranslateZ = 0.0F;
-    public static float offsetRotationX = 0.0F;
-    public static float offsetRotationY = 0.0F;
-    public static float offsetRotationZ = 0.0F;
-    public static float offsetScaleX = 0.0F;
-    public static float offsetScaleY = 0.0F;
-    public static float offsetScaleZ = 0.0F;
+    public static float offsetTranslateX;
+    public static float offsetTranslateY;
+    public static float offsetTranslateZ;
+    public static float offsetRotationX;
+    public static float offsetRotationY;
+    public static float offsetRotationZ;
+    public static float offsetScaleX;
+    public static float offsetScaleY;
+    public static float offsetScaleZ;
     public final ItemTransformVec3f thirdperson_left;
     public final ItemTransformVec3f thirdperson_right;
     public final ItemTransformVec3f firstperson_left;
@@ -56,16 +56,16 @@ public class ItemCameraTransforms
     }
 
     @Deprecated
-    public ItemCameraTransforms(ItemTransformVec3f p_i46569_1_, ItemTransformVec3f p_i46569_2_, ItemTransformVec3f p_i46569_3_, ItemTransformVec3f p_i46569_4_, ItemTransformVec3f p_i46569_5_, ItemTransformVec3f p_i46569_6_, ItemTransformVec3f p_i46569_7_, ItemTransformVec3f p_i46569_8_)
+    public ItemCameraTransforms(ItemTransformVec3f thirdperson_leftIn, ItemTransformVec3f thirdperson_rightIn, ItemTransformVec3f firstperson_leftIn, ItemTransformVec3f firstperson_rightIn, ItemTransformVec3f headIn, ItemTransformVec3f guiIn, ItemTransformVec3f groundIn, ItemTransformVec3f fixedIn)
     {
-        this.thirdperson_left = p_i46569_1_;
-        this.thirdperson_right = p_i46569_2_;
-        this.firstperson_left = p_i46569_3_;
-        this.firstperson_right = p_i46569_4_;
-        this.head = p_i46569_5_;
-        this.gui = p_i46569_6_;
-        this.ground = p_i46569_7_;
-        this.fixed = p_i46569_8_;
+        this.thirdperson_left = thirdperson_leftIn;
+        this.thirdperson_right = thirdperson_rightIn;
+        this.firstperson_left = firstperson_leftIn;
+        this.firstperson_right = firstperson_rightIn;
+        this.head = headIn;
+        this.gui = guiIn;
+        this.ground = groundIn;
+        this.fixed = fixedIn;
     }
 
     public void applyTransform(ItemCameraTransforms.TransformType type)

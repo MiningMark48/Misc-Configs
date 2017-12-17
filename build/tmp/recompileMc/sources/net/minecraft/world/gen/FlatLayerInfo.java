@@ -79,7 +79,7 @@ public class FlatLayerInfo
 
         if (this.version >= 3)
         {
-            ResourceLocation resourcelocation = (ResourceLocation)Block.REGISTRY.getNameForObject(this.getLayerMaterialBlock());
+            ResourceLocation resourcelocation = Block.REGISTRY.getNameForObject(this.getLayerMaterialBlock());
             s = resourcelocation == null ? "null" : resourcelocation.toString();
 
             if (this.layerCount > 1)

@@ -14,21 +14,21 @@ public class WorldType
     /** Large Biome world Type. */
     public static final WorldType LARGE_BIOMES = new WorldType(2, "largeBiomes");
     /** amplified world type */
-    public static final WorldType AMPLIFIED = (new WorldType(3, "amplified")).setNotificationData();
+    public static final WorldType AMPLIFIED = (new WorldType(3, "amplified")).enableInfoNotice();
     public static final WorldType CUSTOMIZED = new WorldType(4, "customized");
-    public static final WorldType DEBUG_WORLD = new WorldType(5, "debug_all_block_states");
+    public static final WorldType DEBUG_ALL_BLOCK_STATES = new WorldType(5, "debug_all_block_states");
     /** Default (1.1) world type. */
     public static final WorldType DEFAULT_1_1 = (new WorldType(8, "default_1_1", 0)).setCanBeCreated(false);
     /** ID for this world type. */
-    private final int worldTypeId;
-    private final String worldType;
+    private final int id;
+    private final String name;
     /** The int version of the ChunkProvider that generated this world. */
-    private final int generatorVersion;
+    private final int version;
     /** Whether this world type can be generated. Normally true; set to false for out-of-date generator versions. */
     private boolean canBeCreated;
     /** Whether this WorldType has a version or not. */
-    private boolean isWorldTypeVersioned;
-    private boolean hasNotificationData;
+    private boolean versioned;
+    private boolean hasInfoNotice;
 
     private WorldType(int id, String name)
     {
@@ -37,43 +37,43 @@ public class WorldType
 
     private WorldType(int id, String name, int version)
     {
-        if (name.length() > 16 && DEBUG_WORLD != null) throw new IllegalArgumentException("World type names must not be longer then 16: " + name);
-        this.worldType = name;
-        this.generatorVersion = version;
+        if (name.length() > 16 && DEBUG_ALL_BLOCK_STATES != null) throw new IllegalArgumentException("World type names must not be longer then 16: " + name);
+        this.name = name;
+        this.version = version;
         this.canBeCreated = true;
-        this.worldTypeId = id;
+        this.id = id;
         WORLD_TYPES[id] = this;
     }
 
-    public String getWorldTypeName()
+    public String getName()
     {
-        return this.worldType;
+        return this.name;
     }
 
     /**
      * Gets the translation key for the name of this world type.
      */
     @SideOnly(Side.CLIENT)
-    public String getTranslateName()
+    public String getTranslationKey()
     {
-        return "generator." + this.worldType;
+        return "generator." + this.name;
     }
 
     /**
      * Gets the translation key for the info text for this world type.
      */
     @SideOnly(Side.CLIENT)
-    public String getTranslatedInfo()
+    public String getInfoTranslationKey()
     {
-        return this.getTranslateName() + ".info";
+        return this.getTranslationKey() + ".info";
     }
 
     /**
      * Returns generatorVersion.
      */
-    public int getGeneratorVersion()
+    public int getVersion()
     {
-        return this.generatorVersion;
+        return this.version;
     }
 
     public WorldType getWorldTypeForGeneratorVersion(int version)
@@ -94,7 +94,7 @@ public class WorldType
      * Gets whether this WorldType can be used to generate a new world.
      */
     @SideOnly(Side.CLIENT)
-    public boolean getCanBeCreated()
+    public boolean canBeCreated()
     {
         return this.canBeCreated;
     }
@@ -104,7 +104,7 @@ public class WorldType
      */
     private WorldType setVersioned()
     {
-        this.isWorldTypeVersioned = true;
+        this.versioned = true;
         return this;
     }
 
@@ -113,25 +113,25 @@ public class WorldType
      */
     public boolean isVersioned()
     {
-        return this.isWorldTypeVersioned;
+        return this.versioned;
     }
 
     public static WorldType parseWorldType(String type)
     {
-        for (int i = 0; i < WORLD_TYPES.length; ++i)
+        for (WorldType worldtype : WORLD_TYPES)
         {
-            if (WORLD_TYPES[i] != null && WORLD_TYPES[i].worldType.equalsIgnoreCase(type))
+            if (worldtype != null && worldtype.name.equalsIgnoreCase(type))
             {
-                return WORLD_TYPES[i];
+                return worldtype;
             }
         }
 
         return null;
     }
 
-    public int getWorldTypeID()
+    public int getId()
     {
-        return this.worldTypeId;
+        return this.id;
     }
 
     /**
@@ -139,17 +139,17 @@ public class WorldType
      * message
      */
     @SideOnly(Side.CLIENT)
-    public boolean showWorldInfoNotice()
+    public boolean hasInfoNotice()
     {
-        return this.hasNotificationData;
+        return this.hasInfoNotice;
     }
 
     /**
      * enables the display of generator.[worldtype].info message on the customize world menu
      */
-    private WorldType setNotificationData()
+    private WorldType enableInfoNotice()
     {
-        this.hasNotificationData = true;
+        this.hasInfoNotice = true;
         return this;
     }
 
@@ -160,7 +160,7 @@ public class WorldType
             net.minecraft.world.gen.FlatGeneratorInfo flatgeneratorinfo = net.minecraft.world.gen.FlatGeneratorInfo.createFlatGeneratorFromString(world.getWorldInfo().getGeneratorOptions());
             return new net.minecraft.world.biome.BiomeProviderSingle(net.minecraft.world.biome.Biome.getBiome(flatgeneratorinfo.getBiome(), net.minecraft.init.Biomes.DEFAULT));
         }
-        else if (this == DEBUG_WORLD)
+        else if (this == DEBUG_ALL_BLOCK_STATES)
         {
             return new net.minecraft.world.biome.BiomeProviderSingle(net.minecraft.init.Biomes.PLAINS);
         }
@@ -170,17 +170,17 @@ public class WorldType
         }
     }
 
-    public net.minecraft.world.chunk.IChunkGenerator getChunkGenerator(World world, String generatorOptions)
+    public net.minecraft.world.gen.IChunkGenerator getChunkGenerator(World world, String generatorOptions)
     {
-        if (this == FLAT) return new net.minecraft.world.gen.ChunkProviderFlat(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
-        if (this == DEBUG_WORLD) return new net.minecraft.world.gen.ChunkProviderDebug(world);
-        if (this == CUSTOMIZED) return new net.minecraft.world.gen.ChunkProviderOverworld(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
-        return new net.minecraft.world.gen.ChunkProviderOverworld(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
+        if (this == FLAT) return new net.minecraft.world.gen.ChunkGeneratorFlat(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
+        if (this == DEBUG_ALL_BLOCK_STATES) return new net.minecraft.world.gen.ChunkGeneratorDebug(world);
+        if (this == CUSTOMIZED) return new net.minecraft.world.gen.ChunkGeneratorOverworld(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
+        return new net.minecraft.world.gen.ChunkGeneratorOverworld(world, world.getSeed(), world.getWorldInfo().isMapFeaturesEnabled(), generatorOptions);
     }
 
     public int getMinimumSpawnHeight(World world)
     {
-        return this == FLAT ? 4 : 64;
+        return this == FLAT ? 4 : world.getSeaLevel() + 1;
     }
 
     public double getHorizon(World world)
@@ -283,12 +283,12 @@ public class WorldType
      *
      * @param worldSeed The world seed
      * @param parentLayer The parent layer to feed into any layer you return
-     * @param chunkProviderSettingsJson The JSON string to use when initializing ChunkProviderSettings.Factory
+     * @param chunkSettings The ChunkGeneratorSettings constructed from the custom JSON
      * @return A GenLayer that will return ints representing the Biomes to be generated, see GenLayerBiome
      */
-    public net.minecraft.world.gen.layer.GenLayer getBiomeLayer(long worldSeed, net.minecraft.world.gen.layer.GenLayer parentLayer, String chunkProviderSettingsJson)
+    public net.minecraft.world.gen.layer.GenLayer getBiomeLayer(long worldSeed, net.minecraft.world.gen.layer.GenLayer parentLayer, net.minecraft.world.gen.ChunkGeneratorSettings chunkSettings)
     {
-        net.minecraft.world.gen.layer.GenLayer ret = new net.minecraft.world.gen.layer.GenLayerBiome(200L, parentLayer, this, chunkProviderSettingsJson);
+        net.minecraft.world.gen.layer.GenLayer ret = new net.minecraft.world.gen.layer.GenLayerBiome(200L, parentLayer, this, chunkSettings);
         ret = net.minecraft.world.gen.layer.GenLayerZoom.magnify(1000L, ret, 2);
         ret = new net.minecraft.world.gen.layer.GenLayerBiomeEdge(1000L, ret);
         return ret;

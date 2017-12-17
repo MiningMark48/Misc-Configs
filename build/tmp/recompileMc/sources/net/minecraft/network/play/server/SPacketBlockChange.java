@@ -32,7 +32,7 @@ public class SPacketBlockChange implements Packet<INetHandlerPlayClient>
     public void readPacketData(PacketBuffer buf) throws IOException
     {
         this.blockPosition = buf.readBlockPos();
-        this.blockState = (IBlockState)Block.BLOCK_STATE_IDS.getByValue(buf.readVarIntFromBuffer());
+        this.blockState = Block.BLOCK_STATE_IDS.getByValue(buf.readVarInt());
     }
 
     /**
@@ -41,7 +41,7 @@ public class SPacketBlockChange implements Packet<INetHandlerPlayClient>
     public void writePacketData(PacketBuffer buf) throws IOException
     {
         buf.writeBlockPos(this.blockPosition);
-        buf.writeVarIntToBuffer(Block.BLOCK_STATE_IDS.get(this.blockState));
+        buf.writeVarInt(Block.BLOCK_STATE_IDS.get(this.blockState));
     }
 
     /**

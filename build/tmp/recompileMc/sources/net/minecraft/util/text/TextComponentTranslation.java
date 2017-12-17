@@ -17,6 +17,11 @@ public class TextComponentTranslation extends TextComponentBase
     private final Object[] formatArgs;
     private final Object syncLock = new Object();
     private long lastTranslationUpdateTimeInMilliseconds = -1L;
+    /**
+     * The discrete elements that make up this component.  For example, this would be ["Prefix, ", "FirstArg",
+     * "SecondArg", " again ", "SecondArg", " and ", "FirstArg", " lastly ", "ThirdArg", " and also ", "FirstArg", "
+     * again!"] for "translation.test.complex" (see en-US.lang)
+     */
     @VisibleForTesting
     List<ITextComponent> children = Lists.<ITextComponent>newArrayList();
     public static final Pattern STRING_VARIABLE_PATTERN = Pattern.compile("%(?:(\\d+)\\$)?([A-Za-z%]|$)");
@@ -38,7 +43,7 @@ public class TextComponentTranslation extends TextComponentBase
     @VisibleForTesting
 
     /**
-     * ensures that our children are initialized from the most recent string translation mapping.
+     * Ensures that all of the children are up to date with the most recent translation mapping.
      */
     synchronized void ensureInitialized()
     {
@@ -75,7 +80,7 @@ public class TextComponentTranslation extends TextComponentBase
     }
 
     /**
-     * initializes our children from a format string, using the format args to fill in the placeholder variables.
+     * Initializes the content of this component, substituting in variables.
      */
     protected void initializeFromFormat(String format)
     {
@@ -95,7 +100,7 @@ public class TextComponentTranslation extends TextComponentBase
 
                 if (k > j)
                 {
-                    TextComponentString textcomponentstring = new TextComponentString(String.format(format.substring(j, k), new Object[0]));
+                    TextComponentString textcomponentstring = new TextComponentString(String.format(format.substring(j, k)));
                     textcomponentstring.getStyle().setParentStyle(this.getStyle());
                     this.children.add(textcomponentstring);
                 }
@@ -113,7 +118,7 @@ public class TextComponentTranslation extends TextComponentBase
                 {
                     if (!"s".equals(s2))
                     {
-                        throw new TextComponentTranslationFormatException(this, "Unsupported format: \'" + s + "\'");
+                        throw new TextComponentTranslationFormatException(this, "Unsupported format: '" + s + "'");
                     }
 
                     String s1 = matcher.group(1);
@@ -128,7 +133,7 @@ public class TextComponentTranslation extends TextComponentBase
 
             if (j < format.length())
             {
-                TextComponentString textcomponentstring1 = new TextComponentString(String.format(format.substring(j), new Object[0]));
+                TextComponentString textcomponentstring1 = new TextComponentString(String.format(format.substring(j)));
                 textcomponentstring1.getStyle().setParentStyle(this.getStyle());
                 this.children.add(textcomponentstring1);
             }
@@ -164,6 +169,9 @@ public class TextComponentTranslation extends TextComponentBase
         }
     }
 
+    /**
+     * Sets the style of this component and updates the parent style of all of the sibling components.
+     */
     public ITextComponent setStyle(Style style)
     {
         super.setStyle(style);
@@ -194,8 +202,9 @@ public class TextComponentTranslation extends TextComponentBase
     }
 
     /**
-     * Gets the text of this component, without any special formatting codes added, for chat.  TODO: why is this two
-     * different methods?
+     * Gets the raw content of this component (but not its sibling components), without any formatting codes. For
+     * example, this is the raw text in a {@link TextComponentString}, but it's the translated text for a {@link
+     * TextComponentTranslation} and it's the score value for a {@link TextComponentScore}.
      */
     public String getUnformattedComponentText()
     {
@@ -267,14 +276,20 @@ public class TextComponentTranslation extends TextComponentBase
 
     public String toString()
     {
-        return "TranslatableComponent{key=\'" + this.key + '\'' + ", args=" + Arrays.toString(this.formatArgs) + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
+        return "TranslatableComponent{key='" + this.key + '\'' + ", args=" + Arrays.toString(this.formatArgs) + ", siblings=" + this.siblings + ", style=" + this.getStyle() + '}';
     }
 
+    /**
+     * Gets the key used to translate this component.
+     */
     public String getKey()
     {
         return this.key;
     }
 
+    /**
+     * Gets the object array that is used to translate the key.
+     */
     public Object[] getFormatArgs()
     {
         return this.formatArgs;

@@ -38,7 +38,7 @@ public class SPacketSpawnMob implements Packet<INetHandlerPlayClient>
     {
         this.entityId = entityIn.getEntityId();
         this.uniqueId = entityIn.getUniqueID();
-        this.type = (byte)EntityList.getEntityID(entityIn);
+        this.type = EntityList.getID(entityIn.getClass());
         this.x = entityIn.posX;
         this.y = entityIn.posY;
         this.z = entityIn.posZ;
@@ -50,34 +50,34 @@ public class SPacketSpawnMob implements Packet<INetHandlerPlayClient>
         double d2 = entityIn.motionY;
         double d3 = entityIn.motionZ;
 
-        if (d1 < -d0)
+        if (d1 < -3.9D)
         {
-            d1 = -d0;
+            d1 = -3.9D;
         }
 
-        if (d2 < -d0)
+        if (d2 < -3.9D)
         {
-            d2 = -d0;
+            d2 = -3.9D;
         }
 
-        if (d3 < -d0)
+        if (d3 < -3.9D)
         {
-            d3 = -d0;
+            d3 = -3.9D;
         }
 
-        if (d1 > d0)
+        if (d1 > 3.9D)
         {
-            d1 = d0;
+            d1 = 3.9D;
         }
 
-        if (d2 > d0)
+        if (d2 > 3.9D)
         {
-            d2 = d0;
+            d2 = 3.9D;
         }
 
-        if (d3 > d0)
+        if (d3 > 3.9D)
         {
-            d3 = d0;
+            d3 = 3.9D;
         }
 
         this.velocityX = (int)(d1 * 8000.0D);
@@ -91,9 +91,9 @@ public class SPacketSpawnMob implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.entityId = buf.readVarIntFromBuffer();
-        this.uniqueId = buf.readUuid();
-        this.type = buf.readByte() & 255;
+        this.entityId = buf.readVarInt();
+        this.uniqueId = buf.readUniqueId();
+        this.type = buf.readVarInt();
         this.x = buf.readDouble();
         this.y = buf.readDouble();
         this.z = buf.readDouble();
@@ -111,9 +111,9 @@ public class SPacketSpawnMob implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.entityId);
-        buf.writeUuid(this.uniqueId);
-        buf.writeByte(this.type & 255);
+        buf.writeVarInt(this.entityId);
+        buf.writeUniqueId(this.uniqueId);
+        buf.writeVarInt(this.type);
         buf.writeDouble(this.x);
         buf.writeDouble(this.y);
         buf.writeDouble(this.z);
@@ -138,11 +138,6 @@ public class SPacketSpawnMob implements Packet<INetHandlerPlayClient>
     @SideOnly(Side.CLIENT)
     public List < EntityDataManager.DataEntry<? >> getDataManagerEntries()
     {
-        if (this.dataManagerEntries == null)
-        {
-            this.dataManagerEntries = this.dataManager.getAll();
-        }
-
         return this.dataManagerEntries;
     }
 

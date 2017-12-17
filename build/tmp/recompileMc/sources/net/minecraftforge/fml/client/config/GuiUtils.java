@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2014 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors (this class):
- *     bspkrs - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.client.config;
@@ -17,14 +24,19 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.RenderTooltipEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.annotation.Nonnull;
 
 /**
  * This class provides several methods and constants used by the Config GUI classes.
@@ -189,13 +201,34 @@ public class GuiUtils
         float uScale = 1f / 0x100;
         float vScale = 1f / 0x100;
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer wr = tessellator.getBuffer();
+        BufferBuilder wr = tessellator.getBuffer();
         wr.begin(7, DefaultVertexFormats.POSITION_TEX);
         wr.pos(x        , y + height, zLevel).tex( u          * uScale, ((v + height) * vScale)).endVertex();
         wr.pos(x + width, y + height, zLevel).tex((u + width) * uScale, ((v + height) * vScale)).endVertex();
         wr.pos(x + width, y         , zLevel).tex((u + width) * uScale, ( v           * vScale)).endVertex();
         wr.pos(x        , y         , zLevel).tex( u          * uScale, ( v           * vScale)).endVertex();
         tessellator.draw();
+    }
+
+    @Nonnull
+    private static ItemStack cachedTooltipStack = ItemStack.EMPTY;
+
+    /**
+     * Must be called from {@code GuiScreen.renderToolTip} before {@code GuiScreen.drawHoveringText} is called.
+     *
+     * @param stack The stack for which a tooltip is about to be drawn.
+     */
+    public static void preItemToolTip(@Nonnull ItemStack stack)
+    {
+        cachedTooltipStack = stack;
+    }
+
+    /**
+     * Must be called from {@code GuiScreen.renderToolTip} after {@code GuiScreen.drawHoveringText} is called.
+     */
+    public static void postItemToolTip()
+    {
+        cachedTooltipStack = ItemStack.EMPTY;
     }
 
     /**
@@ -213,10 +246,31 @@ public class GuiUtils
      *                     Set to a negative number to have no max width.
      * @param font the font for drawing the text in the tooltip box
      */
-    public static void drawHoveringText(List<String> textLines, final int mouseX, final int mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font)
+    public static void drawHoveringText(List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, FontRenderer font)
+    {
+        drawHoveringText(cachedTooltipStack, textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font);
+    }
+
+    /**
+     * Use this version if calling from somewhere where ItemStack context is available.
+     *
+     * @see #drawHoveringText(List, int, int, int, int, int, FontRenderer)
+     */
+    public static void drawHoveringText(@Nonnull final ItemStack stack, List<String> textLines, int mouseX, int mouseY, int screenWidth, int screenHeight, int maxTextWidth, FontRenderer font)
     {
         if (!textLines.isEmpty())
         {
+            RenderTooltipEvent.Pre event = new RenderTooltipEvent.Pre(stack, textLines, mouseX, mouseY, screenWidth, screenHeight, maxTextWidth, font);
+            if (MinecraftForge.EVENT_BUS.post(event)) {
+                return;
+            }
+            mouseX = event.getX();
+            mouseY = event.getY();
+            screenWidth = event.getScreenWidth();
+            screenHeight = event.getScreenHeight();
+            maxTextWidth = event.getMaxWidth();
+            font = event.getFontRenderer();
+
             GlStateManager.disableRescaleNormal();
             RenderHelper.disableStandardItemLighting();
             GlStateManager.disableLighting();
@@ -307,9 +361,13 @@ public class GuiUtils
                 }
             }
 
-            if (tooltipY + tooltipHeight + 6 > screenHeight)
+            if (tooltipY < 4)
             {
-                tooltipY = screenHeight - tooltipHeight - 6;
+                tooltipY = 4;
+            }
+            else if (tooltipY + tooltipHeight + 4 > screenHeight)
+            {
+                tooltipY = screenHeight - tooltipHeight - 4;
             }
 
             final int zLevel = 300;
@@ -326,6 +384,9 @@ public class GuiUtils
             drawGradientRect(zLevel, tooltipX - 3, tooltipY - 3, tooltipX + tooltipTextWidth + 3, tooltipY - 3 + 1, borderColorStart, borderColorStart);
             drawGradientRect(zLevel, tooltipX - 3, tooltipY + tooltipHeight + 2, tooltipX + tooltipTextWidth + 3, tooltipY + tooltipHeight + 3, borderColorEnd, borderColorEnd);
 
+            MinecraftForge.EVENT_BUS.post(new RenderTooltipEvent.PostBackground(stack, textLines, tooltipX, tooltipY, font, tooltipTextWidth, tooltipHeight));
+            int tooltipTop = tooltipY;
+
             for (int lineNumber = 0; lineNumber < textLines.size(); ++lineNumber)
             {
                 String line = textLines.get(lineNumber);
@@ -338,6 +399,8 @@ public class GuiUtils
 
                 tooltipY += 10;
             }
+
+            MinecraftForge.EVENT_BUS.post(new RenderTooltipEvent.PostText(stack, textLines, tooltipX, tooltipTop, font, tooltipTextWidth, tooltipHeight));
 
             GlStateManager.enableLighting();
             GlStateManager.enableDepth();
@@ -364,12 +427,12 @@ public class GuiUtils
         GlStateManager.shadeModel(7425);
 
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer vertexbuffer = tessellator.getBuffer();
-        vertexbuffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        vertexbuffer.pos(right, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-        vertexbuffer.pos(left, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
-        vertexbuffer.pos(left, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
-        vertexbuffer.pos(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(right, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+        buffer.pos(left, top, zLevel).color(startRed, startGreen, startBlue, startAlpha).endVertex();
+        buffer.pos(left, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
+        buffer.pos(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
         tessellator.draw();
 
         GlStateManager.shadeModel(7424);

@@ -6,6 +6,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,8 +26,10 @@ import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -64,7 +67,8 @@ public class BlockFlowerPot extends BlockContainer
     }
 
     /**
-     * The type of render function called. 3 for standard block models, 2 for TESR's, 1 for liquids, -1 is no render
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
      */
     public EnumBlockRenderType getRenderType(IBlockState state)
     {
@@ -76,53 +80,70 @@ public class BlockFlowerPot extends BlockContainer
         return false;
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        if (heldItem != null && heldItem.getItem() instanceof ItemBlock)
-        {
-            TileEntityFlowerPot tileentityflowerpot = this.getTileEntity(worldIn, pos);
+        ItemStack itemstack = playerIn.getHeldItem(hand);
+        TileEntityFlowerPot tileentityflowerpot = this.getTileEntity(worldIn, pos);
 
-            if (tileentityflowerpot == null)
-            {
-                return false;
-            }
-            else if (tileentityflowerpot.getFlowerPotItem() != null)
-            {
-                return false;
-            }
-            else
-            {
-                Block block = Block.getBlockFromItem(heldItem.getItem());
-
-                if (!this.canContain(block, heldItem.getMetadata()))
-                {
-                    return false;
-                }
-                else
-                {
-                    tileentityflowerpot.setFlowerPotData(heldItem.getItem(), heldItem.getMetadata());
-                    tileentityflowerpot.markDirty();
-                    worldIn.notifyBlockUpdate(pos, state, state, 3);
-                    playerIn.addStat(StatList.FLOWER_POTTED);
-
-                    if (!playerIn.capabilities.isCreativeMode)
-                    {
-                        --heldItem.stackSize;
-                    }
-
-                    return true;
-                }
-            }
-        }
-        else
+        if (tileentityflowerpot == null)
         {
             return false;
         }
+        else
+        {
+            ItemStack itemstack1 = tileentityflowerpot.getFlowerItemStack();
+
+            if (itemstack1.isEmpty())
+            {
+                if (!this.canBePotted(itemstack))
+                {
+                    return false;
+                }
+
+                tileentityflowerpot.setItemStack(itemstack);
+                playerIn.addStat(StatList.FLOWER_POTTED);
+
+                if (!playerIn.capabilities.isCreativeMode)
+                {
+                    itemstack.shrink(1);
+                }
+            }
+            else
+            {
+                if (itemstack.isEmpty())
+                {
+                    playerIn.setHeldItem(hand, itemstack1);
+                }
+                else if (!playerIn.addItemStackToInventory(itemstack1))
+                {
+                    playerIn.dropItem(itemstack1, false);
+                }
+
+                tileentityflowerpot.setItemStack(ItemStack.EMPTY);
+            }
+
+            tileentityflowerpot.markDirty();
+            worldIn.notifyBlockUpdate(pos, state, state, 3);
+            return true;
+        }
     }
 
-    private boolean canContain(@Nullable Block blockIn, int meta)
+    private boolean canBePotted(ItemStack stack)
     {
-        return blockIn != Blocks.YELLOW_FLOWER && blockIn != Blocks.RED_FLOWER && blockIn != Blocks.CACTUS && blockIn != Blocks.BROWN_MUSHROOM && blockIn != Blocks.RED_MUSHROOM && blockIn != Blocks.SAPLING && blockIn != Blocks.DEADBUSH ? blockIn == Blocks.TALLGRASS && meta == BlockTallGrass.EnumType.FERN.getMeta() : true;
+        Block block = Block.getBlockFromItem(stack.getItem());
+
+        if (block != Blocks.YELLOW_FLOWER && block != Blocks.RED_FLOWER && block != Blocks.CACTUS && block != Blocks.BROWN_MUSHROOM && block != Blocks.RED_MUSHROOM && block != Blocks.SAPLING && block != Blocks.DEADBUSH)
+        {
+            int i = stack.getMetadata();
+            return block == Blocks.TALLGRASS && i == BlockTallGrass.EnumType.FERN.getMeta();
+        }
+        else
+        {
+            return true;
+        }
     }
 
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
@@ -133,7 +154,7 @@ public class BlockFlowerPot extends BlockContainer
         {
             ItemStack itemstack = tileentityflowerpot.getFlowerItemStack();
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 return itemstack;
             }
@@ -144,7 +165,7 @@ public class BlockFlowerPot extends BlockContainer
 
     public boolean canPlaceBlockAt(World worldIn, BlockPos pos)
     {
-        return super.canPlaceBlockAt(worldIn, pos) && worldIn.getBlockState(pos.down()).isFullyOpaque();
+        return super.canPlaceBlockAt(worldIn, pos) && worldIn.getBlockState(pos.down()).isTopSolid();
     }
 
     /**
@@ -152,20 +173,27 @@ public class BlockFlowerPot extends BlockContainer
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
-        if (!worldIn.getBlockState(pos.down()).isFullyOpaque())
+        if (!worldIn.getBlockState(pos.down()).isTopSolid())
         {
             this.dropBlockAsItem(worldIn, pos, state, 0);
             worldIn.setBlockToAir(pos);
         }
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         super.breakBlock(worldIn, pos, state);
     }
 
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
     public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player)
     {
         super.onBlockHarvested(worldIn, pos, state, player);
@@ -176,7 +204,7 @@ public class BlockFlowerPot extends BlockContainer
 
             if (tileentityflowerpot != null)
             {
-                tileentityflowerpot.setFlowerPotData((Item)null, 0);
+                tileentityflowerpot.setItemStack(ItemStack.EMPTY);
             }
         }
     }
@@ -184,7 +212,6 @@ public class BlockFlowerPot extends BlockContainer
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Items.FLOWER_POT;
@@ -278,7 +305,7 @@ public class BlockFlowerPot extends BlockContainer
     public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos)
     {
         BlockFlowerPot.EnumFlowerType blockflowerpot$enumflowertype = BlockFlowerPot.EnumFlowerType.EMPTY;
-        TileEntity tileentity = worldIn.getTileEntity(pos);
+        TileEntity tileentity = worldIn instanceof ChunkCache ? ((ChunkCache)worldIn).getTileEntity(pos, Chunk.EnumCreateEntityType.CHECK) : worldIn.getTileEntity(pos);
 
         if (tileentity instanceof TileEntityFlowerPot)
         {
@@ -397,16 +424,29 @@ public class BlockFlowerPot extends BlockContainer
         return BlockRenderLayer.CUTOUT;
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
+    }
+
 
     /*============================FORGE START=====================================*/
     @Override
-    public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        java.util.List<ItemStack> ret = super.getDrops(world, pos, state, fortune);
+        super.getDrops(drops, world, pos, state, fortune);
         TileEntityFlowerPot te = world.getTileEntity(pos) instanceof TileEntityFlowerPot ? (TileEntityFlowerPot)world.getTileEntity(pos) : null;
         if (te != null && te.getFlowerPotItem() != null)
-            ret.add(new ItemStack(te.getFlowerPotItem(), 1, te.getFlowerPotData()));
-        return ret;
+            drops.add(new ItemStack(te.getFlowerPotItem(), 1, te.getFlowerPotData()));
     }
     @Override
     public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest)
@@ -414,8 +454,12 @@ public class BlockFlowerPot extends BlockContainer
         if (willHarvest) return true; //If it will harvest, delay deletion of the block until after getDrops
         return super.removedByPlayer(state, world, pos, player, willHarvest);
     }
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
     @Override
-    public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te, ItemStack tool)
+    public void harvestBlock(World world, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack tool)
     {
         super.harvestBlock(world, player, pos, state, te, tool);
         world.setBlockToAir(pos);

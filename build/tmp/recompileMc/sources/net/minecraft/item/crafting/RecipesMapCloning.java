@@ -1,12 +1,12 @@
 package net.minecraft.item.crafting;
 
-import javax.annotation.Nullable;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class RecipesMapCloning implements IRecipe
+public class RecipesMapCloning extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
 {
     /**
      * Used to check if a recipe matches current crafting inventory
@@ -14,17 +14,17 @@ public class RecipesMapCloning implements IRecipe
     public boolean matches(InventoryCrafting inv, World worldIn)
     {
         int i = 0;
-        ItemStack itemstack = null;
+        ItemStack itemstack = ItemStack.EMPTY;
 
         for (int j = 0; j < inv.getSizeInventory(); ++j)
         {
             ItemStack itemstack1 = inv.getStackInSlot(j);
 
-            if (itemstack1 != null)
+            if (!itemstack1.isEmpty())
             {
                 if (itemstack1.getItem() == Items.FILLED_MAP)
                 {
-                    if (itemstack != null)
+                    if (!itemstack.isEmpty())
                     {
                         return false;
                     }
@@ -43,29 +43,28 @@ public class RecipesMapCloning implements IRecipe
             }
         }
 
-        return itemstack != null && i > 0;
+        return !itemstack.isEmpty() && i > 0;
     }
 
     /**
      * Returns an Item that is the result of this recipe
      */
-    @Nullable
     public ItemStack getCraftingResult(InventoryCrafting inv)
     {
         int i = 0;
-        ItemStack itemstack = null;
+        ItemStack itemstack = ItemStack.EMPTY;
 
         for (int j = 0; j < inv.getSizeInventory(); ++j)
         {
             ItemStack itemstack1 = inv.getStackInSlot(j);
 
-            if (itemstack1 != null)
+            if (!itemstack1.isEmpty())
             {
                 if (itemstack1.getItem() == Items.FILLED_MAP)
                 {
-                    if (itemstack != null)
+                    if (!itemstack.isEmpty())
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
 
                     itemstack = itemstack1;
@@ -74,7 +73,7 @@ public class RecipesMapCloning implements IRecipe
                 {
                     if (itemstack1.getItem() != Items.MAP)
                     {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
 
                     ++i;
@@ -82,7 +81,7 @@ public class RecipesMapCloning implements IRecipe
             }
         }
 
-        if (itemstack != null && i >= 1)
+        if (!itemstack.isEmpty() && i >= 1)
         {
             ItemStack itemstack2 = new ItemStack(Items.FILLED_MAP, i + 1, itemstack.getMetadata());
 
@@ -91,38 +90,47 @@ public class RecipesMapCloning implements IRecipe
                 itemstack2.setStackDisplayName(itemstack.getDisplayName());
             }
 
+            if (itemstack.hasTagCompound())
+            {
+                itemstack2.setTagCompound(itemstack.getTagCompound());
+            }
+
             return itemstack2;
         }
         else
         {
-            return null;
+            return ItemStack.EMPTY;
         }
+    }
+
+    public ItemStack getRecipeOutput()
+    {
+        return ItemStack.EMPTY;
+    }
+
+    public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv)
+    {
+        NonNullList<ItemStack> nonnulllist = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+
+        for (int i = 0; i < nonnulllist.size(); ++i)
+        {
+            ItemStack itemstack = inv.getStackInSlot(i);
+            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
+        }
+
+        return nonnulllist;
+    }
+
+    public boolean isDynamic()
+    {
+        return true;
     }
 
     /**
-     * Returns the size of the recipe area
+     * Used to determine if this recipe can fit in a grid of the given width/height
      */
-    public int getRecipeSize()
+    public boolean canFit(int width, int height)
     {
-        return 9;
-    }
-
-    @Nullable
-    public ItemStack getRecipeOutput()
-    {
-        return null;
-    }
-
-    public ItemStack[] getRemainingItems(InventoryCrafting inv)
-    {
-        ItemStack[] aitemstack = new ItemStack[inv.getSizeInventory()];
-
-        for (int i = 0; i < aitemstack.length; ++i)
-        {
-            ItemStack itemstack = inv.getStackInSlot(i);
-            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
-        }
-
-        return aitemstack;
+        return width >= 3 && height >= 3;
     }
 }

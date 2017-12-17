@@ -67,7 +67,7 @@ public class BlockDynamicLiquid extends BlockLiquid
                 }
             }
 
-            if (this.adjacentSourceBlocks >= 2 && this.blockMaterial == Material.WATER)
+            if (this.adjacentSourceBlocks >= 2 && net.minecraftforge.event.ForgeEventFactory.canCreateFluidSource(worldIn, pos, state, this.blockMaterial == Material.WATER))
             {
                 IBlockState iblockstate = worldIn.getBlockState(pos.down());
 
@@ -103,7 +103,7 @@ public class BlockDynamicLiquid extends BlockLiquid
                     state = state.withProperty(LEVEL, Integer.valueOf(i1));
                     worldIn.setBlockState(pos, state, 2);
                     worldIn.scheduleUpdate(pos, this, k);
-                    worldIn.notifyNeighborsOfStateChange(pos, this);
+                    worldIn.notifyNeighborsOfStateChange(pos, this, false);
                 }
             }
         }
@@ -158,7 +158,7 @@ public class BlockDynamicLiquid extends BlockLiquid
     {
         if (this.canFlowInto(worldIn, pos, state))
         {
-            if (state.getBlock() != Blocks.AIR)
+            if (state.getMaterial() != Material.AIR)
             {
                 if (this.blockMaterial == Material.LAVA)
                 {
@@ -166,6 +166,7 @@ public class BlockDynamicLiquid extends BlockLiquid
                 }
                 else
                 {
+                    if (state.getBlock() != Blocks.SNOW_LAYER) //Forge: Vanilla has a 'bug' where snowballs don't drop like every other block. So special case because ewww...
                     state.getBlock().dropBlockAsItem(worldIn, pos, state, 0);
                 }
             }
@@ -187,7 +188,7 @@ public class BlockDynamicLiquid extends BlockLiquid
 
                 if (!this.isBlocked(worldIn, blockpos, iblockstate) && (iblockstate.getMaterial() != this.blockMaterial || ((Integer)iblockstate.getValue(LEVEL)).intValue() > 0))
                 {
-                    if (!this.isBlocked(worldIn, blockpos.down(), iblockstate))
+                    if (!this.isBlocked(worldIn, blockpos.down(), worldIn.getBlockState(blockpos.down())))
                     {
                         return distance;
                     }
@@ -213,6 +214,9 @@ public class BlockDynamicLiquid extends BlockLiquid
         return this.blockMaterial == Material.LAVA && !worldIn.provider.doesWaterVaporize() ? 2 : 4;
     }
 
+    /**
+     * This method returns a Set of EnumFacing
+     */
     private Set<EnumFacing> getPossibleFlowDirections(World worldIn, BlockPos pos)
     {
         int i = 1000;
@@ -254,8 +258,17 @@ public class BlockDynamicLiquid extends BlockLiquid
 
     private boolean isBlocked(World worldIn, BlockPos pos, IBlockState state)
     {
-        Block block = worldIn.getBlockState(pos).getBlock();
-        return !(block instanceof BlockDoor) && block != Blocks.STANDING_SIGN && block != Blocks.LADDER && block != Blocks.REEDS ? (block.blockMaterial == Material.PORTAL ? true : block.blockMaterial.blocksMovement()) : true;
+        Block block = state.getBlock(); //Forge: state must be valid for position
+        Material mat = state.getMaterial();
+
+        if (!(block instanceof BlockDoor) && block != Blocks.STANDING_SIGN && block != Blocks.LADDER && block != Blocks.REEDS)
+        {
+            return mat != Material.PORTAL && mat != Material.STRUCTURE_VOID ? mat.blocksMovement() : true;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     protected int checkAdjacentBlock(World worldIn, BlockPos pos, int currentMinLevel)
@@ -288,6 +301,9 @@ public class BlockDynamicLiquid extends BlockLiquid
         return material != this.blockMaterial && material != Material.LAVA && !this.isBlocked(worldIn, pos, state);
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         if (!this.checkForMixing(worldIn, pos, state))

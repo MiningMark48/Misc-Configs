@@ -4,11 +4,11 @@ import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.client.resources.data.IMetadataSection;
@@ -19,7 +19,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.IOUtils;
 
 @SideOnly(Side.CLIENT)
-public class SimpleResource implements IResource, Closeable
+public class SimpleResource implements IResource
 {
     private final Map<String, IMetadataSection> mapMetadataSections = Maps.<String, IMetadataSection>newHashMap();
     private final String resourcePackName;
@@ -70,8 +70,8 @@ public class SimpleResource implements IResource, Closeable
 
                 try
                 {
-                    bufferedreader = new BufferedReader(new InputStreamReader(this.mcmetaInputStream));
-                    this.mcmetaJson = (new JsonParser()).parse((Reader)bufferedreader).getAsJsonObject();
+                    bufferedreader = new BufferedReader(new InputStreamReader(this.mcmetaInputStream, StandardCharsets.UTF_8));
+                    this.mcmetaJson = (new JsonParser()).parse(bufferedreader).getAsJsonObject();
                 }
                 finally
                 {

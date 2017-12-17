@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.event;
 
 import java.util.ArrayList;
@@ -63,7 +82,7 @@ public class GuiScreenEvent extends Event
         }
 
         /**
-         * This event fires just after initializing {@link GuiScreen#mc}, {@link GuiScreen#fontRendererObj},
+         * This event fires just after initializing {@link GuiScreen#mc}, {@link GuiScreen#fontRenderer},
          * {@link GuiScreen#width}, and {@link GuiScreen#height}.<br/><br/>
          * 
          * If canceled the following lines are skipped in {@link GuiScreen#setWorldAndResolution(Minecraft, int, int)}:<br/>
@@ -292,8 +311,11 @@ public class GuiScreenEvent extends Event
 
         /**
          * This event fires after {@link GuiScreen#handleMouseInput()} provided that the active
-         * screen has not been changed as a result of {@link GuiScreen#handleMouseInput()}.
+         * screen has not been changed as a result of {@link GuiScreen#handleMouseInput()} and
+         * the {@link GuiScreen#mouseHandled} flag has not been set.
+         * Cancel this event when you successfully use the mouse input to prevent other handlers from using the same input.
          */
+        @Cancelable
         public static class Post extends MouseInputEvent
         {
             public Post(GuiScreen gui)
@@ -325,8 +347,11 @@ public class GuiScreenEvent extends Event
 
         /**
          * This event fires after {@link GuiScreen#handleKeyboardInput()} provided that the active
-         * screen has not been changed as a result of {@link GuiScreen#handleKeyboardInput()}.
+         * screen has not been changed as a result of {@link GuiScreen#handleKeyboardInput()} and
+         * the {@link GuiScreen#keyHandled} flag has not been set.
+         * Cancel this event when you successfully use the keyboard input to prevent other handlers from using the same input.
          */
+        @Cancelable
         public static class Post extends KeyboardInputEvent
         {
             public Post(GuiScreen gui)

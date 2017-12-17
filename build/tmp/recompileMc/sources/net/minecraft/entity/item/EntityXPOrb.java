@@ -3,13 +3,13 @@ package net.minecraft.entity.item;
 import net.minecraft.block.material.Material;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -64,11 +64,11 @@ public class EntityXPOrb extends Entity
     }
 
     @SideOnly(Side.CLIENT)
-    public int getBrightnessForRender(float partialTicks)
+    public int getBrightnessForRender()
     {
         float f = 0.5F;
-        f = MathHelper.clamp_float(f, 0.0F, 1.0F);
-        int i = super.getBrightnessForRender(partialTicks);
+        f = MathHelper.clamp(f, 0.0F, 1.0F);
+        int i = super.getBrightnessForRender();
         int j = i & 255;
         int k = i >> 16 & 255;
         j = j + (int)(f * 15.0F * 16.0F);
@@ -96,9 +96,13 @@ public class EntityXPOrb extends Entity
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
-        this.motionY -= 0.029999999329447746D;
 
-        if (this.worldObj.getBlockState(new BlockPos(this)).getMaterial() == Material.LAVA)
+        if (!this.hasNoGravity())
+        {
+            this.motionY -= 0.029999999329447746D;
+        }
+
+        if (this.world.getBlockState(new BlockPos(this)).getMaterial() == Material.LAVA)
         {
             this.motionY = 0.20000000298023224D;
             this.motionX = (double)((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
@@ -111,9 +115,9 @@ public class EntityXPOrb extends Entity
 
         if (this.xpTargetColor < this.xpColor - 20 + this.getEntityId() % 100)
         {
-            if (this.closestPlayer == null || this.closestPlayer.getDistanceSqToEntity(this) > d0 * d0)
+            if (this.closestPlayer == null || this.closestPlayer.getDistanceSq(this) > 64.0D)
             {
-                this.closestPlayer = this.worldObj.getClosestPlayerToEntity(this, d0);
+                this.closestPlayer = this.world.getClosestPlayerToEntity(this, 8.0D);
             }
 
             this.xpTargetColor = this.xpColor;
@@ -126,9 +130,9 @@ public class EntityXPOrb extends Entity
 
         if (this.closestPlayer != null)
         {
-            double d1 = (this.closestPlayer.posX - this.posX) / d0;
-            double d2 = (this.closestPlayer.posY + (double)this.closestPlayer.getEyeHeight() / 2.0D - this.posY) / d0;
-            double d3 = (this.closestPlayer.posZ - this.posZ) / d0;
+            double d1 = (this.closestPlayer.posX - this.posX) / 8.0D;
+            double d2 = (this.closestPlayer.posY + (double)this.closestPlayer.getEyeHeight() / 2.0D - this.posY) / 8.0D;
+            double d3 = (this.closestPlayer.posZ - this.posZ) / 8.0D;
             double d4 = Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
             double d5 = 1.0D - d4;
 
@@ -141,12 +145,14 @@ public class EntityXPOrb extends Entity
             }
         }
 
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
         float f = 0.98F;
 
         if (this.onGround)
         {
-            f = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.98F;
+            BlockPos underPos = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ));
+            net.minecraft.block.state.IBlockState underState = this.world.getBlockState(underPos);
+            f = underState.getBlock().getSlipperiness(underState, this.world, underPos, this) * 0.98F;
         }
 
         this.motionX *= (double)f;
@@ -172,7 +178,7 @@ public class EntityXPOrb extends Entity
      */
     public boolean handleWaterMovement()
     {
-        return this.worldObj.handleMaterialAcceleration(this.getEntityBoundingBox(), Material.WATER, this);
+        return this.world.handleMaterialAcceleration(this.getEntityBoundingBox(), Material.WATER, this);
     }
 
     /**
@@ -180,7 +186,7 @@ public class EntityXPOrb extends Entity
      */
     protected void dealFireDamage(int amount)
     {
-        this.attackEntityFrom(DamageSource.inFire, (float)amount);
+        this.attackEntityFrom(DamageSource.IN_FIRE, (float)amount);
     }
 
     /**
@@ -188,13 +194,14 @@ public class EntityXPOrb extends Entity
      */
     public boolean attackEntityFrom(DamageSource source, float amount)
     {
+        if (this.world.isRemote || this.isDead) return false; //Forge: Fixes MC-53850
         if (this.isEntityInvulnerable(source))
         {
             return false;
         }
         else
         {
-            this.setBeenAttacked();
+            this.markVelocityChanged();
             this.xpOrbHealth = (int)((float)this.xpOrbHealth - amount);
 
             if (this.xpOrbHealth <= 0)
@@ -231,17 +238,16 @@ public class EntityXPOrb extends Entity
      */
     public void onCollideWithPlayer(EntityPlayer entityIn)
     {
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
             if (this.delayBeforeCanPickup == 0 && entityIn.xpCooldown == 0)
             {
                 if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerPickupXpEvent(entityIn, this))) return;
                 entityIn.xpCooldown = 2;
-                this.worldObj.playSound((EntityPlayer)null, entityIn.posX, entityIn.posY, entityIn.posZ, SoundEvents.ENTITY_EXPERIENCE_ORB_TOUCH, SoundCategory.PLAYERS, 0.1F, 0.5F * ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.7F + 1.8F));
                 entityIn.onItemPickup(this, 1);
                 ItemStack itemstack = EnchantmentHelper.getEnchantedItem(Enchantments.MENDING, entityIn);
 
-                if (itemstack != null && itemstack.isItemDamaged())
+                if (!itemstack.isEmpty() && itemstack.isItemDamaged())
                 {
                     int i = Math.min(this.xpToDurability(this.xpValue), itemstack.getItemDamage());
                     this.xpValue -= this.durabilityToXp(i);
@@ -283,7 +289,46 @@ public class EntityXPOrb extends Entity
     @SideOnly(Side.CLIENT)
     public int getTextureByXP()
     {
-        return this.xpValue >= 2477 ? 10 : (this.xpValue >= 1237 ? 9 : (this.xpValue >= 617 ? 8 : (this.xpValue >= 307 ? 7 : (this.xpValue >= 149 ? 6 : (this.xpValue >= 73 ? 5 : (this.xpValue >= 37 ? 4 : (this.xpValue >= 17 ? 3 : (this.xpValue >= 7 ? 2 : (this.xpValue >= 3 ? 1 : 0)))))))));
+        if (this.xpValue >= 2477)
+        {
+            return 10;
+        }
+        else if (this.xpValue >= 1237)
+        {
+            return 9;
+        }
+        else if (this.xpValue >= 617)
+        {
+            return 8;
+        }
+        else if (this.xpValue >= 307)
+        {
+            return 7;
+        }
+        else if (this.xpValue >= 149)
+        {
+            return 6;
+        }
+        else if (this.xpValue >= 73)
+        {
+            return 5;
+        }
+        else if (this.xpValue >= 37)
+        {
+            return 4;
+        }
+        else if (this.xpValue >= 17)
+        {
+            return 3;
+        }
+        else if (this.xpValue >= 7)
+        {
+            return 2;
+        }
+        else
+        {
+            return this.xpValue >= 3 ? 1 : 0;
+        }
     }
 
     /**
@@ -291,7 +336,46 @@ public class EntityXPOrb extends Entity
      */
     public static int getXPSplit(int expValue)
     {
-        return expValue >= 2477 ? 2477 : (expValue >= 1237 ? 1237 : (expValue >= 617 ? 617 : (expValue >= 307 ? 307 : (expValue >= 149 ? 149 : (expValue >= 73 ? 73 : (expValue >= 37 ? 37 : (expValue >= 17 ? 17 : (expValue >= 7 ? 7 : (expValue >= 3 ? 3 : 1)))))))));
+        if (expValue >= 2477)
+        {
+            return 2477;
+        }
+        else if (expValue >= 1237)
+        {
+            return 1237;
+        }
+        else if (expValue >= 617)
+        {
+            return 617;
+        }
+        else if (expValue >= 307)
+        {
+            return 307;
+        }
+        else if (expValue >= 149)
+        {
+            return 149;
+        }
+        else if (expValue >= 73)
+        {
+            return 73;
+        }
+        else if (expValue >= 37)
+        {
+            return 37;
+        }
+        else if (expValue >= 17)
+        {
+            return 17;
+        }
+        else if (expValue >= 7)
+        {
+            return 7;
+        }
+        else
+        {
+            return expValue >= 3 ? 3 : 1;
+        }
     }
 
     /**

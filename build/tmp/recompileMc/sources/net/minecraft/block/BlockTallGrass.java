@@ -1,6 +1,5 @@
 package net.minecraft.block;
 
-import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
@@ -17,12 +16,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.stats.StatList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraftforge.common.IShearable
 {
@@ -56,7 +54,6 @@ public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraf
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return null;
@@ -70,9 +67,13 @@ public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraf
         return 1 + random.nextInt(fortune * 2 + 1);
     }
 
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, @Nullable ItemStack stack)
+    /**
+     * Spawns the block's drops in the world. By the time this is called the Block has possibly been set to air via
+     * Block.removedByPlayer
+     */
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
     {
-        if (false && !worldIn.isRemote && stack != null && stack.getItem() == Items.SHEARS) // Forge: Noop Taken care of by IShearable
+        if (!worldIn.isRemote && stack.getItem() == Items.SHEARS)
         {
             player.addStat(StatList.getBlockStats(this));
             spawnAsEntity(worldIn, pos, new ItemStack(Blocks.TALLGRASS, 1, ((BlockTallGrass.EnumType)state.getValue(TYPE)).getMeta()));
@@ -91,12 +92,11 @@ public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraf
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (int i = 1; i < 3; ++i)
         {
-            list.add(new ItemStack(itemIn, 1, i));
+            items.add(new ItemStack(this, 1, i));
         }
     }
 
@@ -152,7 +152,6 @@ public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraf
     /**
      * Get the OffsetType for this Block. Determines if the model is rendered slightly offset.
      */
-    @SideOnly(Side.CLIENT)
     public Block.EnumOffsetType getOffsetType()
     {
         return Block.EnumOffsetType.XYZ;
@@ -210,19 +209,16 @@ public class BlockTallGrass extends BlockBush implements IGrowable, net.minecraf
 
     @Override public boolean isShearable(ItemStack item, IBlockAccess world, BlockPos pos){ return true; }
     @Override
-    public List<ItemStack> onSheared(ItemStack item, IBlockAccess world, BlockPos pos, int fortune)
+    public NonNullList<ItemStack> onSheared(ItemStack item, IBlockAccess world, BlockPos pos, int fortune)
     {
-        List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
-        ret.add(new ItemStack(Blocks.TALLGRASS, 1, ((BlockTallGrass.EnumType)world.getBlockState(pos).getValue(TYPE)).getMeta()));
-        return ret;
+        return NonNullList.withSize(1, new ItemStack(Blocks.TALLGRASS, 1, ((BlockTallGrass.EnumType)world.getBlockState(pos).getValue(TYPE)).getMeta()));
     }
     @Override
-    public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(NonNullList<ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        List<ItemStack> ret = new java.util.ArrayList<ItemStack>();
-        if (RANDOM.nextInt(8) != 0) return ret;
+        if (RANDOM.nextInt(8) != 0) return;
         ItemStack seed = net.minecraftforge.common.ForgeHooks.getGrassSeed(RANDOM, fortune);
-        if (seed != null) ret.add(seed);
-        return ret;
+        if (!seed.isEmpty())
+            drops.add(seed);
     }
 }

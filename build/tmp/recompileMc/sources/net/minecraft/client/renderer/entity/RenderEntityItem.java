@@ -20,7 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RenderEntityItem extends Render<EntityItem>
 {
     private final RenderItem itemRenderer;
-    private Random random = new Random();
+    private final Random random = new Random();
 
     public RenderEntityItem(RenderManager renderManagerIn, RenderItem p_i46167_2_)
     {
@@ -32,7 +32,7 @@ public class RenderEntityItem extends Render<EntityItem>
 
     private int transformModelCount(EntityItem itemIn, double p_177077_2_, double p_177077_4_, double p_177077_6_, float p_177077_8_, IBakedModel p_177077_9_)
     {
-        ItemStack itemstack = itemIn.getEntityItem();
+        ItemStack itemstack = itemIn.getItem();
         Item item = itemstack.getItem();
 
         if (item == null)
@@ -63,19 +63,19 @@ public class RenderEntityItem extends Render<EntityItem>
     {
         int i = 1;
 
-        if (stack.stackSize > 48)
+        if (stack.getCount() > 48)
         {
             i = 5;
         }
-        else if (stack.stackSize > 32)
+        else if (stack.getCount() > 32)
         {
             i = 4;
         }
-        else if (stack.stackSize > 16)
+        else if (stack.getCount() > 16)
         {
             i = 3;
         }
-        else if (stack.stackSize > 1)
+        else if (stack.getCount() > 1)
         {
             i = 2;
         }
@@ -88,18 +88,8 @@ public class RenderEntityItem extends Render<EntityItem>
      */
     public void doRender(EntityItem entity, double x, double y, double z, float entityYaw, float partialTicks)
     {
-        ItemStack itemstack = entity.getEntityItem();
-        int i;
-
-        if (itemstack != null && itemstack.getItem() != null)
-        {
-            i = Item.getIdFromItem(itemstack.getItem()) + itemstack.getMetadata();
-        }
-        else
-        {
-            i = 187;
-        }
-
+        ItemStack itemstack = entity.getItem();
+        int i = itemstack.isEmpty() ? 187 : Item.getIdFromItem(itemstack.getItem()) + itemstack.getMetadata();
         this.random.setSeed((long)i);
         boolean flag = false;
 
@@ -115,7 +105,7 @@ public class RenderEntityItem extends Render<EntityItem>
         RenderHelper.enableStandardItemLighting();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.pushMatrix();
-        IBakedModel ibakedmodel = this.itemRenderer.getItemModelWithOverrides(itemstack, entity.worldObj, (EntityLivingBase)null);
+        IBakedModel ibakedmodel = this.itemRenderer.getItemModelWithOverrides(itemstack, entity.world, (EntityLivingBase)null);
         int j = this.transformModelCount(entity, x, y, z, partialTicks, ibakedmodel);
         boolean flag1 = ibakedmodel.isGui3d();
 
@@ -147,8 +137,8 @@ public class RenderEntityItem extends Render<EntityItem>
                     GlStateManager.translate(shouldSpreadItems() ? f7 : 0, shouldSpreadItems() ? f9 : 0, f6);
                 }
 
-                ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GROUND, false);
-                this.itemRenderer.renderItem(itemstack, ibakedmodel);
+                IBakedModel transformedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GROUND, false);
+                this.itemRenderer.renderItem(itemstack, transformedModel);
                 GlStateManager.popMatrix();
             }
             else
@@ -162,8 +152,8 @@ public class RenderEntityItem extends Render<EntityItem>
                     GlStateManager.translate(f8, f10, 0.0F);
                 }
 
-                ibakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GROUND, false);
-                this.itemRenderer.renderItem(itemstack, ibakedmodel);
+                IBakedModel transformedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(ibakedmodel, ItemCameraTransforms.TransformType.GROUND, false);
+                this.itemRenderer.renderItem(itemstack, transformedModel);
                 GlStateManager.popMatrix();
                 GlStateManager.translate(0.0F, 0.0F, 0.09375F);
             }

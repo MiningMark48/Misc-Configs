@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.common;
 
 import net.minecraftforge.fml.common.FMLLog;
@@ -21,6 +40,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.ForgeHooks.SeedEntry;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.oredict.OreDictionary;
+
+import javax.annotation.Nonnull;
 
 public class MinecraftForge
 {
@@ -48,7 +69,7 @@ public class MinecraftForge
      *
      * Note: These functions may be going away soon, we're looking into loot tables....
      */
-    public static void addGrassSeed(ItemStack seed, int weight)
+    public static void addGrassSeed(@Nonnull ItemStack seed, int weight)
     {
         addGrassSeed(new SeedEntry(seed, weight));
     }
@@ -62,7 +83,7 @@ public class MinecraftForge
     */
    public static void initialize()
    {
-       FMLLog.info("MinecraftForge v%s Initialized", ForgeVersion.getVersion());
+       FMLLog.log.info("MinecraftForge v{} Initialized", ForgeVersion.getVersion());
 
        OreDictionary.getOreName(0);
 
@@ -92,18 +113,18 @@ public class MinecraftForge
        if (all.size() == 0)
         return;
 
-       FMLLog.log(modID, Level.DEBUG, "Preloading CrashReport Classes");
+       ForgeModContainer.log.debug("Preloading CrashReport Classes");
        Collections.sort(all); //Sort it because I like pretty output ;)
        for (String name : all)
        {
-           FMLLog.log(modID, Level.DEBUG, "\t" + name);
+           ForgeModContainer.log.debug("\t{}", name);
            try
            {
                Class.forName(name.replace('/', '.'), false, MinecraftForge.class.getClassLoader());
            }
            catch (Exception e)
            {
-               e.printStackTrace();
+               FMLLog.log.error("Could not find class for name '{}'.", name, e);
            }
        }
    }

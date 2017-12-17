@@ -34,7 +34,7 @@ public class SPacketEntity implements Packet<INetHandlerPlayClient>
      */
     public void readPacketData(PacketBuffer buf) throws IOException
     {
-        this.entityId = buf.readVarIntFromBuffer();
+        this.entityId = buf.readVarInt();
     }
 
     /**
@@ -42,7 +42,7 @@ public class SPacketEntity implements Packet<INetHandlerPlayClient>
      */
     public void writePacketData(PacketBuffer buf) throws IOException
     {
-        buf.writeVarIntToBuffer(this.entityId);
+        buf.writeVarInt(this.entityId);
     }
 
     /**

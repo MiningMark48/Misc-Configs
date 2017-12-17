@@ -46,10 +46,9 @@ public class ItemOverrideList
         return null;
     }
 
-    public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity)
+    public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable EntityLivingBase entity)
     {
-        net.minecraft.item.Item item = stack.getItem();
-        if (item != null && item.hasCustomProperties())
+        if (!stack.isEmpty() && stack.getItem().hasCustomProperties())
         {
             ResourceLocation location = applyOverride(stack, world, entity);
             if (location != null)

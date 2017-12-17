@@ -1,22 +1,23 @@
 package net.minecraft.inventory;
 
-import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ContainerBeacon extends Container
 {
-    private IInventory tileBeacon;
+    private final IInventory tileBeacon;
     /** This beacon's slot where you put in Emerald, Diamond, Gold or Iron Ingot. */
     private final ContainerBeacon.BeaconSlot beaconSlot;
 
     public ContainerBeacon(IInventory playerInventory, IInventory tileBeaconIn)
     {
         this.tileBeacon = tileBeaconIn;
-        this.addSlotToContainer(this.beaconSlot = new ContainerBeacon.BeaconSlot(tileBeaconIn, 0, 136, 110));
+        this.beaconSlot = new ContainerBeacon.BeaconSlot(tileBeaconIn, 0, 136, 110);
+        this.addSlotToContainer(this.beaconSlot);
         int i = 36;
         int j = 137;
 
@@ -24,13 +25,13 @@ public class ContainerBeacon extends Container
         {
             for (int l = 0; l < 9; ++l)
             {
-                this.addSlotToContainer(new Slot(playerInventory, l + k * 9 + 9, i + l * 18, j + k * 18));
+                this.addSlotToContainer(new Slot(playerInventory, l + k * 9 + 9, 36 + l * 18, 137 + k * 18));
             }
         }
 
         for (int i1 = 0; i1 < 9; ++i1)
         {
-            this.addSlotToContainer(new Slot(playerInventory, i1, i + i1 * 18, 58 + j));
+            this.addSlotToContainer(new Slot(playerInventory, i1, 36 + i1 * 18, 195));
         }
     }
 
@@ -58,30 +59,33 @@ public class ContainerBeacon extends Container
     {
         super.onContainerClosed(playerIn);
 
-        if (playerIn != null && !playerIn.worldObj.isRemote)
+        if (!playerIn.world.isRemote)
         {
             ItemStack itemstack = this.beaconSlot.decrStackSize(this.beaconSlot.getSlotStackLimit());
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 playerIn.dropItem(itemstack, false);
             }
         }
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     public boolean canInteractWith(EntityPlayer playerIn)
     {
-        return this.tileBeacon.isUseableByPlayer(playerIn);
+        return this.tileBeacon.isUsableByPlayer(playerIn);
     }
 
     /**
-     * Take a stack from the specified inventory slot.
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player
+     * inventory and the other inventory(s).
      */
-    @Nullable
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
     {
-        ItemStack itemstack = null;
-        Slot slot = (Slot)this.inventorySlots.get(index);
+        ItemStack itemstack = ItemStack.EMPTY;
+        Slot slot = this.inventorySlots.get(index);
 
         if (slot != null && slot.getHasStack())
         {
@@ -92,52 +96,49 @@ public class ContainerBeacon extends Container
             {
                 if (!this.mergeItemStack(itemstack1, 1, 37, true))
                 {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
 
                 slot.onSlotChange(itemstack1, itemstack);
             }
-            else if (!this.beaconSlot.getHasStack() && this.beaconSlot.isItemValid(itemstack1) && itemstack1.stackSize == 1)
+            else if (this.mergeItemStack(itemstack1, 0, 1, false)) //Forge Fix Shift Clicking in beacons with stacks larger then 1.
             {
-                if (!this.mergeItemStack(itemstack1, 0, 1, false))
-                {
-                    return null;
-                }
+                return ItemStack.EMPTY;
             }
             else if (index >= 1 && index < 28)
             {
                 if (!this.mergeItemStack(itemstack1, 28, 37, false))
                 {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
             }
             else if (index >= 28 && index < 37)
             {
                 if (!this.mergeItemStack(itemstack1, 1, 28, false))
                 {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
             }
             else if (!this.mergeItemStack(itemstack1, 1, 37, false))
             {
-                return null;
+                return ItemStack.EMPTY;
             }
 
-            if (itemstack1.stackSize == 0)
+            if (itemstack1.isEmpty())
             {
-                slot.putStack((ItemStack)null);
+                slot.putStack(ItemStack.EMPTY);
             }
             else
             {
                 slot.onSlotChanged();
             }
 
-            if (itemstack1.stackSize == itemstack.stackSize)
+            if (itemstack1.getCount() == itemstack.getCount())
             {
-                return null;
+                return ItemStack.EMPTY;
             }
 
-            slot.onPickupFromSlot(playerIn, itemstack1);
+            slot.onTake(playerIn, itemstack1);
         }
 
         return itemstack;
@@ -151,11 +152,11 @@ public class ContainerBeacon extends Container
         }
 
         /**
-         * Check if the stack is a valid item for this slot. Always true beside for the armor slots.
+         * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
          */
-        public boolean isItemValid(@Nullable ItemStack stack)
+        public boolean isItemValid(ItemStack stack)
         {
-            return stack == null ? false : stack.getItem().isBeaconPayment(stack);
+            return stack.getItem().isBeaconPayment(stack);
         }
 
         /**

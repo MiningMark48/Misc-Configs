@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common;
@@ -18,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,19 +59,20 @@ import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.client.model.animation.Animation;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.CompoundDataFixer;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.thread.SidedThreadGroup;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.server.FMLServerHandler;
 
-import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
 import com.google.common.base.Joiner;
@@ -71,8 +81,8 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
+import javax.annotation.Nullable;
 
 /**
  * The main class for non-obfuscated hook handling code
@@ -102,7 +112,7 @@ public class FMLCommonHandler
     private List<String> brandings;
     private List<String> brandingsNoMC;
     private List<ICrashCallable> crashCallables = Lists.newArrayList(Loader.instance().getCallableCrashInformation());
-    private Set<SaveHandler> handlerSet = Sets.newSetFromMap(new MapMaker().weakKeys().<SaveHandler,Boolean>makeMap());
+    private Set<SaveHandler> handlerSet = Collections.newSetFromMap(new MapMaker().weakKeys().<SaveHandler,Boolean>makeMap());
     private WeakReference<SaveHandler> handlerToCheck;
     private EventBus eventBus = MinecraftForge.EVENT_BUS;
     private volatile CountDownLatch exitLatch = null;
@@ -111,6 +121,7 @@ public class FMLCommonHandler
     {
         registerCrashCallable(new ICrashCallable()
         {
+            @Override
             public String call() throws Exception
             {
                 StringBuilder builder = new StringBuilder();
@@ -122,6 +133,7 @@ public class FMLCommonHandler
                 return builder.toString();
             }
 
+            @Override
             public String getLabel()
             {
                 return "Loaded coremods (and transformers)";
@@ -173,10 +185,13 @@ public class FMLCommonHandler
     /**
      * Get the forge mod loader logging instance (goes to the forgemodloader log file)
      * @return The log instance for the FML log file
+     *
+     * @deprecated Not used in FML, Mods use your own logger, see {@link FMLPreInitializationEvent#getModLog()}
      */
+    @Deprecated
     public Logger getFMLLogger()
     {
-        return FMLLog.getLogger();
+        return FMLLog.log;
     }
 
     public Side getSide()
@@ -191,20 +206,15 @@ public class FMLCommonHandler
      */
     public Side getEffectiveSide()
     {
-        Thread thr = Thread.currentThread();
-        if (thr.getName().equals("Server thread") || thr.getName().startsWith("Netty Server IO"))
-        {
-            return Side.SERVER;
-        }
-
-        return Side.CLIENT;
+        final ThreadGroup group = Thread.currentThread().getThreadGroup();
+        return group instanceof SidedThreadGroup ? ((SidedThreadGroup) group).getSide() : Side.CLIENT;
     }
     /**
      * Raise an exception
      */
     public void raiseException(Throwable exception, String message, boolean stopGame)
     {
-        FMLLog.log(Level.ERROR, exception, "Something raised an exception. The message was '%s'. 'stopGame' is %b", message, stopGame);
+        FMLLog.log.error("Something raised an exception. The message was '{}'. 'stopGame' is {}", stopGame, exception);
         if (stopGame)
         {
             getSidedDelegate().haltGame(message,exception);
@@ -367,7 +377,7 @@ public class FMLCommonHandler
     {
         for (ICrashCallable call: crashCallables)
         {
-            category.setDetail(call.getLabel(), call);
+            category.addDetail(call.getLabel(), call);
         }
     }
 
@@ -431,6 +441,11 @@ public class FMLCommonHandler
         if (!confirmed) StartupQuery.abort();
     }
 
+    public boolean isDisplayCloseRequested()
+    {
+        return sidedDelegate != null && sidedDelegate.isDisplayCloseRequested();
+    }
+
     public boolean shouldServerBeKilledQuietly()
     {
         if (sidedDelegate == null)
@@ -465,19 +480,19 @@ public class FMLCommonHandler
         {
             try
             {
-                FMLLog.info("Waiting for the server to terminate/save.");
+                FMLLog.log.info("Waiting for the server to terminate/save.");
                 if (!latch.await(10, TimeUnit.SECONDS))
                 {
-                    FMLLog.warning("The server didn't stop within 10 seconds, exiting anyway.");
+                    FMLLog.log.warn("The server didn't stop within 10 seconds, exiting anyway.");
                 }
                 else
                 {
-                    FMLLog.info("Server terminated.");
+                    FMLLog.log.info("Server terminated.");
                 }
             }
             catch (InterruptedException e)
             {
-                FMLLog.warning("Interrupted wait, exiting.");
+                FMLLog.log.warn("Interrupted wait, exiting.");
             }
         }
 
@@ -508,7 +523,7 @@ public class FMLCommonHandler
         modNames.add("fml");
         if (!noForge)
         {
-            modNames.add("forge");
+            modNames.add(ForgeVersion.MOD_ID);
         }
 
         if (Loader.instance().getFMLBrandingProperties().containsKey("snooperbranding"))
@@ -563,14 +578,14 @@ public class FMLCommonHandler
         bus().post(new PlayerEvent.PlayerLoggedOutEvent(player));
     }
 
-    public void firePlayerRespawnEvent(EntityPlayer player)
+    public void firePlayerRespawnEvent(EntityPlayer player, boolean endConquered)
     {
-        bus().post(new PlayerEvent.PlayerRespawnEvent(player));
+        bus().post(new PlayerEvent.PlayerRespawnEvent(player, endConquered));
     }
 
-    public void firePlayerItemPickupEvent(EntityPlayer player, EntityItem item)
+    public void firePlayerItemPickupEvent(EntityPlayer player, EntityItem item, ItemStack clone)
     {
-        bus().post(new PlayerEvent.ItemPickupEvent(player, item));
+        bus().post(new PlayerEvent.ItemPickupEvent(player, item, clone));
     }
 
     public void firePlayerCraftingEvent(EntityPlayer player, ItemStack crafted, IInventory craftMatrix)
@@ -611,7 +626,7 @@ public class FMLCommonHandler
         if (!shouldAllowPlayerLogins())
         {
             TextComponentString text = new TextComponentString("Server is still starting! Please wait before reconnecting.");
-            FMLLog.info("Disconnecting Player: " + text.getUnformattedText());
+            FMLLog.log.info("Disconnecting Player: {}", text.getUnformattedText());
             manager.sendPacket(new SPacketDisconnect(text));
             manager.closeChannel(text);
             return false;
@@ -621,7 +636,7 @@ public class FMLCommonHandler
         {
             manager.setConnectionState(EnumConnectionState.LOGIN);
             TextComponentString text = new TextComponentString("This server requires FML/Forge to be installed. Contact your server admin for more details.");
-            FMLLog.info("Disconnecting Player: " + text.getUnformattedText());
+            FMLLog.log.info("Disconnecting Player: {}", text.getUnformattedText());
             manager.sendPacket(new SPacketDisconnect(text));
             manager.closeChannel(text);
             return false;
@@ -646,18 +661,18 @@ public class FMLCommonHandler
      */
     public void exitJava(int exitCode, boolean hardExit)
     {
-        FMLLog.log(Level.INFO, "Java has been asked to exit (code %d) by %s.", exitCode, Thread.currentThread().getStackTrace()[1]);
+        FMLLog.log.info("Java has been asked to exit (code {}) by {}.", exitCode, Thread.currentThread().getStackTrace()[1]);
         if (hardExit)
         {
-            FMLLog.log(Level.INFO, "This is an abortive exit and could cause world corruption or other things");
+            FMLLog.log.info("This is an abortive exit and could cause world corruption or other things");
         }
         if (Boolean.parseBoolean(System.getProperty("fml.debugExit", "false")))
         {
-            FMLLog.log(Level.INFO, new Throwable(), "Exit trace");
+            FMLLog.log.info("Exit trace", new Throwable());
         }
         else
         {
-            FMLLog.log(Level.INFO, "If this was an unexpected exit, use -Dfml.debugExit=true as a JVM argument to find out where it was called");
+            FMLLog.log.info("If this was an unexpected exit, use -Dfml.debugExit=true as a JVM argument to find out where it was called");
         }
         if (hardExit)
         {
@@ -681,13 +696,9 @@ public class FMLCommonHandler
             task.run();
             task.get(); // Forces the exception to be thrown if any
         }
-        catch (InterruptedException e)
+        catch (InterruptedException | ExecutionException e)
         {
-            FMLLog.log(Level.FATAL, e, "Exception caught executing FutureTask: " + e.toString());
-        }
-        catch (ExecutionException e)
-        {
-            FMLLog.log(Level.FATAL, e, "Exception caught executing FutureTask: " + e.toString());
+            FMLLog.log.fatal("Exception caught executing FutureTask: {}", e.toString(), e);
         }
     }
 
@@ -701,12 +712,13 @@ public class FMLCommonHandler
      * @param inputstream Input stream containing the lang file.
      * @return A new InputStream that vanilla uses to load normal Lang files, Null if this is a 'enhanced' file and loading is done.
      */
+    @Nullable
     public InputStream loadLanguage(Map<String, String> table, InputStream inputstream) throws IOException
     {
         byte[] data = IOUtils.toByteArray(inputstream);
 
         boolean isEnhanced = false;
-        for (String line : IOUtils.readLines(new ByteArrayInputStream(data), Charsets.UTF_8))
+        for (String line : IOUtils.readLines(new ByteArrayInputStream(data), StandardCharsets.UTF_8))
         {
             if (!line.isEmpty() && line.charAt(0) == '#')
             {
@@ -723,7 +735,7 @@ public class FMLCommonHandler
             return new ByteArrayInputStream(data);
 
         Properties props = new Properties();
-        props.load(new InputStreamReader(new ByteArrayInputStream(data), Charsets.UTF_8));
+        props.load(new InputStreamReader(new ByteArrayInputStream(data), StandardCharsets.UTF_8));
         for (Entry<Object, Object> e : props.entrySet())
         {
             table.put((String)e.getKey(), (String)e.getValue());
@@ -734,5 +746,28 @@ public class FMLCommonHandler
     public String stripSpecialChars(String message)
     {
         return sidedDelegate != null ? sidedDelegate.stripSpecialChars(message) : message;
+    }
+
+    public void reloadRenderers() {
+        sidedDelegate.reloadRenderers();
+    }
+
+    public void fireSidedRegistryEvents()
+    {
+        sidedDelegate.fireSidedRegistryEvents();
+    }
+
+    public CompoundDataFixer getDataFixer()
+    {
+        return (CompoundDataFixer)sidedDelegate.getDataFixer();
+    }
+
+    public boolean isDisplayVSyncForced() { return sidedDelegate.isDisplayVSyncForced(); }
+    public void resetClientRecipeBook() {
+        this.sidedDelegate.resetClientRecipeBook();
+    }
+
+    public void reloadSearchTrees() {
+        this.sidedDelegate.reloadSearchTrees();
     }
 }

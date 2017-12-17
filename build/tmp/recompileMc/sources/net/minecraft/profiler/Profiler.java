@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
@@ -13,12 +14,15 @@ import org.apache.logging.log4j.Logger;
 public class Profiler
 {
     private static final Logger LOGGER = LogManager.getLogger();
+    /** List of parent sections */
     private final List<String> sectionList = Lists.<String>newArrayList();
+    /** List of timestamps (System.nanoTime) */
     private final List<Long> timestampList = Lists.<Long>newArrayList();
     /** Flag profiling enabled */
     public boolean profilingEnabled;
     /** Current profiling section */
     private String profilingSection = "";
+    /** Profiling map */
     private final Map<String, Long> profilingMap = Maps.<String, Long>newHashMap();
 
     /**
@@ -38,7 +42,7 @@ public class Profiler
     {
         if (this.profilingEnabled)
         {
-            if (this.profilingSection.length() > 0)
+            if (!this.profilingSection.isEmpty())
             {
                 this.profilingSection = this.profilingSection + ".";
             }
@@ -46,6 +50,14 @@ public class Profiler
             this.profilingSection = this.profilingSection + name;
             this.sectionList.add(this.profilingSection);
             this.timestampList.add(Long.valueOf(System.nanoTime()));
+        }
+    }
+
+    public void func_194340_a(Supplier<String> p_194340_1_)
+    {
+        if (this.profilingEnabled)
+        {
+            this.startSection(p_194340_1_.get());
         }
     }
 
@@ -72,13 +84,16 @@ public class Profiler
 
             if (k > 100000000L)
             {
-                LOGGER.warn("Something\'s taking too long! \'" + this.profilingSection + "\' took aprox " + (double)k / 1000000.0D + " ms");
+                LOGGER.warn("Something's taking too long! '{}' took aprox {} ms", this.profilingSection, Double.valueOf((double)k / 1000000.0D));
             }
 
-            this.profilingSection = !this.sectionList.isEmpty() ? (String)this.sectionList.get(this.sectionList.size() - 1) : "";
+            this.profilingSection = this.sectionList.isEmpty() ? "" : (String)this.sectionList.get(this.sectionList.size() - 1);
         }
     }
 
+    /**
+     * Get profiling data
+     */
     public List<Profiler.Result> getProfilingData(String profilerName)
     {
         if (!this.profilingEnabled)
@@ -91,7 +106,7 @@ public class Profiler
             long j = this.profilingMap.containsKey(profilerName) ? ((Long)this.profilingMap.get(profilerName)).longValue() : -1L;
             List<Profiler.Result> list = Lists.<Profiler.Result>newArrayList();
 
-            if (profilerName.length() > 0)
+            if (!profilerName.isEmpty())
             {
                 profilerName = profilerName + ".";
             }
@@ -157,7 +172,14 @@ public class Profiler
 
     public String getNameOfLastSection()
     {
-        return this.sectionList.size() == 0 ? "[UNKNOWN]" : (String)this.sectionList.get(this.sectionList.size() - 1);
+        return this.sectionList.isEmpty() ? "[UNKNOWN]" : (String)this.sectionList.get(this.sectionList.size() - 1);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void func_194339_b(Supplier<String> p_194339_1_)
+    {
+        this.endSection();
+        this.func_194340_a(p_194339_1_);
     }
 
     public static final class Result implements Comparable<Profiler.Result>
@@ -175,7 +197,14 @@ public class Profiler
 
             public int compareTo(Profiler.Result p_compareTo_1_)
             {
-                return p_compareTo_1_.usePercentage < this.usePercentage ? -1 : (p_compareTo_1_.usePercentage > this.usePercentage ? 1 : p_compareTo_1_.profilerName.compareTo(this.profilerName));
+                if (p_compareTo_1_.usePercentage < this.usePercentage)
+                {
+                    return -1;
+                }
+                else
+                {
+                    return p_compareTo_1_.usePercentage > this.usePercentage ? 1 : p_compareTo_1_.profilerName.compareTo(this.profilerName);
+                }
             }
 
             /**
@@ -187,4 +216,16 @@ public class Profiler
                 return (this.profilerName.hashCode() & 11184810) + 4473924;
             }
         }
+
+    /**
+     * Forge: Fix for MC-117087, World.updateEntities is wasting time calling Class.getSimpleName() when the profiler is not active
+     */
+    @Deprecated // TODO: remove (1.13)
+    public void startSection(Class<?> profiledClass)
+    {
+        if (this.profilingEnabled)
+        {
+            startSection(profiledClass.getSimpleName());
+        }
+    }
 }

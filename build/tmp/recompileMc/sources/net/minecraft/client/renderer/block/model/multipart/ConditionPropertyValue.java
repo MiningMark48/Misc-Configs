@@ -1,7 +1,7 @@
 package net.minecraft.client.renderer.block.model.multipart;
 
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -39,7 +39,7 @@ public class ConditionPropertyValue implements ICondition
         else
         {
             String s = this.value;
-            boolean flag = !s.isEmpty() && s.charAt(0) == 33;
+            boolean flag = !s.isEmpty() && s.charAt(0) == '!';
 
             if (flag)
             {
@@ -99,6 +99,6 @@ public class ConditionPropertyValue implements ICondition
 
     public String toString()
     {
-        return Objects.toStringHelper(this).add("key", this.key).add("value", this.value).toString();
+        return MoreObjects.toStringHelper(this).add("key", this.key).add("value", this.value).toString();
     }
 }

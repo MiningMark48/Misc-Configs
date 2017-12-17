@@ -1,4 +1,25 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fluids;
+
+import javax.annotation.Nonnull;
 
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.dispenser.BehaviorDefaultDispenseItem;
@@ -8,7 +29,7 @@ import net.minecraft.tileentity.TileEntityDispenser;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 
 /**
  * Fills or drains a fluid container item using a Dispenser.
@@ -29,7 +50,9 @@ public class DispenseFluidContainer extends BehaviorDefaultDispenseItem
     /**
      * Dispense the specified stack, play the dispense sound and spawn particles.
      */
-    public ItemStack dispenseStack(IBlockSource source, ItemStack stack)
+    @Override
+    @Nonnull
+    public ItemStack dispenseStack(@Nonnull IBlockSource source, @Nonnull ItemStack stack)
     {
         if (FluidUtil.getFluidContained(stack) != null)
         {
@@ -44,63 +67,70 @@ public class DispenseFluidContainer extends BehaviorDefaultDispenseItem
     /**
      * Picks up fluid in front of a Dispenser and fills a container with it.
      */
-    private ItemStack fillContainer(IBlockSource source, ItemStack stack)
+    @Nonnull
+    private ItemStack fillContainer(@Nonnull IBlockSource source, @Nonnull ItemStack stack)
     {
         World world = source.getWorld();
-        EnumFacing dispenserFacing = BlockDispenser.getFacing(source.getBlockMetadata());
+        EnumFacing dispenserFacing = source.getBlockState().getValue(BlockDispenser.FACING);
         BlockPos blockpos = source.getBlockPos().offset(dispenserFacing);
 
-        ItemStack result = FluidUtil.tryPickUpFluid(stack, null, world, blockpos, dispenserFacing.getOpposite());
-        if (result == null)
+        FluidActionResult actionResult = FluidUtil.tryPickUpFluid(stack, null, world, blockpos, dispenserFacing.getOpposite());
+        ItemStack resultStack = actionResult.getResult();
+
+        if (!actionResult.isSuccess() || resultStack.isEmpty())
         {
             return super.dispenseStack(source, stack);
         }
 
-        world.setBlockToAir(blockpos);
-
-        if (--stack.stackSize == 0)
+        if (stack.getCount() == 1)
         {
-            stack.deserializeNBT(result.serializeNBT());
+            return resultStack;
         }
-        else if (((TileEntityDispenser)source.getBlockTileEntity()).addItemStack(result) < 0)
+        else if (((TileEntityDispenser)source.getBlockTileEntity()).addItemStack(resultStack) < 0)
         {
-            this.dispenseBehavior.dispense(source, result);
+            this.dispenseBehavior.dispense(source, resultStack);
         }
 
-        return stack;
+        ItemStack stackCopy = stack.copy();
+        stackCopy.shrink(1);
+        return stackCopy;
     }
 
     /**
      * Drains a filled container and places the fluid in front of the Dispenser.
      */
-    private ItemStack dumpContainer(IBlockSource source, ItemStack stack)
+    @Nonnull
+    private ItemStack dumpContainer(IBlockSource source, @Nonnull ItemStack stack)
     {
-        ItemStack dispensedStack = stack.copy();
-        dispensedStack.stackSize = 1;
-        IFluidHandler fluidHandler = FluidUtil.getFluidHandler(dispensedStack);
+        ItemStack singleStack = stack.copy();
+        singleStack.setCount(1);
+        IFluidHandlerItem fluidHandler = FluidUtil.getFluidHandler(singleStack);
         if (fluidHandler == null)
         {
             return super.dispenseStack(source, stack);
         }
 
         FluidStack fluidStack = fluidHandler.drain(Fluid.BUCKET_VOLUME, false);
-        EnumFacing dispenserFacing = BlockDispenser.getFacing(source.getBlockMetadata());
+        EnumFacing dispenserFacing = source.getBlockState().getValue(BlockDispenser.FACING);
         BlockPos blockpos = source.getBlockPos().offset(dispenserFacing);
+        FluidActionResult result = fluidStack != null ? FluidUtil.tryPlaceFluid(null, source.getWorld(), blockpos, stack, fluidStack) : FluidActionResult.FAILURE;
 
-        if (fluidStack != null && fluidStack.amount == Fluid.BUCKET_VOLUME && FluidUtil.tryPlaceFluid(null, source.getWorld(), fluidStack, blockpos))
+        if (result.isSuccess())
         {
-            fluidHandler.drain(Fluid.BUCKET_VOLUME, true);
+            ItemStack drainedStack = result.getResult();
 
-            if (--stack.stackSize == 0)
+            if (drainedStack.getCount() == 1)
             {
-                stack.deserializeNBT(dispensedStack.serializeNBT());
+                return drainedStack;
             }
-            else if (((TileEntityDispenser)source.getBlockTileEntity()).addItemStack(dispensedStack) < 0)
+            else if (!drainedStack.isEmpty() && ((TileEntityDispenser)source.getBlockTileEntity()).addItemStack(drainedStack) < 0)
             {
-                this.dispenseBehavior.dispense(source, dispensedStack);
+                this.dispenseBehavior.dispense(source, drainedStack);
             }
 
-            return stack;
+            ItemStack stackCopy = drainedStack.copy();
+            stackCopy.shrink(1);
+            return stackCopy;
         }
         else
         {

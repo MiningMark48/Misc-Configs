@@ -53,7 +53,6 @@ public class SoundType
         return this.pitch;
     }
 
-    @SideOnly(Side.CLIENT)
     public SoundEvent getBreakSound()
     {
         return this.breakSound;
@@ -69,7 +68,6 @@ public class SoundType
         return this.placeSound;
     }
 
-    @SideOnly(Side.CLIENT)
     public SoundEvent getHitSound()
     {
         return this.hitSound;

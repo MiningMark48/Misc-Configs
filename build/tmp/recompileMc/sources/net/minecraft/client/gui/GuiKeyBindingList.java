@@ -16,7 +16,7 @@ public class GuiKeyBindingList extends GuiListExtended
     private final GuiControls controlsScreen;
     private final Minecraft mc;
     private final GuiListExtended.IGuiListEntry[] listEntries;
-    private int maxListLabelWidth = 0;
+    private int maxListLabelWidth;
 
     public GuiKeyBindingList(GuiControls controls, Minecraft mcIn)
     {
@@ -39,7 +39,7 @@ public class GuiKeyBindingList extends GuiListExtended
                 this.listEntries[i++] = new GuiKeyBindingList.CategoryEntry(s1);
             }
 
-            int j = mcIn.fontRendererObj.getStringWidth(I18n.format(keybinding.getKeyDescription(), new Object[0]));
+            int j = mcIn.fontRenderer.getStringWidth(I18n.format(keybinding.getKeyDescription()));
 
             if (j > this.maxListLabelWidth)
             {
@@ -84,13 +84,13 @@ public class GuiKeyBindingList extends GuiListExtended
 
         public CategoryEntry(String name)
         {
-            this.labelText = I18n.format(name, new Object[0]);
-            this.labelWidth = GuiKeyBindingList.this.mc.fontRendererObj.getStringWidth(this.labelText);
+            this.labelText = I18n.format(name);
+            this.labelWidth = GuiKeyBindingList.this.mc.fontRenderer.getStringWidth(this.labelText);
         }
 
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks)
         {
-            GuiKeyBindingList.this.mc.fontRendererObj.drawString(this.labelText, GuiKeyBindingList.this.mc.currentScreen.width / 2 - this.labelWidth / 2, y + slotHeight - GuiKeyBindingList.this.mc.fontRendererObj.FONT_HEIGHT - 1, 16777215);
+            GuiKeyBindingList.this.mc.fontRenderer.drawString(this.labelText, GuiKeyBindingList.this.mc.currentScreen.width / 2 - this.labelWidth / 2, y + slotHeight - GuiKeyBindingList.this.mc.fontRenderer.FONT_HEIGHT - 1, 16777215);
         }
 
         /**
@@ -109,7 +109,7 @@ public class GuiKeyBindingList extends GuiListExtended
         {
         }
 
-        public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_)
+        public void updatePosition(int slotIndex, int x, int y, float partialTicks)
         {
         }
     }
@@ -127,21 +127,21 @@ public class GuiKeyBindingList extends GuiListExtended
         private KeyEntry(KeyBinding name)
         {
             this.keybinding = name;
-            this.keyDesc = I18n.format(name.getKeyDescription(), new Object[0]);
-            this.btnChangeKeyBinding = new GuiButton(0, 0, 0, 95, 20, I18n.format(name.getKeyDescription(), new Object[0]));
-            this.btnReset = new GuiButton(0, 0, 0, 50, 20, I18n.format("controls.reset", new Object[0]));
+            this.keyDesc = I18n.format(name.getKeyDescription());
+            this.btnChangeKeyBinding = new GuiButton(0, 0, 0, 95, 20, I18n.format(name.getKeyDescription()));
+            this.btnReset = new GuiButton(0, 0, 0, 50, 20, I18n.format("controls.reset"));
         }
 
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks)
         {
             boolean flag = GuiKeyBindingList.this.controlsScreen.buttonId == this.keybinding;
-            GuiKeyBindingList.this.mc.fontRendererObj.drawString(this.keyDesc, x + 90 - GuiKeyBindingList.this.maxListLabelWidth, y + slotHeight / 2 - GuiKeyBindingList.this.mc.fontRendererObj.FONT_HEIGHT / 2, 16777215);
-            this.btnReset.xPosition = x + 210;
-            this.btnReset.yPosition = y;
+            GuiKeyBindingList.this.mc.fontRenderer.drawString(this.keyDesc, x + 90 - GuiKeyBindingList.this.maxListLabelWidth, y + slotHeight / 2 - GuiKeyBindingList.this.mc.fontRenderer.FONT_HEIGHT / 2, 16777215);
+            this.btnReset.x = x + 210;
+            this.btnReset.y = y;
             this.btnReset.enabled = !this.keybinding.isSetToDefaultValue();
-            this.btnReset.drawButton(GuiKeyBindingList.this.mc, mouseX, mouseY);
-            this.btnChangeKeyBinding.xPosition = x + 105;
-            this.btnChangeKeyBinding.yPosition = y;
+            this.btnReset.drawButton(GuiKeyBindingList.this.mc, mouseX, mouseY, partialTicks);
+            this.btnChangeKeyBinding.x = x + 105;
+            this.btnChangeKeyBinding.y = y;
             this.btnChangeKeyBinding.displayString = this.keybinding.getDisplayName();
             boolean flag1 = false;
             boolean keyCodeModifierConflict = true; // less severe form of conflict, like SHIFT conflicting with SHIFT+G
@@ -167,7 +167,7 @@ public class GuiKeyBindingList extends GuiListExtended
                 this.btnChangeKeyBinding.displayString = (keyCodeModifierConflict ? TextFormatting.GOLD : TextFormatting.RED) + this.btnChangeKeyBinding.displayString;
             }
 
-            this.btnChangeKeyBinding.drawButton(GuiKeyBindingList.this.mc, mouseX, mouseY);
+            this.btnChangeKeyBinding.drawButton(GuiKeyBindingList.this.mc, mouseX, mouseY, partialTicks);
         }
 
         /**
@@ -203,7 +203,7 @@ public class GuiKeyBindingList extends GuiListExtended
             this.btnReset.mouseReleased(x, y);
         }
 
-        public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_)
+        public void updatePosition(int slotIndex, int x, int y, float partialTicks)
         {
         }
     }

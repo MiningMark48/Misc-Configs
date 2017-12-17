@@ -16,15 +16,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class RenderShulker extends RenderLiving<EntityShulker>
 {
-    private static final ResourceLocation SHULKER_ENDERGOLEM_TEXTURE = new ResourceLocation("textures/entity/shulker/endergolem.png");
-    private int modelVersion;
+    public static final ResourceLocation[] SHULKER_ENDERGOLEM_TEXTURE = new ResourceLocation[] {new ResourceLocation("textures/entity/shulker/shulker_white.png"), new ResourceLocation("textures/entity/shulker/shulker_orange.png"), new ResourceLocation("textures/entity/shulker/shulker_magenta.png"), new ResourceLocation("textures/entity/shulker/shulker_light_blue.png"), new ResourceLocation("textures/entity/shulker/shulker_yellow.png"), new ResourceLocation("textures/entity/shulker/shulker_lime.png"), new ResourceLocation("textures/entity/shulker/shulker_pink.png"), new ResourceLocation("textures/entity/shulker/shulker_gray.png"), new ResourceLocation("textures/entity/shulker/shulker_silver.png"), new ResourceLocation("textures/entity/shulker/shulker_cyan.png"), new ResourceLocation("textures/entity/shulker/shulker_purple.png"), new ResourceLocation("textures/entity/shulker/shulker_blue.png"), new ResourceLocation("textures/entity/shulker/shulker_brown.png"), new ResourceLocation("textures/entity/shulker/shulker_green.png"), new ResourceLocation("textures/entity/shulker/shulker_red.png"), new ResourceLocation("textures/entity/shulker/shulker_black.png")};
 
-    public RenderShulker(RenderManager manager, ModelShulker p_i46550_2_)
+    public RenderShulker(RenderManager p_i47194_1_)
     {
-        super(manager, p_i46550_2_, 0.0F);
+        super(p_i47194_1_, new ModelShulker(), 0.0F);
         this.addLayer(new RenderShulker.HeadLayer());
-        this.modelVersion = p_i46550_2_.getModelVersion();
-        this.shadowSize = 0.0F;
+    }
+
+    public ModelShulker getMainModel()
+    {
+        return (ModelShulker)super.getMainModel();
     }
 
     /**
@@ -32,12 +34,6 @@ public class RenderShulker extends RenderLiving<EntityShulker>
      */
     public void doRender(EntityShulker entity, double x, double y, double z, float entityYaw, float partialTicks)
     {
-        if (this.modelVersion != ((ModelShulker)this.mainModel).getModelVersion())
-        {
-            this.mainModel = new ModelShulker();
-            this.modelVersion = ((ModelShulker)this.mainModel).getModelVersion();
-        }
-
         int i = entity.getClientTeleportInterp();
 
         if (i > 0 && entity.isAttachedToBlock())
@@ -72,7 +68,7 @@ public class RenderShulker extends RenderLiving<EntityShulker>
                 Vec3d vec3d = new Vec3d((double)blockpos1.getX(), (double)blockpos1.getY(), (double)blockpos1.getZ());
                 Vec3d vec3d1 = new Vec3d((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ());
 
-                if (camera.isBoundingBoxInFrustum(new AxisAlignedBB(vec3d1.xCoord, vec3d1.yCoord, vec3d1.zCoord, vec3d.xCoord, vec3d.yCoord, vec3d.zCoord)))
+                if (camera.isBoundingBoxInFrustum(new AxisAlignedBB(vec3d1.x, vec3d1.y, vec3d1.z, vec3d.x, vec3d.y, vec3d.z)))
                 {
                     return true;
                 }
@@ -87,12 +83,12 @@ public class RenderShulker extends RenderLiving<EntityShulker>
      */
     protected ResourceLocation getEntityTexture(EntityShulker entity)
     {
-        return SHULKER_ENDERGOLEM_TEXTURE;
+        return SHULKER_ENDERGOLEM_TEXTURE[entity.getColor().getMetadata()];
     }
 
-    protected void rotateCorpse(EntityShulker entityLiving, float p_77043_2_, float p_77043_3_, float partialTicks)
+    protected void applyRotations(EntityShulker entityLiving, float p_77043_2_, float rotationYaw, float partialTicks)
     {
-        super.rotateCorpse(entityLiving, p_77043_2_, p_77043_3_, partialTicks);
+        super.applyRotations(entityLiving, p_77043_2_, rotationYaw, partialTicks);
 
         switch (entityLiving.getAttachmentFacing())
         {
@@ -175,10 +171,10 @@ public class RenderShulker extends RenderLiving<EntityShulker>
                     GlStateManager.translate(0.0F, -2.0F, 0.0F);
             }
 
-            ModelRenderer modelrenderer = ((ModelShulker)RenderShulker.this.getMainModel()).head;
+            ModelRenderer modelrenderer = RenderShulker.this.getMainModel().head;
             modelrenderer.rotateAngleY = netHeadYaw * 0.017453292F;
             modelrenderer.rotateAngleX = headPitch * 0.017453292F;
-            RenderShulker.this.bindTexture(RenderShulker.SHULKER_ENDERGOLEM_TEXTURE);
+            RenderShulker.this.bindTexture(RenderShulker.SHULKER_ENDERGOLEM_TEXTURE[entitylivingbaseIn.getColor().getMetadata()]);
             modelrenderer.render(scale);
             GlStateManager.popMatrix();
         }

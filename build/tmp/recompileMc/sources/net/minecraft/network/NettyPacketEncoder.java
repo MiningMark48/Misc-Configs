@@ -22,29 +22,38 @@ public class NettyPacketEncoder extends MessageToByteEncoder < Packet<? >>
 
     protected void encode(ChannelHandlerContext p_encode_1_, Packet<?> p_encode_2_, ByteBuf p_encode_3_) throws IOException, Exception
     {
-        Integer integer = ((EnumConnectionState)p_encode_1_.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get()).getPacketId(this.direction, p_encode_2_);
+        EnumConnectionState enumconnectionstate = (EnumConnectionState)p_encode_1_.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get();
 
-        if (LOGGER.isDebugEnabled())
+        if (enumconnectionstate == null)
         {
-            LOGGER.debug(RECEIVED_PACKET_MARKER, "OUT: [{}:{}] {}", new Object[] {p_encode_1_.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get(), integer, p_encode_2_.getClass().getName()});
-        }
-
-        if (integer == null)
-        {
-            throw new IOException("Can\'t serialize unregistered packet");
+            throw new RuntimeException("ConnectionProtocol unknown: " + p_encode_2_.toString());
         }
         else
         {
-            PacketBuffer packetbuffer = new PacketBuffer(p_encode_3_);
-            packetbuffer.writeVarIntToBuffer(integer.intValue());
+            Integer integer = enumconnectionstate.getPacketId(this.direction, p_encode_2_);
 
-            try
+            if (LOGGER.isDebugEnabled())
             {
-                p_encode_2_.writePacketData(packetbuffer);
+                LOGGER.debug(RECEIVED_PACKET_MARKER, "OUT: [{}:{}] {}", p_encode_1_.channel().attr(NetworkManager.PROTOCOL_ATTRIBUTE_KEY).get(), integer, p_encode_2_.getClass().getName());
             }
-            catch (Throwable throwable)
+
+            if (integer == null)
             {
-                LOGGER.error((Object)throwable);
+                throw new IOException("Can't serialize unregistered packet");
+            }
+            else
+            {
+                PacketBuffer packetbuffer = new PacketBuffer(p_encode_3_);
+                packetbuffer.writeVarInt(integer.intValue());
+
+                try
+                {
+                    p_encode_2_.writePacketData(packetbuffer);
+                }
+                catch (Throwable throwable)
+                {
+                    throw throwable; // Forge: throw this instead of logging it, to prevent corrupt packets from being sent to the client where they are much harder to debug.
+                }
             }
         }
     }

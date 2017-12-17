@@ -1,8 +1,7 @@
 package net.minecraft.world.gen;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import java.util.Random;
-import net.minecraft.block.BlockSand;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -94,12 +93,12 @@ public class MapGenCaves extends MapGenBase
 
                 if (p_180702_6_ >= d0 - 16.0D - d2 * 2.0D && p_180702_10_ >= d1 - 16.0D - d2 * 2.0D && p_180702_6_ <= d0 + 16.0D + d2 * 2.0D && p_180702_10_ <= d1 + 16.0D + d2 * 2.0D)
                 {
-                    int k2 = MathHelper.floor_double(p_180702_6_ - d2) - p_180702_3_ * 16 - 1;
-                    int k = MathHelper.floor_double(p_180702_6_ + d2) - p_180702_3_ * 16 + 1;
-                    int l2 = MathHelper.floor_double(p_180702_8_ - d3) - 1;
-                    int l = MathHelper.floor_double(p_180702_8_ + d3) + 1;
-                    int i3 = MathHelper.floor_double(p_180702_10_ - d2) - p_180702_4_ * 16 - 1;
-                    int i1 = MathHelper.floor_double(p_180702_10_ + d2) - p_180702_4_ * 16 + 1;
+                    int k2 = MathHelper.floor(p_180702_6_ - d2) - p_180702_3_ * 16 - 1;
+                    int k = MathHelper.floor(p_180702_6_ + d2) - p_180702_3_ * 16 + 1;
+                    int l2 = MathHelper.floor(p_180702_8_ - d3) - 1;
+                    int l = MathHelper.floor(p_180702_8_ + d3) + 1;
+                    int i3 = MathHelper.floor(p_180702_10_ - d2) - p_180702_4_ * 16 - 1;
+                    int i1 = MathHelper.floor(p_180702_10_ + d2) - p_180702_4_ * 16 + 1;
 
                     if (k2 < 0)
                     {
@@ -177,7 +176,7 @@ public class MapGenCaves extends MapGenBase
                                         if (d9 > -0.7D && d10 * d10 + d9 * d9 + d8 * d8 < 1.0D)
                                         {
                                             IBlockState iblockstate1 = p_180702_5_.getBlockState(j3, j2, i2);
-                                            IBlockState iblockstate2 = (IBlockState)Objects.firstNonNull(p_180702_5_.getBlockState(j3, j2 + 1, i2), BLK_AIR);
+                                            IBlockState iblockstate2 = (IBlockState)MoreObjects.firstNonNull(p_180702_5_.getBlockState(j3, j2 + 1, i2), BLK_AIR);
 
                                             if (isTopBlock(p_180702_5_, j3, j2, i2, p_180702_3_, p_180702_4_))
                                             {
@@ -203,13 +202,52 @@ public class MapGenCaves extends MapGenBase
 
     protected boolean canReplaceBlock(IBlockState p_175793_1_, IBlockState p_175793_2_)
     {
-        return p_175793_1_.getBlock() == Blocks.STONE ? true : (p_175793_1_.getBlock() == Blocks.DIRT ? true : (p_175793_1_.getBlock() == Blocks.GRASS ? true : (p_175793_1_.getBlock() == Blocks.HARDENED_CLAY ? true : (p_175793_1_.getBlock() == Blocks.STAINED_HARDENED_CLAY ? true : (p_175793_1_.getBlock() == Blocks.SANDSTONE ? true : (p_175793_1_.getBlock() == Blocks.RED_SANDSTONE ? true : (p_175793_1_.getBlock() == Blocks.MYCELIUM ? true : (p_175793_1_.getBlock() == Blocks.SNOW_LAYER ? true : (p_175793_1_.getBlock() == Blocks.SAND || p_175793_1_.getBlock() == Blocks.GRAVEL) && p_175793_2_.getMaterial() != Material.WATER))))))));
+        if (p_175793_1_.getBlock() == Blocks.STONE)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.DIRT)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.GRASS)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.HARDENED_CLAY)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.STAINED_HARDENED_CLAY)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.SANDSTONE)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.RED_SANDSTONE)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.MYCELIUM)
+        {
+            return true;
+        }
+        else if (p_175793_1_.getBlock() == Blocks.SNOW_LAYER)
+        {
+            return true;
+        }
+        else
+        {
+            return (p_175793_1_.getBlock() == Blocks.SAND || p_175793_1_.getBlock() == Blocks.GRAVEL) && p_175793_2_.getMaterial() != Material.WATER;
+        }
     }
 
     /**
      * Recursively called by generate()
      */
-    protected void recursiveGenerate(World worldIn, int chunkX, int chunkZ, int p_180701_4_, int p_180701_5_, ChunkPrimer chunkPrimerIn)
+    protected void recursiveGenerate(World worldIn, int chunkX, int chunkZ, int originalX, int originalZ, ChunkPrimer chunkPrimerIn)
     {
         int i = this.rand.nextInt(this.rand.nextInt(this.rand.nextInt(15) + 1) + 1);
 
@@ -227,7 +265,7 @@ public class MapGenCaves extends MapGenBase
 
             if (this.rand.nextInt(4) == 0)
             {
-                this.addRoom(this.rand.nextLong(), p_180701_4_, p_180701_5_, chunkPrimerIn, d0, d1, d2);
+                this.addRoom(this.rand.nextLong(), originalX, originalZ, chunkPrimerIn, d0, d1, d2);
                 k += this.rand.nextInt(4);
             }
 
@@ -242,7 +280,7 @@ public class MapGenCaves extends MapGenBase
                     f2 *= this.rand.nextFloat() * this.rand.nextFloat() * 3.0F + 1.0F;
                 }
 
-                this.addTunnel(this.rand.nextLong(), p_180701_4_, p_180701_5_, chunkPrimerIn, d0, d1, d2, f2, f, f1, 0, 0, 1.0D);
+                this.addTunnel(this.rand.nextLong(), originalX, originalZ, chunkPrimerIn, d0, d1, d2, f2, f, f1, 0, 0, 1.0D);
             }
         }
     }
@@ -265,7 +303,7 @@ public class MapGenCaves extends MapGenBase
     //Vanilla bugs to make sure that we generate the map the same way vanilla does.
     private boolean isTopBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ)
     {
-        net.minecraft.world.biome.Biome biome = worldObj.getBiomeGenForCoords(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState state = data.getBlockState(x, y, z);
         return (isExceptionBiome(biome) ? state.getBlock() == Blocks.GRASS : state.getBlock() == biome.topBlock);
     }
@@ -287,7 +325,7 @@ public class MapGenCaves extends MapGenBase
      */
     protected void digBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ, boolean foundTop, IBlockState state, IBlockState up)
     {
-        net.minecraft.world.biome.Biome biome = worldObj.getBiomeGenForCoords(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
+        net.minecraft.world.biome.Biome biome = world.getBiome(new BlockPos(x + chunkX * 16, 0, z + chunkZ * 16));
         IBlockState top = biome.topBlock;
         IBlockState filler = biome.fillerBlock;
 
@@ -300,11 +338,6 @@ public class MapGenCaves extends MapGenBase
             else
             {
                 data.setBlockState(x, y, z, BLK_AIR);
-
-                if (up.getBlock() == Blocks.SAND)
-                {
-                    data.setBlockState(x, y + 1, z, up.getValue(BlockSand.VARIANT) == BlockSand.EnumType.RED_SAND ? BLK_RED_SANDSTONE : BLK_SANDSTONE);
-                }
 
                 if (foundTop && data.getBlockState(x, y - 1, z).getBlock() == filler.getBlock())
                 {

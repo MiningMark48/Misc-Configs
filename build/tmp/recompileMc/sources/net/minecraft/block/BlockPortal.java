@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.BlockWorldState;
 import net.minecraft.block.state.IBlockState;
@@ -31,7 +32,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockPortal extends BlockBreakable
 {
-    public static final PropertyEnum<EnumFacing.Axis> AXIS = PropertyEnum.<EnumFacing.Axis>create("axis", EnumFacing.Axis.class, new EnumFacing.Axis[] {EnumFacing.Axis.X, EnumFacing.Axis.Z});
+    public static final PropertyEnum<EnumFacing.Axis> AXIS = PropertyEnum.<EnumFacing.Axis>create("axis", EnumFacing.Axis.class, EnumFacing.Axis.X, EnumFacing.Axis.Z);
     protected static final AxisAlignedBB X_AABB = new AxisAlignedBB(0.0D, 0.0D, 0.375D, 1.0D, 1.0D, 0.625D);
     protected static final AxisAlignedBB Z_AABB = new AxisAlignedBB(0.375D, 0.0D, 0.0D, 0.625D, 1.0D, 1.0D);
     protected static final AxisAlignedBB Y_AABB = new AxisAlignedBB(0.375D, 0.0D, 0.375D, 0.625D, 1.0D, 0.625D);
@@ -66,14 +67,14 @@ public class BlockPortal extends BlockBreakable
             int i = pos.getY();
             BlockPos blockpos;
 
-            for (blockpos = pos; !worldIn.getBlockState(blockpos).isFullyOpaque() && blockpos.getY() > 0; blockpos = blockpos.down())
+            for (blockpos = pos; !worldIn.getBlockState(blockpos).isTopSolid() && blockpos.getY() > 0; blockpos = blockpos.down())
             {
                 ;
             }
 
             if (i > 0 && !worldIn.getBlockState(blockpos.up()).isNormalCube())
             {
-                Entity entity = ItemMonsterPlacer.spawnCreature(worldIn, EntityList.getEntityStringFromClass(EntityPigZombie.class), (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 1.1D, (double)blockpos.getZ() + 0.5D);
+                Entity entity = ItemMonsterPlacer.spawnCreature(worldIn, EntityList.getKey(EntityPigZombie.class), (double)blockpos.getX() + 0.5D, (double)blockpos.getY() + 1.1D, (double)blockpos.getZ() + 0.5D);
 
                 if (entity != null)
                 {
@@ -84,14 +85,21 @@ public class BlockPortal extends BlockBreakable
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         return NULL_AABB;
     }
 
     public static int getMetaForAxis(EnumFacing.Axis axis)
     {
-        return axis == EnumFacing.Axis.X ? 1 : (axis == EnumFacing.Axis.Z ? 2 : 0);
+        if (axis == EnumFacing.Axis.X)
+        {
+            return 1;
+        }
+        else
+        {
+            return axis == EnumFacing.Axis.Z ? 2 : 0;
+        }
     }
 
     public boolean isFullCube(IBlockState state)
@@ -129,7 +137,7 @@ public class BlockPortal extends BlockBreakable
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         EnumFacing.Axis enumfacing$axis = (EnumFacing.Axis)state.getValue(AXIS);
 
@@ -185,7 +193,23 @@ public class BlockPortal extends BlockBreakable
         boolean flag3 = blockAccess.getBlockState(pos.south()).getBlock() == this && blockAccess.getBlockState(pos.south(2)).getBlock() != this;
         boolean flag4 = flag || flag1 || enumfacing$axis == EnumFacing.Axis.X;
         boolean flag5 = flag2 || flag3 || enumfacing$axis == EnumFacing.Axis.Z;
-        return flag4 && side == EnumFacing.WEST ? true : (flag4 && side == EnumFacing.EAST ? true : (flag5 && side == EnumFacing.NORTH ? true : flag5 && side == EnumFacing.SOUTH));
+
+        if (flag4 && side == EnumFacing.WEST)
+        {
+            return true;
+        }
+        else if (flag4 && side == EnumFacing.EAST)
+        {
+            return true;
+        }
+        else if (flag5 && side == EnumFacing.NORTH)
+        {
+            return true;
+        }
+        else
+        {
+            return flag5 && side == EnumFacing.SOUTH;
+        }
     }
 
     /**
@@ -207,10 +231,9 @@ public class BlockPortal extends BlockBreakable
         }
     }
 
-    @Nullable
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     /**
@@ -256,7 +279,7 @@ public class BlockPortal extends BlockBreakable
                 d5 = (double)(rand.nextFloat() * 2.0F * (float)j);
             }
 
-            worldIn.spawnParticle(EnumParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5, new int[0]);
+            worldIn.spawnParticle(EnumParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
         }
     }
 
@@ -353,13 +376,27 @@ public class BlockPortal extends BlockBreakable
         }
     }
 
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
+    }
+
     public static class Size
         {
             private final World world;
             private final EnumFacing.Axis axis;
             private final EnumFacing rightDir;
             private final EnumFacing leftDir;
-            private int portalBlockCount = 0;
+            private int portalBlockCount;
             private BlockPos bottomLeft;
             private int height;
             private int width;
@@ -435,7 +472,7 @@ public class BlockPortal extends BlockBreakable
 
             protected int calculatePortalHeight()
             {
-                label24:
+                label56:
 
                 for (this.height = 0; this.height < 21; ++this.height)
                 {
@@ -446,7 +483,7 @@ public class BlockPortal extends BlockBreakable
 
                         if (!this.isEmptyBlock(block))
                         {
-                            break label24;
+                            break label56;
                         }
 
                         if (block == Blocks.PORTAL)
@@ -460,7 +497,7 @@ public class BlockPortal extends BlockBreakable
 
                             if (block != Blocks.OBSIDIAN)
                             {
-                                break label24;
+                                break label56;
                             }
                         }
                         else if (i == this.width - 1)
@@ -469,7 +506,7 @@ public class BlockPortal extends BlockBreakable
 
                             if (block != Blocks.OBSIDIAN)
                             {
-                                break label24;
+                                break label56;
                             }
                         }
                     }

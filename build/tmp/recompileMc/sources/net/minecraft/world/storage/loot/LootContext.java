@@ -15,7 +15,7 @@ import net.minecraft.world.WorldServer;
 public class LootContext
 {
     private final float luck;
-    private final WorldServer worldObj;
+    private final WorldServer world;
     private final LootTableManager lootTableManager;
     @Nullable
     private final Entity lootedEntity;
@@ -28,7 +28,7 @@ public class LootContext
     public LootContext(float luckIn, WorldServer worldIn, LootTableManager lootTableManagerIn, @Nullable Entity lootedEntityIn, @Nullable EntityPlayer playerIn, @Nullable DamageSource damageSourceIn)
     {
         this.luck = luckIn;
-        this.worldObj = worldIn;
+        this.world = worldIn;
         this.lootTableManager = lootTableManagerIn;
         this.lootedEntity = lootedEntityIn;
         this.player = playerIn;
@@ -50,7 +50,7 @@ public class LootContext
     @Nullable
     public Entity getKiller()
     {
-        return this.damageSource == null ? null : this.damageSource.getEntity();
+        return this.damageSource == null ? null : this.damageSource.getTrueSource();
     }
 
     public boolean addLootTable(LootTable lootTableIn)
@@ -91,12 +91,17 @@ public class LootContext
 
     public WorldServer getWorld()
     {
-        return worldObj;
+        return world;
+    }
+
+    public int getLootingModifier()
+    {
+        return net.minecraftforge.common.ForgeHooks.getLootingLevel(getLootedEntity(), getKiller(), damageSource);
     }
 
     public static class Builder
         {
-            private final WorldServer worldObj;
+            private final WorldServer world;
             private float luck;
             private Entity lootedEntity;
             private EntityPlayer player;
@@ -104,7 +109,7 @@ public class LootContext
 
             public Builder(WorldServer worldIn)
             {
-                this.worldObj = worldIn;
+                this.world = worldIn;
             }
 
             public LootContext.Builder withLuck(float luckIn)
@@ -133,7 +138,7 @@ public class LootContext
 
             public LootContext build()
             {
-                return new LootContext(this.luck, this.worldObj, this.worldObj.getLootTableManager(), this.lootedEntity, this.player, this.damageSource);
+                return new LootContext(this.luck, this.world, this.world.getLootTableManager(), this.lootedEntity, this.player, this.damageSource);
             }
         }
 

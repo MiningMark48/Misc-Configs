@@ -23,18 +23,25 @@ public class Smelt extends LootFunction
 
     public ItemStack apply(ItemStack stack, Random rand, LootContext context)
     {
-        ItemStack itemstack = FurnaceRecipes.instance().getSmeltingResult(stack);
-
-        if (itemstack == null)
+        if (stack.isEmpty())
         {
-            LOGGER.warn("Couldn\'t smelt " + stack + " because there is no smelting recipe");
             return stack;
         }
         else
         {
-            ItemStack itemstack1 = itemstack.copy();
-            itemstack1.stackSize = stack.stackSize;
-            return itemstack1;
+            ItemStack itemstack = FurnaceRecipes.instance().getSmeltingResult(stack);
+
+            if (itemstack.isEmpty())
+            {
+                LOGGER.warn("Couldn't smelt {} because there is no smelting recipe", (Object)stack);
+                return stack;
+            }
+            else
+            {
+                ItemStack itemstack1 = itemstack.copy();
+                itemstack1.setCount(stack.getCount());
+                return itemstack1;
+            }
         }
     }
 

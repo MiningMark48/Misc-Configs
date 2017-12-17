@@ -5,7 +5,6 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,14 +23,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockRedstoneTorch extends BlockTorch
 {
-    private static Map<World, List<BlockRedstoneTorch.Toggle>> toggles = Maps.<World, List<BlockRedstoneTorch.Toggle>>newHashMap();
+    private static final Map<World, List<BlockRedstoneTorch.Toggle>> toggles = new java.util.WeakHashMap<World, List<Toggle>>(); // FORGE - fix vanilla MC-101233
     private final boolean isOn;
 
     private boolean isBurnedOut(World worldIn, BlockPos pos, boolean turnOff)
     {
         if (!toggles.containsKey(worldIn))
         {
-            toggles.put(worldIn, Lists.<BlockRedstoneTorch.Toggle>newArrayList());
+            toggles.put(worldIn, Lists.newArrayList());
         }
 
         List<BlockRedstoneTorch.Toggle> list = (List)toggles.get(worldIn);
@@ -45,7 +44,7 @@ public class BlockRedstoneTorch extends BlockTorch
 
         for (int j = 0; j < list.size(); ++j)
         {
-            BlockRedstoneTorch.Toggle blockredstonetorch$toggle = (BlockRedstoneTorch.Toggle)list.get(j);
+            BlockRedstoneTorch.Toggle blockredstonetorch$toggle = list.get(j);
 
             if (blockredstonetorch$toggle.pos.equals(pos))
             {
@@ -76,24 +75,30 @@ public class BlockRedstoneTorch extends BlockTorch
         return 2;
     }
 
+    /**
+     * Called after the block is set in the Chunk data, but before the Tile Entity is set
+     */
     public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state)
     {
         if (this.isOn)
         {
             for (EnumFacing enumfacing : EnumFacing.values())
             {
-                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this);
+                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this, false);
             }
         }
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         if (this.isOn)
         {
             for (EnumFacing enumfacing : EnumFacing.values())
             {
-                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this);
+                worldIn.notifyNeighborsOfStateChange(pos.offset(enumfacing), this, false);
             }
         }
     }
@@ -121,7 +126,7 @@ public class BlockRedstoneTorch extends BlockTorch
         boolean flag = this.shouldBeOff(worldIn, pos, state);
         List<BlockRedstoneTorch.Toggle> list = (List)toggles.get(worldIn);
 
-        while (list != null && !list.isEmpty() && worldIn.getTotalWorldTime() - ((BlockRedstoneTorch.Toggle)list.get(0)).time > 60L)
+        while (list != null && !list.isEmpty() && worldIn.getTotalWorldTime() - (list.get(0)).time > 60L)
         {
             list.remove(0);
         }
@@ -141,7 +146,7 @@ public class BlockRedstoneTorch extends BlockTorch
                         double d0 = (double)pos.getX() + rand.nextDouble() * 0.6D + 0.2D;
                         double d1 = (double)pos.getY() + rand.nextDouble() * 0.6D + 0.2D;
                         double d2 = (double)pos.getZ() + rand.nextDouble() * 0.6D + 0.2D;
-                        worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D, new int[0]);
+                        worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D);
                     }
 
                     worldIn.scheduleUpdate(pos, worldIn.getBlockState(pos).getBlock(), 160);
@@ -159,7 +164,7 @@ public class BlockRedstoneTorch extends BlockTorch
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (!this.onNeighborChangeInternal(worldIn, pos, state))
         {
@@ -178,7 +183,6 @@ public class BlockRedstoneTorch extends BlockTorch
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return Item.getItemFromBlock(Blocks.REDSTONE_TORCH);
@@ -211,7 +215,7 @@ public class BlockRedstoneTorch extends BlockTorch
                 d2 += 0.27D * (double)enumfacing1.getFrontOffsetZ();
             }
 
-            worldIn.spawnParticle(EnumParticleTypes.REDSTONE, d0, d1, d2, 0.0D, 0.0D, 0.0D, new int[0]);
+            worldIn.spawnParticle(EnumParticleTypes.REDSTONE, d0, d1, d2, 0.0D, 0.0D, 0.0D);
         }
     }
 

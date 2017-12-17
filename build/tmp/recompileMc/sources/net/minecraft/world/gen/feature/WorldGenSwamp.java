@@ -153,22 +153,22 @@ public class WorldGenSwamp extends WorldGenAbstractTree
                                     BlockPos blockpos1 = blockpos$mutableblockpos1.north();
                                     BlockPos blockpos2 = blockpos$mutableblockpos1.south();
 
-                                    if (rand.nextInt(4) == 0 && isAir(worldIn, blockpos3))
+                                    if (rand.nextInt(4) == 0 && worldIn.isAirBlock(blockpos3))
                                     {
                                         this.addVine(worldIn, blockpos3, BlockVine.EAST);
                                     }
 
-                                    if (rand.nextInt(4) == 0 && isAir(worldIn, blockpos4))
+                                    if (rand.nextInt(4) == 0 && worldIn.isAirBlock(blockpos4))
                                     {
                                         this.addVine(worldIn, blockpos4, BlockVine.WEST);
                                     }
 
-                                    if (rand.nextInt(4) == 0 && isAir(worldIn, blockpos1))
+                                    if (rand.nextInt(4) == 0 && worldIn.isAirBlock(blockpos1))
                                     {
                                         this.addVine(worldIn, blockpos1, BlockVine.SOUTH);
                                     }
 
-                                    if (rand.nextInt(4) == 0 && isAir(worldIn, blockpos2))
+                                    if (rand.nextInt(4) == 0 && worldIn.isAirBlock(blockpos2))
                                     {
                                         this.addVine(worldIn, blockpos2, BlockVine.NORTH);
                                     }
@@ -197,16 +197,10 @@ public class WorldGenSwamp extends WorldGenAbstractTree
         this.setBlockAndNotifyAdequately(worldIn, pos, iblockstate);
         int i = 4;
 
-        for (pos = pos.down(); isAir(worldIn, pos) && i > 0; --i)
+        for (BlockPos blockpos = pos.down(); worldIn.isAirBlock(blockpos) && i > 0; --i)
         {
-            this.setBlockAndNotifyAdequately(worldIn, pos, iblockstate);
-            pos = pos.down();
+            this.setBlockAndNotifyAdequately(worldIn, blockpos, iblockstate);
+            blockpos = blockpos.down();
         }
-    }
-
-    private boolean isAir(World world, BlockPos pos)
-    {
-        IBlockState state = world.getBlockState(pos);
-        return state.getBlock().isAir(state, world, pos);
     }
 }

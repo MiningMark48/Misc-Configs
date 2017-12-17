@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common;
 
 import java.lang.reflect.Field;
@@ -55,7 +74,7 @@ public interface ILanguageAdapter {
             catch (ClassNotFoundException e)
             {
                 // Not a singleton, look for @Instance field as a fallback.
-                FMLLog.log(Level.INFO, e, "An error occurred trying to load a proxy into %s.%s. Did you declare your mod as 'class' instead of 'object'?", proxyTarget.getSimpleName(), target.getName());
+                FMLLog.log.info("An error occurred trying to load a proxy into {}.{}. Did you declare your mod as 'class' instead of 'object'?", proxyTarget.getSimpleName(), target.getName(), e);
                 return;
             }
 
@@ -91,12 +110,12 @@ public interface ILanguageAdapter {
             }
             catch (InvocationTargetException e)
             {
-                FMLLog.log(Level.ERROR, e, "An error occurred trying to load a proxy into %s.%s", proxyTarget.getSimpleName(), target.getName());
+                FMLLog.log.error("An error occurred trying to load a proxy into {}.{}", target.getName(), e);
                 throw new LoaderException(e);
             }
 
             // If we come here we could not find a setter for this proxy.
-            FMLLog.severe("Failed loading proxy into %s.%s, could not find setter function. Did you declare the field with 'val' instead of 'var'?", proxyTarget.getSimpleName(), target.getName());
+            FMLLog.log.fatal("Failed loading proxy into {}.{}, could not find setter function. Did you declare the field with 'val' instead of 'var'?", proxyTarget.getSimpleName(), target.getName());
             throw new LoaderException(String.format("Failed loading proxy into %s.%s, could not find setter function. Did you declare the field with 'val' instead of 'var'?", proxyTarget.getSimpleName(), target.getName()));
         }
 
@@ -141,14 +160,14 @@ public interface ILanguageAdapter {
 
                             if (!target.getType().isAssignableFrom(proxy.getClass()))
                             {
-                                FMLLog.severe("Attempted to load a proxy type %s into %s.%s, but the types don't match", targetType, proxyTarget.getSimpleName(), target.getName());
+                                FMLLog.log.fatal("Attempted to load a proxy type {} into {}.{}, but the types don't match", targetType, proxyTarget.getSimpleName(), target.getName());
                                 throw new LoaderException(String.format("Attempted to load a proxy type %s into %s.%s, but the types don't match", targetType, proxyTarget.getSimpleName(), target.getName()));
                             }
 
                             setProxy(target, proxyTarget, proxy);
                         }
                         catch (Exception e) {
-                            FMLLog.log(Level.ERROR, e, "An error occurred trying to load a proxy into %s.%s", proxyTarget.getSimpleName(), target.getName());
+                            FMLLog.log.error("An error occurred trying to load a proxy into {}.{}", target.getName(), e);
                             throw new LoaderException(e);
                         }
                     }
@@ -156,7 +175,7 @@ public interface ILanguageAdapter {
             }
             else
             {
-                FMLLog.finer("Mod does not appear to be a singleton.");
+                FMLLog.log.trace("Mod does not appear to be a singleton.");
             }
         }
     }

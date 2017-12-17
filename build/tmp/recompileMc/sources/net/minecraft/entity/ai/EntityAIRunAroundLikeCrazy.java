@@ -1,19 +1,19 @@
 package net.minecraft.entity.ai;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.passive.EntityHorse;
+import net.minecraft.entity.passive.AbstractHorse;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.Vec3d;
 
 public class EntityAIRunAroundLikeCrazy extends EntityAIBase
 {
-    private EntityHorse horseHost;
-    private double speed;
+    private final AbstractHorse horseHost;
+    private final double speed;
     private double targetX;
     private double targetY;
     private double targetZ;
 
-    public EntityAIRunAroundLikeCrazy(EntityHorse horse, double speedIn)
+    public EntityAIRunAroundLikeCrazy(AbstractHorse horse, double speedIn)
     {
         this.horseHost = horse;
         this.speed = speedIn;
@@ -35,9 +35,9 @@ public class EntityAIRunAroundLikeCrazy extends EntityAIBase
             }
             else
             {
-                this.targetX = vec3d.xCoord;
-                this.targetY = vec3d.yCoord;
-                this.targetZ = vec3d.zCoord;
+                this.targetX = vec3d.x;
+                this.targetY = vec3d.y;
+                this.targetZ = vec3d.z;
                 return true;
             }
         }
@@ -58,17 +58,17 @@ public class EntityAIRunAroundLikeCrazy extends EntityAIBase
     /**
      * Returns whether an in-progress EntityAIBase should continue executing
      */
-    public boolean continueExecuting()
+    public boolean shouldContinueExecuting()
     {
-        return !this.horseHost.getNavigator().noPath() && this.horseHost.isBeingRidden();
+        return !this.horseHost.isTame() && !this.horseHost.getNavigator().noPath() && this.horseHost.isBeingRidden();
     }
 
     /**
-     * Updates the task
+     * Keep ticking a continuous task that has already been started
      */
     public void updateTask()
     {
-        if (this.horseHost.getRNG().nextInt(50) == 0)
+        if (!this.horseHost.isTame() && this.horseHost.getRNG().nextInt(50) == 0)
         {
             Entity entity = (Entity)this.horseHost.getPassengers().get(0);
 
@@ -82,10 +82,9 @@ public class EntityAIRunAroundLikeCrazy extends EntityAIBase
                 int i = this.horseHost.getTemper();
                 int j = this.horseHost.getMaxTemper();
 
-                if (j > 0 && this.horseHost.getRNG().nextInt(j) < i)
+                if (j > 0 && this.horseHost.getRNG().nextInt(j) < i && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(horseHost, (EntityPlayer)entity))
                 {
                     this.horseHost.setTamedBy((EntityPlayer)entity);
-                    this.horseHost.worldObj.setEntityState(this.horseHost, (byte)7);
                     return;
                 }
 
@@ -93,8 +92,8 @@ public class EntityAIRunAroundLikeCrazy extends EntityAIBase
             }
 
             this.horseHost.removePassengers();
-            this.horseHost.makeHorseRearWithSound();
-            this.horseHost.worldObj.setEntityState(this.horseHost, (byte)6);
+            this.horseHost.makeMad();
+            this.horseHost.world.setEntityState(this.horseHost, (byte)6);
         }
     }
 }

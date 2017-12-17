@@ -42,7 +42,7 @@ public class ModelMagmaCube extends ModelBase
      * Used for easily adding entity-dependent animations. The second and third float params here are the same second
      * and third as in the setRotationAngles method.
      */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
+    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
     {
         EntityMagmaCube entitymagmacube = (EntityMagmaCube)entitylivingbaseIn;
         float f = entitymagmacube.prevSquishFactor + (entitymagmacube.squishFactor - entitymagmacube.prevSquishFactor) * partialTickTime;
@@ -66,9 +66,9 @@ public class ModelMagmaCube extends ModelBase
         this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
         this.core.render(scale);
 
-        for (int i = 0; i < this.segments.length; ++i)
+        for (ModelRenderer modelrenderer : this.segments)
         {
-            this.segments[i].render(scale);
+            modelrenderer.render(scale);
         }
     }
 }

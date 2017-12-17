@@ -17,15 +17,18 @@ import net.minecraft.util.text.TextFormatting;
 
 public class CommandMessage extends CommandBase
 {
-    public List<String> getCommandAliases()
+    /**
+     * Get a list of aliases for this command. <b>Never return null!</b>
+     */
+    public List<String> getAliases()
     {
-        return Arrays.<String>asList(new String[] {"w", "msg"});
+        return Arrays.<String>asList("w", "msg");
     }
 
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "tell";
     }
@@ -41,7 +44,7 @@ public class CommandMessage extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.message.usage";
     }
@@ -61,7 +64,7 @@ public class CommandMessage extends CommandBase
 
             if (entityplayer == sender)
             {
-                throw new PlayerNotFoundException("commands.message.sameTarget", new Object[0]);
+                throw new PlayerNotFoundException("commands.message.sameTarget");
             }
             else
             {
@@ -70,19 +73,18 @@ public class CommandMessage extends CommandBase
                 TextComponentTranslation textcomponenttranslation1 = new TextComponentTranslation("commands.message.display.outgoing", new Object[] {entityplayer.getDisplayName(), itextcomponent.createCopy()});
                 textcomponenttranslation.getStyle().setColor(TextFormatting.GRAY).setItalic(Boolean.valueOf(true));
                 textcomponenttranslation1.getStyle().setColor(TextFormatting.GRAY).setItalic(Boolean.valueOf(true));
-                entityplayer.addChatMessage(textcomponenttranslation);
-                sender.addChatMessage(textcomponenttranslation1);
+                entityplayer.sendMessage(textcomponenttranslation);
+                sender.sendMessage(textcomponenttranslation1);
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        /**
-         * Returns a List of strings (chosen from the given strings) which the last word in the given string array is a
-         * beginning-match for. (Tab completion).
-         */
-        return getListOfStringsMatchingLastWord(args, server.getAllUsernames());
+        return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
     }
 
     /**

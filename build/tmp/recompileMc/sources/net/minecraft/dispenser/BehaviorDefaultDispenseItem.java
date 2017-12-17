@@ -15,7 +15,7 @@ public class BehaviorDefaultDispenseItem implements IBehaviorDispenseItem
     {
         ItemStack itemstack = this.dispenseStack(source, stack);
         this.playDispenseSound(source);
-        this.spawnDispenseParticles(source, BlockDispenser.getFacing(source.getBlockMetadata()));
+        this.spawnDispenseParticles(source, (EnumFacing)source.getBlockState().getValue(BlockDispenser.FACING));
         return itemstack;
     }
 
@@ -24,7 +24,7 @@ public class BehaviorDefaultDispenseItem implements IBehaviorDispenseItem
      */
     protected ItemStack dispenseStack(IBlockSource source, ItemStack stack)
     {
-        EnumFacing enumfacing = BlockDispenser.getFacing(source.getBlockMetadata());
+        EnumFacing enumfacing = (EnumFacing)source.getBlockState().getValue(BlockDispenser.FACING);
         IPosition iposition = BlockDispenser.getDispensePosition(source);
         ItemStack itemstack = stack.splitStack(1);
         doDispense(source.getWorld(), itemstack, 6, enumfacing, iposition);
@@ -54,7 +54,7 @@ public class BehaviorDefaultDispenseItem implements IBehaviorDispenseItem
         entityitem.motionX += worldIn.rand.nextGaussian() * 0.007499999832361937D * (double)speed;
         entityitem.motionY += worldIn.rand.nextGaussian() * 0.007499999832361937D * (double)speed;
         entityitem.motionZ += worldIn.rand.nextGaussian() * 0.007499999832361937D * (double)speed;
-        worldIn.spawnEntityInWorld(entityitem);
+        worldIn.spawnEntity(entityitem);
     }
 
     /**

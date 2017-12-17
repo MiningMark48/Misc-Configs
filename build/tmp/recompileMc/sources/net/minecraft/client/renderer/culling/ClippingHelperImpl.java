@@ -10,10 +10,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ClippingHelperImpl extends ClippingHelper
 {
-    private static ClippingHelperImpl instance = new ClippingHelperImpl();
-    private FloatBuffer projectionMatrixBuffer = GLAllocation.createDirectFloatBuffer(16);
-    private FloatBuffer modelviewMatrixBuffer = GLAllocation.createDirectFloatBuffer(16);
-    private FloatBuffer floatBuffer16 = GLAllocation.createDirectFloatBuffer(16);
+    private static final ClippingHelperImpl instance = new ClippingHelperImpl();
+    private final FloatBuffer projectionMatrixBuffer = GLAllocation.createDirectFloatBuffer(16);
+    private final FloatBuffer modelviewMatrixBuffer = GLAllocation.createDirectFloatBuffer(16);
+    private final FloatBuffer floatBuffer16 = GLAllocation.createDirectFloatBuffer(16);
 
     /**
      * Initialises the ClippingHelper object then returns an instance of it.
@@ -26,7 +26,7 @@ public class ClippingHelperImpl extends ClippingHelper
 
     private void normalize(float[] p_180547_1_)
     {
-        float f = MathHelper.sqrt_float(p_180547_1_[0] * p_180547_1_[0] + p_180547_1_[1] * p_180547_1_[1] + p_180547_1_[2] * p_180547_1_[2]);
+        float f = MathHelper.sqrt(p_180547_1_[0] * p_180547_1_[0] + p_180547_1_[1] * p_180547_1_[1] + p_180547_1_[2] * p_180547_1_[2]);
         p_180547_1_[0] /= f;
         p_180547_1_[1] /= f;
         p_180547_1_[2] /= f;

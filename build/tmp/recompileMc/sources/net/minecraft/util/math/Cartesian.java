@@ -14,24 +14,33 @@ import javax.annotation.Nullable;
 
 public class Cartesian
 {
+    /**
+     * Create the cartesian product. This method returns an Iterable of arrays of type clazz.
+     */
     public static <T> Iterable<T[]> cartesianProduct(Class<T> clazz, Iterable <? extends Iterable <? extends T >> sets)
     {
         return new Cartesian.Product(clazz, (Iterable[])toArray(Iterable.class, sets));
     }
 
+    /**
+     * Like cartesianProduct(Class, Iterable) but returns an Iterable of Lists instead.
+     */
     public static <T> Iterable<List<T>> cartesianProduct(Iterable <? extends Iterable <? extends T >> sets)
     {
-        /**
-         * Convert an Iterable of Arrays (Object[]) to an Iterable of Lists
-         */
         return arraysAsLists(cartesianProduct(Object.class, sets));
     }
 
+    /**
+     * Convert an Iterable of Arrays (Object[]) to an Iterable of Lists
+     */
     private static <T> Iterable<List<T>> arraysAsLists(Iterable<Object[]> arrays)
     {
         return Iterables.transform(arrays, new Cartesian.GetList());
     }
 
+    /**
+     * Create a new Array of type clazz with the contents of the given Iterable
+     */
     private static <T> T[] toArray(Class <? super T > clazz, Iterable <? extends T > it)
     {
         List<T> list = Lists.<T>newArrayList();
@@ -41,12 +50,12 @@ public class Cartesian
             list.add(t);
         }
 
-        return (T[])((Object[])list.toArray(createArray(clazz, list.size())));
+        return (T[])(list.toArray(createArray(clazz, list.size())));
     }
 
     private static <T> T[] createArray(Class <? super T > elementType, int length)
     {
-        return (T[])((Object[])((Object[])Array.newInstance(elementType, length)));
+        return (T[])((Object[])Array.newInstance(elementType, length));
     }
 
     static class GetList<T> implements Function<Object[], List<T>>
@@ -74,7 +83,7 @@ public class Cartesian
 
             public Iterator<T[]> iterator()
             {
-                return (Iterator<T[]>)(this.iterables.length <= 0 ? Collections.singletonList((Object[])Cartesian.createArray(this.clazz, 0)).iterator() : new Cartesian.Product.ProductIterator(this.clazz, this.iterables));
+                return (Iterator<T[]>)(this.iterables.length <= 0 ? Collections.singletonList(Cartesian.createArray(this.clazz, 0)).iterator() : new Cartesian.Product.ProductIterator(this.clazz, this.iterables));
             }
 
             static class ProductIterator<T> extends UnmodifiableIterator<T[]>
@@ -96,7 +105,7 @@ public class Cartesian
                             this.iterators[i] = iterables[i].iterator();
                         }
 
-                        this.results = Cartesian.createArray(clazz, this.iterators.length);
+                        this.results = (T[])Cartesian.createArray(clazz, this.iterators.length);
                     }
 
                     /**

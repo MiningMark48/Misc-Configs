@@ -8,8 +8,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ModelDragonHead extends ModelBase
 {
-    private ModelRenderer head;
-    private ModelRenderer jaw;
+    private final ModelRenderer head;
+    private final ModelRenderer jaw;
 
     public ModelDragonHead(float p_i46588_1_)
     {
@@ -36,16 +36,16 @@ public class ModelDragonHead extends ModelBase
         this.setTextureOffset("head.nostril", 112, 0);
         float f = -16.0F;
         this.head = new ModelRenderer(this, "head");
-        this.head.addBox("upperlip", -6.0F, -1.0F, -8.0F + f, 12, 5, 16);
-        this.head.addBox("upperhead", -8.0F, -8.0F, 6.0F + f, 16, 16, 16);
+        this.head.addBox("upperlip", -6.0F, -1.0F, -24.0F, 12, 5, 16);
+        this.head.addBox("upperhead", -8.0F, -8.0F, -10.0F, 16, 16, 16);
         this.head.mirror = true;
-        this.head.addBox("scale", -5.0F, -12.0F, 12.0F + f, 2, 4, 6);
-        this.head.addBox("nostril", -5.0F, -3.0F, -6.0F + f, 2, 2, 4);
+        this.head.addBox("scale", -5.0F, -12.0F, -4.0F, 2, 4, 6);
+        this.head.addBox("nostril", -5.0F, -3.0F, -22.0F, 2, 2, 4);
         this.head.mirror = false;
-        this.head.addBox("scale", 3.0F, -12.0F, 12.0F + f, 2, 4, 6);
-        this.head.addBox("nostril", 3.0F, -3.0F, -6.0F + f, 2, 2, 4);
+        this.head.addBox("scale", 3.0F, -12.0F, -4.0F, 2, 4, 6);
+        this.head.addBox("nostril", 3.0F, -3.0F, -22.0F, 2, 2, 4);
         this.jaw = new ModelRenderer(this, "jaw");
-        this.jaw.setRotationPoint(0.0F, 4.0F, 8.0F + f);
+        this.jaw.setRotationPoint(0.0F, 4.0F, -8.0F);
         this.jaw.addBox("jaw", -6.0F, 0.0F, -16.0F, 12, 4, 16);
         this.head.addChild(this.jaw);
     }

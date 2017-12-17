@@ -39,16 +39,15 @@ public class GuiWorldEdit extends GuiScreen
     {
         Keyboard.enableRepeatEvents(true);
         this.buttonList.clear();
-        GuiButton guibutton;
-        this.buttonList.add(guibutton = new GuiButton(3, this.width / 2 - 100, this.height / 4 + 24 + 12, I18n.format("selectWorld.edit.resetIcon", new Object[0])));
-        this.buttonList.add(new GuiButton(4, this.width / 2 - 100, this.height / 4 + 48 + 12, I18n.format("selectWorld.edit.openFolder", new Object[0])));
-        this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 96 + 12, I18n.format("selectWorld.edit.save", new Object[0])));
-        this.buttonList.add(new GuiButton(1, this.width / 2 - 100, this.height / 4 + 120 + 12, I18n.format("gui.cancel", new Object[0])));
+        GuiButton guibutton = this.addButton(new GuiButton(3, this.width / 2 - 100, this.height / 4 + 24 + 12, I18n.format("selectWorld.edit.resetIcon")));
+        this.buttonList.add(new GuiButton(4, this.width / 2 - 100, this.height / 4 + 48 + 12, I18n.format("selectWorld.edit.openFolder")));
+        this.buttonList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 96 + 12, I18n.format("selectWorld.edit.save")));
+        this.buttonList.add(new GuiButton(1, this.width / 2 - 100, this.height / 4 + 120 + 12, I18n.format("gui.cancel")));
         guibutton.enabled = this.mc.getSaveLoader().getFile(this.worldId, "icon.png").isFile();
         ISaveFormat isaveformat = this.mc.getSaveLoader();
         WorldInfo worldinfo = isaveformat.getWorldInfo(this.worldId);
-        String s = worldinfo.getWorldName();
-        this.nameEdit = new GuiTextField(2, this.fontRendererObj, this.width / 2 - 100, 60, 200, 20);
+        String s = worldinfo == null ? "" : worldinfo.getWorldName();
+        this.nameEdit = new GuiTextField(2, this.fontRenderer, this.width / 2 - 100, 60, 200, 20);
         this.nameEdit.setFocused(true);
         this.nameEdit.setText(s);
     }
@@ -99,11 +98,11 @@ public class GuiWorldEdit extends GuiScreen
     protected void keyTyped(char typedChar, int keyCode) throws IOException
     {
         this.nameEdit.textboxKeyTyped(typedChar, keyCode);
-        ((GuiButton)this.buttonList.get(2)).enabled = !this.nameEdit.getText().trim().isEmpty();
+        (this.buttonList.get(2)).enabled = !this.nameEdit.getText().trim().isEmpty();
 
         if (keyCode == 28 || keyCode == 156)
         {
-            this.actionPerformed((GuiButton)this.buttonList.get(2));
+            this.actionPerformed(this.buttonList.get(2));
         }
     }
 
@@ -122,8 +121,8 @@ public class GuiWorldEdit extends GuiScreen
     public void drawScreen(int mouseX, int mouseY, float partialTicks)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, I18n.format("selectWorld.edit.title", new Object[0]), this.width / 2, 20, 16777215);
-        this.drawString(this.fontRendererObj, I18n.format("selectWorld.enterName", new Object[0]), this.width / 2 - 100, 47, 10526880);
+        this.drawCenteredString(this.fontRenderer, I18n.format("selectWorld.edit.title"), this.width / 2, 20, 16777215);
+        this.drawString(this.fontRenderer, I18n.format("selectWorld.enterName"), this.width / 2 - 100, 47, 10526880);
         this.nameEdit.drawTextBox();
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

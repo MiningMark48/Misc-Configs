@@ -1,6 +1,5 @@
 package net.minecraft.item;
 
-import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockOldLog;
 import net.minecraft.block.BlockPlanks;
@@ -16,6 +15,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -45,19 +45,21 @@ public class ItemDye extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        if (!playerIn.canPlayerEdit(pos.offset(facing), facing, stack))
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (!player.canPlayerEdit(pos.offset(facing), facing, itemstack))
         {
             return EnumActionResult.FAIL;
         }
         else
         {
-            EnumDyeColor enumdyecolor = EnumDyeColor.byDyeDamage(stack.getMetadata());
+            EnumDyeColor enumdyecolor = EnumDyeColor.byDyeDamage(itemstack.getMetadata());
 
             if (enumdyecolor == EnumDyeColor.WHITE)
             {
-                if (applyBonemeal(stack, worldIn, pos, playerIn))
+                if (applyBonemeal(itemstack, worldIn, pos, player, hand))
                 {
                     if (!worldIn.isRemote)
                     {
@@ -74,25 +76,25 @@ public class ItemDye extends Item
 
                 if (block == Blocks.LOG && iblockstate.getValue(BlockOldLog.VARIANT) == BlockPlanks.EnumType.JUNGLE)
                 {
-                    if (facing != EnumFacing.DOWN && facing != EnumFacing.UP)
+                    if (facing == EnumFacing.DOWN || facing == EnumFacing.UP)
                     {
-                        pos = pos.offset(facing);
+                        return EnumActionResult.FAIL;
+                    }
 
-                        if (worldIn.isAirBlock(pos))
+                    pos = pos.offset(facing);
+
+                    if (worldIn.isAirBlock(pos))
+                    {
+                        IBlockState iblockstate1 = Blocks.COCOA.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, 0, player, hand);
+                        worldIn.setBlockState(pos, iblockstate1, 10);
+
+                        if (!player.capabilities.isCreativeMode)
                         {
-                            IBlockState iblockstate1 = Blocks.COCOA.onBlockPlaced(worldIn, pos, facing, hitX, hitY, hitZ, 0, playerIn);
-                            worldIn.setBlockState(pos, iblockstate1, 10);
-
-                            if (!playerIn.capabilities.isCreativeMode)
-                            {
-                                --stack.stackSize;
-                            }
+                            itemstack.shrink(1);
                         }
 
                         return EnumActionResult.SUCCESS;
                     }
-
-                    return EnumActionResult.FAIL;
                 }
 
                 return EnumActionResult.FAIL;
@@ -105,15 +107,15 @@ public class ItemDye extends Item
     public static boolean applyBonemeal(ItemStack stack, World worldIn, BlockPos target)
     {
         if (worldIn instanceof net.minecraft.world.WorldServer)
-            return applyBonemeal(stack, worldIn, target, net.minecraftforge.common.util.FakePlayerFactory.getMinecraft((net.minecraft.world.WorldServer)worldIn));
+            return applyBonemeal(stack, worldIn, target, net.minecraftforge.common.util.FakePlayerFactory.getMinecraft((net.minecraft.world.WorldServer)worldIn), null);
         return false;
     }
 
-    public static boolean applyBonemeal(ItemStack stack, World worldIn, BlockPos target, EntityPlayer player)
+    public static boolean applyBonemeal(ItemStack stack, World worldIn, BlockPos target, EntityPlayer player, @javax.annotation.Nullable EnumHand hand)
     {
         IBlockState iblockstate = worldIn.getBlockState(target);
 
-        int hook = net.minecraftforge.event.ForgeEventFactory.onApplyBonemeal(player, worldIn, target, iblockstate, stack);
+        int hook = net.minecraftforge.event.ForgeEventFactory.onApplyBonemeal(player, worldIn, target, iblockstate, stack, hand);
         if (hook != 0) return hook > 0;
 
         if (iblockstate.getBlock() instanceof IGrowable)
@@ -129,7 +131,7 @@ public class ItemDye extends Item
                         igrowable.grow(worldIn, worldIn.rand, target, iblockstate);
                     }
 
-                    --stack.stackSize;
+                    stack.shrink(1);
                 }
 
                 return true;
@@ -156,7 +158,7 @@ public class ItemDye extends Item
                 double d0 = itemRand.nextGaussian() * 0.02D;
                 double d1 = itemRand.nextGaussian() * 0.02D;
                 double d2 = itemRand.nextGaussian() * 0.02D;
-                worldIn.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, (double)((float)pos.getX() + itemRand.nextFloat()), (double)pos.getY() + (double)itemRand.nextFloat() * iblockstate.getBoundingBox(worldIn, pos).maxY, (double)((float)pos.getZ() + itemRand.nextFloat()), d0, d1, d2, new int[0]);
+                worldIn.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, (double)((float)pos.getX() + itemRand.nextFloat()), (double)pos.getY() + (double)itemRand.nextFloat() * iblockstate.getBoundingBox(worldIn, pos).maxY, (double)((float)pos.getZ() + itemRand.nextFloat()), d0, d1, d2);
             }
         }
         else
@@ -184,7 +186,7 @@ public class ItemDye extends Item
             if (!entitysheep.getSheared() && entitysheep.getFleeceColor() != enumdyecolor)
             {
                 entitysheep.setFleeceColor(enumdyecolor);
-                --stack.stackSize;
+                stack.shrink(1);
             }
 
             return true;
@@ -198,12 +200,14 @@ public class ItemDye extends Item
     /**
      * returns a list of items with the same ID, but different meta (eg: dye returns 16 items)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items)
     {
-        for (int i = 0; i < 16; ++i)
+        if (this.isInCreativeTab(tab))
         {
-            subItems.add(new ItemStack(itemIn, 1, i));
+            for (int i = 0; i < 16; ++i)
+            {
+                items.add(new ItemStack(this, 1, i));
+            }
         }
     }
 }

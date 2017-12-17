@@ -6,6 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
 
 public class TileEntityFlowerPot extends TileEntity
 {
@@ -22,10 +23,14 @@ public class TileEntityFlowerPot extends TileEntity
         this.flowerPotData = potData;
     }
 
+    public static void registerFixesFlowerPot(DataFixer fixer)
+    {
+    }
+
     public NBTTagCompound writeToNBT(NBTTagCompound compound)
     {
         super.writeToNBT(compound);
-        ResourceLocation resourcelocation = (ResourceLocation)Item.REGISTRY.getNameForObject(this.flowerPotItem);
+        ResourceLocation resourcelocation = Item.REGISTRY.getNameForObject(this.flowerPotItem);
         compound.setString("Item", resourcelocation == null ? "" : resourcelocation.toString());
         compound.setInteger("Data", this.flowerPotData);
         return compound;
@@ -58,16 +63,15 @@ public class TileEntityFlowerPot extends TileEntity
         return this.writeToNBT(new NBTTagCompound());
     }
 
-    public void setFlowerPotData(Item potItem, int potData)
+    public void setItemStack(ItemStack stack)
     {
-        this.flowerPotItem = potItem;
-        this.flowerPotData = potData;
+        this.flowerPotItem = stack.getItem();
+        this.flowerPotData = stack.getMetadata();
     }
 
-    @Nullable
     public ItemStack getFlowerItemStack()
     {
-        return this.flowerPotItem == null ? null : new ItemStack(this.flowerPotItem, 1, this.flowerPotData);
+        return this.flowerPotItem == null ? ItemStack.EMPTY : new ItemStack(this.flowerPotItem, 1, this.flowerPotData);
     }
 
     @Nullable

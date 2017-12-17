@@ -16,6 +16,7 @@ public class ParticleSimpleAnimated extends Particle
     private final int numAgingFrames;
     /** Added to the ySpeed every tick. Usually a small (thousandths), negative value. */
     private final float yAccel;
+    private float baseAirFriction = 0.91F;
     /** The red value to drift toward */
     private float fadeTargetRed;
     /** The green value to drift toward */
@@ -39,7 +40,7 @@ public class ParticleSimpleAnimated extends Particle
         float f1 = (float)((p_187146_1_ & 65280) >> 8) / 255.0F;
         float f2 = (float)((p_187146_1_ & 255) >> 0) / 255.0F;
         float f3 = 1.0F;
-        this.setRBGColorF(f * f3, f1 * f3, f2 * f3);
+        this.setRBGColorF(f * 1.0F, f1 * 1.0F, f2 * 1.0F);
     }
 
     /**
@@ -53,7 +54,7 @@ public class ParticleSimpleAnimated extends Particle
         this.fadingColor = true;
     }
 
-    public boolean isTransparent()
+    public boolean shouldDisableDepth()
     {
         return true;
     }
@@ -83,12 +84,12 @@ public class ParticleSimpleAnimated extends Particle
 
         this.setParticleTextureIndex(this.textureIdx + (this.numAgingFrames - 1 - this.particleAge * this.numAgingFrames / this.particleMaxAge));
         this.motionY += (double)this.yAccel;
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
-        this.motionX *= 0.9100000262260437D;
-        this.motionY *= 0.9100000262260437D;
-        this.motionZ *= 0.9100000262260437D;
+        this.move(this.motionX, this.motionY, this.motionZ);
+        this.motionX *= (double)this.baseAirFriction;
+        this.motionY *= (double)this.baseAirFriction;
+        this.motionZ *= (double)this.baseAirFriction;
 
-        if (this.isCollided)
+        if (this.onGround)
         {
             this.motionX *= 0.699999988079071D;
             this.motionZ *= 0.699999988079071D;
@@ -98,5 +99,10 @@ public class ParticleSimpleAnimated extends Particle
     public int getBrightnessForRender(float p_189214_1_)
     {
         return 15728880;
+    }
+
+    protected void setBaseAirFriction(float p_191238_1_)
+    {
+        this.baseAirFriction = p_191238_1_;
     }
 }

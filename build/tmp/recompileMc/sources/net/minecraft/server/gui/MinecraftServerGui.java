@@ -37,7 +37,7 @@ public class MinecraftServerGui extends JComponent
 {
     private static final Font SERVER_GUI_FONT = new Font("Monospaced", 0, 12);
     private static final Logger LOGGER = LogManager.getLogger();
-    private DedicatedServer server;
+    private final DedicatedServer server;
 
     /**
      * Creates the server GUI and sets it visible for the user.
@@ -96,7 +96,7 @@ public class MinecraftServerGui extends JComponent
         }
         catch (Exception exception)
         {
-            LOGGER.error((String)"Couldn\'t build server GUI", (Throwable)exception);
+            LOGGER.error("Couldn't build server GUI", (Throwable)exception);
         }
     }
 

@@ -190,7 +190,9 @@ public class Style
             return this;
         }
         /**
-         * Gets the equivalent text formatting code for this style, without the initial section sign (U+00A7) character.
+         * Gets the equivilent text formatting code(s) for this style, including all needed section sign characters.
+         *  
+         * @return A formatted string that can be combined with text to produce this style.
          */
         @SideOnly(Side.CLIENT)
         public String getFormattingCode()
@@ -253,7 +255,7 @@ public class Style
      */
     public boolean isEmpty()
     {
-        return this.bold == null && this.italic == null && this.strikethrough == null && this.underlined == null && this.obfuscated == null && this.color == null && this.clickEvent == null && this.hoverEvent == null;
+        return this.bold == null && this.italic == null && this.strikethrough == null && this.underlined == null && this.obfuscated == null && this.color == null && this.clickEvent == null && this.hoverEvent == null && this.insertion == null;
     }
 
     /**
@@ -381,7 +383,9 @@ public class Style
     }
 
     /**
-     * Gets the equivalent text formatting code for this style, without the initial section sign (U+00A7) character.
+     * Gets the equivilent text formatting code(s) for this style, including all needed section sign characters.
+     *  
+     * @return A formatted string that can be combined with text to produce this style.
      */
     public String getFormattingCode()
     {
@@ -453,48 +457,48 @@ public class Style
         else
         {
             boolean flag;
-            label0:
+            label77:
             {
                 Style style = (Style)p_equals_1_;
 
                 if (this.getBold() == style.getBold() && this.getColor() == style.getColor() && this.getItalic() == style.getItalic() && this.getObfuscated() == style.getObfuscated() && this.getStrikethrough() == style.getStrikethrough() && this.getUnderlined() == style.getUnderlined())
                 {
-                    label85:
+                    label71:
                     {
                         if (this.getClickEvent() != null)
                         {
                             if (!this.getClickEvent().equals(style.getClickEvent()))
                             {
-                                break label85;
+                                break label71;
                             }
                         }
                         else if (style.getClickEvent() != null)
                         {
-                            break label85;
+                            break label71;
                         }
 
                         if (this.getHoverEvent() != null)
                         {
                             if (!this.getHoverEvent().equals(style.getHoverEvent()))
                             {
-                                break label85;
+                                break label71;
                             }
                         }
                         else if (style.getHoverEvent() != null)
                         {
-                            break label85;
+                            break label71;
                         }
 
                         if (this.getInsertion() != null)
                         {
                             if (this.getInsertion().equals(style.getInsertion()))
                             {
-                                break label0;
+                                break label77;
                             }
                         }
                         else if (style.getInsertion() == null)
                         {
-                            break label0;
+                            break label77;
                         }
                     }
                 }
@@ -579,27 +583,27 @@ public class Style
                     {
                         if (jsonobject.has("bold"))
                         {
-                            style.bold = Boolean.valueOf(jsonobject.get("bold").getAsBoolean());
+                            style.bold = jsonobject.get("bold").getAsBoolean();
                         }
 
                         if (jsonobject.has("italic"))
                         {
-                            style.italic = Boolean.valueOf(jsonobject.get("italic").getAsBoolean());
+                            style.italic = jsonobject.get("italic").getAsBoolean();
                         }
 
                         if (jsonobject.has("underlined"))
                         {
-                            style.underlined = Boolean.valueOf(jsonobject.get("underlined").getAsBoolean());
+                            style.underlined = jsonobject.get("underlined").getAsBoolean();
                         }
 
                         if (jsonobject.has("strikethrough"))
                         {
-                            style.strikethrough = Boolean.valueOf(jsonobject.get("strikethrough").getAsBoolean());
+                            style.strikethrough = jsonobject.get("strikethrough").getAsBoolean();
                         }
 
                         if (jsonobject.has("obfuscated"))
                         {
-                            style.obfuscated = Boolean.valueOf(jsonobject.get("obfuscated").getAsBoolean());
+                            style.obfuscated = jsonobject.get("obfuscated").getAsBoolean();
                         }
 
                         if (jsonobject.has("color"))

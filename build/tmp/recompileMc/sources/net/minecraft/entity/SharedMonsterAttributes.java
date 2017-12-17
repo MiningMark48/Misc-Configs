@@ -16,10 +16,11 @@ import org.apache.logging.log4j.Logger;
 public class SharedMonsterAttributes
 {
     private static final Logger LOGGER = LogManager.getLogger();
-    public static final IAttribute MAX_HEALTH = (new RangedAttribute((IAttribute)null, "generic.maxHealth", 20.0D, 0.0D, 1024.0D)).setDescription("Max Health").setShouldWatch(true);
+    public static final IAttribute MAX_HEALTH = (new RangedAttribute((IAttribute)null, "generic.maxHealth", 20.0D, Float.MIN_VALUE, 1024.0D)).setDescription("Max Health").setShouldWatch(true); // Forge: set smallest max-health value to fix MC-119183. This gets rounded to float so we use the smallest positive float value.
     public static final IAttribute FOLLOW_RANGE = (new RangedAttribute((IAttribute)null, "generic.followRange", 32.0D, 0.0D, 2048.0D)).setDescription("Follow Range");
     public static final IAttribute KNOCKBACK_RESISTANCE = (new RangedAttribute((IAttribute)null, "generic.knockbackResistance", 0.0D, 0.0D, 1.0D)).setDescription("Knockback Resistance");
     public static final IAttribute MOVEMENT_SPEED = (new RangedAttribute((IAttribute)null, "generic.movementSpeed", 0.699999988079071D, 0.0D, 1024.0D)).setDescription("Movement Speed").setShouldWatch(true);
+    public static final IAttribute FLYING_SPEED = (new RangedAttribute((IAttribute)null, "generic.flyingSpeed", 0.4000000059604645D, 0.0D, 1024.0D)).setDescription("Flying Speed").setShouldWatch(true);
     public static final IAttribute ATTACK_DAMAGE = new RangedAttribute((IAttribute)null, "generic.attackDamage", 2.0D, 0.0D, 2048.0D);
     public static final IAttribute ATTACK_SPEED = (new RangedAttribute((IAttribute)null, "generic.attackSpeed", 4.0D, 0.0D, 1024.0D)).setShouldWatch(true);
     public static final IAttribute ARMOR = (new RangedAttribute((IAttribute)null, "generic.armor", 0.0D, 0.0D, 30.0D)).setShouldWatch(true);
@@ -48,7 +49,7 @@ public class SharedMonsterAttributes
     {
         NBTTagCompound nbttagcompound = new NBTTagCompound();
         IAttribute iattribute = instance.getAttribute();
-        nbttagcompound.setString("Name", iattribute.getAttributeUnlocalizedName());
+        nbttagcompound.setString("Name", iattribute.getName());
         nbttagcompound.setDouble("Base", instance.getBaseValue());
         Collection<AttributeModifier> collection = instance.getModifiers();
 
@@ -90,13 +91,13 @@ public class SharedMonsterAttributes
             NBTTagCompound nbttagcompound = list.getCompoundTagAt(i);
             IAttributeInstance iattributeinstance = map.getAttributeInstanceByName(nbttagcompound.getString("Name"));
 
-            if (iattributeinstance != null)
+            if (iattributeinstance == null)
             {
-                applyModifiersToAttributeInstance(iattributeinstance, nbttagcompound);
+                LOGGER.warn("Ignoring unknown attribute '{}'", (Object)nbttagcompound.getString("Name"));
             }
             else
             {
-                LOGGER.warn("Ignoring unknown attribute \'" + nbttagcompound.getString("Name") + "\'");
+                applyModifiersToAttributeInstance(iattributeinstance, nbttagcompound);
             }
         }
     }
@@ -142,7 +143,7 @@ public class SharedMonsterAttributes
         }
         catch (Exception exception)
         {
-            LOGGER.warn("Unable to create attribute: " + exception.getMessage());
+            LOGGER.warn("Unable to create attribute: {}", (Object)exception.getMessage());
             return null;
         }
     }

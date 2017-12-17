@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2014 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors (this class):
- *     bspkrs - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.client.config;
@@ -36,7 +43,6 @@ import static net.minecraftforge.fml.client.config.GuiUtils.VALID;
 public class GuiEditArrayEntries extends GuiListExtended
 {
     protected GuiEditArray owningGui;
-    public Minecraft mc;
     public IConfigElement configElement;
     public List<IArrayEntry> listEntries;
     public boolean isDefault;
@@ -50,7 +56,6 @@ public class GuiEditArrayEntries extends GuiListExtended
     {
         super(mc, parent.width, parent.height, parent.titleLine2 != null ? (parent.titleLine3 != null ? 43 : 33) : 23, parent.height - 32, 20);
         this.owningGui = parent;
-        this.mc = mc;
         this.configElement = configElement;
         this.beforeValues = beforeValues;
         this.currentValues = currentValues;
@@ -71,12 +76,11 @@ public class GuiEditArrayEntries extends GuiListExtended
                 try
                 {
                     listEntries.add(clazz.getConstructor(GuiEditArray.class, GuiEditArrayEntries.class, IConfigElement.class, Object.class)
-                            .newInstance(this.owningGui, this, configElement, value.toString()));
+                            .newInstance(this.owningGui, this, configElement, value));
                 }
                 catch (Throwable e)
                 {
-                    FMLLog.severe("There was a critical error instantiating the custom IGuiEditListEntry for property %s.", configElement.getName());
-                    e.printStackTrace();
+                    FMLLog.log.error("There was a critical error instantiating the custom IGuiEditListEntry for property {}.", configElement.getName(), e);
                 }
             }
         }
@@ -133,7 +137,34 @@ public class GuiEditArrayEntries extends GuiListExtended
 
     public void addNewEntry(int index)
     {
-        if (configElement.isList() && configElement.getType() == ConfigGuiType.BOOLEAN)
+        if (configElement.isList() && configElement.getArrayEntryClass() != null)
+        {
+            Class<? extends IArrayEntry> clazz = configElement.getArrayEntryClass();
+            try
+            {
+                Object value;
+                switch (configElement.getType())
+                {
+                    case BOOLEAN:
+                        value = true;
+                        break;
+                    case INTEGER:
+                        value = 0;
+                        break;
+                    case DOUBLE:
+                        value = 0.0D;
+                        break;
+                    default:
+                        value = "";
+                }
+                listEntries.add(index, clazz.getConstructor(GuiEditArray.class, GuiEditArrayEntries.class, IConfigElement.class, Object.class).newInstance(this.owningGui, this, configElement, value));
+            }
+            catch (Throwable e)
+            {
+                FMLLog.log.error("There was a critical error instantiating the custom IGuiEditListEntry for property {}.", configElement.getName(), e);
+            }
+        }
+        else if (configElement.isList() && configElement.getType() == ConfigGuiType.BOOLEAN)
             listEntries.add(index, new BooleanEntry(this.owningGui, this, this.configElement, true));
         else if (configElement.isList() && configElement.getType() == ConfigGuiType.INTEGER)
             listEntries.add(index, new IntegerEntry(this.owningGui, this, this.configElement, 0));
@@ -280,6 +311,11 @@ public class GuiEditArrayEntries extends GuiListExtended
             entry.drawToolTip(mouseX, mouseY);
     }
 
+    public Minecraft getMC()
+    {
+        return this.mc;
+    }
+
     /**
      * IGuiListEntry Inner Classes
      */
@@ -404,7 +440,7 @@ public class GuiEditArrayEntries extends GuiListExtended
         public StringEntry(GuiEditArray owningScreen, GuiEditArrayEntries owningEntryList, IConfigElement configElement, Object value)
         {
             super(owningScreen, owningEntryList, configElement);
-            this.textFieldValue = new GuiTextField(0, owningEntryList.mc.fontRendererObj, owningEntryList.width / 4 + 1, 0, owningEntryList.controlWidth - 3, 16);
+            this.textFieldValue = new GuiTextField(0, owningEntryList.getMC().fontRenderer, owningEntryList.width / 4 + 1, 0, owningEntryList.controlWidth - 3, 16);
             this.textFieldValue.setMaxStringLength(10000);
             this.textFieldValue.setText(value.toString());
             this.isValidated = configElement.getValidationPattern() != null;
@@ -419,13 +455,13 @@ public class GuiEditArrayEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
             if (configElement.isListLengthFixed() || slotIndex != owningEntryList.listEntries.size() - 1)
             {
                 this.textFieldValue.setVisible(true);
-                this.textFieldValue.yPosition = y + 1;
+                this.textFieldValue.y = y + 1;
                 this.textFieldValue.drawTextBox();
             }
             else
@@ -485,11 +521,11 @@ public class GuiEditArrayEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
-            this.btnValue.xPosition = listWidth / 4;
-            this.btnValue.yPosition = y;
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
+            this.btnValue.x = listWidth / 4;
+            this.btnValue.y = y;
 
             String trans = I18n.format(String.valueOf(value));
             if (!trans.equals(String.valueOf(value)))
@@ -498,7 +534,7 @@ public class GuiEditArrayEntries extends GuiListExtended
                 this.btnValue.displayString = String.valueOf(value);
             btnValue.packedFGColour = value ? GuiUtils.getColorCode('2', true) : GuiUtils.getColorCode('4', true);
 
-            this.btnValue.drawButton(owningEntryList.mc, mouseX, mouseY);
+            this.btnValue.drawButton(owningEntryList.getMC(), mouseX, mouseY, partial);
         }
 
         /**
@@ -508,9 +544,9 @@ public class GuiEditArrayEntries extends GuiListExtended
         @Override
         public boolean mousePressed(int index, int x, int y, int mouseEvent, int relativeX, int relativeY)
         {
-            if (this.btnValue.mousePressed(owningEntryList.mc, x, y))
+            if (this.btnValue.mousePressed(owningEntryList.getMC(), x, y))
             {
-                btnValue.playPressSound(owningEntryList.mc.getSoundHandler());
+                btnValue.playPressSound(owningEntryList.getMC().getSoundHandler());
                 value = !value;
                 owningEntryList.recalculateState();
                 return true;
@@ -569,22 +605,22 @@ public class GuiEditArrayEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
             if (this.getValue() != null && this.isValidated)
-                owningEntryList.mc.fontRendererObj.drawString(
+                owningEntryList.getMC().fontRenderer.drawString(
                         isValidValue ? TextFormatting.GREEN + VALID : TextFormatting.RED + INVALID,
-                        listWidth / 4 - owningEntryList.mc.fontRendererObj.getStringWidth(VALID) - 2,
-                        y + slotHeight / 2 - owningEntryList.mc.fontRendererObj.FONT_HEIGHT / 2,
+                        listWidth / 4 - owningEntryList.getMC().fontRenderer.getStringWidth(VALID) - 2,
+                        y + slotHeight / 2 - owningEntryList.getMC().fontRenderer.FONT_HEIGHT / 2,
                         16777215);
 
             int half = listWidth / 2;
             if (owningEntryList.canAddMoreEntries)
             {
                 this.btnAddNewEntryAbove.visible = true;
-                this.btnAddNewEntryAbove.xPosition = half + ((half / 2) - 44);
-                this.btnAddNewEntryAbove.yPosition = y;
-                this.btnAddNewEntryAbove.drawButton(owningEntryList.mc, mouseX, mouseY);
+                this.btnAddNewEntryAbove.x = half + ((half / 2) - 44);
+                this.btnAddNewEntryAbove.y = y;
+                this.btnAddNewEntryAbove.drawButton(owningEntryList.getMC(), mouseX, mouseY, partial);
             }
             else
                 this.btnAddNewEntryAbove.visible = false;
@@ -592,9 +628,9 @@ public class GuiEditArrayEntries extends GuiListExtended
             if (!configElement.isListLengthFixed() && slotIndex != owningEntryList.listEntries.size() - 1)
             {
                 this.btnRemoveEntry.visible = true;
-                this.btnRemoveEntry.xPosition = half + ((half / 2) - 22);
-                this.btnRemoveEntry.yPosition = y;
-                this.btnRemoveEntry.drawButton(owningEntryList.mc, mouseX, mouseY);
+                this.btnRemoveEntry.x = half + ((half / 2) - 22);
+                this.btnRemoveEntry.y = y;
+                this.btnRemoveEntry.drawButton(owningEntryList.getMC(), mouseX, mouseY, partial);
             }
             else
                 this.btnRemoveEntry.visible = false;
@@ -617,16 +653,16 @@ public class GuiEditArrayEntries extends GuiListExtended
         @Override
         public boolean mousePressed(int index, int x, int y, int mouseEvent, int relativeX, int relativeY)
         {
-            if (this.btnAddNewEntryAbove.mousePressed(owningEntryList.mc, x, y))
+            if (this.btnAddNewEntryAbove.mousePressed(owningEntryList.getMC(), x, y))
             {
-                btnAddNewEntryAbove.playPressSound(owningEntryList.mc.getSoundHandler());
+                btnAddNewEntryAbove.playPressSound(owningEntryList.getMC().getSoundHandler());
                 owningEntryList.addNewEntry(index);
                 owningEntryList.recalculateState();
                 return true;
             }
-            else if (this.btnRemoveEntry.mousePressed(owningEntryList.mc, x, y))
+            else if (this.btnRemoveEntry.mousePressed(owningEntryList.getMC(), x, y))
             {
-                btnRemoveEntry.playPressSound(owningEntryList.mc.getSoundHandler());
+                btnRemoveEntry.playPressSound(owningEntryList.getMC().getSoundHandler());
                 owningEntryList.removeEntry(index);
                 owningEntryList.recalculateState();
                 return true;
@@ -670,7 +706,7 @@ public class GuiEditArrayEntries extends GuiListExtended
         }
 
         @Override
-        public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_){}
+        public void updatePosition(int p_178011_1_, int p_178011_2_, int p_178011_3_, float partial){}
     }
 
     public static interface IArrayEntry extends GuiListExtended.IGuiListEntry

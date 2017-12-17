@@ -6,5 +6,5 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface ISpectatorMenuRecipient
 {
-    void onSpectatorMenuClosed(SpectatorMenu p_175257_1_);
+    void onSpectatorMenuClosed(SpectatorMenu menu);
 }

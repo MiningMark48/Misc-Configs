@@ -1,6 +1,5 @@
 package net.minecraft.block;
 
-import java.util.List;
 import java.util.Random;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
@@ -9,8 +8,8 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.translation.I18n;
@@ -25,8 +24,6 @@ import net.minecraft.world.gen.feature.WorldGenSavannaTree;
 import net.minecraft.world.gen.feature.WorldGenTaiga2;
 import net.minecraft.world.gen.feature.WorldGenTrees;
 import net.minecraft.world.gen.feature.WorldGenerator;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockSapling extends BlockBush implements IGrowable
 {
@@ -89,7 +86,7 @@ public class BlockSapling extends BlockBush implements IGrowable
         switch ((BlockPlanks.EnumType)state.getValue(TYPE))
         {
             case SPRUCE:
-                label114:
+                label68:
 
                 for (i = 0; i >= -1; --i)
                 {
@@ -99,15 +96,15 @@ public class BlockSapling extends BlockBush implements IGrowable
                         {
                             worldgenerator = new WorldGenMegaPineTree(false, rand.nextBoolean());
                             flag = true;
-                            break label114;
+                            break label68;
                         }
                     }
                 }
 
                 if (!flag)
                 {
-                    j = 0;
                     i = 0;
+                    j = 0;
                     worldgenerator = new WorldGenTaiga2(true);
                 }
 
@@ -118,7 +115,7 @@ public class BlockSapling extends BlockBush implements IGrowable
             case JUNGLE:
                 IBlockState iblockstate = Blocks.LOG.getDefaultState().withProperty(BlockOldLog.VARIANT, BlockPlanks.EnumType.JUNGLE);
                 IBlockState iblockstate1 = Blocks.LEAVES.getDefaultState().withProperty(BlockOldLeaf.VARIANT, BlockPlanks.EnumType.JUNGLE).withProperty(BlockLeaves.CHECK_DECAY, Boolean.valueOf(false));
-                label269:
+                label82:
 
                 for (i = 0; i >= -1; --i)
                 {
@@ -128,15 +125,15 @@ public class BlockSapling extends BlockBush implements IGrowable
                         {
                             worldgenerator = new WorldGenMegaJungle(true, 10, 20, iblockstate, iblockstate1);
                             flag = true;
-                            break label269;
+                            break label82;
                         }
                     }
                 }
 
                 if (!flag)
                 {
-                    j = 0;
                     i = 0;
+                    j = 0;
                     worldgenerator = new WorldGenTrees(true, 4 + rand.nextInt(7), iblockstate, iblockstate1, false);
                 }
 
@@ -145,7 +142,7 @@ public class BlockSapling extends BlockBush implements IGrowable
                 worldgenerator = new WorldGenSavannaTree(true);
                 break;
             case DARK_OAK:
-                label390:
+                label96:
 
                 for (i = 0; i >= -1; --i)
                 {
@@ -155,7 +152,7 @@ public class BlockSapling extends BlockBush implements IGrowable
                         {
                             worldgenerator = new WorldGenCanopyTree(true);
                             flag = true;
-                            break label390;
+                            break label96;
                         }
                     }
                 }
@@ -224,12 +221,11 @@ public class BlockSapling extends BlockBush implements IGrowable
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (BlockPlanks.EnumType blockplanks$enumtype : BlockPlanks.EnumType.values())
         {
-            list.add(new ItemStack(itemIn, 1, blockplanks$enumtype.getMetadata()));
+            items.add(new ItemStack(this, 1, blockplanks$enumtype.getMetadata()));
         }
     }
 

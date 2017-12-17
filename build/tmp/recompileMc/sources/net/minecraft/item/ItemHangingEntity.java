@@ -25,11 +25,12 @@ public class ItemHangingEntity extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
+        ItemStack itemstack = player.getHeldItem(hand);
         BlockPos blockpos = pos.offset(facing);
 
-        if (facing != EnumFacing.DOWN && facing != EnumFacing.UP && playerIn.canPlayerEdit(blockpos, facing, stack))
+        if (facing != EnumFacing.DOWN && facing != EnumFacing.UP && player.canPlayerEdit(blockpos, facing, itemstack))
         {
             EntityHanging entityhanging = this.createEntity(worldIn, blockpos, facing);
 
@@ -38,10 +39,10 @@ public class ItemHangingEntity extends Item
                 if (!worldIn.isRemote)
                 {
                     entityhanging.playPlaceSound();
-                    worldIn.spawnEntityInWorld(entityhanging);
+                    worldIn.spawnEntity(entityhanging);
                 }
 
-                --stack.stackSize;
+                itemstack.shrink(1);
             }
 
             return EnumActionResult.SUCCESS;
@@ -55,6 +56,13 @@ public class ItemHangingEntity extends Item
     @Nullable
     private EntityHanging createEntity(World worldIn, BlockPos pos, EnumFacing clickedSide)
     {
-        return (EntityHanging)(this.hangingEntityClass == EntityPainting.class ? new EntityPainting(worldIn, pos, clickedSide) : (this.hangingEntityClass == EntityItemFrame.class ? new EntityItemFrame(worldIn, pos, clickedSide) : null));
+        if (this.hangingEntityClass == EntityPainting.class)
+        {
+            return new EntityPainting(worldIn, pos, clickedSide);
+        }
+        else
+        {
+            return this.hangingEntityClass == EntityItemFrame.class ? new EntityItemFrame(worldIn, pos, clickedSide) : null;
+        }
     }
 }

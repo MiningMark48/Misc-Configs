@@ -1,12 +1,16 @@
 package net.minecraft.entity.passive;
 
 import javax.annotation.Nullable;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.init.MobEffects;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTableList;
@@ -43,6 +47,11 @@ public class EntitySquid extends EntityWaterMob
         this.rotationVelocity = 1.0F / (this.rand.nextFloat() + 1.0F) * 0.2F;
     }
 
+    public static void registerFixesSquid(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntitySquid.class);
+    }
+
     protected void initEntityAI()
     {
         this.tasks.addTask(0, new EntitySquid.AIMoveRandom(this));
@@ -64,7 +73,7 @@ public class EntitySquid extends EntityWaterMob
         return SoundEvents.ENTITY_SQUID_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_SQUID_HURT;
     }
@@ -98,15 +107,6 @@ public class EntitySquid extends EntityWaterMob
     }
 
     /**
-     * Checks if this entity is inside water (if inWater field is true as a result of handleWaterMovement() returning
-     * true)
-     */
-    public boolean isInWater()
-    {
-        return super.isInWater();
-    }
-
-    /**
      * Called frequently so the entity can update its state every tick as required. For example, zombies and skeletons
      * use this to react to sunlight and start to burn.
      */
@@ -121,7 +121,7 @@ public class EntitySquid extends EntityWaterMob
 
         if ((double)this.squidRotation > (Math.PI * 2D))
         {
-            if (this.worldObj.isRemote)
+            if (this.world.isRemote)
             {
                 this.squidRotation = ((float)Math.PI * 2F);
             }
@@ -134,7 +134,7 @@ public class EntitySquid extends EntityWaterMob
                     this.rotationVelocity = 1.0F / (this.rand.nextFloat() + 1.0F) * 0.2F;
                 }
 
-                this.worldObj.setEntityState(this, (byte)19);
+                this.world.setEntityState(this, (byte)19);
             }
         }
 
@@ -162,14 +162,14 @@ public class EntitySquid extends EntityWaterMob
                 this.rotateSpeed *= 0.99F;
             }
 
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
                 this.motionX = (double)(this.randomMotionVecX * this.randomMotionSpeed);
                 this.motionY = (double)(this.randomMotionVecY * this.randomMotionSpeed);
                 this.motionZ = (double)(this.randomMotionVecZ * this.randomMotionSpeed);
             }
 
-            float f1 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
+            float f1 = MathHelper.sqrt(this.motionX * this.motionX + this.motionZ * this.motionZ);
             this.renderYawOffset += (-((float)MathHelper.atan2(this.motionX, this.motionZ)) * (180F / (float)Math.PI) - this.renderYawOffset) * 0.1F;
             this.rotationYaw = this.renderYawOffset;
             this.squidYaw = (float)((double)this.squidYaw + Math.PI * (double)this.rotateSpeed * 1.5D);
@@ -179,7 +179,7 @@ public class EntitySquid extends EntityWaterMob
         {
             this.tentacleAngle = MathHelper.abs(MathHelper.sin(this.squidRotation)) * (float)Math.PI * 0.25F;
 
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
                 this.motionX = 0.0D;
                 this.motionZ = 0.0D;
@@ -188,7 +188,7 @@ public class EntitySquid extends EntityWaterMob
                 {
                     this.motionY += 0.05D * (double)(this.getActivePotionEffect(MobEffects.LEVITATION).getAmplifier() + 1) - this.motionY;
                 }
-                else
+                else if (!this.hasNoGravity())
                 {
                     this.motionY -= 0.08D;
                 }
@@ -200,12 +200,9 @@ public class EntitySquid extends EntityWaterMob
         }
     }
 
-    /**
-     * Moves the entity based on the specified heading.
-     */
-    public void moveEntityWithHeading(float strafe, float forward)
+    public void travel(float strafe, float vertical, float forward)
     {
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
     }
 
     /**
@@ -213,9 +210,12 @@ public class EntitySquid extends EntityWaterMob
      */
     public boolean getCanSpawnHere()
     {
-        return this.posY > 45.0D && this.posY < (double)this.worldObj.getSeaLevel() && super.getCanSpawnHere();
+        return this.posY > 45.0D && this.posY < (double)this.world.getSeaLevel() && super.getCanSpawnHere();
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @SideOnly(Side.CLIENT)
     public void handleStatusUpdate(byte id)
     {
@@ -243,7 +243,7 @@ public class EntitySquid extends EntityWaterMob
 
     static class AIMoveRandom extends EntityAIBase
         {
-            private EntitySquid squid;
+            private final EntitySquid squid;
 
             public AIMoveRandom(EntitySquid p_i45859_1_)
             {
@@ -259,11 +259,11 @@ public class EntitySquid extends EntityWaterMob
             }
 
             /**
-             * Updates the task
+             * Keep ticking a continuous task that has already been started
              */
             public void updateTask()
             {
-                int i = this.squid.getAge();
+                int i = this.squid.getIdleTime();
 
                 if (i > 100)
                 {

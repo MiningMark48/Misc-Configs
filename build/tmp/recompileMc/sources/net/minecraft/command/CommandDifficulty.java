@@ -13,7 +13,7 @@ public class CommandDifficulty extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "difficulty";
     }
@@ -29,7 +29,7 @@ public class CommandDifficulty extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.difficulty.usage";
     }
@@ -53,11 +53,35 @@ public class CommandDifficulty extends CommandBase
 
     protected EnumDifficulty getDifficultyFromCommand(String difficultyString) throws CommandException, NumberInvalidException
     {
-        return !difficultyString.equalsIgnoreCase("peaceful") && !difficultyString.equalsIgnoreCase("p") ? (!difficultyString.equalsIgnoreCase("easy") && !difficultyString.equalsIgnoreCase("e") ? (!difficultyString.equalsIgnoreCase("normal") && !difficultyString.equalsIgnoreCase("n") ? (!difficultyString.equalsIgnoreCase("hard") && !difficultyString.equalsIgnoreCase("h") ? EnumDifficulty.getDifficultyEnum(parseInt(difficultyString, 0, 3)) : EnumDifficulty.HARD) : EnumDifficulty.NORMAL) : EnumDifficulty.EASY) : EnumDifficulty.PEACEFUL;
+        if (!"peaceful".equalsIgnoreCase(difficultyString) && !"p".equalsIgnoreCase(difficultyString))
+        {
+            if (!"easy".equalsIgnoreCase(difficultyString) && !"e".equalsIgnoreCase(difficultyString))
+            {
+                if (!"normal".equalsIgnoreCase(difficultyString) && !"n".equalsIgnoreCase(difficultyString))
+                {
+                    return !"hard".equalsIgnoreCase(difficultyString) && !"h".equalsIgnoreCase(difficultyString) ? EnumDifficulty.getDifficultyEnum(parseInt(difficultyString, 0, 3)) : EnumDifficulty.HARD;
+                }
+                else
+                {
+                    return EnumDifficulty.NORMAL;
+                }
+            }
+            else
+            {
+                return EnumDifficulty.EASY;
+            }
+        }
+        else
+        {
+            return EnumDifficulty.PEACEFUL;
+        }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"peaceful", "easy", "normal", "hard"}): Collections.<String>emptyList();
+        return args.length == 1 ? getListOfStringsMatchingLastWord(args, new String[] {"peaceful", "easy", "normal", "hard"}) : Collections.emptyList();
     }
 }

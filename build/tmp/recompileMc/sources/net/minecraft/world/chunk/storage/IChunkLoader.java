@@ -28,8 +28,9 @@ public interface IChunkLoader
     void chunkTick();
 
     /**
-     * Save extra data not associated with any Chunk.  Not saved during autosave, only during world unload.  Currently
-     * unused.
+     * Flushes all pending chunks fully back to disk
      */
-    void saveExtraData();
+    void flush();
+
+    boolean isChunkGeneratedAt(int x, int z);
 }

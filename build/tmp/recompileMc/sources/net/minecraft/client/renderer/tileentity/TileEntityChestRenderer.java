@@ -20,8 +20,8 @@ public class TileEntityChestRenderer extends TileEntitySpecialRenderer<TileEntit
     private static final ResourceLocation TEXTURE_TRAPPED = new ResourceLocation("textures/entity/chest/trapped.png");
     private static final ResourceLocation TEXTURE_CHRISTMAS = new ResourceLocation("textures/entity/chest/christmas.png");
     private static final ResourceLocation TEXTURE_NORMAL = new ResourceLocation("textures/entity/chest/normal.png");
-    private ModelChest simpleChest = new ModelChest();
-    private ModelChest largeChest = new ModelLargeChest();
+    private final ModelChest simpleChest = new ModelChest();
+    private final ModelChest largeChest = new ModelLargeChest();
     private boolean isChristmas;
 
     public TileEntityChestRenderer()
@@ -34,18 +34,14 @@ public class TileEntityChestRenderer extends TileEntitySpecialRenderer<TileEntit
         }
     }
 
-    public void renderTileEntityAt(TileEntityChest te, double x, double y, double z, float partialTicks, int destroyStage)
+    public void render(TileEntityChest te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
     {
         GlStateManager.enableDepth();
         GlStateManager.depthFunc(515);
         GlStateManager.depthMask(true);
         int i;
 
-        if (!te.hasWorldObj())
-        {
-            i = 0;
-        }
-        else
+        if (te.hasWorld())
         {
             Block block = te.getBlockType();
             i = te.getBlockMetadata();
@@ -57,6 +53,10 @@ public class TileEntityChestRenderer extends TileEntitySpecialRenderer<TileEntit
             }
 
             te.checkForAdjacentChests();
+        }
+        else
+        {
+            i = 0;
         }
 
         if (te.adjacentChestZNeg == null && te.adjacentChestXNeg == null)
@@ -121,7 +121,7 @@ public class TileEntityChestRenderer extends TileEntitySpecialRenderer<TileEntit
 
             if (destroyStage < 0)
             {
-                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
             }
 
             GlStateManager.translate((float)x, (float)y + 1.0F, (float)z + 1.0F);

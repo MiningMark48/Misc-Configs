@@ -1,19 +1,18 @@
 [
-{
-"modid": "miscconfigs",
-"name": "Misc Configs",
-"description": "A mod that adds miscellaneous configs.",
-"version": "0.0.5",
-"credits": "Parcel31u : Wanted configs, So I added them.",
-"logoFile": "",
-"mcversion": "1.9.4",
-"url": "http://minecraft.curseforge.com/projects/misc-configs",
-"updateUrl": "",
-"authorList": [ "MiningMark48"],
-"parent":"",
-"screenshots": [],
-"dependencies": [
-"mod_MinecraftForge"
-]
-}
+  {
+    "modid": "miscconfigs",
+    "name": "Misc Configs",
+    "description": "A mod that adds miscellaneous configs.",
+    "version": "0.0.6",
+    "mcversion": "1.12.2",
+    "url": "http://minecraft.curseforge.com/projects/misc-configs",
+    "updateUrl": "",
+    "authorList": [
+      "MiningMark48"
+    ],
+    "credits": "Parcel31u : Wanted configs, So I added them.",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
 ]

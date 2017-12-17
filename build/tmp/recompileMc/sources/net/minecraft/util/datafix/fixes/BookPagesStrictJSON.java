@@ -4,6 +4,7 @@ import com.google.gson.JsonParseException;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.datafix.IFixableData;
 import net.minecraft.util.text.ITextComponent;
@@ -33,11 +34,11 @@ public class BookPagesStrictJSON implements IFixableData
 
                     if (!"null".equals(s) && !StringUtils.isNullOrEmpty(s))
                     {
-                        if (s.charAt(0) == 34 && s.charAt(s.length() - 1) == 34 || s.charAt(0) == 123 && s.charAt(s.length() - 1) == 125)
+                        if (s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"' || s.charAt(0) == '{' && s.charAt(s.length() - 1) == '}')
                         {
                             try
                             {
-                                itextcomponent = (ITextComponent)SignStrictJSON.GSON_INSTANCE.fromJson(s, ITextComponent.class);
+                                itextcomponent = (ITextComponent)JsonUtils.gsonDeserialize(SignStrictJSON.GSON_INSTANCE, s, ITextComponent.class, true);
 
                                 if (itextcomponent == null)
                                 {

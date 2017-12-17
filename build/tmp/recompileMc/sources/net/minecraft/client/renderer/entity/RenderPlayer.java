@@ -1,7 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
 import net.minecraft.client.entity.AbstractClientPlayer;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.model.ModelPlayer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -11,6 +10,7 @@ import net.minecraft.client.renderer.entity.layers.LayerCape;
 import net.minecraft.client.renderer.entity.layers.LayerCustomHead;
 import net.minecraft.client.renderer.entity.layers.LayerDeadmau5Head;
 import net.minecraft.client.renderer.entity.layers.LayerElytra;
+import net.minecraft.client.renderer.entity.layers.LayerEntityOnShoulder;
 import net.minecraft.client.renderer.entity.layers.LayerHeldItem;
 import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.item.EnumAction;
@@ -29,7 +29,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
 {
     /** this field is used to indicate the 3-pixel wide arms */
-    private boolean smallArms;
+    private final boolean smallArms;
 
     public RenderPlayer(RenderManager renderManager)
     {
@@ -47,6 +47,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
         this.addLayer(new LayerCape(this));
         this.addLayer(new LayerCustomHead(this.getMainModel().bipedHead));
         this.addLayer(new LayerElytra(this));
+        this.addLayer(new LayerEntityOnShoulder(renderManager));
     }
 
     public ModelPlayer getMainModel()
@@ -64,7 +65,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
         {
             double d0 = y;
 
-            if (entity.isSneaking() && !(entity instanceof EntityPlayerSP))
+            if (entity.isSneaking())
             {
                 d0 = y - 0.125D;
             }
@@ -83,7 +84,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
 
         if (clientPlayer.isSpectator())
         {
-            modelplayer.setInvisible(false);
+            modelplayer.setVisible(false);
             modelplayer.bipedHead.showModel = true;
             modelplayer.bipedHeadwear.showModel = true;
         }
@@ -91,7 +92,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
         {
             ItemStack itemstack = clientPlayer.getHeldItemMainhand();
             ItemStack itemstack1 = clientPlayer.getHeldItemOffhand();
-            modelplayer.setInvisible(true);
+            modelplayer.setVisible(true);
             modelplayer.bipedHeadwear.showModel = clientPlayer.isWearing(EnumPlayerModelParts.HAT);
             modelplayer.bipedBodyWear.showModel = clientPlayer.isWearing(EnumPlayerModelParts.JACKET);
             modelplayer.bipedLeftLegwear.showModel = clientPlayer.isWearing(EnumPlayerModelParts.LEFT_PANTS_LEG);
@@ -102,7 +103,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
             ModelBiped.ArmPose modelbiped$armpose = ModelBiped.ArmPose.EMPTY;
             ModelBiped.ArmPose modelbiped$armpose1 = ModelBiped.ArmPose.EMPTY;
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 modelbiped$armpose = ModelBiped.ArmPose.ITEM;
 
@@ -121,7 +122,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
                 }
             }
 
-            if (itemstack1 != null)
+            if (!itemstack1.isEmpty())
             {
                 modelbiped$armpose1 = ModelBiped.ArmPose.ITEM;
 
@@ -132,6 +133,11 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
                     if (enumaction1 == EnumAction.BLOCK)
                     {
                         modelbiped$armpose1 = ModelBiped.ArmPose.BLOCK;
+                    }
+                    // FORGE: fix MC-88356 allow offhand to use bow and arrow animation
+                    else if (enumaction1 == EnumAction.BOW)
+                    {
+                        modelbiped$armpose1 = ModelBiped.ArmPose.BOW_AND_ARROW;
                     }
                 }
             }
@@ -152,7 +158,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
     /**
      * Returns the location of an entity's texture. Doesn't seem to be called unless you call Render.bindEntityTexture.
      */
-    protected ResourceLocation getEntityTexture(AbstractClientPlayer entity)
+    public ResourceLocation getEntityTexture(AbstractClientPlayer entity)
     {
         return entity.getLocationSkin();
     }
@@ -168,12 +174,12 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
     protected void preRenderCallback(AbstractClientPlayer entitylivingbaseIn, float partialTickTime)
     {
         float f = 0.9375F;
-        GlStateManager.scale(f, f, f);
+        GlStateManager.scale(0.9375F, 0.9375F, 0.9375F);
     }
 
-    protected void renderEntityName(AbstractClientPlayer entityIn, double x, double y, double z, String name, double p_188296_9_)
+    protected void renderEntityName(AbstractClientPlayer entityIn, double x, double y, double z, String name, double distanceSq)
     {
-        if (p_188296_9_ < 100.0D)
+        if (distanceSq < 100.0D)
         {
             Scoreboard scoreboard = entityIn.getWorldScoreboard();
             ScoreObjective scoreobjective = scoreboard.getObjectiveInDisplaySlot(2);
@@ -186,13 +192,13 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
             }
         }
 
-        super.renderEntityName(entityIn, x, y, z, name, p_188296_9_);
+        super.renderEntityName(entityIn, x, y, z, name, distanceSq);
     }
 
     public void renderRightArm(AbstractClientPlayer clientPlayer)
     {
         float f = 1.0F;
-        GlStateManager.color(f, f, f);
+        GlStateManager.color(1.0F, 1.0F, 1.0F);
         float f1 = 0.0625F;
         ModelPlayer modelplayer = this.getMainModel();
         this.setModelVisibilities(clientPlayer);
@@ -210,7 +216,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
     public void renderLeftArm(AbstractClientPlayer clientPlayer)
     {
         float f = 1.0F;
-        GlStateManager.color(f, f, f);
+        GlStateManager.color(1.0F, 1.0F, 1.0F);
         float f1 = 0.0625F;
         ModelPlayer modelplayer = this.getMainModel();
         this.setModelVisibilities(clientPlayer);
@@ -240,7 +246,7 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
         }
     }
 
-    protected void rotateCorpse(AbstractClientPlayer entityLiving, float p_77043_2_, float p_77043_3_, float partialTicks)
+    protected void applyRotations(AbstractClientPlayer entityLiving, float p_77043_2_, float rotationYaw, float partialTicks)
     {
         if (entityLiving.isEntityAlive() && entityLiving.isPlayerSleeping())
         {
@@ -250,24 +256,24 @@ public class RenderPlayer extends RenderLivingBase<AbstractClientPlayer>
         }
         else if (entityLiving.isElytraFlying())
         {
-            super.rotateCorpse(entityLiving, p_77043_2_, p_77043_3_, partialTicks);
+            super.applyRotations(entityLiving, p_77043_2_, rotationYaw, partialTicks);
             float f = (float)entityLiving.getTicksElytraFlying() + partialTicks;
-            float f1 = MathHelper.clamp_float(f * f / 100.0F, 0.0F, 1.0F);
+            float f1 = MathHelper.clamp(f * f / 100.0F, 0.0F, 1.0F);
             GlStateManager.rotate(f1 * (-90.0F - entityLiving.rotationPitch), 1.0F, 0.0F, 0.0F);
             Vec3d vec3d = entityLiving.getLook(partialTicks);
             double d0 = entityLiving.motionX * entityLiving.motionX + entityLiving.motionZ * entityLiving.motionZ;
-            double d1 = vec3d.xCoord * vec3d.xCoord + vec3d.zCoord * vec3d.zCoord;
+            double d1 = vec3d.x * vec3d.x + vec3d.z * vec3d.z;
 
             if (d0 > 0.0D && d1 > 0.0D)
             {
-                double d2 = (entityLiving.motionX * vec3d.xCoord + entityLiving.motionZ * vec3d.zCoord) / (Math.sqrt(d0) * Math.sqrt(d1));
-                double d3 = entityLiving.motionX * vec3d.zCoord - entityLiving.motionZ * vec3d.xCoord;
+                double d2 = (entityLiving.motionX * vec3d.x + entityLiving.motionZ * vec3d.z) / (Math.sqrt(d0) * Math.sqrt(d1));
+                double d3 = entityLiving.motionX * vec3d.z - entityLiving.motionZ * vec3d.x;
                 GlStateManager.rotate((float)(Math.signum(d3) * Math.acos(d2)) * 180.0F / (float)Math.PI, 0.0F, 1.0F, 0.0F);
             }
         }
         else
         {
-            super.rotateCorpse(entityLiving, p_77043_2_, p_77043_3_, partialTicks);
+            super.applyRotations(entityLiving, p_77043_2_, rotationYaw, partialTicks);
         }
     }
 }

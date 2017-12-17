@@ -1,6 +1,6 @@
 package net.minecraft.client.renderer.block.statemap;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.Collections;
@@ -16,8 +16,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class BlockStateMapper
 {
-    private Map<Block, IStateMapper> blockStateMap = Maps.<Block, IStateMapper>newIdentityHashMap();
-    private Set<Block> setBuiltInBlocks = Sets.<Block>newIdentityHashSet();
+    private final Map<Block, IStateMapper> blockStateMap = Maps.<Block, IStateMapper>newIdentityHashMap();
+    private final Set<Block> setBuiltInBlocks = Sets.<Block>newIdentityHashSet();
 
     public void registerBlockStateMapper(Block blockIn, IStateMapper stateMapper)
     {
@@ -49,7 +49,7 @@ public class BlockStateMapper
         }
         else
         {
-            IStateMapper istatemapper = (IStateMapper)this.blockStateMap.get(blockIn);
+            IStateMapper istatemapper = this.blockStateMap.get(blockIn);
 
             if (istatemapper == null)
             {
@@ -71,6 +71,6 @@ public class BlockStateMapper
 
     public Map<IBlockState, ModelResourceLocation> getVariants(Block blockIn)
     {
-        return this.setBuiltInBlocks.contains(blockIn) ? Collections.<IBlockState, ModelResourceLocation>emptyMap() : ((IStateMapper)Objects.firstNonNull(this.blockStateMap.get(blockIn), new DefaultStateMapper())).putStateModelLocations(blockIn);
+        return this.setBuiltInBlocks.contains(blockIn) ? Collections.emptyMap() : ((IStateMapper)MoreObjects.firstNonNull(this.blockStateMap.get(blockIn), new DefaultStateMapper())).putStateModelLocations(blockIn);
     }
 }

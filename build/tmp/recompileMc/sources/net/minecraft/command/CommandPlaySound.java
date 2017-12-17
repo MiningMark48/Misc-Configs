@@ -16,7 +16,7 @@ public class CommandPlaySound extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "playsound";
     }
@@ -32,7 +32,7 @@ public class CommandPlaySound extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.playsound.usage";
     }
@@ -44,7 +44,7 @@ public class CommandPlaySound extends CommandBase
     {
         if (args.length < 2)
         {
-            throw new WrongUsageException(this.getCommandUsage(sender), new Object[0]);
+            throw new WrongUsageException(this.getUsage(sender), new Object[0]);
         }
         else
         {
@@ -61,48 +61,12 @@ public class CommandPlaySound extends CommandBase
             {
                 EntityPlayerMP entityplayermp = getPlayer(server, sender, args[i++]);
                 Vec3d vec3d = sender.getPositionVector();
-                double d0 = vec3d.xCoord;
-
-                if (args.length > i)
-                {
-                    d0 = parseDouble(d0, args[i++], true);
-                }
-
-                double d1 = vec3d.yCoord;
-
-                if (args.length > i)
-                {
-                    d1 = parseDouble(d1, args[i++], 0, 0, false);
-                }
-
-                double d2 = vec3d.zCoord;
-
-                if (args.length > i)
-                {
-                    d2 = parseDouble(d2, args[i++], true);
-                }
-
-                double d3 = 1.0D;
-
-                if (args.length > i)
-                {
-                    d3 = parseDouble(args[i++], 0.0D, 3.4028234663852886E38D);
-                }
-
-                double d4 = 1.0D;
-
-                if (args.length > i)
-                {
-                    d4 = parseDouble(args[i++], 0.0D, 2.0D);
-                }
-
-                double d5 = 0.0D;
-
-                if (args.length > i)
-                {
-                    d5 = parseDouble(args[i], 0.0D, 1.0D);
-                }
-
+                double d0 = args.length > i ? parseDouble(vec3d.x, args[i++], true) : vec3d.x;
+                double d1 = args.length > i ? parseDouble(vec3d.y, args[i++], 0, 0, false) : vec3d.y;
+                double d2 = args.length > i ? parseDouble(vec3d.z, args[i++], true) : vec3d.z;
+                double d3 = args.length > i ? parseDouble(args[i++], 0.0D, 3.4028234663852886E38D) : 1.0D;
+                double d4 = args.length > i ? parseDouble(args[i++], 0.0D, 2.0D) : 1.0D;
+                double d5 = args.length > i ? parseDouble(args[i], 0.0D, 1.0D) : 0.0D;
                 double d6 = d3 > 1.0D ? d3 * 16.0D : 16.0D;
                 double d7 = entityplayermp.getDistance(d0, d1, d2);
 
@@ -134,9 +98,27 @@ public class CommandPlaySound extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, SoundEvent.REGISTRY.getKeys()) : (args.length == 2 ? getListOfStringsMatchingLastWord(args, SoundCategory.getSoundCategoryNames()) : (args.length == 3 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length > 3 && args.length <= 6 ? getTabCompletionCoordinate(args, 2, pos) : Collections.<String>emptyList())));
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, SoundEvent.REGISTRY.getKeys());
+        }
+        else if (args.length == 2)
+        {
+            return getListOfStringsMatchingLastWord(args, SoundCategory.getSoundCategoryNames());
+        }
+        else if (args.length == 3)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else
+        {
+            return args.length > 3 && args.length <= 6 ? getTabCompletionCoordinate(args, 3, targetPos) : Collections.emptyList();
+        }
     }
 
     /**

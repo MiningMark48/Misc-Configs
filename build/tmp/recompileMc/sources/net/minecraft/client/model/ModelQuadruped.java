@@ -54,7 +54,7 @@ public class ModelQuadruped extends ModelBase
             this.head.render(scale);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.scale(1.0F / f, 1.0F / f, 1.0F / f);
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
             GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
             this.body.render(scale);
             this.leg1.render(scale);

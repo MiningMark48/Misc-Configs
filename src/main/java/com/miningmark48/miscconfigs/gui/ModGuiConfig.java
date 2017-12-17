@@ -29,4 +29,9 @@ public class ModGuiConfig extends GuiConfig {
                 GuiConfig.getAbridgedConfigPath(ConfigurationHandler.configuration.toString()));
     }
 
+    public ModGuiConfig() {
+        this(null);
+    }
+
+
 }

@@ -19,10 +19,7 @@ public class PropertyDirection extends PropertyEnum<EnumFacing>
      */
     public static PropertyDirection create(String name)
     {
-        /**
-         * Create a new PropertyDirection with all directions that match the given Predicate
-         */
-        return create(name, Predicates.<EnumFacing>alwaysTrue());
+        return create(name, Predicates.alwaysTrue());
     }
 
     /**
@@ -30,10 +27,7 @@ public class PropertyDirection extends PropertyEnum<EnumFacing>
      */
     public static PropertyDirection create(String name, Predicate<EnumFacing> filter)
     {
-        /**
-         * Create a new PropertyDirection for the given direction values
-         */
-        return create(name, Collections2.<EnumFacing>filter(Lists.newArrayList(EnumFacing.values()), filter));
+        return create(name, Collections2.filter(Lists.newArrayList(EnumFacing.values()), filter));
     }
 
     /**

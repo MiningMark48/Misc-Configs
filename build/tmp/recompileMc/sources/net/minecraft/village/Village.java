@@ -1,11 +1,13 @@
 package net.minecraft.village;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.mojang.authlib.GameProfile;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.material.Material;
@@ -24,9 +26,10 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class Village
+public class Village implements net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>
 {
-    private World worldObj;
+    private World world;
+    /** list of VillageDoorInfo objects */
     private final List<VillageDoorInfo> villageDoorInfoList = Lists.<VillageDoorInfo>newArrayList();
     /**
      * This is the sum of all door coordinates and used to calculate the actual village center by dividing by the number
@@ -41,22 +44,25 @@ public class Village
     private int numVillagers;
     /** Timestamp of tick count when villager last bred */
     private int noBreedTicks;
-    private TreeMap<String, Integer> playerReputation = new TreeMap();
-    private List<Village.VillageAggressor> villageAgressors = Lists.<Village.VillageAggressor>newArrayList();
+    /** List of player reputations with this village */
+    private final Map<UUID, Integer> playerReputation = Maps.<UUID, Integer>newHashMap();
+    private final List<Village.VillageAggressor> villageAgressors = Lists.<Village.VillageAggressor>newArrayList();
     private int numIronGolems;
 
     public Village()
     {
+        this.capabilities = net.minecraftforge.event.ForgeEventFactory.gatherCapabilities(this);
     }
 
     public Village(World worldIn)
     {
-        this.worldObj = worldIn;
+        this.world = worldIn;
+        this.capabilities = net.minecraftforge.event.ForgeEventFactory.gatherCapabilities(this);
     }
 
     public void setWorld(World worldIn)
     {
-        this.worldObj = worldIn;
+        this.world = worldIn;
     }
 
     /**
@@ -80,15 +86,15 @@ public class Village
 
         int i = this.numVillagers / 10;
 
-        if (this.numIronGolems < i && this.villageDoorInfoList.size() > 20 && this.worldObj.rand.nextInt(7000) == 0)
+        if (this.numIronGolems < i && this.villageDoorInfoList.size() > 20 && this.world.rand.nextInt(7000) == 0)
         {
             Vec3d vec3d = this.findRandomSpawnPos(this.center, 2, 4, 2);
 
             if (vec3d != null)
             {
-                EntityIronGolem entityirongolem = new EntityIronGolem(this.worldObj);
-                entityirongolem.setPosition(vec3d.xCoord, vec3d.yCoord, vec3d.zCoord);
-                this.worldObj.spawnEntityInWorld(entityirongolem);
+                EntityIronGolem entityirongolem = new EntityIronGolem(this.world);
+                entityirongolem.setPosition(vec3d.x, vec3d.y, vec3d.z);
+                this.world.spawnEntity(entityirongolem);
                 ++this.numIronGolems;
             }
         }
@@ -98,7 +104,7 @@ public class Village
     {
         for (int i = 0; i < 10; ++i)
         {
-            BlockPos blockpos = pos.add(this.worldObj.rand.nextInt(16) - 8, this.worldObj.rand.nextInt(6) - 3, this.worldObj.rand.nextInt(16) - 8);
+            BlockPos blockpos = pos.add(this.world.rand.nextInt(16) - 8, this.world.rand.nextInt(6) - 3, this.world.rand.nextInt(16) - 8);
 
             if (this.isBlockPosWithinSqVillageRadius(blockpos) && this.isAreaClearAround(new BlockPos(x, y, z), blockpos))
             {
@@ -114,7 +120,7 @@ public class Village
      */
     private boolean isAreaClearAround(BlockPos blockSize, BlockPos blockLocation)
     {
-        if (!this.worldObj.getBlockState(blockLocation.down()).isFullyOpaque())
+        if (!this.world.getBlockState(blockLocation.down()).isTopSolid())
         {
             return false;
         }
@@ -129,7 +135,7 @@ public class Village
                 {
                     for (int i1 = j; i1 < j + blockSize.getZ(); ++i1)
                     {
-                        if (this.worldObj.getBlockState(new BlockPos(k, l, i1)).isNormalCube())
+                        if (this.world.getBlockState(new BlockPos(k, l, i1)).isNormalCube())
                         {
                             return false;
                         }
@@ -143,13 +149,13 @@ public class Village
 
     private void updateNumIronGolems()
     {
-        List<EntityIronGolem> list = this.worldObj.<EntityIronGolem>getEntitiesWithinAABB(EntityIronGolem.class, new AxisAlignedBB((double)(this.center.getX() - this.villageRadius), (double)(this.center.getY() - 4), (double)(this.center.getZ() - this.villageRadius), (double)(this.center.getX() + this.villageRadius), (double)(this.center.getY() + 4), (double)(this.center.getZ() + this.villageRadius)));
+        List<EntityIronGolem> list = this.world.<EntityIronGolem>getEntitiesWithinAABB(EntityIronGolem.class, new AxisAlignedBB((double)(this.center.getX() - this.villageRadius), (double)(this.center.getY() - 4), (double)(this.center.getZ() - this.villageRadius), (double)(this.center.getX() + this.villageRadius), (double)(this.center.getY() + 4), (double)(this.center.getZ() + this.villageRadius)));
         this.numIronGolems = list.size();
     }
 
     private void updateNumVillagers()
     {
-        List<EntityVillager> list = this.worldObj.<EntityVillager>getEntitiesWithinAABB(EntityVillager.class, new AxisAlignedBB((double)(this.center.getX() - this.villageRadius), (double)(this.center.getY() - 4), (double)(this.center.getZ() - this.villageRadius), (double)(this.center.getX() + this.villageRadius), (double)(this.center.getY() + 4), (double)(this.center.getZ() + this.villageRadius)));
+        List<EntityVillager> list = this.world.<EntityVillager>getEntitiesWithinAABB(EntityVillager.class, new AxisAlignedBB((double)(this.center.getX() - this.villageRadius), (double)(this.center.getY() - 4), (double)(this.center.getZ() - this.villageRadius), (double)(this.center.getX() + this.villageRadius), (double)(this.center.getY() + 4), (double)(this.center.getZ() + this.villageRadius)));
         this.numVillagers = list.size();
 
         if (this.numVillagers == 0)
@@ -196,6 +202,9 @@ public class Village
         return this.center.distanceSq(pos) < (double)(this.villageRadius * this.villageRadius);
     }
 
+    /**
+     * called only by class EntityAIMoveThroughVillage
+     */
     public List<VillageDoorInfo> getVillageDoorInfoList()
     {
         return this.villageDoorInfoList;
@@ -246,7 +255,7 @@ public class Village
                 BlockPos blockpos = villagedoorinfo1.getDoorBlockPos();
                 EnumFacing enumfacing = villagedoorinfo1.getInsideDirection();
 
-                if (this.worldObj.getBlockState(blockpos.offset(enumfacing, 1)).getBlock().isPassable(this.worldObj, blockpos.offset(enumfacing, 1)) && this.worldObj.getBlockState(blockpos.offset(enumfacing, -1)).getBlock().isPassable(this.worldObj, blockpos.offset(enumfacing, -1)) && this.worldObj.getBlockState(blockpos.up().offset(enumfacing, 1)).getBlock().isPassable(this.worldObj, blockpos.up().offset(enumfacing, 1)) && this.worldObj.getBlockState(blockpos.up().offset(enumfacing, -1)).getBlock().isPassable(this.worldObj, blockpos.up().offset(enumfacing, -1)))
+                if (this.world.getBlockState(blockpos.offset(enumfacing, 1)).getBlock().isPassable(this.world, blockpos.offset(enumfacing, 1)) && this.world.getBlockState(blockpos.offset(enumfacing, -1)).getBlock().isPassable(this.world, blockpos.offset(enumfacing, -1)) && this.world.getBlockState(blockpos.up().offset(enumfacing, 1)).getBlock().isPassable(this.world, blockpos.up().offset(enumfacing, 1)) && this.world.getBlockState(blockpos.up().offset(enumfacing, -1)).getBlock().isPassable(this.world, blockpos.up().offset(enumfacing, -1)))
                 {
                     villagedoorinfo = villagedoorinfo1;
                     i = j;
@@ -260,6 +269,7 @@ public class Village
     /**
      * if door not existed in this village, null will be returned
      */
+    @Nullable
     public VillageDoorInfo getExistedDoor(BlockPos doorBlock)
     {
         if (this.center.distanceSq(doorBlock) > (double)(this.villageRadius * this.villageRadius))
@@ -285,7 +295,7 @@ public class Village
         this.villageDoorInfoList.add(doorInfo);
         this.centerHelper = this.centerHelper.add(doorInfo.getDoorBlockPos());
         this.updateVillageRadiusAndCenter();
-        this.lastAddDoorTimestamp = doorInfo.getInsidePosY();
+        this.lastAddDoorTimestamp = doorInfo.getLastActivityTimestamp();
     }
 
     /**
@@ -310,6 +320,7 @@ public class Village
         this.villageAgressors.add(new Village.VillageAggressor(entitylivingbaseIn, this.tickCounter));
     }
 
+    @Nullable
     public EntityLivingBase findNearestVillageAggressor(EntityLivingBase entitylivingbaseIn)
     {
         double d0 = Double.MAX_VALUE;
@@ -317,8 +328,8 @@ public class Village
 
         for (int i = 0; i < this.villageAgressors.size(); ++i)
         {
-            Village.VillageAggressor village$villageaggressor1 = (Village.VillageAggressor)this.villageAgressors.get(i);
-            double d1 = village$villageaggressor1.agressor.getDistanceSqToEntity(entitylivingbaseIn);
+            Village.VillageAggressor village$villageaggressor1 = this.villageAgressors.get(i);
+            double d1 = village$villageaggressor1.agressor.getDistanceSq(entitylivingbaseIn);
 
             if (d1 <= d0)
             {
@@ -327,7 +338,7 @@ public class Village
             }
         }
 
-        return village$villageaggressor != null ? village$villageaggressor.agressor : null;
+        return village$villageaggressor == null ? null : village$villageaggressor.agressor;
     }
 
     public EntityPlayer getNearestTargetPlayer(EntityLivingBase villageDefender)
@@ -335,15 +346,15 @@ public class Village
         double d0 = Double.MAX_VALUE;
         EntityPlayer entityplayer = null;
 
-        for (String s : this.playerReputation.keySet())
+        for (UUID s : this.playerReputation.keySet())
         {
             if (this.isPlayerReputationTooLow(s))
             {
-                EntityPlayer entityplayer1 = this.worldObj.getPlayerEntityByName(s);
+                EntityPlayer entityplayer1 = this.world.getPlayerEntityByUUID(s);
 
                 if (entityplayer1 != null)
                 {
-                    double d1 = entityplayer1.getDistanceSqToEntity(villageDefender);
+                    double d1 = entityplayer1.getDistanceSq(villageDefender);
 
                     if (d1 <= d0)
                     {
@@ -363,7 +374,7 @@ public class Village
 
         while (iterator.hasNext())
         {
-            Village.VillageAggressor village$villageaggressor = (Village.VillageAggressor)iterator.next();
+            Village.VillageAggressor village$villageaggressor = iterator.next();
 
             if (!village$villageaggressor.agressor.isEntityAlive() || Math.abs(this.tickCounter - village$villageaggressor.agressionTime) > 300)
             {
@@ -375,19 +386,19 @@ public class Village
     private void removeDeadAndOutOfRangeDoors()
     {
         boolean flag = false;
-        boolean flag1 = this.worldObj.rand.nextInt(50) == 0;
+        boolean flag1 = this.world.rand.nextInt(50) == 0;
         Iterator<VillageDoorInfo> iterator = this.villageDoorInfoList.iterator();
 
         while (iterator.hasNext())
         {
-            VillageDoorInfo villagedoorinfo = (VillageDoorInfo)iterator.next();
+            VillageDoorInfo villagedoorinfo = iterator.next();
 
             if (flag1)
             {
                 villagedoorinfo.resetDoorOpeningRestrictionCounter();
             }
 
-            if (!this.isWoodDoor(villagedoorinfo.getDoorBlockPos()) || Math.abs(this.tickCounter - villagedoorinfo.getInsidePosY()) > 1200)
+            if (!this.isWoodDoor(villagedoorinfo.getDoorBlockPos()) || Math.abs(this.tickCounter - villagedoorinfo.getLastActivityTimestamp()) > 1200)
             {
                 this.centerHelper = this.centerHelper.subtract(villagedoorinfo.getDoorBlockPos());
                 flag = true;
@@ -404,9 +415,17 @@ public class Village
 
     private boolean isWoodDoor(BlockPos pos)
     {
-        IBlockState iblockstate = this.worldObj.getBlockState(pos);
+        IBlockState iblockstate = this.world.getBlockState(pos);
         Block block = iblockstate.getBlock();
-        return block instanceof BlockDoor ? iblockstate.getMaterial() == Material.WOOD : false;
+
+        if (block instanceof BlockDoor)
+        {
+            return iblockstate.getMaterial() == Material.WOOD;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private void updateVillageRadiusAndCenter()
@@ -435,20 +454,40 @@ public class Village
     /**
      * Return the village reputation for a player
      */
+    @Deprecated //Hasn't worked since 1.9, use UUID version below.
     public int getPlayerReputation(String playerName)
     {
-        Integer integer = (Integer)this.playerReputation.get(playerName);
-        return integer != null ? integer.intValue() : 0;
+        return this.getPlayerReputation(findUUID(playerName));
+    }
+
+    public int getPlayerReputation(UUID playerName)
+    {
+        Integer integer = this.playerReputation.get(playerName);
+        return integer == null ? 0 : integer.intValue();
+    }
+
+    private UUID findUUID(String name)
+    {
+        if (this.world == null || this.world.getMinecraftServer() == null)
+            return EntityPlayer.getOfflineUUID(name);
+        GameProfile profile = this.world.getMinecraftServer().getPlayerProfileCache().getGameProfileForUsername(name);
+        return profile == null ? EntityPlayer.getOfflineUUID(name) : profile.getId();
     }
 
     /**
      * Modify a players reputation in the village. Use positive values to increase reputation and negative values to
      * decrease. <br>Note that a players reputation is clamped between -30 and 10
      */
+    @Deprecated //Hasn't worked since 1.9, use UUID version below.
     public int modifyPlayerReputation(String playerName, int reputation)
     {
+        return this.modifyPlayerReputation(findUUID(playerName), reputation);
+    }
+
+    public int modifyPlayerReputation(UUID playerName, int reputation)
+    {
         int i = this.getPlayerReputation(playerName);
-        int j = MathHelper.clamp_int(i + reputation, -30, 10);
+        int j = MathHelper.clamp(i + reputation, -30, 10);
         this.playerReputation.put(playerName, Integer.valueOf(j));
         return j;
     }
@@ -456,9 +495,15 @@ public class Village
     /**
      * Return whether this player has a too low reputation with this village.
      */
+    @Deprecated //Hasn't worked since 1.9, use UUID version below.
     public boolean isPlayerReputationTooLow(String playerName)
     {
-        return this.getPlayerReputation(playerName) <= -15;
+        return this.isPlayerReputationTooLow(findUUID(playerName));
+    }
+
+    public boolean isPlayerReputationTooLow(UUID uuid)
+    {
+        return this.getPlayerReputation(uuid) <= -15;
     }
 
     /**
@@ -491,19 +536,15 @@ public class Village
 
             if (nbttagcompound1.hasKey("UUID"))
             {
-                PlayerProfileCache playerprofilecache = this.worldObj.getMinecraftServer().getPlayerProfileCache();
-                GameProfile gameprofile = playerprofilecache.getProfileByUUID(UUID.fromString(nbttagcompound1.getString("UUID")));
-
-                if (gameprofile != null)
-                {
-                    this.playerReputation.put(gameprofile.getName(), Integer.valueOf(nbttagcompound1.getInteger("S")));
-                }
+                this.playerReputation.put(UUID.fromString(nbttagcompound1.getString("UUID")), Integer.valueOf(nbttagcompound1.getInteger("S")));
             }
             else
             {
-                this.playerReputation.put(nbttagcompound1.getString("Name"), Integer.valueOf(nbttagcompound1.getInteger("S")));
+                //World is never set here, so this will always be offline UUIDs, sadly there is no way to convert this.
+                this.playerReputation.put(findUUID(nbttagcompound1.getString("Name")), Integer.valueOf(nbttagcompound1.getInteger("S")));
             }
         }
+        if (this.capabilities != null && compound.hasKey("ForgeCaps")) this.capabilities.deserializeNBT(compound.getCompoundTag("ForgeCaps"));
     }
 
     /**
@@ -533,28 +574,33 @@ public class Village
             nbttagcompound.setInteger("Z", villagedoorinfo.getDoorBlockPos().getZ());
             nbttagcompound.setInteger("IDX", villagedoorinfo.getInsideOffsetX());
             nbttagcompound.setInteger("IDZ", villagedoorinfo.getInsideOffsetZ());
-            nbttagcompound.setInteger("TS", villagedoorinfo.getInsidePosY());
+            nbttagcompound.setInteger("TS", villagedoorinfo.getLastActivityTimestamp());
             nbttaglist.appendTag(nbttagcompound);
         }
 
         compound.setTag("Doors", nbttaglist);
         NBTTagList nbttaglist1 = new NBTTagList();
 
-        for (String s : this.playerReputation.keySet())
+        for (UUID s : this.playerReputation.keySet())
         {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-            PlayerProfileCache playerprofilecache = this.worldObj.getMinecraftServer().getPlayerProfileCache();
-            GameProfile gameprofile = playerprofilecache.getGameProfileForUsername(s);
 
-            if (gameprofile != null)
+            try
             {
-                nbttagcompound1.setString("UUID", gameprofile.getId().toString());
-                nbttagcompound1.setInteger("S", ((Integer)this.playerReputation.get(s)).intValue());
-                nbttaglist1.appendTag(nbttagcompound1);
+                {
+                    nbttagcompound1.setString("UUID", s.toString());
+                    nbttagcompound1.setInteger("S", ((Integer)this.playerReputation.get(s)).intValue());
+                    nbttaglist1.appendTag(nbttagcompound1);
+                }
+            }
+            catch (RuntimeException var9)
+            {
+                ;
             }
         }
 
         compound.setTag("Players", nbttaglist1);
+        if (this.capabilities != null) compound.setTag("ForgeCaps", this.capabilities.serializeNBT());
     }
 
     /**
@@ -575,7 +621,7 @@ public class Village
 
     public void setDefaultPlayerReputation(int defaultReputation)
     {
-        for (String s : this.playerReputation.keySet())
+        for (UUID s : this.playerReputation.keySet())
         {
             this.modifyPlayerReputation(s, defaultReputation);
         }
@@ -592,4 +638,30 @@ public class Village
             this.agressionTime = agressionTimeIn;
         }
     }
+
+    /* ======================================== FORGE START =====================================*/
+    private net.minecraftforge.common.capabilities.CapabilityDispatcher capabilities;
+    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable net.minecraft.util.EnumFacing facing)
+    {
+        return capabilities == null ? false : capabilities.hasCapability(capability, facing);
+    }
+
+    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.EnumFacing facing)
+    {
+        return capabilities == null ? null : capabilities.getCapability(capability, facing);
+    }
+
+    public void deserializeNBT(NBTTagCompound nbt)
+    {
+        this.readVillageDataFromNBT(nbt);;
+    }
+
+    public NBTTagCompound serializeNBT()
+    {
+        NBTTagCompound ret = new NBTTagCompound();
+        this.writeVillageDataToNBT(ret);
+        return ret;
+    }
+
+    /* ========================================= FORGE END ======================================*/
 }

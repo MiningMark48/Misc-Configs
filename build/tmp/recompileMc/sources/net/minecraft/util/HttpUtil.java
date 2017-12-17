@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.io.FileUtils;
@@ -53,7 +54,7 @@ public class HttpUtil
 
             try
             {
-                stringbuilder.append(URLEncoder.encode((String)entry.getKey(), "UTF-8"));
+                stringbuilder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
             }
             catch (UnsupportedEncodingException unsupportedencodingexception1)
             {
@@ -81,12 +82,9 @@ public class HttpUtil
     /**
      * Sends a POST to the given URL using the map as the POST args
      */
-    public static String postMap(URL url, Map<String, Object> data, boolean skipLoggingErrors, @Nullable Proxy p_151226_3_)
+    public static String postMap(URL url, Map<String, Object> data, boolean skipLoggingErrors, @Nullable Proxy proxyIn)
     {
-        /**
-         * Sends a POST to the given URL
-         */
-        return post(url, buildPostString(data), skipLoggingErrors, p_151226_3_);
+        return post(url, buildPostString(data), skipLoggingErrors, proxyIn);
     }
 
     /**
@@ -130,7 +128,7 @@ public class HttpUtil
         {
             if (!skipLoggingErrors)
             {
-                LOGGER.error((String)("Could not post to " + url), (Throwable)exception);
+                LOGGER.error("Could not post to {}", url, exception);
             }
 
             return "";
@@ -150,8 +148,8 @@ public class HttpUtil
 
                 if (p_180192_4_ != null)
                 {
-                    p_180192_4_.resetProgressAndMessage("Downloading Resource Pack");
-                    p_180192_4_.displayLoadingString("Making Request...");
+                    p_180192_4_.resetProgressAndMessage(I18n.translateToLocal("resourcepack.downloading"));
+                    p_180192_4_.displayLoadingString(I18n.translateToLocal("resourcepack.requesting"));
                 }
 
                 try
@@ -161,12 +159,13 @@ public class HttpUtil
                         byte[] abyte = new byte[4096];
                         URL url = new URL(packUrl);
                         httpurlconnection = (HttpURLConnection)url.openConnection(p_180192_5_);
+                        httpurlconnection.setInstanceFollowRedirects(true);
                         float f = 0.0F;
                         float f1 = (float)p_180192_2_.entrySet().size();
 
                         for (Entry<String, String> entry : p_180192_2_.entrySet())
                         {
-                            httpurlconnection.setRequestProperty((String)entry.getKey(), (String)entry.getValue());
+                            httpurlconnection.setRequestProperty(entry.getKey(), entry.getValue());
 
                             if (p_180192_4_ != null)
                             {
@@ -180,7 +179,7 @@ public class HttpUtil
 
                         if (p_180192_4_ != null)
                         {
-                            p_180192_4_.displayLoadingString(String.format("Downloading file (%.2f MB)...", new Object[] {Float.valueOf(f1 / 1000.0F / 1000.0F)}));
+                            p_180192_4_.displayLoadingString(I18n.translateToLocalFormatted("resourcepack.progress", String.format("%.2f", f1 / 1000.0F / 1000.0F)));
                         }
 
                         if (saveFile.exists())
@@ -197,7 +196,7 @@ public class HttpUtil
                                 return;
                             }
 
-                            HttpUtil.LOGGER.warn("Deleting " + saveFile + " as it does not match what we currently have (" + i + " vs our " + j + ").");
+                            HttpUtil.LOGGER.warn("Deleting {} as it does not match what we currently have ({} vs our {}).", saveFile, Integer.valueOf(i), Long.valueOf(j));
                             FileUtils.deleteQuietly(saveFile);
                         }
                         else if (saveFile.getParentFile() != null)
@@ -217,7 +216,7 @@ public class HttpUtil
                             throw new IOException("Filesize is bigger than maximum allowed (file is " + f + ", limit is " + maxSize + ")");
                         }
 
-                        int k = 0;
+                        int k;
 
                         while ((k = inputstream.read(abyte)) >= 0)
                         {

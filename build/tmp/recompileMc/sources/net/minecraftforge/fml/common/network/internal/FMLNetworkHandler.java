@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.network.internal;
@@ -47,16 +54,16 @@ import net.minecraftforge.fml.common.registry.EntityRegistry.EntityRegistration;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import org.apache.logging.log4j.core.helpers.Integers;
-
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import javax.annotation.Nullable;
+
 public class FMLNetworkHandler
 {
-    public static final int READ_TIMEOUT = Integers.parseInt(System.getProperty("fml.readTimeout","30"),30);
-    public static final int LOGIN_TIMEOUT = Integers.parseInt(System.getProperty("fml.loginTimeout","600"),600);
+    public static final int READ_TIMEOUT = Integer.parseInt(System.getProperty("fml.readTimeout","30"));
+    public static final int LOGIN_TIMEOUT = Integer.parseInt(System.getProperty("fml.loginTimeout","600"));
     private static EnumMap<Side, FMLEmbeddedChannel> channelPair;
 
     public static void fmlServerHandshake(PlayerList scm, NetworkManager manager, EntityPlayerMP player)
@@ -91,6 +98,7 @@ public class FMLNetworkHandler
                 entityPlayerMP.openContainer = remoteGuiContainer;
                 entityPlayerMP.openContainer.windowId = windowId;
                 entityPlayerMP.openContainer.addListener(entityPlayerMP);
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.player.PlayerContainerEvent.Open(entityPlayer, entityPlayer.openContainer));
             }
         }
         else if (entityPlayer instanceof FakePlayer)
@@ -104,11 +112,12 @@ public class FMLNetworkHandler
         }
         else
         {
-            FMLLog.fine("Invalid attempt to open a local GUI on a dedicated server. This is likely a bug. GUI ID: %s,%d", mc.getModId(), modGuiId);
+            FMLLog.log.debug("Invalid attempt to open a local GUI on a dedicated server. This is likely a bug. GUI ID: {},{}", mc.getModId(), modGuiId);
         }
 
     }
 
+    @Nullable
     public static Packet<?> getEntitySpawningPacket(Entity entity)
     {
         EntityRegistration er = EntityRegistry.instance().lookupModSpawn(entity.getClass(), false);
@@ -124,11 +133,14 @@ public class FMLNetworkHandler
         return channelPair.get(Side.SERVER).generatePacketFrom(new FMLMessage.EntitySpawnMessage(er, entity, er.getContainer()));
     }
 
+    @Nullable
     public static String checkModList(FMLHandshakeMessage.ModList modListPacket, Side side)
     {
         Map<String,String> modList = modListPacket.modList();
         return checkModList(modList, side);
     }
+
+    @Nullable
     public static String checkModList(Map<String,String> listData, Side side)
     {
         List<ModContainer> rejects = Lists.newArrayList();
@@ -146,7 +158,7 @@ public class FMLNetworkHandler
         }
         else
         {
-            FMLLog.info("Rejecting connection %s: %s", side, rejects);
+            FMLLog.log.info("Rejecting connection {}: {}", side, rejects);
             return String.format("Mod rejections %s",rejects);
         }
     }

@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.SERVER)
 public class PlayerListComponent extends JList implements ITickable
 {
-    private MinecraftServer server;
+    private final MinecraftServer server;
     private int ticks;
 
     public PlayerListComponent(MinecraftServer server)
@@ -27,11 +27,11 @@ public class PlayerListComponent extends JList implements ITickable
     {
         if (this.ticks++ % 20 == 0)
         {
-            Vector<String> vector = new Vector();
+            Vector<String> vector = new Vector<String>();
 
-            for (int i = 0; i < this.server.getPlayerList().getPlayerList().size(); ++i)
+            for (int i = 0; i < this.server.getPlayerList().getPlayers().size(); ++i)
             {
-                vector.add(((EntityPlayerMP)this.server.getPlayerList().getPlayerList().get(i)).getName());
+                vector.add(((EntityPlayerMP)this.server.getPlayerList().getPlayers().get(i)).getName());
             }
 
             this.setListData(vector);

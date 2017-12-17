@@ -19,7 +19,7 @@ public class PhaseManager
 
     public void setPhase(PhaseList<?> phaseIn)
     {
-        if (this.phase == null || phaseIn != this.phase.getPhaseList())
+        if (this.phase == null || phaseIn != this.phase.getType())
         {
             if (this.phase != null)
             {
@@ -28,12 +28,12 @@ public class PhaseManager
 
             this.phase = this.getPhase(phaseIn);
 
-            if (!this.dragon.worldObj.isRemote)
+            if (!this.dragon.world.isRemote)
             {
                 this.dragon.getDataManager().set(EntityDragon.PHASE, Integer.valueOf(phaseIn.getId()));
             }
 
-            LOGGER.debug("Dragon is now in phase {} on the {}", new Object[] {phaseIn, this.dragon.worldObj.isRemote ? "client" : "server"});
+            LOGGER.debug("Dragon is now in phase {} on the {}", phaseIn, this.dragon.world.isRemote ? "client" : "server");
             this.phase.initPhase();
         }
     }

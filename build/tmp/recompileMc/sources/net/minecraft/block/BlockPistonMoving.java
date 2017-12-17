@@ -1,14 +1,18 @@
 package net.minecraft.block;
 
+import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -39,6 +43,7 @@ public class BlockPistonMoving extends BlockContainer
     /**
      * Returns a new instance of a block's tile entity class. Called on placing the block.
      */
+    @Nullable
     public TileEntity createNewTileEntity(World worldIn, int meta)
     {
         return null;
@@ -49,6 +54,9 @@ public class BlockPistonMoving extends BlockContainer
         return new TileEntityPiston(blockStateIn, facingIn, extendingIn, shouldHeadBeRenderedIn);
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         TileEntity tileentity = worldIn.getTileEntity(pos);
@@ -69,7 +77,7 @@ public class BlockPistonMoving extends BlockContainer
     }
 
     /**
-     * Check whether this Block can be placed on the given side
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
      */
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
@@ -77,7 +85,7 @@ public class BlockPistonMoving extends BlockContainer
     }
 
     /**
-     * Called when a player destroys this Block
+     * Called after a player destroys this Block - the posiiton pos may no longer hold the state indicated.
      */
     public void onBlockDestroyedByPlayer(World worldIn, BlockPos pos, IBlockState state)
     {
@@ -103,7 +111,10 @@ public class BlockPistonMoving extends BlockContainer
         return false;
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         if (!worldIn.isRemote && worldIn.getTileEntity(pos) == null)
         {
@@ -119,10 +130,9 @@ public class BlockPistonMoving extends BlockContainer
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
-        return null;
+        return Items.AIR;
     }
 
     /**
@@ -140,12 +150,13 @@ public class BlockPistonMoving extends BlockContainer
                 iblockstate.getBlock().dropBlockAsItem(worldIn, pos, iblockstate, 0);
             }
         }
-        super.dropBlockAsItemWithChance(worldIn, pos, state, chance, fortune);
+        super.dropBlockAsItemWithChance(worldIn, pos, state, 1, fortune); // mimic vanilla behavior from above and ignore chance
     }
 
     /**
      * Ray traces through the blocks collision from start vector to end vector returning a ray trace hit.
      */
+    @Nullable
     public RayTraceResult collisionRayTrace(IBlockState blockState, World worldIn, BlockPos pos, Vec3d start, Vec3d end)
     {
         return null;
@@ -156,7 +167,7 @@ public class BlockPistonMoving extends BlockContainer
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         if (!worldIn.isRemote)
         {
@@ -165,10 +176,20 @@ public class BlockPistonMoving extends BlockContainer
     }
 
     @Nullable
-    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, World worldIn, BlockPos pos)
+    public AxisAlignedBB getCollisionBoundingBox(IBlockState blockState, IBlockAccess worldIn, BlockPos pos)
     {
         TileEntityPiston tileentitypiston = this.getTilePistonAt(worldIn, pos);
         return tileentitypiston == null ? null : tileentitypiston.getAABB(worldIn, pos);
+    }
+
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
+    {
+        TileEntityPiston tileentitypiston = this.getTilePistonAt(worldIn, pos);
+
+        if (tileentitypiston != null)
+        {
+            tileentitypiston.addCollissionAABBs(worldIn, pos, entityBox, collidingBoxes, entityIn);
+        }
     }
 
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
@@ -187,10 +208,9 @@ public class BlockPistonMoving extends BlockContainer
         return tileentity instanceof TileEntityPiston ? (TileEntityPiston)tileentity : null;
     }
 
-    @Nullable
     public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     /**
@@ -241,14 +261,27 @@ public class BlockPistonMoving extends BlockContainer
     }
 
     @Override
-    public java.util.List<net.minecraft.item.ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<net.minecraft.item.ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
         TileEntityPiston tileentitypiston = this.getTilePistonAt(world, pos);
         if (tileentitypiston != null)
         {
             IBlockState pushed = tileentitypiston.getPistonState();
-            return pushed.getBlock().getDrops(world, pos, pushed, fortune);
+            drops.addAll(pushed.getBlock().getDrops(world, pos, pushed, fortune)); // use the old method until it gets removed, for backward compatibility
         }
-        return new java.util.ArrayList();
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return BlockFaceShape.UNDEFINED;
     }
 }

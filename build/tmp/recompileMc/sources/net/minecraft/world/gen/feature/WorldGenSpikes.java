@@ -11,8 +11,8 @@ import net.minecraft.world.World;
 
 public class WorldGenSpikes extends WorldGenerator
 {
-    private boolean crystalInvulnerable = false;
-    private WorldGenSpikes.EndSpike spike = null;
+    private boolean crystalInvulnerable;
+    private WorldGenSpikes.EndSpike spike;
     private BlockPos beamTarget;
 
     public void setSpike(WorldGenSpikes.EndSpike p_186143_1_)
@@ -53,7 +53,7 @@ public class WorldGenSpikes extends WorldGenerator
                 {
                     for (int k = -2; k <= 2; ++k)
                     {
-                        if (MathHelper.abs_int(j) == 2 || MathHelper.abs_int(k) == 2)
+                        if (MathHelper.abs(j) == 2 || MathHelper.abs(k) == 2)
                         {
                             this.setBlockAndNotifyAdequately(worldIn, new BlockPos(position.getX() + j, this.spike.getHeight(), position.getZ() + k), Blocks.IRON_BARS.getDefaultState());
                             this.setBlockAndNotifyAdequately(worldIn, new BlockPos(position.getX() + j, this.spike.getHeight() + 1, position.getZ() + k), Blocks.IRON_BARS.getDefaultState());
@@ -69,7 +69,7 @@ public class WorldGenSpikes extends WorldGenerator
             entityendercrystal.setBeamTarget(this.beamTarget);
             entityendercrystal.setEntityInvulnerable(this.crystalInvulnerable);
             entityendercrystal.setLocationAndAngles((double)((float)position.getX() + 0.5F), (double)(this.spike.getHeight() + 1), (double)((float)position.getZ() + 0.5F), rand.nextFloat() * 360.0F, 0.0F);
-            worldIn.spawnEntityInWorld(entityendercrystal);
+            worldIn.spawnEntity(entityendercrystal);
             this.setBlockAndNotifyAdequately(worldIn, new BlockPos(position.getX(), this.spike.getHeight(), position.getZ()), Blocks.BEDROCK.getDefaultState());
             return true;
         }

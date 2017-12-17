@@ -1,5 +1,6 @@
 package net.minecraft.client.renderer.entity;
 
+import javax.annotation.Nullable;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
@@ -28,6 +29,7 @@ public class RenderEntity extends Render<Entity>
     /**
      * Returns the location of an entity's texture. Doesn't seem to be called unless you call Render.bindEntityTexture.
      */
+    @Nullable
     protected ResourceLocation getEntityTexture(Entity entity)
     {
         return null;

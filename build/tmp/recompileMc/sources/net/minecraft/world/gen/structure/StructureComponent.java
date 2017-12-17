@@ -17,7 +17,9 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.template.TemplateManager;
 
 public abstract class StructureComponent
 {
@@ -81,13 +83,13 @@ public abstract class StructureComponent
         int i = tagCompound.getInteger("O");
         this.setCoordBaseMode(i == -1 ? null : EnumFacing.getHorizontal(i));
         this.componentType = tagCompound.getInteger("GD");
-        this.readStructureFromNBT(tagCompound);
+        this.readStructureFromNBT(tagCompound, worldIn.getSaveHandler().getStructureTemplateManager());
     }
 
     /**
      * (abstract) Helper method to read subclass data from NBT
      */
-    protected abstract void readStructureFromNBT(NBTTagCompound tagCompound);
+    protected abstract void readStructureFromNBT(NBTTagCompound tagCompound, TemplateManager p_143011_2_);
 
     /**
      * Initiates construction of the Structure Component picked, at the current Location of StructGen
@@ -129,11 +131,6 @@ public abstract class StructureComponent
         }
 
         return null;
-    }
-
-    public BlockPos getBoundingBoxCenter()
-    {
-        return new BlockPos(this.boundingBox.getCenter());
     }
 
     /**
@@ -284,6 +281,15 @@ public abstract class StructureComponent
         return !boundingboxIn.isVecInside(blockpos) ? Blocks.AIR.getDefaultState() : worldIn.getBlockState(blockpos);
     }
 
+    protected int getSkyBrightness(World worldIn, int x, int y, int z, StructureBoundingBox boundingboxIn)
+    {
+        int i = this.getXWithOffset(x, z);
+        int j = this.getYWithOffset(y + 1);
+        int k = this.getZWithOffset(x, z);
+        BlockPos blockpos = new BlockPos(i, j, k);
+        return !boundingboxIn.isVecInside(blockpos) ? EnumSkyBlock.SKY.defaultLightValue : worldIn.getLightFor(EnumSkyBlock.SKY, blockpos);
+    }
+
     /**
      * arguments: (World worldObj, StructureBoundingBox structBB, int minX, int minY, int minZ, int maxX, int maxY, int
      * maxZ)
@@ -351,26 +357,23 @@ public abstract class StructureComponent
         }
     }
 
-    /**
-     * Randomly fill the given area with the blockstate2 and cover them with blockstate1
-     */
-    protected void fillWithBlocksRandomly(World worldIn, StructureBoundingBox boundingboxIn, Random rand, float chance, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, IBlockState blockstate1, IBlockState blockstate2, boolean excludeAir)
+    protected void generateMaybeBox(World worldIn, StructureBoundingBox sbb, Random rand, float chance, int x1, int y1, int z1, int x2, int y2, int z2, IBlockState edgeState, IBlockState state, boolean requireNonAir, int requiredSkylight)
     {
-        for (int i = minY; i <= maxY; ++i)
+        for (int i = y1; i <= y2; ++i)
         {
-            for (int j = minX; j <= maxX; ++j)
+            for (int j = x1; j <= x2; ++j)
             {
-                for (int k = minZ; k <= maxZ; ++k)
+                for (int k = z1; k <= z2; ++k)
                 {
-                    if (rand.nextFloat() <= chance && (!excludeAir || this.getBlockStateFromPos(worldIn, j, i, k, boundingboxIn).getMaterial() != Material.AIR))
+                    if (rand.nextFloat() <= chance && (!requireNonAir || this.getBlockStateFromPos(worldIn, j, i, k, sbb).getMaterial() != Material.AIR) && (requiredSkylight <= 0 || this.getSkyBrightness(worldIn, j, i, k, sbb) < requiredSkylight))
                     {
-                        if (i != minY && i != maxY && j != minX && j != maxX && k != minZ && k != maxZ)
+                        if (i != y1 && i != y2 && j != x1 && j != x2 && k != z1 && k != z2)
                         {
-                            this.setBlockState(worldIn, blockstate2, j, i, k, boundingboxIn);
+                            this.setBlockState(worldIn, state, j, i, k, sbb);
                         }
                         else
                         {
-                            this.setBlockState(worldIn, blockstate1, j, i, k, boundingboxIn);
+                            this.setBlockState(worldIn, edgeState, j, i, k, sbb);
                         }
                     }
                 }
@@ -462,16 +465,24 @@ public abstract class StructureComponent
     protected boolean generateChest(World worldIn, StructureBoundingBox structurebb, Random randomIn, int x, int y, int z, ResourceLocation loot)
     {
         BlockPos blockpos = new BlockPos(this.getXWithOffset(x, z), this.getYWithOffset(y), this.getZWithOffset(x, z));
+        return this.generateChest(worldIn, structurebb, randomIn, blockpos, loot, (IBlockState)null);
+    }
 
-        if (structurebb.isVecInside(blockpos) && worldIn.getBlockState(blockpos).getBlock() != Blocks.CHEST)
+    protected boolean generateChest(World p_191080_1_, StructureBoundingBox p_191080_2_, Random p_191080_3_, BlockPos p_191080_4_, ResourceLocation p_191080_5_, @Nullable IBlockState p_191080_6_)
+    {
+        if (p_191080_2_.isVecInside(p_191080_4_) && p_191080_1_.getBlockState(p_191080_4_).getBlock() != Blocks.CHEST)
         {
-            IBlockState iblockstate = Blocks.CHEST.getDefaultState();
-            worldIn.setBlockState(blockpos, Blocks.CHEST.correctFacing(worldIn, blockpos, iblockstate), 2);
-            TileEntity tileentity = worldIn.getTileEntity(blockpos);
+            if (p_191080_6_ == null)
+            {
+                p_191080_6_ = Blocks.CHEST.correctFacing(p_191080_1_, p_191080_4_, Blocks.CHEST.getDefaultState());
+            }
+
+            p_191080_1_.setBlockState(p_191080_4_, p_191080_6_, 2);
+            TileEntity tileentity = p_191080_1_.getTileEntity(p_191080_4_);
 
             if (tileentity instanceof TileEntityChest)
             {
-                ((TileEntityChest)tileentity).setLootTable(loot, randomIn.nextLong());
+                ((TileEntityChest)tileentity).setLootTable(p_191080_5_, p_191080_3_.nextLong());
             }
 
             return true;
@@ -482,18 +493,18 @@ public abstract class StructureComponent
         }
     }
 
-    protected boolean createDispenser(World p_189419_1_, StructureBoundingBox p_189419_2_, Random p_189419_3_, int p_189419_4_, int p_189419_5_, int p_189419_6_, EnumFacing p_189419_7_, ResourceLocation p_189419_8_)
+    protected boolean createDispenser(World worldIn, StructureBoundingBox sbb, Random rand, int x, int y, int z, EnumFacing facing, ResourceLocation lootTableIn)
     {
-        BlockPos blockpos = new BlockPos(this.getXWithOffset(p_189419_4_, p_189419_6_), this.getYWithOffset(p_189419_5_), this.getZWithOffset(p_189419_4_, p_189419_6_));
+        BlockPos blockpos = new BlockPos(this.getXWithOffset(x, z), this.getYWithOffset(y), this.getZWithOffset(x, z));
 
-        if (p_189419_2_.isVecInside(blockpos) && p_189419_1_.getBlockState(blockpos).getBlock() != Blocks.DISPENSER)
+        if (sbb.isVecInside(blockpos) && worldIn.getBlockState(blockpos).getBlock() != Blocks.DISPENSER)
         {
-            this.setBlockState(p_189419_1_, Blocks.DISPENSER.getDefaultState().withProperty(BlockDispenser.FACING, p_189419_7_), p_189419_4_, p_189419_5_, p_189419_6_, p_189419_2_);
-            TileEntity tileentity = p_189419_1_.getTileEntity(blockpos);
+            this.setBlockState(worldIn, Blocks.DISPENSER.getDefaultState().withProperty(BlockDispenser.FACING, facing), x, y, z, sbb);
+            TileEntity tileentity = worldIn.getTileEntity(blockpos);
 
             if (tileentity instanceof TileEntityDispenser)
             {
-                ((TileEntityDispenser)tileentity).setLootTable(p_189419_8_, p_189419_3_.nextLong());
+                ((TileEntityDispenser)tileentity).setLootTable(lootTableIn, rand.nextLong());
             }
 
             return true;
@@ -504,13 +515,10 @@ public abstract class StructureComponent
         }
     }
 
-    /**
-     * Places door on given position
-     */
-    protected void placeDoorCurrentPosition(World worldIn, StructureBoundingBox boundingBoxIn, Random rand, int x, int y, int z, EnumFacing facing)
+    protected void generateDoor(World worldIn, StructureBoundingBox sbb, Random rand, int x, int y, int z, EnumFacing facing, BlockDoor door)
     {
-        this.setBlockState(worldIn, Blocks.OAK_DOOR.getDefaultState().withProperty(BlockDoor.FACING, facing), x, y, z, boundingBoxIn);
-        this.setBlockState(worldIn, Blocks.OAK_DOOR.getDefaultState().withProperty(BlockDoor.FACING, facing).withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER), x, y + 1, z, boundingBoxIn);
+        this.setBlockState(worldIn, door.getDefaultState().withProperty(BlockDoor.FACING, facing), x, y, z, sbb);
+        this.setBlockState(worldIn, door.getDefaultState().withProperty(BlockDoor.FACING, facing).withProperty(BlockDoor.HALF, BlockDoor.EnumDoorHalf.UPPER), x, y + 1, z, sbb);
     }
 
     public void offset(int x, int y, int z)
@@ -563,7 +571,7 @@ public abstract class StructureComponent
             /**
              * picks Block Ids and Metadata (Silverfish)
              */
-            public abstract void selectBlocks(Random rand, int x, int y, int z, boolean p_75062_5_);
+            public abstract void selectBlocks(Random rand, int x, int y, int z, boolean wall);
 
             public IBlockState getBlockState()
             {

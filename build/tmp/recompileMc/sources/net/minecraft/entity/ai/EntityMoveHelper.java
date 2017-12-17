@@ -14,11 +14,11 @@ public class EntityMoveHelper
     protected double posX;
     protected double posY;
     protected double posZ;
-    /** The speed at which the entity should move */
+    /** Multiplier for the entity's speed attribute value */
     protected double speed;
     protected float moveForward;
     protected float moveStrafe;
-    protected EntityMoveHelper.Action action = EntityMoveHelper.Action.WAIT;
+    public EntityMoveHelper.Action action = EntityMoveHelper.Action.WAIT;
 
     public EntityMoveHelper(EntityLiving entitylivingIn)
     {
@@ -74,7 +74,7 @@ public class EntityMoveHelper
             float f1 = (float)this.speed * f;
             float f2 = this.moveForward;
             float f3 = this.moveStrafe;
-            float f4 = MathHelper.sqrt_float(f2 * f2 + f3 * f3);
+            float f4 = MathHelper.sqrt(f2 * f2 + f3 * f3);
 
             if (f4 < 1.0F)
             {
@@ -94,7 +94,7 @@ public class EntityMoveHelper
             {
                 NodeProcessor nodeprocessor = pathnavigate.getNodeProcessor();
 
-                if (nodeprocessor != null && nodeprocessor.getPathNodeType(this.entity.worldObj, MathHelper.floor_double(this.entity.posX + (double)f7), MathHelper.floor_double(this.entity.posY), MathHelper.floor_double(this.entity.posZ + (double)f8)) != PathNodeType.WALKABLE)
+                if (nodeprocessor != null && nodeprocessor.getPathNodeType(this.entity.world, MathHelper.floor(this.entity.posX + (double)f7), MathHelper.floor(this.entity.posY), MathHelper.floor(this.entity.posZ + (double)f8)) != PathNodeType.WALKABLE)
                 {
                     this.moveForward = 1.0F;
                     this.moveStrafe = 0.0F;
@@ -125,9 +125,19 @@ public class EntityMoveHelper
             this.entity.rotationYaw = this.limitAngle(this.entity.rotationYaw, f9, 90.0F);
             this.entity.setAIMoveSpeed((float)(this.speed * this.entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue()));
 
-            if (d2 > (double)this.entity.stepHeight && d0 * d0 + d1 * d1 < 1.0D)
+            if (d2 > (double)this.entity.stepHeight && d0 * d0 + d1 * d1 < (double)Math.max(1.0F, this.entity.width))
             {
                 this.entity.getJumpHelper().setJumping();
+                this.action = EntityMoveHelper.Action.JUMPING;
+            }
+        }
+        else if (this.action == EntityMoveHelper.Action.JUMPING)
+        {
+            this.entity.setAIMoveSpeed((float)(this.speed * this.entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue()));
+
+            if (this.entity.onGround)
+            {
+                this.action = EntityMoveHelper.Action.WAIT;
             }
         }
         else
@@ -137,23 +147,24 @@ public class EntityMoveHelper
     }
 
     /**
-     * Limits the given angle to a upper and lower limit.
+     * Attempt to rotate the first angle to become the second angle, but only allow overall direction change to at max
+     * be third parameter
      */
-    protected float limitAngle(float p_75639_1_, float p_75639_2_, float p_75639_3_)
+    protected float limitAngle(float sourceAngle, float targetAngle, float maximumChange)
     {
-        float f = MathHelper.wrapDegrees(p_75639_2_ - p_75639_1_);
+        float f = MathHelper.wrapDegrees(targetAngle - sourceAngle);
 
-        if (f > p_75639_3_)
+        if (f > maximumChange)
         {
-            f = p_75639_3_;
+            f = maximumChange;
         }
 
-        if (f < -p_75639_3_)
+        if (f < -maximumChange)
         {
-            f = -p_75639_3_;
+            f = -maximumChange;
         }
 
-        float f1 = p_75639_1_ + f;
+        float f1 = sourceAngle + f;
 
         if (f1 < 0.0F)
         {
@@ -186,6 +197,7 @@ public class EntityMoveHelper
     {
         WAIT,
         MOVE_TO,
-        STRAFE;
+        STRAFE,
+        JUMPING;
     }
 }

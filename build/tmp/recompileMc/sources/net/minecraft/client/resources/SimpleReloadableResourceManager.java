@@ -39,7 +39,7 @@ public class SimpleReloadableResourceManager implements IReloadableResourceManag
         for (String s : resourcePack.getResourceDomains())
         {
             this.setResourceDomains.add(s);
-            FallbackResourceManager fallbackresourcemanager = (FallbackResourceManager)this.domainResourceManagers.get(s);
+            FallbackResourceManager fallbackresourcemanager = this.domainResourceManagers.get(s);
 
             if (fallbackresourcemanager == null)
             {
@@ -58,7 +58,7 @@ public class SimpleReloadableResourceManager implements IReloadableResourceManag
 
     public IResource getResource(ResourceLocation location) throws IOException
     {
-        IResourceManager iresourcemanager = (IResourceManager)this.domainResourceManagers.get(location.getResourceDomain());
+        IResourceManager iresourcemanager = this.domainResourceManagers.get(location.getResourceDomain());
 
         if (iresourcemanager != null)
         {
@@ -72,7 +72,7 @@ public class SimpleReloadableResourceManager implements IReloadableResourceManag
 
     public List<IResource> getAllResources(ResourceLocation location) throws IOException
     {
-        IResourceManager iresourcemanager = (IResourceManager)this.domainResourceManagers.get(location.getResourceDomain());
+        IResourceManager iresourcemanager = this.domainResourceManagers.get(location.getResourceDomain());
 
         if (iresourcemanager != null)
         {
@@ -92,9 +92,9 @@ public class SimpleReloadableResourceManager implements IReloadableResourceManag
 
     public void reloadResources(List<IResourcePack> resourcesPacksList)
     {
-        this.clearResources();
         net.minecraftforge.fml.common.ProgressManager.ProgressBar resReload = net.minecraftforge.fml.common.ProgressManager.push("Loading Resources", resourcesPacksList.size()+1, true);
-        LOGGER.info("Reloading ResourceManager: " + JOINER_RESOURCE_PACKS.join(Iterables.transform(resourcesPacksList, new Function<IResourcePack, String>()
+        this.clearResources();
+        LOGGER.info("Reloading ResourceManager: {}", (Object)JOINER_RESOURCE_PACKS.join(Iterables.transform(resourcesPacksList, new Function<IResourcePack, String>()
         {
             public String apply(@Nullable IResourcePack p_apply_1_)
             {

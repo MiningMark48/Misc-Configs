@@ -20,23 +20,20 @@ public abstract class EntityFlying extends EntityLiving
     {
     }
 
-    /**
-     * Moves the entity based on the specified heading.
-     */
-    public void moveEntityWithHeading(float strafe, float forward)
+    public void travel(float strafe, float vertical, float forward)
     {
         if (this.isInWater())
         {
-            this.moveRelative(strafe, forward, 0.02F);
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
+            this.moveRelative(strafe, vertical, forward, 0.02F);
+            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
             this.motionX *= 0.800000011920929D;
             this.motionY *= 0.800000011920929D;
             this.motionZ *= 0.800000011920929D;
         }
         else if (this.isInLava())
         {
-            this.moveRelative(strafe, forward, 0.02F);
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
+            this.moveRelative(strafe, vertical, forward, 0.02F);
+            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
             this.motionX *= 0.5D;
             this.motionY *= 0.5D;
             this.motionZ *= 0.5D;
@@ -47,19 +44,23 @@ public abstract class EntityFlying extends EntityLiving
 
             if (this.onGround)
             {
-                f = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                BlockPos underPos = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ));
+                IBlockState underState = this.world.getBlockState(underPos);
+                f = underState.getBlock().getSlipperiness(underState, this.world, underPos, this) * 0.91F;
             }
 
             float f1 = 0.16277136F / (f * f * f);
-            this.moveRelative(strafe, forward, this.onGround ? 0.1F * f1 : 0.02F);
+            this.moveRelative(strafe, vertical, forward, this.onGround ? 0.1F * f1 : 0.02F);
             f = 0.91F;
 
             if (this.onGround)
             {
-                f = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                BlockPos underPos = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ));
+                IBlockState underState = this.world.getBlockState(underPos);
+                f = underState.getBlock().getSlipperiness(underState, this.world, underPos, this) * 0.91F;
             }
 
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
+            this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
             this.motionX *= (double)f;
             this.motionY *= (double)f;
             this.motionZ *= (double)f;
@@ -68,7 +69,7 @@ public abstract class EntityFlying extends EntityLiving
         this.prevLimbSwingAmount = this.limbSwingAmount;
         double d1 = this.posX - this.prevPosX;
         double d0 = this.posZ - this.prevPosZ;
-        float f2 = MathHelper.sqrt_double(d1 * d1 + d0 * d0) * 4.0F;
+        float f2 = MathHelper.sqrt(d1 * d1 + d0 * d0) * 4.0F;
 
         if (f2 > 1.0F)
         {
@@ -80,7 +81,8 @@ public abstract class EntityFlying extends EntityLiving
     }
 
     /**
-     * returns true if this entity is by a ladder, false otherwise
+     * Returns true if this entity should move as if it were on a ladder (either because it's actually on a ladder, or
+     * for AI reasons)
      */
     public boolean isOnLadder()
     {

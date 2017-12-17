@@ -3,6 +3,7 @@ package net.minecraft.entity.monster;
 import java.util.Random;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.IEntityLivingData;
@@ -13,7 +14,7 @@ import net.minecraft.entity.ai.EntityAILeapAtTarget;
 import net.minecraft.entity.ai.EntityAILookIdle;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
 import net.minecraft.entity.ai.EntityAISwimming;
-import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWanderAvoidWater;
 import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.MobEffects;
@@ -25,8 +26,10 @@ import net.minecraft.pathfinding.PathNavigate;
 import net.minecraft.pathfinding.PathNavigateClimber;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
@@ -43,12 +46,17 @@ public class EntitySpider extends EntityMob
         this.setSize(1.4F, 0.9F);
     }
 
+    public static void registerFixesSpider(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntitySpider.class);
+    }
+
     protected void initEntityAI()
     {
         this.tasks.addTask(1, new EntityAISwimming(this));
         this.tasks.addTask(3, new EntityAILeapAtTarget(this, 0.4F));
         this.tasks.addTask(4, new EntitySpider.AISpiderAttack(this));
-        this.tasks.addTask(5, new EntityAIWander(this, 0.8D));
+        this.tasks.addTask(5, new EntityAIWanderAvoidWater(this, 0.8D));
         this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
         this.tasks.addTask(6, new EntityAILookIdle(this));
         this.targetTasks.addTask(1, new EntityAIHurtByTarget(this, false, new Class[0]));
@@ -67,7 +75,7 @@ public class EntitySpider extends EntityMob
     /**
      * Returns new PathNavigateGround instance
      */
-    protected PathNavigate getNewNavigator(World worldIn)
+    protected PathNavigate createNavigator(World worldIn)
     {
         return new PathNavigateClimber(this, worldIn);
     }
@@ -85,9 +93,9 @@ public class EntitySpider extends EntityMob
     {
         super.onUpdate();
 
-        if (!this.worldObj.isRemote)
+        if (!this.world.isRemote)
         {
-            this.setBesideClimbableBlock(this.isCollidedHorizontally);
+            this.setBesideClimbableBlock(this.collidedHorizontally);
         }
     }
 
@@ -103,7 +111,7 @@ public class EntitySpider extends EntityMob
         return SoundEvents.ENTITY_SPIDER_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_SPIDER_HURT;
     }
@@ -125,7 +133,8 @@ public class EntitySpider extends EntityMob
     }
 
     /**
-     * returns true if this entity is by a ladder, false otherwise
+     * Returns true if this entity should move as if it were on a ladder (either because it's actually on a ladder, or
+     * for AI reasons)
      */
     public boolean isOnLadder()
     {
@@ -190,12 +199,12 @@ public class EntitySpider extends EntityMob
     {
         livingdata = super.onInitialSpawn(difficulty, livingdata);
 
-        if (this.worldObj.rand.nextInt(100) == 0)
+        if (this.world.rand.nextInt(100) == 0)
         {
-            EntitySkeleton entityskeleton = new EntitySkeleton(this.worldObj);
+            EntitySkeleton entityskeleton = new EntitySkeleton(this.world);
             entityskeleton.setLocationAndAngles(this.posX, this.posY, this.posZ, this.rotationYaw, 0.0F);
             entityskeleton.onInitialSpawn(difficulty, (IEntityLivingData)null);
-            this.worldObj.spawnEntityInWorld(entityskeleton);
+            this.world.spawnEntity(entityskeleton);
             entityskeleton.startRiding(this);
         }
 
@@ -203,9 +212,9 @@ public class EntitySpider extends EntityMob
         {
             livingdata = new EntitySpider.GroupData();
 
-            if (this.worldObj.getDifficulty() == EnumDifficulty.HARD && this.worldObj.rand.nextFloat() < 0.1F * difficulty.getClampedAdditionalDifficulty())
+            if (this.world.getDifficulty() == EnumDifficulty.HARD && this.world.rand.nextFloat() < 0.1F * difficulty.getClampedAdditionalDifficulty())
             {
-                ((EntitySpider.GroupData)livingdata).setRandomEffect(this.worldObj.rand);
+                ((EntitySpider.GroupData)livingdata).setRandomEffect(this.world.rand);
             }
         }
 
@@ -237,9 +246,9 @@ public class EntitySpider extends EntityMob
             /**
              * Returns whether an in-progress EntityAIBase should continue executing
              */
-            public boolean continueExecuting()
+            public boolean shouldContinueExecuting()
             {
-                float f = this.attacker.getBrightness(1.0F);
+                float f = this.attacker.getBrightness();
 
                 if (f >= 0.5F && this.attacker.getRNG().nextInt(100) == 0)
                 {
@@ -248,7 +257,7 @@ public class EntitySpider extends EntityMob
                 }
                 else
                 {
-                    return super.continueExecuting();
+                    return super.shouldContinueExecuting();
                 }
             }
 
@@ -270,7 +279,7 @@ public class EntitySpider extends EntityMob
              */
             public boolean shouldExecute()
             {
-                float f = this.taskOwner.getBrightness(1.0F);
+                float f = this.taskOwner.getBrightness();
                 return f >= 0.5F ? false : super.shouldExecute();
             }
         }

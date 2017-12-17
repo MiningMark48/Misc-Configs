@@ -65,12 +65,12 @@ public class EnchantmentThorns extends Enchantment
                 attacker.attackEntityFrom(DamageSource.causeThornsDamage(user), (float)getDamage(level, random));
             }
 
-            if (itemstack != null)
+            if (!itemstack.isEmpty())
             {
                 damageArmor(itemstack, 3, user);
             }
         }
-        else if (itemstack != null)
+        else if (!itemstack.isEmpty())
         {
             damageArmor(itemstack, 1, user);
         }
@@ -78,7 +78,14 @@ public class EnchantmentThorns extends Enchantment
 
     public static boolean shouldHit(int level, Random rnd)
     {
-        return level <= 0 ? false : rnd.nextFloat() < 0.15F * (float)level;
+        if (level <= 0)
+        {
+            return false;
+        }
+        else
+        {
+            return rnd.nextFloat() < 0.15F * (float)level;
+        }
     }
 
     public static int getDamage(int level, Random rnd)

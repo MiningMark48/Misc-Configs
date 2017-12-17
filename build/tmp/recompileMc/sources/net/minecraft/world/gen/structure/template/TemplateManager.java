@@ -13,54 +13,57 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.datafix.DataFixer;
+import net.minecraft.util.datafix.FixTypes;
 import org.apache.commons.io.IOUtils;
 
 public class TemplateManager
 {
-    private final Map<String, Template> templates;
+    private final Map<String, Template> templates = Maps.<String, Template>newHashMap();
     /** the folder in the assets folder where the structure templates are found. */
     private final String baseFolder;
+    private final DataFixer fixer;
 
-    public TemplateManager()
+    public TemplateManager(String p_i47239_1_, DataFixer p_i47239_2_)
     {
-        this("structures");
-    }
-
-    public TemplateManager(String basefolderIn)
-    {
-        this.templates = Maps.<String, Template>newHashMap();
-        this.baseFolder = basefolderIn;
+        this.baseFolder = p_i47239_1_;
+        this.fixer = p_i47239_2_;
     }
 
     public Template getTemplate(@Nullable MinecraftServer server, ResourceLocation id)
     {
-        String s = id.getResourcePath();
+        Template template = this.get(server, id);
+
+        if (template == null)
+        {
+            template = new Template();
+            this.templates.put(id.getResourcePath(), template);
+        }
+
+        return template;
+    }
+
+    @Nullable
+    public Template get(@Nullable MinecraftServer server, ResourceLocation templatePath)
+    {
+        String s = templatePath.getResourcePath();
 
         if (this.templates.containsKey(s))
         {
-            return (Template)this.templates.get(s);
+            return this.templates.get(s);
         }
         else
         {
-            if (server != null)
+            if (server == null)
             {
-                this.readTemplate(server, id);
+                this.readTemplateFromJar(templatePath);
             }
             else
             {
-                this.readTemplateFromJar(id);
+                this.readTemplate(templatePath);
             }
 
-            if (this.templates.containsKey(s))
-            {
-                return (Template)this.templates.get(s);
-            }
-            else
-            {
-                Template template = new Template();
-                this.templates.put(s, template);
-                return template;
-            }
+            return this.templates.containsKey(s) ? (Template)this.templates.get(s) : null;
         }
     }
 
@@ -69,15 +72,14 @@ public class TemplateManager
      * This first attempts get the template from an external folder.
      * If it isn't there then it attempts to take it from the minecraft jar.
      */
-    public boolean readTemplate(MinecraftServer server, ResourceLocation id)
+    public boolean readTemplate(ResourceLocation server)
     {
-        String s = id.getResourcePath();
-        File file1 = server.getFile(this.baseFolder);
-        File file2 = new File(file1, s + ".nbt");
+        String s = server.getResourcePath();
+        File file1 = new File(this.baseFolder, s + ".nbt");
 
-        if (!file2.exists())
+        if (!file1.exists())
         {
-            return this.readTemplateFromJar(id);
+            return this.readTemplateFromJar(server);
         }
         else
         {
@@ -86,11 +88,11 @@ public class TemplateManager
 
             try
             {
-                inputstream = new FileInputStream(file2);
+                inputstream = new FileInputStream(file1);
                 this.readTemplateFromStream(s, inputstream);
                 return true;
             }
-            catch (Throwable var12)
+            catch (Throwable var10)
             {
                 flag = false;
             }
@@ -137,25 +139,27 @@ public class TemplateManager
     private void readTemplateFromStream(String id, InputStream stream) throws IOException
     {
         NBTTagCompound nbttagcompound = CompressedStreamTools.readCompressed(stream);
+
+        if (!nbttagcompound.hasKey("DataVersion", 99))
+        {
+            nbttagcompound.setInteger("DataVersion", 500);
+        }
+
         Template template = new Template();
-        template.read(nbttagcompound);
+        template.read(this.fixer.process(FixTypes.STRUCTURE, nbttagcompound));
         this.templates.put(id, template);
     }
 
     /**
      * writes the template to an external folder
      */
-    public boolean writeTemplate(MinecraftServer server, ResourceLocation id)
+    public boolean writeTemplate(@Nullable MinecraftServer server, ResourceLocation id)
     {
         String s = id.getResourcePath();
 
-        if (!this.templates.containsKey(s))
+        if (server != null && this.templates.containsKey(s))
         {
-            return false;
-        }
-        else
-        {
-            File file1 = server.getFile(this.baseFolder);
+            File file1 = new File(this.baseFolder);
 
             if (!file1.exists())
             {
@@ -170,7 +174,7 @@ public class TemplateManager
             }
 
             File file2 = new File(file1, s + ".nbt");
-            Template template = (Template)this.templates.get(s);
+            Template template = this.templates.get(s);
             OutputStream outputstream = null;
             boolean flag;
 
@@ -192,5 +196,14 @@ public class TemplateManager
 
             return flag;
         }
+        else
+        {
+            return false;
+        }
+    }
+
+    public void remove(ResourceLocation templatePath)
+    {
+        this.templates.remove(templatePath.getResourcePath());
     }
 }

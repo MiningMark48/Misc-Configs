@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyInteger;
 import net.minecraft.block.state.BlockStateContainer;
@@ -82,9 +81,10 @@ public class BlockCrops extends BlockBush implements IGrowable
             {
                 float f = getGrowthChance(this, worldIn, pos);
 
-                if (rand.nextInt((int)(25.0F / f) + 1) == 0)
+                if(net.minecraftforge.common.ForgeHooks.onCropsGrowPre(worldIn, pos, state, rand.nextInt((int)(25.0F / f) + 1) == 0))
                 {
                     worldIn.setBlockState(pos, this.withAge(i + 1), 2);
+                    net.minecraftforge.common.ForgeHooks.onCropsGrowPost(worldIn, pos, state, worldIn.getBlockState(pos));
                 }
             }
         }
@@ -105,7 +105,7 @@ public class BlockCrops extends BlockBush implements IGrowable
 
     protected int getBonemealAgeIncrease(World worldIn)
     {
-        return MathHelper.getRandomIntegerInRange(worldIn.rand, 2, 5);
+        return MathHelper.getInt(worldIn.rand, 2, 5);
     }
 
     protected static float getGrowthChance(Block blockIn, World worldIn, BlockPos pos)
@@ -180,9 +180,9 @@ public class BlockCrops extends BlockBush implements IGrowable
     }
 
     @Override
-    public java.util.List<ItemStack> getDrops(net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
+    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
     {
-        java.util.List<ItemStack> ret = super.getDrops(world, pos, state, fortune);
+        super.getDrops(drops, world, pos, state, 0);
         int age = getAge(state);
         Random rand = world instanceof World ? ((World)world).rand : new Random();
 
@@ -194,11 +194,10 @@ public class BlockCrops extends BlockBush implements IGrowable
             {
                 if (rand.nextInt(2 * getMaxAge()) <= age)
                 {
-                    ret.add(new ItemStack(this.getSeed(), 1, 0));
+                    drops.add(new ItemStack(this.getSeed(), 1, 0));
                 }
             }
         }
-        return ret;
     }
 
     /**
@@ -206,7 +205,7 @@ public class BlockCrops extends BlockBush implements IGrowable
      */
     public void dropBlockAsItemWithChance(World worldIn, BlockPos pos, IBlockState state, float chance, int fortune)
     {
-        super.dropBlockAsItemWithChance(worldIn, pos, state, chance, 0);
+        super.dropBlockAsItemWithChance(worldIn, pos, state, chance, fortune);
 
         if (false && !worldIn.isRemote) // Forge: NOP all this.
         {
@@ -230,7 +229,6 @@ public class BlockCrops extends BlockBush implements IGrowable
     /**
      * Get the Item that this Block should drop when harvested.
      */
-    @Nullable
     public Item getItemDropped(IBlockState state, Random rand, int fortune)
     {
         return this.isMaxAge(state) ? this.getCrop() : this.getSeed();

@@ -1,9 +1,8 @@
 package net.minecraft.world.gen.structure;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 
 public class StructureBoundingBox
@@ -67,9 +66,9 @@ public class StructureBoundingBox
         }
     }
 
-    public static StructureBoundingBox createProper(int p_175899_0_, int p_175899_1_, int p_175899_2_, int p_175899_3_, int p_175899_4_, int p_175899_5_)
+    public static StructureBoundingBox createProper(int x1, int y1, int z1, int x2, int y2, int z2)
     {
-        return new StructureBoundingBox(Math.min(p_175899_0_, p_175899_3_), Math.min(p_175899_1_, p_175899_4_), Math.min(p_175899_2_, p_175899_5_), Math.max(p_175899_0_, p_175899_3_), Math.max(p_175899_1_, p_175899_4_), Math.max(p_175899_2_, p_175899_5_));
+        return new StructureBoundingBox(Math.min(x1, x2), Math.min(y1, y2), Math.min(z1, z2), Math.max(x1, x2), Math.max(y1, y2), Math.max(z1, z2));
     }
 
     public StructureBoundingBox(StructureBoundingBox structurebb)
@@ -191,14 +190,9 @@ public class StructureBoundingBox
         return this.maxZ - this.minZ + 1;
     }
 
-    public Vec3i getCenter()
-    {
-        return new BlockPos(this.minX + (this.maxX - this.minX + 1) / 2, this.minY + (this.maxY - this.minY + 1) / 2, this.minZ + (this.maxZ - this.minZ + 1) / 2);
-    }
-
     public String toString()
     {
-        return Objects.toStringHelper(this).add("x0", this.minX).add("y0", this.minY).add("z0", this.minZ).add("x1", this.maxX).add("y1", this.maxY).add("z1", this.maxZ).toString();
+        return MoreObjects.toStringHelper(this).add("x0", this.minX).add("y0", this.minY).add("z0", this.minZ).add("x1", this.maxX).add("y1", this.maxY).add("z1", this.maxZ).toString();
     }
 
     public NBTTagIntArray toNBTTagIntArray()

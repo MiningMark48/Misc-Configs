@@ -1,19 +1,28 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.asm.transformers;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
@@ -21,7 +30,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -62,6 +75,8 @@ public class SideTransformer implements IClassTransformer
                 fields.remove();
             }
         }
+
+        LambdaGatherer lambdaGatherer = new LambdaGatherer();
         Iterator<MethodNode> methods = classNode.methods.iterator();
         while(methods.hasNext())
         {
@@ -73,6 +88,29 @@ public class SideTransformer implements IClassTransformer
                     System.out.println(String.format("Removing Method: %s.%s%s", classNode.name, method.name, method.desc));
                 }
                 methods.remove();
+                lambdaGatherer.accept(method);
+            }
+        }
+
+        // remove dynamic lambda methods that are inside of removed methods
+        List<Handle> dynamicLambdaHandles = lambdaGatherer.getDynamicLambdaHandles();
+        if (!dynamicLambdaHandles.isEmpty())
+        {
+            methods = classNode.methods.iterator();
+            while (methods.hasNext())
+            {
+                MethodNode method = methods.next();
+                for (Handle dynamicLambdaHandle : dynamicLambdaHandles)
+                {
+                    if (method.name.equals(dynamicLambdaHandle.getName()) && method.desc.equals(dynamicLambdaHandle.getDesc()))
+                    {
+                        if (DEBUG)
+                        {
+                            System.out.println(String.format("Removing Method: %s.%s%s", classNode.name, method.name, method.desc));
+                        }
+                        methods.remove();
+                    }
+                }
             }
         }
 
@@ -112,5 +150,43 @@ public class SideTransformer implements IClassTransformer
             }
         }
         return false;
+    }
+
+    private static class LambdaGatherer extends MethodVisitor {
+        private static final Handle META_FACTORY = new Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory",
+                "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
+                false);
+        private final List<Handle> dynamicLambdaHandles = new ArrayList<Handle>();
+
+        public LambdaGatherer() {
+            super(Opcodes.ASM5);
+        }
+
+        public void accept(MethodNode method) {
+            ListIterator<AbstractInsnNode> insnNodeIterator = method.instructions.iterator();
+            while (insnNodeIterator.hasNext())
+            {
+                AbstractInsnNode insnNode = insnNodeIterator.next();
+                if (insnNode.getType() == AbstractInsnNode.INVOKE_DYNAMIC_INSN)
+                {
+                    insnNode.accept(this);
+                }
+            }
+        }
+
+        @Override
+        public void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs)
+        {
+            if (META_FACTORY.equals(bsm))
+            {
+                Handle dynamicLambdaHandle = (Handle) bsmArgs[1];
+                dynamicLambdaHandles.add(dynamicLambdaHandle);
+            }
+        }
+
+        public List<Handle> getDynamicLambdaHandles()
+        {
+            return dynamicLambdaHandles;
+        }
     }
 }

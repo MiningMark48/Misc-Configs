@@ -1,6 +1,5 @@
 package net.minecraft.server.management;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,27 +26,31 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.JsonUtils;
 import org.apache.commons.io.IOUtils;
 
 public class PlayerProfileCache
 {
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
     private static boolean onlineMode;
+    /** A map between player usernames and {@link ProfileEntry profile entries} */
     private final Map<String, PlayerProfileCache.ProfileEntry> usernameToProfileEntryMap = Maps.<String, PlayerProfileCache.ProfileEntry>newHashMap();
+    /** A map between {@link UUID UUID's} and {@link ProfileEntry ProfileEntries} */
     private final Map<UUID, PlayerProfileCache.ProfileEntry> uuidToProfileEntryMap = Maps.<UUID, PlayerProfileCache.ProfileEntry>newHashMap();
-    private final LinkedList<GameProfile> gameProfiles = Lists.<GameProfile>newLinkedList();
+    /** A list of all the cached {@link GameProfile GameProfiles} */
+    private final Deque<GameProfile> gameProfiles = Lists.<GameProfile>newLinkedList();
     private final GameProfileRepository profileRepo;
     protected final Gson gson;
     private final File usercacheFile;
@@ -141,7 +144,7 @@ public class PlayerProfileCache
 
         if (this.uuidToProfileEntryMap.containsKey(uuid))
         {
-            PlayerProfileCache.ProfileEntry playerprofilecache$profileentry1 = (PlayerProfileCache.ProfileEntry)this.uuidToProfileEntryMap.get(uuid);
+            PlayerProfileCache.ProfileEntry playerprofilecache$profileentry1 = this.uuidToProfileEntryMap.get(uuid);
             this.usernameToProfileEntryMap.remove(playerprofilecache$profileentry1.getGameProfile().getName().toLowerCase(Locale.ROOT));
             this.gameProfiles.remove(gameProfile);
         }
@@ -160,7 +163,7 @@ public class PlayerProfileCache
     public GameProfile getGameProfileForUsername(String username)
     {
         String s = username.toLowerCase(Locale.ROOT);
-        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = (PlayerProfileCache.ProfileEntry)this.usernameToProfileEntryMap.get(s);
+        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = this.usernameToProfileEntryMap.get(s);
 
         if (playerprofilecache$profileentry != null && (new Date()).getTime() >= playerprofilecache$profileentry.expirationDate.getTime())
         {
@@ -183,7 +186,7 @@ public class PlayerProfileCache
             if (gameprofile1 != null)
             {
                 this.addEntry(gameprofile1);
-                playerprofilecache$profileentry = (PlayerProfileCache.ProfileEntry)this.usernameToProfileEntryMap.get(s);
+                playerprofilecache$profileentry = this.usernameToProfileEntryMap.get(s);
             }
         }
 
@@ -206,7 +209,7 @@ public class PlayerProfileCache
     @Nullable
     public GameProfile getProfileByUUID(UUID uuid)
     {
-        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = (PlayerProfileCache.ProfileEntry)this.uuidToProfileEntryMap.get(uuid);
+        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = this.uuidToProfileEntryMap.get(uuid);
         return playerprofilecache$profileentry == null ? null : playerprofilecache$profileentry.getGameProfile();
     }
 
@@ -215,7 +218,7 @@ public class PlayerProfileCache
      */
     private PlayerProfileCache.ProfileEntry getByUUID(UUID uuid)
     {
-        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = (PlayerProfileCache.ProfileEntry)this.uuidToProfileEntryMap.get(uuid);
+        PlayerProfileCache.ProfileEntry playerprofilecache$profileentry = this.uuidToProfileEntryMap.get(uuid);
 
         if (playerprofilecache$profileentry != null)
         {
@@ -236,8 +239,8 @@ public class PlayerProfileCache
 
         try
         {
-            bufferedreader = Files.newReader(this.usercacheFile, Charsets.UTF_8);
-            List<PlayerProfileCache.ProfileEntry> list = (List)this.gson.fromJson((Reader)bufferedreader, TYPE);
+            bufferedreader = Files.newReader(this.usercacheFile, StandardCharsets.UTF_8);
+            List<PlayerProfileCache.ProfileEntry> list = (List)JsonUtils.fromJson(this.gson, bufferedreader, TYPE);
             this.usernameToProfileEntryMap.clear();
             this.uuidToProfileEntryMap.clear();
             this.gameProfiles.clear();
@@ -272,12 +275,12 @@ public class PlayerProfileCache
      */
     public void save()
     {
-        String s = this.gson.toJson((Object)this.getEntriesWithLimit(1000));
+        String s = this.gson.toJson(this.getEntriesWithLimit(1000));
         BufferedWriter bufferedwriter = null;
 
         try
         {
-            bufferedwriter = Files.newWriter(this.usercacheFile, Charsets.UTF_8);
+            bufferedwriter = Files.newWriter(this.usercacheFile, StandardCharsets.UTF_8);
             bufferedwriter.write(s);
             return;
         }
@@ -295,9 +298,12 @@ public class PlayerProfileCache
         }
     }
 
+    /**
+     * Get the {@link PlayerProfileCache.ProfileEntry entries} of this cache with a given limit
+     */
     private List<PlayerProfileCache.ProfileEntry> getEntriesWithLimit(int limitSize)
     {
-        ArrayList<PlayerProfileCache.ProfileEntry> arraylist = Lists.<PlayerProfileCache.ProfileEntry>newArrayList();
+        List<PlayerProfileCache.ProfileEntry> list = Lists.<PlayerProfileCache.ProfileEntry>newArrayList();
 
         for (GameProfile gameprofile : Lists.newArrayList(Iterators.limit(this.gameProfiles.iterator(), limitSize)))
         {
@@ -305,11 +311,11 @@ public class PlayerProfileCache
 
             if (playerprofilecache$profileentry != null)
             {
-                arraylist.add(playerprofilecache$profileentry);
+                list.add(playerprofilecache$profileentry);
             }
         }
 
-        return arraylist;
+        return list;
     }
 
     class ProfileEntry

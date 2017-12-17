@@ -1,6 +1,7 @@
 package net.minecraft.world.storage;
 
 import java.io.File;
+import javax.annotation.Nullable;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.MinecraftException;
 import net.minecraft.world.WorldProvider;
@@ -12,6 +13,7 @@ public interface ISaveHandler
     /**
      * Loads and returns the world info
      */
+    @Nullable
     WorldInfo loadWorldInfo();
 
     /**

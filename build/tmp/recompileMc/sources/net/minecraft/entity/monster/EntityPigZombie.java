@@ -4,8 +4,8 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
@@ -21,6 +21,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
@@ -42,6 +43,10 @@ public class EntityPigZombie extends EntityZombie
         this.isImmuneToFire = true;
     }
 
+    /**
+     * Hint to AI tasks that we were attacked by the passed EntityLivingBase and should retaliate. Is not guaranteed to
+     * change our actual active target (for example if we are currently busy attacking someone else)
+     */
     public void setRevengeTarget(@Nullable EntityLivingBase livingBase)
     {
         super.setRevengeTarget(livingBase);
@@ -64,14 +69,6 @@ public class EntityPigZombie extends EntityZombie
         this.getEntityAttribute(SPAWN_REINFORCEMENTS_CHANCE).setBaseValue(0.0D);
         this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.23000000417232513D);
         this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(5.0D);
-    }
-
-    /**
-     * Called to update the entity's position/logic.
-     */
-    public void onUpdate()
-    {
-        super.onUpdate();
     }
 
     protected void updateAITasks()
@@ -97,9 +94,9 @@ public class EntityPigZombie extends EntityZombie
             this.playSound(SoundEvents.ENTITY_ZOMBIE_PIG_ANGRY, this.getSoundVolume() * 2.0F, ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) * 1.8F);
         }
 
-        if (this.angerLevel > 0 && this.angerTargetUUID != null && this.getAITarget() == null)
+        if (this.angerLevel > 0 && this.angerTargetUUID != null && this.getRevengeTarget() == null)
         {
-            EntityPlayer entityplayer = this.worldObj.getPlayerEntityByUUID(this.angerTargetUUID);
+            EntityPlayer entityplayer = this.world.getPlayerEntityByUUID(this.angerTargetUUID);
             this.setRevengeTarget(entityplayer);
             this.attackingPlayer = entityplayer;
             this.recentlyHit = this.getRevengeTimer();
@@ -113,7 +110,7 @@ public class EntityPigZombie extends EntityZombie
      */
     public boolean getCanSpawnHere()
     {
-        return this.worldObj.getDifficulty() != EnumDifficulty.PEACEFUL;
+        return this.world.getDifficulty() != EnumDifficulty.PEACEFUL;
     }
 
     /**
@@ -121,7 +118,12 @@ public class EntityPigZombie extends EntityZombie
      */
     public boolean isNotColliding()
     {
-        return this.worldObj.checkNoEntityCollision(this.getEntityBoundingBox(), this) && this.worldObj.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && !this.worldObj.containsAnyLiquid(this.getEntityBoundingBox());
+        return this.world.checkNoEntityCollision(this.getEntityBoundingBox(), this) && this.world.getCollisionBoxes(this, this.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(this.getEntityBoundingBox());
+    }
+
+    public static void registerFixesPigZombie(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntityPigZombie.class);
     }
 
     /**
@@ -154,7 +156,7 @@ public class EntityPigZombie extends EntityZombie
         if (!s.isEmpty())
         {
             this.angerTargetUUID = UUID.fromString(s);
-            EntityPlayer entityplayer = this.worldObj.getPlayerEntityByUUID(this.angerTargetUUID);
+            EntityPlayer entityplayer = this.world.getPlayerEntityByUUID(this.angerTargetUUID);
             this.setRevengeTarget(entityplayer);
 
             if (entityplayer != null)
@@ -176,7 +178,7 @@ public class EntityPigZombie extends EntityZombie
         }
         else
         {
-            Entity entity = source.getEntity();
+            Entity entity = source.getTrueSource();
 
             if (entity instanceof EntityPlayer)
             {
@@ -211,7 +213,7 @@ public class EntityPigZombie extends EntityZombie
         return SoundEvents.ENTITY_ZOMBIE_PIG_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_ZOMBIE_PIG_HURT;
     }
@@ -227,7 +229,7 @@ public class EntityPigZombie extends EntityZombie
         return LootTableList.ENTITIES_ZOMBIE_PIGMAN;
     }
 
-    public boolean processInteract(EntityPlayer player, EnumHand hand, @Nullable ItemStack stack)
+    public boolean processInteract(EntityPlayer player, EnumHand hand)
     {
         return false;
     }
@@ -240,23 +242,21 @@ public class EntityPigZombie extends EntityZombie
         this.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, new ItemStack(Items.GOLDEN_SWORD));
     }
 
-    /**
-     * Called only once on an entity when first time spawned, via egg, mob spawner, natural spawning etc, but not called
-     * when entity is reloaded from nbt. Mainly used for initializing attributes and inventory
-     */
-    @Nullable
-    public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, @Nullable IEntityLivingData livingdata)
+    protected ItemStack getSkullDrop()
     {
-        super.onInitialSpawn(difficulty, livingdata);
-        this.setToNotVillager();
-        return livingdata;
+        return ItemStack.EMPTY;
+    }
+
+    public boolean isPreventingPlayerRest(EntityPlayer playerIn)
+    {
+        return this.isAngry();
     }
 
     static class AIHurtByAggressor extends EntityAIHurtByTarget
         {
             public AIHurtByAggressor(EntityPigZombie p_i45828_1_)
             {
-                super(p_i45828_1_, true, new Class[0]);
+                super(p_i45828_1_, true);
             }
 
             protected void setEntityAttackTarget(EntityCreature creatureIn, EntityLivingBase entityLivingBaseIn)

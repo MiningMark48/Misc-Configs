@@ -47,7 +47,7 @@ public interface IScoreCriteria
 
         public static IScoreCriteria.EnumRenderType getByName(String name)
         {
-            IScoreCriteria.EnumRenderType iscorecriteria$enumrendertype = (IScoreCriteria.EnumRenderType)BY_NAME.get(name);
+            IScoreCriteria.EnumRenderType iscorecriteria$enumrendertype = BY_NAME.get(name);
             return iscorecriteria$enumrendertype == null ? INTEGER : iscorecriteria$enumrendertype;
         }
 

@@ -23,7 +23,7 @@ public class PhaseHoldingPattern extends PhaseBase
         super(dragonIn);
     }
 
-    public PhaseList<PhaseHoldingPattern> getPhaseList()
+    public PhaseList<PhaseHoldingPattern> getType()
     {
         return PhaseList.HOLDING_PATTERN;
     }
@@ -36,7 +36,7 @@ public class PhaseHoldingPattern extends PhaseBase
     {
         double d0 = this.targetLocation == null ? 0.0D : this.targetLocation.squareDistanceTo(this.dragon.posX, this.dragon.posY, this.dragon.posZ);
 
-        if (d0 < 100.0D || d0 > 22500.0D || this.dragon.isCollidedHorizontally || this.dragon.isCollidedVertically)
+        if (d0 < 100.0D || d0 > 22500.0D || this.dragon.collidedHorizontally || this.dragon.collidedVertically)
         {
             this.findNewTarget();
         }
@@ -64,7 +64,7 @@ public class PhaseHoldingPattern extends PhaseBase
     {
         if (this.currentPath != null && this.currentPath.isFinished())
         {
-            BlockPos blockpos = this.dragon.worldObj.getTopSolidOrLiquidBlock(new BlockPos(WorldGenEndPodium.END_PODIUM_LOCATION));
+            BlockPos blockpos = this.dragon.world.getTopSolidOrLiquidBlock(new BlockPos(WorldGenEndPodium.END_PODIUM_LOCATION));
             int i = this.dragon.getFightManager() == null ? 0 : this.dragon.getFightManager().getNumAliveCrystals();
 
             if (this.dragon.getRNG().nextInt(i + 3) == 0)
@@ -74,14 +74,14 @@ public class PhaseHoldingPattern extends PhaseBase
             }
 
             double d0 = 64.0D;
-            EntityPlayer entityplayer = this.dragon.worldObj.getNearestAttackablePlayer(blockpos, d0, d0);
+            EntityPlayer entityplayer = this.dragon.world.getNearestAttackablePlayer(blockpos, d0, d0);
 
             if (entityplayer != null)
             {
                 d0 = entityplayer.getDistanceSqToCenter(blockpos) / 512.0D;
             }
 
-            if (entityplayer != null && (this.dragon.getRNG().nextInt(MathHelper.abs_int((int)d0) + 2) == 0 || this.dragon.getRNG().nextInt(i + 2) == 0))
+            if (entityplayer != null && (this.dragon.getRNG().nextInt(MathHelper.abs((int)d0) + 2) == 0 || this.dragon.getRNG().nextInt(i + 2) == 0))
             {
                 this.strafePlayer(entityplayer);
                 return;
@@ -147,15 +147,15 @@ public class PhaseHoldingPattern extends PhaseBase
         {
             Vec3d vec3d = this.currentPath.getCurrentPos();
             this.currentPath.incrementPathIndex();
-            double d0 = vec3d.xCoord;
-            double d1 = vec3d.zCoord;
+            double d0 = vec3d.x;
+            double d1 = vec3d.z;
             double d2;
 
             while (true)
             {
-                d2 = vec3d.yCoord + (double)(this.dragon.getRNG().nextFloat() * 20.0F);
+                d2 = vec3d.y + (double)(this.dragon.getRNG().nextFloat() * 20.0F);
 
-                if (d2 >= vec3d.yCoord)
+                if (d2 >= vec3d.y)
                 {
                     break;
                 }
@@ -167,7 +167,7 @@ public class PhaseHoldingPattern extends PhaseBase
 
     public void onCrystalDestroyed(EntityEnderCrystal crystal, BlockPos pos, DamageSource dmgSrc, @Nullable EntityPlayer plyr)
     {
-        if (plyr != null)
+        if (plyr != null && !plyr.capabilities.disableDamage)
         {
             this.strafePlayer(plyr);
         }

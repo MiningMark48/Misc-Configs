@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.client.model;
 
 import java.util.Collection;
@@ -7,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
 
 import net.minecraft.block.state.IBlockState;
@@ -14,7 +34,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -30,8 +49,8 @@ import net.minecraftforge.fml.common.FMLLog;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
+import java.util.function.Function;
+import java.util.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -41,19 +60,20 @@ import com.google.common.collect.Sets;
 @Deprecated
 public final class MultiModel implements IModel
 {
-    private static final class Baked implements IPerspectiveAwareModel
+    private static final class Baked implements IBakedModel
     {
         private final ResourceLocation location;
+        @Nullable
         private final IBakedModel base;
         private final ImmutableMap<String, IBakedModel> parts;
 
         private final IBakedModel internalBase;
         private ImmutableMap<Optional<EnumFacing>, ImmutableList<BakedQuad>> quads;
         private final ImmutableMap<TransformType, Pair<Baked, TRSRTransformation>> transforms;
-        private final ItemOverrideList overrides = new ItemOverrideList(Lists.<ItemOverride>newArrayList())
+        private final ItemOverrideList overrides = new ItemOverrideList(Lists.newArrayList())
         {
             @Override
-            public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, World world, EntityLivingBase entity)
+            public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable EntityLivingBase entity)
             {
                 if(originalModel != Baked.this)
                 {
@@ -83,13 +103,13 @@ public final class MultiModel implements IModel
                 if(dirty)
                 {
                     // TODO: caching?
-                    return new Baked(location, newBase instanceof IPerspectiveAwareModel, newBase, builder.build());
+                    return new Baked(location, true, newBase, builder.build());
                 }
                 return Baked.this;
             }
         };
 
-        public Baked(ResourceLocation location, boolean perspective, IBakedModel base, ImmutableMap<String, IBakedModel> parts)
+        public Baked(ResourceLocation location, boolean perspective, @Nullable IBakedModel base, ImmutableMap<String, IBakedModel> parts)
         {
             this.location = location;
             this.base = base;
@@ -107,13 +127,12 @@ public final class MultiModel implements IModel
             }
 
             // Only changes the base model based on perspective, may recurse for parts in the future.
-            if(perspective && base instanceof IPerspectiveAwareModel)
+            if(base != null && perspective)
             {
-                IPerspectiveAwareModel perBase = (IPerspectiveAwareModel)base;
                 ImmutableMap.Builder<TransformType, Pair<Baked, TRSRTransformation>> builder = ImmutableMap.builder();
                 for(TransformType type : TransformType.values())
                 {
-                    Pair<? extends IBakedModel, Matrix4f> p = perBase.handlePerspective(type);
+                    Pair<? extends IBakedModel, Matrix4f> p = base.handlePerspective(type);
                     IBakedModel newBase = p.getLeft();
                     builder.put(type, Pair.of(new Baked(location, false, newBase, parts), new TRSRTransformation(p.getRight())));
                 }
@@ -156,7 +175,7 @@ public final class MultiModel implements IModel
         }
 
         @Override
-        public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand)
+        public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand)
         {
             if(quads == null)
             {
@@ -184,10 +203,10 @@ public final class MultiModel implements IModel
                 {
                     quads.addAll(bakedPart.getQuads(state, null, 0));
                 }
-                builder.put(Optional.<EnumFacing>absent(), quads.build());
+                builder.put(Optional.empty(), quads.build());
                 this.quads = builder.build();
             }
-            return quads.get(Optional.fromNullable(side));
+            return quads.get(Optional.ofNullable(side));
         }
 
         @Override
@@ -206,11 +225,12 @@ public final class MultiModel implements IModel
     }
 
     private final ResourceLocation location;
+    @Nullable
     private final IModel base;
     private final IModelState baseState;
     private final Map<String, Pair<IModel, IModelState>> parts;
 
-    public MultiModel(ResourceLocation location, IModel base, IModelState baseState, ImmutableMap<String, Pair<IModel, IModelState>> parts)
+    public MultiModel(ResourceLocation location, @Nullable IModel base, IModelState baseState, ImmutableMap<String, Pair<IModel, IModelState>> parts)
     {
         this.location = location;
         this.base = base;
@@ -269,7 +289,7 @@ public final class MultiModel implements IModel
 
         if(bakedBase == null && parts.isEmpty())
         {
-            FMLLog.log(Level.ERROR, "MultiModel %s is empty (no base model or parts were provided/resolved)", location);
+            FMLLog.log.error("MultiModel {} is empty (no base model or parts were provided/resolved)", location);
             IModel missing = ModelLoaderRegistry.getMissingModel();
             return missing.bake(missing.getDefaultState(), format, bakedTextureGetter);
         }

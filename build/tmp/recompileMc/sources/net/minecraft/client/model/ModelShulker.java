@@ -1,7 +1,6 @@
 package net.minecraft.client.model;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntityShulker;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -10,8 +9,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ModelShulker extends ModelBase
 {
-    private ModelRenderer base;
-    private ModelRenderer lid;
+    public final ModelRenderer base;
+    public final ModelRenderer lid;
     public ModelRenderer head;
 
     public ModelShulker()
@@ -27,19 +26,6 @@ public class ModelShulker extends ModelBase
         this.base.setRotationPoint(0.0F, 24.0F, 0.0F);
         this.head.setTextureOffset(0, 52).addBox(-3.0F, 0.0F, -3.0F, 6, 6, 6);
         this.head.setRotationPoint(0.0F, 12.0F, 0.0F);
-    }
-
-    public int getModelVersion()
-    {
-        return 28;
-    }
-
-    /**
-     * Used for easily adding entity-dependent animations. The second and third float params here are the same second
-     * and third as in the setRotationAngles method.
-     */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
-    {
     }
 
     /**

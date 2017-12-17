@@ -16,7 +16,7 @@ public class EventDisableFeatures {
             if (event.getWorld().getBlockState(event.getPos()).getBlock().equals(Blocks.CRAFTING_TABLE)) {
                 event.setCanceled(true);
                 if (!event.getWorld().isRemote) {
-                    event.getEntityPlayer().addChatComponentMessage(new TextComponentString(TextFormatting.DARK_RED + Translate.translateToLocal("chat.event.noWorkbench")));
+                    event.getEntityPlayer().sendStatusMessage(new TextComponentString(Translate.translateToLocal("chat.event.noWorkbench")), true);
                 }
             }
         }
@@ -24,7 +24,7 @@ public class EventDisableFeatures {
             if (event.getWorld().getBlockState(event.getPos()).getBlock().equals(Blocks.ENCHANTING_TABLE)) {
                 event.setCanceled(true);
                 if (!event.getWorld().isRemote) {
-                    event.getEntityPlayer().addChatComponentMessage(new TextComponentString(TextFormatting.DARK_RED + Translate.translateToLocal("chat.event.noEnchanting")));
+                    event.getEntityPlayer().sendStatusMessage(new TextComponentString(Translate.translateToLocal("chat.event.noEnchanting")), true);
                 }
             }
         }
@@ -32,7 +32,7 @@ public class EventDisableFeatures {
             if (event.getWorld().getBlockState(event.getPos()).getBlock().equals(Blocks.CHEST) || event.getWorld().getBlockState(event.getPos()).getBlock().equals(Blocks.TRAPPED_CHEST)) {
                 event.setCanceled(true);
                 if (!event.getWorld().isRemote) {
-                    event.getEntityPlayer().addChatComponentMessage(new TextComponentString(TextFormatting.DARK_RED + Translate.translateToLocal("chat.event.no_chest")));
+                    event.getEntityPlayer().sendStatusMessage(new TextComponentString(Translate.translateToLocal("chat.event.no_chest")), true);
                 }
             }
         }
@@ -40,7 +40,7 @@ public class EventDisableFeatures {
             if (event.getWorld().getBlockState(event.getPos()).getBlock().equals(Blocks.FURNACE)) {
                 event.setCanceled(true);
                 if (!event.getWorld().isRemote) {
-                    event.getEntityPlayer().addChatComponentMessage(new TextComponentString(TextFormatting.DARK_RED + Translate.translateToLocal("chat.event.no_furnace")));
+                    event.getEntityPlayer().sendStatusMessage(new TextComponentString(Translate.translateToLocal("chat.event.no_furnace")), true);
                 }
             }
         }

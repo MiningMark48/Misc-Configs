@@ -1,11 +1,13 @@
 package net.minecraft.item;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.BlockEndPortalFrame;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.state.pattern.BlockPattern;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityEnderEye;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.stats.StatList;
@@ -30,11 +32,12 @@ public class ItemEnderEye extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
+        ItemStack itemstack = player.getHeldItem(hand);
 
-        if (playerIn.canPlayerEdit(pos.offset(facing), facing, stack) && iblockstate.getBlock() == Blocks.END_PORTAL_FRAME && !((Boolean)iblockstate.getValue(BlockEndPortalFrame.EYE)).booleanValue())
+        if (player.canPlayerEdit(pos.offset(facing), facing, itemstack) && iblockstate.getBlock() == Blocks.END_PORTAL_FRAME && !((Boolean)iblockstate.getValue(BlockEndPortalFrame.EYE)).booleanValue())
         {
             if (worldIn.isRemote)
             {
@@ -44,7 +47,7 @@ public class ItemEnderEye extends Item
             {
                 worldIn.setBlockState(pos, iblockstate.withProperty(BlockEndPortalFrame.EYE, Boolean.valueOf(true)), 2);
                 worldIn.updateComparatorOutputLevel(pos, Blocks.END_PORTAL_FRAME);
-                --stack.stackSize;
+                itemstack.shrink(1);
 
                 for (int i = 0; i < 16; ++i)
                 {
@@ -54,23 +57,25 @@ public class ItemEnderEye extends Item
                     double d3 = 0.0D;
                     double d4 = 0.0D;
                     double d5 = 0.0D;
-                    worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D, new int[0]);
+                    worldIn.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, d0, d1, d2, 0.0D, 0.0D, 0.0D);
                 }
 
-                EnumFacing enumfacing = (EnumFacing)iblockstate.getValue(BlockEndPortalFrame.FACING);
+                worldIn.playSound((EntityPlayer)null, pos, SoundEvents.BLOCK_END_PORTAL_FRAME_FILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
                 BlockPattern.PatternHelper blockpattern$patternhelper = BlockEndPortalFrame.getOrCreatePortalShape().match(worldIn, pos);
 
                 if (blockpattern$patternhelper != null)
                 {
                     BlockPos blockpos = blockpattern$patternhelper.getFrontTopLeft().add(-3, 0, -3);
 
-                    for (int k = 0; k < 3; ++k)
+                    for (int j = 0; j < 3; ++j)
                     {
-                        for (int j = 0; j < 3; ++j)
+                        for (int k = 0; k < 3; ++k)
                         {
-                            worldIn.setBlockState(blockpos.add(k, 0, j), Blocks.END_PORTAL.getDefaultState(), 2);
+                            worldIn.setBlockState(blockpos.add(j, 0, k), Blocks.END_PORTAL.getDefaultState(), 2);
                         }
                     }
+
+                    worldIn.playBroadcastSound(1038, blockpos.add(1, 0, 1), 0);
                 }
 
                 return EnumActionResult.SUCCESS;
@@ -82,39 +87,51 @@ public class ItemEnderEye extends Item
         }
     }
 
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn, EnumHand hand)
+    /**
+     * Called when the equipped item is right clicked.
+     */
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn)
     {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
         RayTraceResult raytraceresult = this.rayTrace(worldIn, playerIn, false);
 
         if (raytraceresult != null && raytraceresult.typeOfHit == RayTraceResult.Type.BLOCK && worldIn.getBlockState(raytraceresult.getBlockPos()).getBlock() == Blocks.END_PORTAL_FRAME)
         {
-            return new ActionResult(EnumActionResult.PASS, itemStackIn);
+            return new ActionResult<ItemStack>(EnumActionResult.PASS, itemstack);
         }
         else
         {
+            playerIn.setActiveHand(handIn);
+
             if (!worldIn.isRemote)
             {
-                BlockPos blockpos = ((WorldServer)worldIn).getChunkProvider().getStrongholdGen(worldIn, "Stronghold", new BlockPos(playerIn));
+                BlockPos blockpos = ((WorldServer)worldIn).getChunkProvider().getNearestStructurePos(worldIn, "Stronghold", new BlockPos(playerIn), false);
 
                 if (blockpos != null)
                 {
                     EntityEnderEye entityendereye = new EntityEnderEye(worldIn, playerIn.posX, playerIn.posY + (double)(playerIn.height / 2.0F), playerIn.posZ);
                     entityendereye.moveTowards(blockpos);
-                    worldIn.spawnEntityInWorld(entityendereye);
+                    worldIn.spawnEntity(entityendereye);
+
+                    if (playerIn instanceof EntityPlayerMP)
+                    {
+                        CriteriaTriggers.USED_ENDER_EYE.trigger((EntityPlayerMP)playerIn, blockpos);
+                    }
+
                     worldIn.playSound((EntityPlayer)null, playerIn.posX, playerIn.posY, playerIn.posZ, SoundEvents.ENTITY_ENDEREYE_LAUNCH, SoundCategory.NEUTRAL, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
                     worldIn.playEvent((EntityPlayer)null, 1003, new BlockPos(playerIn), 0);
 
                     if (!playerIn.capabilities.isCreativeMode)
                     {
-                        --itemStackIn.stackSize;
+                        itemstack.shrink(1);
                     }
 
                     playerIn.addStat(StatList.getObjectUseStats(this));
-                    return new ActionResult(EnumActionResult.SUCCESS, itemStackIn);
+                    return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
                 }
             }
 
-            return new ActionResult(EnumActionResult.FAIL, itemStackIn);
+            return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, itemstack);
         }
     }
 }

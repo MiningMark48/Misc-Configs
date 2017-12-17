@@ -5,7 +5,6 @@ import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemArmorStand;
 import net.minecraft.item.ItemBow;
 import net.minecraft.item.ItemEmptyMap;
-import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemFishingRod;
 import net.minecraft.item.ItemMap;
 import net.minecraft.item.ItemPotion;
@@ -14,6 +13,7 @@ import net.minecraft.util.ResourceLocation;
 
 public class Items
 {
+    public static final Item AIR;
     public static final Item IRON_SHOVEL;
     public static final Item IRON_PICKAXE;
     public static final Item IRON_AXE;
@@ -183,7 +183,7 @@ public class Items
     public static final Item PUMPKIN_PIE;
     public static final Item FIREWORKS;
     public static final Item FIREWORK_CHARGE;
-    public static final ItemEnchantedBook ENCHANTED_BOOK;
+    public static final Item ENCHANTED_BOOK;
     public static final Item COMPARATOR;
     public static final Item NETHERBRICK;
     public static final Item QUARTZ;
@@ -219,10 +219,14 @@ public class Items
     public static final Item BEETROOT_SEEDS;
     public static final Item BEETROOT;
     public static final Item BEETROOT_SOUP;
+    public static final Item TOTEM_OF_UNDYING;
+    public static final Item SHULKER_SHELL;
+    public static final Item IRON_NUGGET;
+    public static final Item KNOWLEDGE_BOOK;
 
     private static Item getRegisteredItem(String name)
     {
-        Item item = (Item)Item.REGISTRY.getObject(new ResourceLocation(name));
+        Item item = Item.REGISTRY.getObject(new ResourceLocation(name));
 
         if (item == null)
         {
@@ -242,6 +246,7 @@ public class Items
         }
         else
         {
+            AIR = getRegisteredItem("air");
             IRON_SHOVEL = getRegisteredItem("iron_shovel");
             IRON_PICKAXE = getRegisteredItem("iron_pickaxe");
             IRON_AXE = getRegisteredItem("iron_axe");
@@ -411,7 +416,7 @@ public class Items
             PUMPKIN_PIE = getRegisteredItem("pumpkin_pie");
             FIREWORKS = getRegisteredItem("fireworks");
             FIREWORK_CHARGE = getRegisteredItem("firework_charge");
-            ENCHANTED_BOOK = (ItemEnchantedBook)getRegisteredItem("enchanted_book");
+            ENCHANTED_BOOK = getRegisteredItem("enchanted_book");
             COMPARATOR = getRegisteredItem("comparator");
             NETHERBRICK = getRegisteredItem("netherbrick");
             QUARTZ = getRegisteredItem("quartz");
@@ -447,6 +452,10 @@ public class Items
             BEETROOT_SEEDS = getRegisteredItem("beetroot_seeds");
             BEETROOT = getRegisteredItem("beetroot");
             BEETROOT_SOUP = getRegisteredItem("beetroot_soup");
+            TOTEM_OF_UNDYING = getRegisteredItem("totem_of_undying");
+            SHULKER_SHELL = getRegisteredItem("shulker_shell");
+            IRON_NUGGET = getRegisteredItem("iron_nugget");
+            KNOWLEDGE_BOOK = getRegisteredItem("knowledge_book");
         }
     }
 }

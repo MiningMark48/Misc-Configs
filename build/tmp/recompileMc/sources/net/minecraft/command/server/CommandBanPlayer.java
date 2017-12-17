@@ -13,13 +13,14 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.UserListBansEntry;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
 
 public class CommandBanPlayer extends CommandBase
 {
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "ban";
     }
@@ -35,7 +36,7 @@ public class CommandBanPlayer extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.ban.usage";
     }
@@ -76,7 +77,7 @@ public class CommandBanPlayer extends CommandBase
 
                 if (entityplayermp != null)
                 {
-                    entityplayermp.connection.kickPlayerFromServer("You are banned from this server.");
+                    entityplayermp.connection.disconnect(new TextComponentTranslation("multiplayer.disconnect.banned", new Object[0]));
                 }
 
                 notifyCommandListener(sender, this, "commands.ban.success", new Object[] {args[0]});
@@ -88,8 +89,11 @@ public class CommandBanPlayer extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length >= 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : Collections.<String>emptyList();
+        return args.length >= 1 ? getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()) : Collections.emptyList();
     }
 }

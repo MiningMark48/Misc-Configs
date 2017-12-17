@@ -17,8 +17,8 @@ public abstract class AbstractTexture implements ITextureObject
     {
         this.blur = blurIn;
         this.mipmap = mipmapIn;
-        int i = -1;
-        int j = -1;
+        int i;
+        int j;
 
         if (blurIn)
         {

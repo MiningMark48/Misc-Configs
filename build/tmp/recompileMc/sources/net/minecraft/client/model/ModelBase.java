@@ -15,8 +15,10 @@ public abstract class ModelBase
     public float swingProgress;
     public boolean isRiding;
     public boolean isChild = true;
+    /** This is a list of all the boxes (ModelRenderer.class) in the current model. */
     public List<ModelRenderer> boxList = Lists.<ModelRenderer>newArrayList();
-    private Map<String, TextureOffset> modelTextureMap = Maps.<String, TextureOffset>newHashMap();
+    /** A mapping for all texture offsets */
+    private final Map<String, TextureOffset> modelTextureMap = Maps.<String, TextureOffset>newHashMap();
     public int textureWidth = 64;
     public int textureHeight = 32;
 
@@ -40,13 +42,13 @@ public abstract class ModelBase
      * Used for easily adding entity-dependent animations. The second and third float params here are the same second
      * and third as in the setRotationAngles method.
      */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
+    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
     {
     }
 
     public ModelRenderer getRandomModelBox(Random rand)
     {
-        return (ModelRenderer)this.boxList.get(rand.nextInt(this.boxList.size()));
+        return this.boxList.get(rand.nextInt(this.boxList.size()));
     }
 
     protected void setTextureOffset(String partName, int x, int y)
@@ -56,7 +58,7 @@ public abstract class ModelBase
 
     public TextureOffset getTextureOffset(String partName)
     {
-        return (TextureOffset)this.modelTextureMap.get(partName);
+        return this.modelTextureMap.get(partName);
     }
 
     /**

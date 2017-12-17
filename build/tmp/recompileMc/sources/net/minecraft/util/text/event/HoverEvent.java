@@ -71,7 +71,7 @@ public class HoverEvent
 
     public String toString()
     {
-        return "HoverEvent{action=" + this.action + ", value=\'" + this.value + '\'' + '}';
+        return "HoverEvent{action=" + this.action + ", value='" + this.value + '\'' + '}';
     }
 
     public int hashCode()
@@ -84,7 +84,6 @@ public class HoverEvent
     public static enum Action
     {
         SHOW_TEXT("show_text", true),
-        SHOW_ACHIEVEMENT("show_achievement", true),
         SHOW_ITEM("show_item", true),
         SHOW_ENTITY("show_entity", true);
 
@@ -119,7 +118,7 @@ public class HoverEvent
          */
         public static HoverEvent.Action getValueByCanonicalName(String canonicalNameIn)
         {
-            return (HoverEvent.Action)NAME_MAPPING.get(canonicalNameIn);
+            return NAME_MAPPING.get(canonicalNameIn);
         }
 
         static

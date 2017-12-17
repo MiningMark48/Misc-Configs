@@ -44,13 +44,13 @@ public enum DragonSpawnManager
         public void process(WorldServer worldIn, DragonFightManager manager, List<EntityEnderCrystal> crystals, int ticks, BlockPos pos)
         {
             int i = 40;
-            boolean flag = ticks % i == 0;
-            boolean flag1 = ticks % i == i - 1;
+            boolean flag = ticks % 40 == 0;
+            boolean flag1 = ticks % 40 == 39;
 
             if (flag || flag1)
             {
                 WorldGenSpikes.EndSpike[] aworldgenspikes$endspike = BiomeEndDecorator.getSpikesForWorld(worldIn);
-                int j = ticks / i;
+                int j = ticks / 40;
 
                 if (j < aworldgenspikes$endspike.length)
                 {
@@ -67,7 +67,7 @@ public enum DragonSpawnManager
                     {
                         int k = 10;
 
-                        for (BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(new BlockPos(worldgenspikes$endspike.getCenterX() - k, worldgenspikes$endspike.getHeight() - k, worldgenspikes$endspike.getCenterZ() - k), new BlockPos(worldgenspikes$endspike.getCenterX() + k, worldgenspikes$endspike.getHeight() + k, worldgenspikes$endspike.getCenterZ() + k)))
+                        for (BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(new BlockPos(worldgenspikes$endspike.getCenterX() - 10, worldgenspikes$endspike.getHeight() - 10, worldgenspikes$endspike.getCenterZ() - 10), new BlockPos(worldgenspikes$endspike.getCenterX() + 10, worldgenspikes$endspike.getHeight() + 10, worldgenspikes$endspike.getCenterZ() + 10)))
                         {
                             worldIn.setBlockToAir(blockpos$mutableblockpos);
                         }

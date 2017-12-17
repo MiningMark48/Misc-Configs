@@ -1,7 +1,6 @@
 package net.minecraft.client.renderer.entity.layers;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelQuadruped;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderMooshroom;
@@ -45,7 +44,7 @@ public class LayerMooshroomMushroom implements LayerRenderer<EntityMooshroom>
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            ((ModelQuadruped)this.mooshroomRenderer.getMainModel()).head.postRender(0.0625F);
+            this.mooshroomRenderer.getMainModel().head.postRender(0.0625F);
             GlStateManager.scale(1.0F, -1.0F, 1.0F);
             GlStateManager.translate(0.0F, 0.7F, -0.2F);
             GlStateManager.rotate(12.0F, 0.0F, 1.0F, 0.0F);

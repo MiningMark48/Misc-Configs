@@ -7,7 +7,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class MathHelper
 {
-    public static final float SQRT_2 = sqrt_float(2.0F);
+    public static final float SQRT_2 = sqrt(2.0F);
     /** A table of sin values computed from 0 (inclusive) to 2*pi (exclusive), with steps of 2*PI / 65536. */
     private static final float[] SIN_TABLE = new float[65536];
     private static final Random RANDOM = new Random();
@@ -39,12 +39,12 @@ public class MathHelper
         return SIN_TABLE[(int)(value * 10430.378F + 16384.0F) & 65535];
     }
 
-    public static float sqrt_float(float value)
+    public static float sqrt(float value)
     {
         return (float)Math.sqrt((double)value);
     }
 
-    public static float sqrt_double(double value)
+    public static float sqrt(double value)
     {
         return (float)Math.sqrt(value);
     }
@@ -52,7 +52,7 @@ public class MathHelper
     /**
      * Returns the greatest integer less than or equal to the float argument
      */
-    public static int floor_float(float value)
+    public static int floor(float value)
     {
         int i = (int)value;
         return value < (float)i ? i - 1 : i;
@@ -62,7 +62,7 @@ public class MathHelper
      * returns par0 cast as an int, and no greater than Integer.MAX_VALUE-1024
      */
     @SideOnly(Side.CLIENT)
-    public static int truncateDoubleToInt(double value)
+    public static int fastFloor(double value)
     {
         return (int)(value + 1024.0D) - 1024;
     }
@@ -70,16 +70,16 @@ public class MathHelper
     /**
      * Returns the greatest integer less than or equal to the double argument
      */
-    public static int floor_double(double value)
+    public static int floor(double value)
     {
         int i = (int)value;
         return value < (double)i ? i - 1 : i;
     }
 
     /**
-     * Long version of floor_double
+     * Long version of floor()
      */
-    public static long floor_double_long(double value)
+    public static long lfloor(double value)
     {
         long i = (long)value;
         return value < (double)i ? i - 1L : i;
@@ -99,18 +99,18 @@ public class MathHelper
     /**
      * Returns the unsigned value of an int.
      */
-    public static int abs_int(int value)
+    public static int abs(int value)
     {
         return value >= 0 ? value : -value;
     }
 
-    public static int ceiling_float_int(float value)
+    public static int ceil(float value)
     {
         int i = (int)value;
         return value > (float)i ? i + 1 : i;
     }
 
-    public static int ceiling_double_int(double value)
+    public static int ceil(double value)
     {
         int i = (int)value;
         return value > (double)i ? i + 1 : i;
@@ -120,34 +120,62 @@ public class MathHelper
      * Returns the value of the first parameter, clamped to be within the lower and upper limits given by the second and
      * third parameters.
      */
-    public static int clamp_int(int num, int min, int max)
+    public static int clamp(int num, int min, int max)
     {
-        return num < min ? min : (num > max ? max : num);
+        if (num < min)
+        {
+            return min;
+        }
+        else
+        {
+            return num > max ? max : num;
+        }
     }
 
     /**
      * Returns the value of the first parameter, clamped to be within the lower and upper limits given by the second and
      * third parameters
      */
-    public static float clamp_float(float num, float min, float max)
+    public static float clamp(float num, float min, float max)
     {
-        return num < min ? min : (num > max ? max : num);
+        if (num < min)
+        {
+            return min;
+        }
+        else
+        {
+            return num > max ? max : num;
+        }
     }
 
-    public static double clamp_double(double num, double min, double max)
+    public static double clamp(double num, double min, double max)
     {
-        return num < min ? min : (num > max ? max : num);
+        if (num < min)
+        {
+            return min;
+        }
+        else
+        {
+            return num > max ? max : num;
+        }
     }
 
-    public static double denormalizeClamp(double lowerBnd, double upperBnd, double slide)
+    public static double clampedLerp(double lowerBnd, double upperBnd, double slide)
     {
-        return slide < 0.0D ? lowerBnd : (slide > 1.0D ? upperBnd : lowerBnd + (upperBnd - lowerBnd) * slide);
+        if (slide < 0.0D)
+        {
+            return lowerBnd;
+        }
+        else
+        {
+            return slide > 1.0D ? upperBnd : lowerBnd + (upperBnd - lowerBnd) * slide;
+        }
     }
 
     /**
      * Maximum of the absolute value of two numbers.
      */
-    public static double abs_max(double p_76132_0_, double p_76132_2_)
+    public static double absMax(double p_76132_0_, double p_76132_2_)
     {
         if (p_76132_0_ < 0.0D)
         {
@@ -166,22 +194,22 @@ public class MathHelper
      * Buckets an integer with specifed bucket sizes.
      */
     @SideOnly(Side.CLIENT)
-    public static int bucketInt(int p_76137_0_, int p_76137_1_)
+    public static int intFloorDiv(int p_76137_0_, int p_76137_1_)
     {
         return p_76137_0_ < 0 ? -((-p_76137_0_ - 1) / p_76137_1_) - 1 : p_76137_0_ / p_76137_1_;
     }
 
-    public static int getRandomIntegerInRange(Random random, int minimum, int maximum)
+    public static int getInt(Random random, int minimum, int maximum)
     {
         return minimum >= maximum ? minimum : random.nextInt(maximum - minimum + 1) + minimum;
     }
 
-    public static float randomFloatClamp(Random random, float minimum, float maximum)
+    public static float nextFloat(Random random, float minimum, float maximum)
     {
         return minimum >= maximum ? minimum : random.nextFloat() * (maximum - minimum) + minimum;
     }
 
-    public static double getRandomDoubleInRange(Random random, double minimum, double maximum)
+    public static double nextDouble(Random random, double minimum, double maximum)
     {
         return minimum >= maximum ? minimum : random.nextDouble() * (maximum - minimum) + minimum;
     }
@@ -212,6 +240,12 @@ public class MathHelper
 
     @SideOnly(Side.CLIENT)
     public static float positiveModulo(float numerator, float denominator)
+    {
+        return (numerator % denominator + denominator) % denominator;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static double positiveModulo(double numerator, double denominator)
     {
         return (numerator % denominator + denominator) % denominator;
     }
@@ -259,7 +293,7 @@ public class MathHelper
     /**
      * Adjust the angle so that his value is in range [-180;180[
      */
-    public static int clampAngle(int angle)
+    public static int wrapDegrees(int angle)
     {
         angle = angle % 360;
 
@@ -279,7 +313,7 @@ public class MathHelper
     /**
      * parses the string as integer or returns the second parameter if it fails
      */
-    public static int parseIntWithDefault(String value, int defaultValue)
+    public static int getInt(String value, int defaultValue)
     {
         try
         {
@@ -294,15 +328,15 @@ public class MathHelper
     /**
      * parses the string as integer or returns the second parameter if it fails. this value is capped to par2
      */
-    public static int parseIntWithDefaultAndMax(String value, int defaultValue, int max)
+    public static int getInt(String value, int defaultValue, int max)
     {
-        return Math.max(max, parseIntWithDefault(value, defaultValue));
+        return Math.max(max, getInt(value, defaultValue));
     }
 
     /**
      * parses the string as double or returns the second parameter if it fails.
      */
-    public static double parseDoubleWithDefault(String value, double defaultValue)
+    public static double getDouble(String value, double defaultValue)
     {
         try
         {
@@ -314,15 +348,15 @@ public class MathHelper
         }
     }
 
-    public static double parseDoubleWithDefaultAndMax(String value, double defaultValue, double max)
+    public static double getDouble(String value, double defaultValue, double max)
     {
-        return Math.max(max, parseDoubleWithDefault(value, defaultValue));
+        return Math.max(max, getDouble(value, defaultValue));
     }
 
     /**
      * Returns the input value rounded up to the next highest power of two.
      */
-    public static int roundUpToPowerOfTwo(int value)
+    public static int smallestEncompassingPowerOfTwo(int value)
     {
         int i = value - 1;
         i = i | i >> 1;
@@ -343,12 +377,12 @@ public class MathHelper
 
     /**
      * Uses a B(2, 5) De Bruijn sequence and a lookup table to efficiently calculate the log-base-two of the given
-     * value.  Optimized for cases where the input value is a power-of-two.  If the input value is not a power-of-two,
+     * value. Optimized for cases where the input value is a power-of-two. If the input value is not a power-of-two,
      * then subtract 1 from the return value.
      */
-    public static int calculateLogBaseTwoDeBruijn(int value)
+    public static int log2DeBruijn(int value)
     {
-        value = isPowerOfTwo(value) ? value : roundUpToPowerOfTwo(value);
+        value = isPowerOfTwo(value) ? value : smallestEncompassingPowerOfTwo(value);
         return MULTIPLY_DE_BRUIJN_BIT_POSITION[(int)((long)value * 125613361L >> 27) & 31];
     }
 
@@ -356,14 +390,9 @@ public class MathHelper
      * Efficiently calculates the floor of the base-2 log of an integer value.  This is effectively the index of the
      * highest bit that is set.  For example, if the number in binary is 0...100101, this will return 5.
      */
-    public static int calculateLogBaseTwo(int value)
+    public static int log2(int value)
     {
-        /**
-         * Uses a B(2, 5) De Bruijn sequence and a lookup table to efficiently calculate the log-base-two of the given
-         * value.  Optimized for cases where the input value is a power-of-two.  If the input value is not a power-of-
-         * two, then subtract 1 from the return value.
-         */
-        return calculateLogBaseTwoDeBruijn(value) - (isPowerOfTwo(value) ? 0 : 1);
+        return log2DeBruijn(value) - (isPowerOfTwo(value) ? 0 : 1);
     }
 
     /**
@@ -394,16 +423,20 @@ public class MathHelper
         }
     }
 
+    public static long getCoordinateRandom(int x, int y, int z)
+    {
+        long i = (long)(x * 3129871) ^ (long)z * 116129781L ^ (long)y;
+        i = i * i * 42317861L + i * 11L;
+        return i;
+    }
+
     /**
      * Makes an integer color from the given red, green, and blue float values
      */
     @SideOnly(Side.CLIENT)
     public static int rgb(float rIn, float gIn, float bIn)
     {
-        /**
-         * Makes a single int color with the given red, green, and blue values.
-         */
-        return rgb(floor_float(rIn * 255.0F), floor_float(gIn * 255.0F), floor_float(bIn * 255.0F));
+        return rgb(floor(rIn * 255.0F), floor(gIn * 255.0F), floor(bIn * 255.0F));
     }
 
     /**
@@ -447,7 +480,7 @@ public class MathHelper
         return getCoordinateRandom(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static UUID getRandomUuid(Random rand)
+    public static UUID getRandomUUID(Random rand)
     {
         long i = rand.nextLong() & -61441L | 16384L;
         long j = rand.nextLong() & 4611686018427387903L | Long.MIN_VALUE;
@@ -459,15 +492,7 @@ public class MathHelper
      */
     public static UUID getRandomUUID()
     {
-        return getRandomUuid(RANDOM);
-    }
-
-    @SideOnly(Side.CLIENT)
-    public static long getCoordinateRandom(int x, int y, int z)
-    {
-        long i = (long)(x * 3129871) ^ (long)z * 116129781L ^ (long)y;
-        i = i * i * 42317861L + i * 11L;
-        return i;
+        return getRandomUUID(RANDOM);
     }
 
     public static double pct(double p_181160_0_, double p_181160_2_, double p_181160_4_)
@@ -539,6 +564,10 @@ public class MathHelper
         }
     }
 
+    /**
+     * Computes 1/sqrt(n) using <a href="https://en.wikipedia.org/wiki/Fast_inverse_square_root">the fast inverse square
+     * root</a> with a constant of 0x5FE6EB50C7B537AA.
+     */
     public static double fastInvSqrt(double p_181161_0_)
     {
         double d0 = 0.5D * p_181161_0_;
@@ -550,13 +579,13 @@ public class MathHelper
     }
 
     @SideOnly(Side.CLIENT)
-    public static int hsvToRGB(float p_181758_0_, float p_181758_1_, float p_181758_2_)
+    public static int hsvToRGB(float hue, float saturation, float value)
     {
-        int i = (int)(p_181758_0_ * 6.0F) % 6;
-        float f = p_181758_0_ * 6.0F - (float)i;
-        float f1 = p_181758_2_ * (1.0F - p_181758_1_);
-        float f2 = p_181758_2_ * (1.0F - f * p_181758_1_);
-        float f3 = p_181758_2_ * (1.0F - (1.0F - f) * p_181758_1_);
+        int i = (int)(hue * 6.0F) % 6;
+        float f = hue * 6.0F - (float)i;
+        float f1 = value * (1.0F - saturation);
+        float f2 = value * (1.0F - f * saturation);
+        float f3 = value * (1.0F - (1.0F - f) * saturation);
         float f4;
         float f5;
         float f6;
@@ -564,46 +593,46 @@ public class MathHelper
         switch (i)
         {
             case 0:
-                f4 = p_181758_2_;
+                f4 = value;
                 f5 = f3;
                 f6 = f1;
                 break;
             case 1:
                 f4 = f2;
-                f5 = p_181758_2_;
+                f5 = value;
                 f6 = f1;
                 break;
             case 2:
                 f4 = f1;
-                f5 = p_181758_2_;
+                f5 = value;
                 f6 = f3;
                 break;
             case 3:
                 f4 = f1;
                 f5 = f2;
-                f6 = p_181758_2_;
+                f6 = value;
                 break;
             case 4:
                 f4 = f3;
                 f5 = f1;
-                f6 = p_181758_2_;
+                f6 = value;
                 break;
             case 5:
-                f4 = p_181758_2_;
+                f4 = value;
                 f5 = f1;
                 f6 = f2;
                 break;
             default:
-                throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + p_181758_0_ + ", " + p_181758_1_ + ", " + p_181758_2_);
+                throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + value);
         }
 
-        int j = clamp_int((int)(f4 * 255.0F), 0, 255);
-        int k = clamp_int((int)(f5 * 255.0F), 0, 255);
-        int l = clamp_int((int)(f6 * 255.0F), 0, 255);
+        int j = clamp((int)(f4 * 255.0F), 0, 255);
+        int k = clamp((int)(f5 * 255.0F), 0, 255);
+        int l = clamp((int)(f6 * 255.0F), 0, 255);
         return j << 16 | k << 8 | l;
     }
 
-    public static int getHash(int p_188208_0_)
+    public static int hash(int p_188208_0_)
     {
         p_188208_0_ = p_188208_0_ ^ p_188208_0_ >>> 16;
         p_188208_0_ = p_188208_0_ * -2048144789;

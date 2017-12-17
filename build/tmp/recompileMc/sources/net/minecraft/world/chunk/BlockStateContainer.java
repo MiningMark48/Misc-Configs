@@ -16,7 +16,7 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
     protected static final IBlockState AIR_BLOCK_STATE = Blocks.AIR.getDefaultState();
     protected BitArray storage;
     protected IBlockStatePalette palette;
-    private int bits = 0;
+    private int bits;
 
     public BlockStateContainer()
     {
@@ -29,6 +29,10 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
     }
 
     private void setBits(int bitsIn)
+    {
+        setBits(bitsIn, false);
+    }
+    private void setBits(int bitsIn, boolean forceBits)
     {
         if (bitsIn != this.bits)
         {
@@ -46,7 +50,9 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
             else
             {
                 this.palette = REGISTRY_BASED_PALETTE;
-                this.bits = MathHelper.calculateLogBaseTwoDeBruijn(Block.BLOCK_STATE_IDS.size());
+                this.bits = MathHelper.log2DeBruijn(Block.BLOCK_STATE_IDS.size());
+                if (forceBits)
+                    this.bits = bitsIn;
             }
 
             this.palette.idFor(AIR_BLOCK_STATE);
@@ -54,11 +60,11 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
         }
     }
 
-    public int onResize(int p_186008_1_, IBlockState state)
+    public int onResize(int bits, IBlockState state)
     {
         BitArray bitarray = this.storage;
         IBlockStatePalette iblockstatepalette = this.palette;
-        this.setBits(p_186008_1_);
+        this.setBits(bits);
 
         for (int i = 0; i < bitarray.size(); ++i)
         {
@@ -102,11 +108,15 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
 
         if (this.bits != i)
         {
-            this.setBits(i);
+            this.setBits(i, true); //Forge, Force bit density to fix network issues, resize below if needed.
         }
 
         this.palette.read(buf);
         buf.readLongArray(this.storage.getBackingLongArray());
+
+        int regSize = MathHelper.log2DeBruijn(Block.BLOCK_STATE_IDS.size());
+        if (this.palette == REGISTRY_BASED_PALETTE && this.bits != regSize) // Resize bits to fit registry.
+            this.onResize(regSize, AIR_BLOCK_STATE);
     }
 
     public void write(PacketBuffer buf)
@@ -117,7 +127,7 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
     }
 
     @Nullable
-    public NibbleArray getDataForNBT(byte[] p_186017_1_, NibbleArray p_186017_2_)
+    public NibbleArray getDataForNBT(byte[] blockIds, NibbleArray data)
     {
         NibbleArray nibblearray = null;
 
@@ -138,28 +148,28 @@ public class BlockStateContainer implements IBlockStatePaletteResizer
                 nibblearray.set(k, l, i1, j >> 12 & 15);
             }
 
-            p_186017_1_[i] = (byte)(j >> 4 & 255);
-            p_186017_2_.set(k, l, i1, j & 15);
+            blockIds[i] = (byte)(j >> 4 & 255);
+            data.set(k, l, i1, j & 15);
         }
 
         return nibblearray;
     }
 
-    public void setDataFromNBT(byte[] p_186019_1_, NibbleArray p_186019_2_, @Nullable NibbleArray p_186019_3_)
+    public void setDataFromNBT(byte[] blockIds, NibbleArray data, @Nullable NibbleArray blockIdExtension)
     {
         for (int i = 0; i < 4096; ++i)
         {
             int j = i & 15;
             int k = i >> 8 & 15;
             int l = i >> 4 & 15;
-            int i1 = p_186019_3_ == null ? 0 : p_186019_3_.get(j, k, l);
-            int j1 = i1 << 12 | (p_186019_1_[i] & 255) << 4 | p_186019_2_.get(j, k, l);
-            this.set(i, (IBlockState)Block.BLOCK_STATE_IDS.getByValue(j1));
+            int i1 = blockIdExtension == null ? 0 : blockIdExtension.get(j, k, l);
+            int j1 = i1 << 12 | (blockIds[i] & 255) << 4 | data.get(j, k, l);
+            this.set(i, Block.BLOCK_STATE_IDS.getByValue(j1));
         }
     }
 
     public int getSerializedSize()
     {
-        return 1 + this.palette.getSerializedState() + PacketBuffer.getVarIntSize(this.storage.size()) + this.storage.getBackingLongArray().length * 8;
+        return 1 + this.palette.getSerializedSize() + PacketBuffer.getVarIntSize(this.storage.size()) + this.storage.getBackingLongArray().length * 8;
     }
 }

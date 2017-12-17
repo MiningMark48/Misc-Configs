@@ -9,9 +9,9 @@ public class RangedAttribute extends BaseAttribute
     private final double maximumValue;
     private String description;
 
-    public RangedAttribute(@Nullable IAttribute p_i45891_1_, String unlocalizedNameIn, double defaultValue, double minimumValueIn, double maximumValueIn)
+    public RangedAttribute(@Nullable IAttribute parentIn, String unlocalizedNameIn, double defaultValue, double minimumValueIn, double maximumValueIn)
     {
-        super(p_i45891_1_, unlocalizedNameIn, defaultValue);
+        super(parentIn, unlocalizedNameIn, defaultValue);
         this.minimumValue = minimumValueIn;
         this.maximumValue = maximumValueIn;
 
@@ -40,9 +40,9 @@ public class RangedAttribute extends BaseAttribute
         return this.description;
     }
 
-    public double clampValue(double p_111109_1_)
+    public double clampValue(double value)
     {
-        p_111109_1_ = MathHelper.clamp_double(p_111109_1_, this.minimumValue, this.maximumValue);
-        return p_111109_1_;
+        value = MathHelper.clamp(value, this.minimumValue, this.maximumValue);
+        return value;
     }
 }

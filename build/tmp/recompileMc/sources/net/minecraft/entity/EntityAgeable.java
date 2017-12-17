@@ -27,15 +27,18 @@ public abstract class EntityAgeable extends EntityCreature
         super(worldIn);
     }
 
+    @Nullable
     public abstract EntityAgeable createChild(EntityAgeable ageable);
 
-    public boolean processInteract(EntityPlayer player, EnumHand hand, @Nullable ItemStack stack)
+    public boolean processInteract(EntityPlayer player, EnumHand hand)
     {
-        if (stack != null && stack.getItem() == Items.SPAWN_EGG)
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (itemstack.getItem() == Items.SPAWN_EGG)
         {
-            if (!this.worldObj.isRemote)
+            if (!this.world.isRemote)
             {
-                Class <? extends Entity > oclass = EntityList.NAME_TO_CLASS.get(ItemMonsterPlacer.getEntityIdFromItem(stack));
+                Class <? extends Entity > oclass = EntityList.getClass(ItemMonsterPlacer.getNamedIdFrom(itemstack));
 
                 if (oclass != null && this.getClass() == oclass)
                 {
@@ -45,16 +48,16 @@ public abstract class EntityAgeable extends EntityCreature
                     {
                         entityageable.setGrowingAge(-24000);
                         entityageable.setLocationAndAngles(this.posX, this.posY, this.posZ, 0.0F, 0.0F);
-                        this.worldObj.spawnEntityInWorld(entityageable);
+                        this.world.spawnEntity(entityageable);
 
-                        if (stack.hasDisplayName())
+                        if (itemstack.hasDisplayName())
                         {
-                            entityageable.setCustomNameTag(stack.getDisplayName());
+                            entityageable.setCustomNameTag(itemstack.getDisplayName());
                         }
 
                         if (!player.capabilities.isCreativeMode)
                         {
-                            --stack.stackSize;
+                            itemstack.shrink(1);
                         }
                     }
                 }
@@ -65,6 +68,22 @@ public abstract class EntityAgeable extends EntityCreature
         else
         {
             return false;
+        }
+    }
+
+    /**
+     * Checks if the given item is a spawn egg that spawns the given class of entity.
+     */
+    protected boolean holdingSpawnEggOfClass(ItemStack stack, Class <? extends Entity > entityClass)
+    {
+        if (stack.getItem() != Items.SPAWN_EGG)
+        {
+            return false;
+        }
+        else
+        {
+            Class <? extends Entity > oclass = EntityList.getClass(ItemMonsterPlacer.getNamedIdFrom(stack));
+            return oclass != null && entityClass == oclass;
         }
     }
 
@@ -81,14 +100,29 @@ public abstract class EntityAgeable extends EntityCreature
      */
     public int getGrowingAge()
     {
-        return this.worldObj.isRemote ? (((Boolean)this.dataManager.get(BABY)).booleanValue() ? -1 : 1) : this.growingAge;
+        if (this.world.isRemote)
+        {
+            return ((Boolean)this.dataManager.get(BABY)).booleanValue() ? -1 : 1;
+        }
+        else
+        {
+            return this.growingAge;
+        }
     }
 
-    public void ageUp(int p_175501_1_, boolean p_175501_2_)
+    /**
+     * Increases this entity's age, optionally updating {@link #forcedAge}. If the entity is an adult (if the entity's
+     * age is greater than or equal to 0) then the entity's age will be set to {@link #forcedAge}.
+     *  
+     * @param growthSeconds Number of seconds to grow this entity by. The entity's age will be increased by 20 times
+     * this number (i.e. this number converted to ticks).
+     * @param updateForcedAge If true, updates {@link #forcedAge} and {@link #forcedAgeTimer}
+     */
+    public void ageUp(int growthSeconds, boolean updateForcedAge)
     {
         int i = this.getGrowingAge();
         int j = i;
-        i = i + p_175501_1_ * 20;
+        i = i + growthSeconds * 20;
 
         if (i > 0)
         {
@@ -103,7 +137,7 @@ public abstract class EntityAgeable extends EntityCreature
         int k = i - j;
         this.setGrowingAge(i);
 
-        if (p_175501_2_)
+        if (updateForcedAge)
         {
             this.forcedAge += k;
 
@@ -120,8 +154,8 @@ public abstract class EntityAgeable extends EntityCreature
     }
 
     /**
-     * "Adds the value of the parameter times 20 to the age of this entity. If the entity is an adult (if the entity's
-     * age is greater than 0), it will have no effect."
+     * Increases this entity's age. If the entity is an adult (if the entity's age is greater than or equal to 0) then
+     * the entity's age will be set to {@link #forcedAge}. This method does not update {@link #forcedAge}.
      */
     public void addGrowth(int growth)
     {
@@ -177,13 +211,13 @@ public abstract class EntityAgeable extends EntityCreature
     {
         super.onLivingUpdate();
 
-        if (this.worldObj.isRemote)
+        if (this.world.isRemote)
         {
             if (this.forcedAgeTimer > 0)
             {
                 if (this.forcedAgeTimer % 4 == 0)
                 {
-                    this.worldObj.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + 0.5D + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, 0.0D, 0.0D, 0.0D, new int[0]);
+                    this.world.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + 0.5D + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, 0.0D, 0.0D, 0.0D);
                 }
 
                 --this.forcedAgeTimer;

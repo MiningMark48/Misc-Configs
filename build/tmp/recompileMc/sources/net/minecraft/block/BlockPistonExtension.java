@@ -7,6 +7,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.properties.PropertyEnum;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -40,6 +41,12 @@ public class BlockPistonExtension extends BlockDirectional
     protected static final AxisAlignedBB NORTH_ARM_AABB = new AxisAlignedBB(0.375D, 0.375D, 0.25D, 0.625D, 0.625D, 1.25D);
     protected static final AxisAlignedBB EAST_ARM_AABB = new AxisAlignedBB(-0.25D, 0.375D, 0.375D, 0.75D, 0.625D, 0.625D);
     protected static final AxisAlignedBB WEST_ARM_AABB = new AxisAlignedBB(0.25D, 0.375D, 0.375D, 1.25D, 0.625D, 0.625D);
+    protected static final AxisAlignedBB SHORT_UP_ARM_AABB = new AxisAlignedBB(0.375D, 0.0D, 0.375D, 0.625D, 0.75D, 0.625D);
+    protected static final AxisAlignedBB SHORT_DOWN_ARM_AABB = new AxisAlignedBB(0.375D, 0.25D, 0.375D, 0.625D, 1.0D, 0.625D);
+    protected static final AxisAlignedBB SHORT_SOUTH_ARM_AABB = new AxisAlignedBB(0.375D, 0.375D, 0.0D, 0.625D, 0.625D, 0.75D);
+    protected static final AxisAlignedBB SHORT_NORTH_ARM_AABB = new AxisAlignedBB(0.375D, 0.375D, 0.25D, 0.625D, 0.625D, 1.0D);
+    protected static final AxisAlignedBB SHORT_EAST_ARM_AABB = new AxisAlignedBB(0.0D, 0.375D, 0.375D, 0.75D, 0.625D, 0.625D);
+    protected static final AxisAlignedBB SHORT_WEST_ARM_AABB = new AxisAlignedBB(0.25D, 0.375D, 0.375D, 1.0D, 0.625D, 0.625D);
 
     public BlockPistonExtension()
     {
@@ -69,7 +76,7 @@ public class BlockPistonExtension extends BlockDirectional
         }
     }
 
-    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn)
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState)
     {
         addCollisionBoxToList(pos, entityBox, collidingBoxes, state.getBoundingBox(worldIn, pos));
         addCollisionBoxToList(pos, entityBox, collidingBoxes, this.getArmShape(state));
@@ -77,32 +84,38 @@ public class BlockPistonExtension extends BlockDirectional
 
     private AxisAlignedBB getArmShape(IBlockState state)
     {
+        boolean flag = ((Boolean)state.getValue(SHORT)).booleanValue();
+
         switch ((EnumFacing)state.getValue(FACING))
         {
             case DOWN:
             default:
-                return DOWN_ARM_AABB;
+                return flag ? SHORT_DOWN_ARM_AABB : DOWN_ARM_AABB;
             case UP:
-                return UP_ARM_AABB;
+                return flag ? SHORT_UP_ARM_AABB : UP_ARM_AABB;
             case NORTH:
-                return NORTH_ARM_AABB;
+                return flag ? SHORT_NORTH_ARM_AABB : NORTH_ARM_AABB;
             case SOUTH:
-                return SOUTH_ARM_AABB;
+                return flag ? SHORT_SOUTH_ARM_AABB : SOUTH_ARM_AABB;
             case WEST:
-                return WEST_ARM_AABB;
+                return flag ? SHORT_WEST_ARM_AABB : WEST_ARM_AABB;
             case EAST:
-                return EAST_ARM_AABB;
+                return flag ? SHORT_EAST_ARM_AABB : EAST_ARM_AABB;
         }
     }
 
     /**
-     * Checks if an IBlockState represents a block that is opaque and a full cube.
+     * Determines if the block is solid enough on the top side to support other blocks, like redstone components.
      */
-    public boolean isFullyOpaque(IBlockState state)
+    public boolean isTopSolid(IBlockState state)
     {
         return state.getValue(FACING) == EnumFacing.UP;
     }
 
+    /**
+     * Called before the Block is set to air in the world. Called regardless of if the player's tool can actually
+     * collect this block
+     */
     public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player)
     {
         if (player.capabilities.isCreativeMode)
@@ -119,6 +132,9 @@ public class BlockPistonExtension extends BlockDirectional
         super.onBlockHarvested(worldIn, pos, state, player);
     }
 
+    /**
+     * Called serverside after this block is replaced with another in Chunk, but before the Tile Entity is updated
+     */
     public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
     {
         super.breakBlock(worldIn, pos, state);
@@ -152,7 +168,7 @@ public class BlockPistonExtension extends BlockDirectional
     }
 
     /**
-     * Check whether this Block can be placed on the given side
+     * Check whether this Block can be placed at pos, while aiming at the specified side of an adjacent block
      */
     public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side)
     {
@@ -172,7 +188,7 @@ public class BlockPistonExtension extends BlockDirectional
      * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
      * block, etc.
      */
-    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn)
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         EnumFacing enumfacing = (EnumFacing)state.getValue(FACING);
         BlockPos blockpos = pos.offset(enumfacing.getOpposite());
@@ -184,7 +200,7 @@ public class BlockPistonExtension extends BlockDirectional
         }
         else
         {
-            iblockstate.neighborChanged(worldIn, blockpos, blockIn);
+            iblockstate.neighborChanged(worldIn, blockpos, blockIn, fromPos);
         }
     }
 
@@ -251,6 +267,20 @@ public class BlockPistonExtension extends BlockDirectional
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {FACING, TYPE, SHORT});
+    }
+
+    /**
+     * Get the geometry of the queried face at the given position and state. This is used to decide whether things like
+     * buttons are allowed to be placed on the face, or how glass panes connect to the face, among other things.
+     * <p>
+     * Common values are {@code SOLID}, which is the default, and {@code UNDEFINED}, which represents something that
+     * does not fit the other descriptions and will generally cause other things not to connect to the face.
+     * 
+     * @return an approximation of the form of the given face
+     */
+    public BlockFaceShape getBlockFaceShape(IBlockAccess worldIn, IBlockState state, BlockPos pos, EnumFacing face)
+    {
+        return face == state.getValue(FACING) ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;
     }
 
     public static enum EnumPistonType implements IStringSerializable

@@ -20,7 +20,7 @@ import org.lwjgl.util.vector.Vector3f;
 @Deprecated
 public class ItemTransformVec3f implements net.minecraftforge.common.model.IModelState
 {
-    public com.google.common.base.Optional<net.minecraftforge.common.model.TRSRTransformation> apply(com.google.common.base.Optional<? extends net.minecraftforge.common.model.IModelPart> part) { return net.minecraftforge.client.ForgeHooksClient.applyTransform(this, part); }
+    public java.util.Optional<net.minecraftforge.common.model.TRSRTransformation> apply(java.util.Optional<? extends net.minecraftforge.common.model.IModelPart> part) { return net.minecraftforge.client.ForgeHooksClient.applyTransform(this, part); }
     public static final ItemTransformVec3f DEFAULT = new ItemTransformVec3f(new Vector3f(), new Vector3f(), new Vector3f(1.0F, 1.0F, 1.0F));
     public final Vector3f rotation;
     public final Vector3f translation;
@@ -71,13 +71,13 @@ public class ItemTransformVec3f implements net.minecraftforge.common.model.IMode
                 Vector3f vector3f = this.parseVector3f(jsonobject, "rotation", ROTATION_DEFAULT);
                 Vector3f vector3f1 = this.parseVector3f(jsonobject, "translation", TRANSLATION_DEFAULT);
                 vector3f1.scale(0.0625F);
-                vector3f1.x = MathHelper.clamp_float(vector3f1.x, -5.0F, 5.0F);
-                vector3f1.y = MathHelper.clamp_float(vector3f1.y, -5.0F, 5.0F);
-                vector3f1.z = MathHelper.clamp_float(vector3f1.z, -5.0F, 5.0F);
+                vector3f1.x = MathHelper.clamp(vector3f1.x, -5.0F, 5.0F);
+                vector3f1.y = MathHelper.clamp(vector3f1.y, -5.0F, 5.0F);
+                vector3f1.z = MathHelper.clamp(vector3f1.z, -5.0F, 5.0F);
                 Vector3f vector3f2 = this.parseVector3f(jsonobject, "scale", SCALE_DEFAULT);
-                vector3f2.x = MathHelper.clamp_float(vector3f2.x, -4.0F, 4.0F);
-                vector3f2.y = MathHelper.clamp_float(vector3f2.y, -4.0F, 4.0F);
-                vector3f2.z = MathHelper.clamp_float(vector3f2.z, -4.0F, 4.0F);
+                vector3f2.x = MathHelper.clamp(vector3f2.x, -4.0F, 4.0F);
+                vector3f2.y = MathHelper.clamp(vector3f2.y, -4.0F, 4.0F);
+                vector3f2.z = MathHelper.clamp(vector3f2.z, -4.0F, 4.0F);
                 return new ItemTransformVec3f(vector3f, vector3f1, vector3f2);
             }
 

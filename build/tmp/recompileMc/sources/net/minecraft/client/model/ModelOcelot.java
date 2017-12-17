@@ -12,21 +12,21 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class ModelOcelot extends ModelBase
 {
     /** The back left leg model for the Ocelot. */
-    private ModelRenderer ocelotBackLeftLeg;
+    private final ModelRenderer ocelotBackLeftLeg;
     /** The back right leg model for the Ocelot. */
-    private ModelRenderer ocelotBackRightLeg;
+    private final ModelRenderer ocelotBackRightLeg;
     /** The front left leg model for the Ocelot. */
-    private ModelRenderer ocelotFrontLeftLeg;
+    private final ModelRenderer ocelotFrontLeftLeg;
     /** The front right leg model for the Ocelot. */
-    private ModelRenderer ocelotFrontRightLeg;
+    private final ModelRenderer ocelotFrontRightLeg;
     /** The tail model for the Ocelot. */
-    private ModelRenderer ocelotTail;
+    private final ModelRenderer ocelotTail;
     /** The second part of tail model for the Ocelot. */
-    private ModelRenderer ocelotTail2;
+    private final ModelRenderer ocelotTail2;
     /** The head model for the Ocelot. */
-    private ModelRenderer ocelotHead;
+    private final ModelRenderer ocelotHead;
     /** The body model for the Ocelot. */
-    private ModelRenderer ocelotBody;
+    private final ModelRenderer ocelotBody;
     private int state = 1;
 
     public ModelOcelot()
@@ -76,12 +76,12 @@ public class ModelOcelot extends ModelBase
         {
             float f = 2.0F;
             GlStateManager.pushMatrix();
-            GlStateManager.scale(1.5F / f, 1.5F / f, 1.5F / f);
+            GlStateManager.scale(0.75F, 0.75F, 0.75F);
             GlStateManager.translate(0.0F, 10.0F * scale, 4.0F * scale);
             this.ocelotHead.render(scale);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
-            GlStateManager.scale(1.0F / f, 1.0F / f, 1.0F / f);
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
             GlStateManager.translate(0.0F, 24.0F * scale, 0.0F);
             this.ocelotBody.render(scale);
             this.ocelotBackLeftLeg.render(scale);
@@ -150,7 +150,7 @@ public class ModelOcelot extends ModelBase
      * Used for easily adding entity-dependent animations. The second and third float params here are the same second
      * and third as in the setRotationAngles method.
      */
-    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float p_78086_2_, float p_78086_3_, float partialTickTime)
+    public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime)
     {
         EntityOcelot entityocelot = (EntityOcelot)entitylivingbaseIn;
         this.ocelotBody.rotationPointY = 12.0F;
@@ -161,10 +161,14 @@ public class ModelOcelot extends ModelBase
         this.ocelotTail.rotationPointZ = 8.0F;
         this.ocelotTail2.rotationPointY = 20.0F;
         this.ocelotTail2.rotationPointZ = 14.0F;
-        this.ocelotFrontLeftLeg.rotationPointY = this.ocelotFrontRightLeg.rotationPointY = 13.8F;
-        this.ocelotFrontLeftLeg.rotationPointZ = this.ocelotFrontRightLeg.rotationPointZ = -5.0F;
-        this.ocelotBackLeftLeg.rotationPointY = this.ocelotBackRightLeg.rotationPointY = 18.0F;
-        this.ocelotBackLeftLeg.rotationPointZ = this.ocelotBackRightLeg.rotationPointZ = 5.0F;
+        this.ocelotFrontLeftLeg.rotationPointY = 13.8F;
+        this.ocelotFrontLeftLeg.rotationPointZ = -5.0F;
+        this.ocelotFrontRightLeg.rotationPointY = 13.8F;
+        this.ocelotFrontRightLeg.rotationPointZ = -5.0F;
+        this.ocelotBackLeftLeg.rotationPointY = 18.0F;
+        this.ocelotBackLeftLeg.rotationPointZ = 5.0F;
+        this.ocelotBackRightLeg.rotationPointY = 18.0F;
+        this.ocelotBackRightLeg.rotationPointZ = 5.0F;
         this.ocelotTail.rotateAngleX = 0.9F;
 
         if (entityocelot.isSneaking())
@@ -199,12 +203,18 @@ public class ModelOcelot extends ModelBase
             this.ocelotTail2.rotationPointZ += -0.8F;
             this.ocelotTail.rotateAngleX = 1.7278761F;
             this.ocelotTail2.rotateAngleX = 2.670354F;
-            this.ocelotFrontLeftLeg.rotateAngleX = this.ocelotFrontRightLeg.rotateAngleX = -0.15707964F;
-            this.ocelotFrontLeftLeg.rotationPointY = this.ocelotFrontRightLeg.rotationPointY = 15.8F;
-            this.ocelotFrontLeftLeg.rotationPointZ = this.ocelotFrontRightLeg.rotationPointZ = -7.0F;
-            this.ocelotBackLeftLeg.rotateAngleX = this.ocelotBackRightLeg.rotateAngleX = -((float)Math.PI / 2F);
-            this.ocelotBackLeftLeg.rotationPointY = this.ocelotBackRightLeg.rotationPointY = 21.0F;
-            this.ocelotBackLeftLeg.rotationPointZ = this.ocelotBackRightLeg.rotationPointZ = 1.0F;
+            this.ocelotFrontLeftLeg.rotateAngleX = -0.15707964F;
+            this.ocelotFrontLeftLeg.rotationPointY = 15.8F;
+            this.ocelotFrontLeftLeg.rotationPointZ = -7.0F;
+            this.ocelotFrontRightLeg.rotateAngleX = -0.15707964F;
+            this.ocelotFrontRightLeg.rotationPointY = 15.8F;
+            this.ocelotFrontRightLeg.rotationPointZ = -7.0F;
+            this.ocelotBackLeftLeg.rotateAngleX = -((float)Math.PI / 2F);
+            this.ocelotBackLeftLeg.rotationPointY = 21.0F;
+            this.ocelotBackLeftLeg.rotationPointZ = 1.0F;
+            this.ocelotBackRightLeg.rotateAngleX = -((float)Math.PI / 2F);
+            this.ocelotBackRightLeg.rotationPointY = 21.0F;
+            this.ocelotBackRightLeg.rotationPointZ = 1.0F;
             this.state = 3;
         }
         else

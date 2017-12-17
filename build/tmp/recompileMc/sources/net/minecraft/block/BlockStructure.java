@@ -1,7 +1,6 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -37,9 +36,13 @@ public class BlockStructure extends BlockContainer
         return new TileEntityStructure();
     }
 
-    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, @Nullable ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ)
+    /**
+     * Called when the block is right clicked by a player.
+     */
+    public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        return false;
+        TileEntity tileentity = worldIn.getTileEntity(pos);
+        return tileentity instanceof TileEntityStructure ? ((TileEntityStructure)tileentity).usedBy(playerIn) : false;
     }
 
     /**
@@ -47,12 +50,16 @@ public class BlockStructure extends BlockContainer
      */
     public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack)
     {
-    }
+        if (!worldIn.isRemote)
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
 
-    @Nullable
-    public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state)
-    {
-        return null;
+            if (tileentity instanceof TileEntityStructure)
+            {
+                TileEntityStructure tileentitystructure = (TileEntityStructure)tileentity;
+                tileentitystructure.createdBy(placer);
+            }
+        }
     }
 
     /**
@@ -64,7 +71,8 @@ public class BlockStructure extends BlockContainer
     }
 
     /**
-     * The type of render function called. 3 for standard block models, 2 for TESR's, 1 for liquids, -1 is no render
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only,
+     * LIQUID for vanilla liquids, INVISIBLE to skip all rendering
      */
     public EnumBlockRenderType getRenderType(IBlockState state)
     {
@@ -75,7 +83,7 @@ public class BlockStructure extends BlockContainer
      * Called by ItemBlocks just before a block is actually set in the world, to allow for adjustments to the
      * IBlockstate
      */
-    public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
+    public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
         return this.getDefaultState().withProperty(MODE, TileEntityStructure.Mode.DATA);
     }
@@ -99,5 +107,51 @@ public class BlockStructure extends BlockContainer
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, new IProperty[] {MODE});
+    }
+
+    /**
+     * Called when a neighboring block was changed and marks that this state should perform any checks during a neighbor
+     * change. Cases may include when redstone power is updated, cactus blocks popping off due to a neighboring solid
+     * block, etc.
+     */
+    public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
+    {
+        if (!worldIn.isRemote)
+        {
+            TileEntity tileentity = worldIn.getTileEntity(pos);
+
+            if (tileentity instanceof TileEntityStructure)
+            {
+                TileEntityStructure tileentitystructure = (TileEntityStructure)tileentity;
+                boolean flag = worldIn.isBlockPowered(pos);
+                boolean flag1 = tileentitystructure.isPowered();
+
+                if (flag && !flag1)
+                {
+                    tileentitystructure.setPowered(true);
+                    this.trigger(tileentitystructure);
+                }
+                else if (!flag && flag1)
+                {
+                    tileentitystructure.setPowered(false);
+                }
+            }
+        }
+    }
+
+    private void trigger(TileEntityStructure p_189874_1_)
+    {
+        switch (p_189874_1_.getMode())
+        {
+            case SAVE:
+                p_189874_1_.save(false);
+                break;
+            case LOAD:
+                p_189874_1_.load(false);
+                break;
+            case CORNER:
+                p_189874_1_.unloadStructure();
+            case DATA:
+        }
     }
 }

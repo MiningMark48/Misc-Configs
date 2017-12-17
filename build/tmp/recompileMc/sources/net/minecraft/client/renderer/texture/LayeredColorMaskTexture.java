@@ -6,7 +6,6 @@ import java.awt.image.ImageObserver;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.item.EnumDyeColor;
@@ -22,7 +21,7 @@ import org.apache.logging.log4j.Logger;
 public class LayeredColorMaskTexture extends AbstractTexture
 {
     /** Access to the Logger, for all your logging needs. */
-    private static final Logger LOG = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger();
     /** The location of the texture. */
     private final ResourceLocation textureLocation;
     private final List<String> listTextures;
@@ -40,7 +39,7 @@ public class LayeredColorMaskTexture extends AbstractTexture
         this.deleteGlTexture();
         IResource iresource = null;
         BufferedImage bufferedimage;
-        label6:
+        label255:
         {
             try
             {
@@ -62,15 +61,15 @@ public class LayeredColorMaskTexture extends AbstractTexture
                 {
                     if (j >= 17 || j >= this.listTextures.size() || j >= this.listDyeColors.size())
                     {
-                        break label6;
+                        break label255;
                     }
 
                     IResource iresource1 = null;
 
                     try
                     {
-                        String s = (String)this.listTextures.get(j);
-                        MapColor mapcolor = ((EnumDyeColor)this.listDyeColors.get(j)).getMapColor();
+                        String s = this.listTextures.get(j);
+                        int k = ((EnumDyeColor)this.listDyeColors.get(j)).getColorValue();
 
                         if (s != null)
                         {
@@ -79,18 +78,18 @@ public class LayeredColorMaskTexture extends AbstractTexture
 
                             if (bufferedimage2.getWidth() == bufferedimage.getWidth() && bufferedimage2.getHeight() == bufferedimage.getHeight() && bufferedimage2.getType() == 6)
                             {
-                                for (int k = 0; k < bufferedimage2.getHeight(); ++k)
+                                for (int l = 0; l < bufferedimage2.getHeight(); ++l)
                                 {
-                                    for (int l = 0; l < bufferedimage2.getWidth(); ++l)
+                                    for (int i1 = 0; i1 < bufferedimage2.getWidth(); ++i1)
                                     {
-                                        int i1 = bufferedimage2.getRGB(l, k);
+                                        int j1 = bufferedimage2.getRGB(i1, l);
 
-                                        if ((i1 & -16777216) != 0)
+                                        if ((j1 & -16777216) != 0)
                                         {
-                                            int j1 = (i1 & 16711680) << 8 & -16777216;
-                                            int k1 = bufferedimage1.getRGB(l, k);
-                                            int l1 = MathHelper.multiplyColor(k1, mapcolor.colorValue) & 16777215;
-                                            bufferedimage2.setRGB(l, k, j1 | l1);
+                                            int k1 = (j1 & 16711680) << 8 & -16777216;
+                                            int l1 = bufferedimage1.getRGB(i1, l);
+                                            int i2 = MathHelper.multiplyColor(l1, k) & 16777215;
+                                            bufferedimage2.setRGB(i1, l, k1 | i2);
                                         }
                                     }
                                 }
@@ -109,7 +108,7 @@ public class LayeredColorMaskTexture extends AbstractTexture
             }
             catch (IOException ioexception)
             {
-                LOG.error((String)"Couldn\'t load layered image", (Throwable)ioexception);
+                LOGGER.error("Couldn't load layered image", (Throwable)ioexception);
             }
             finally
             {

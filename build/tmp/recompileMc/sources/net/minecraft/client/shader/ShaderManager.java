@@ -1,6 +1,5 @@
 package net.minecraft.client.shader;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonArray;
@@ -9,8 +8,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.ITextureObject;
@@ -31,9 +32,10 @@ public class ShaderManager
 {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final ShaderDefault DEFAULT_SHADER_UNIFORM = new ShaderDefault();
-    private static ShaderManager staticShaderManager = null;
+    private static ShaderManager staticShaderManager;
     private static int currentProgram = -1;
     private static boolean lastCull = true;
+    /** maps sampler names to their texture */
     private final Map<String, Object> shaderSamplers = Maps.<String, Object>newHashMap();
     private final List<String> samplerNames = Lists.<String>newArrayList();
     private final List<Integer> shaderSamplerLocations = Lists.<Integer>newArrayList();
@@ -53,14 +55,15 @@ public class ShaderManager
     public ShaderManager(IResourceManager resourceManager, String programName) throws JsonException, IOException
     {
         JsonParser jsonparser = new JsonParser();
-        ResourceLocation resourcelocation = new ResourceLocation("shaders/program/" + programName + ".json");
+        String[] rl = ResourceLocation.splitObjectName(programName);
+        ResourceLocation resourcelocation = new ResourceLocation(rl[0], "shaders/program/" + rl[1] + ".json");
         this.programFilename = programName;
         IResource iresource = null;
 
         try
         {
             iresource = resourceManager.getResource(resourcelocation);
-            JsonObject jsonobject = jsonparser.parse(IOUtils.toString(iresource.getInputStream(), Charsets.UTF_8)).getAsJsonObject();
+            JsonObject jsonobject = jsonparser.parse(IOUtils.toString(iresource.getInputStream(), StandardCharsets.UTF_8)).getAsJsonObject();
             String s = JsonUtils.getString(jsonobject, "vertex");
             String s1 = JsonUtils.getString(jsonobject, "fragment");
             JsonArray jsonarray = JsonUtils.getJsonArray(jsonobject, "samplers", (JsonArray)null);
@@ -238,7 +241,7 @@ public class ShaderManager
                 if (j != -1)
                 {
                     GlStateManager.bindTexture(j);
-                    OpenGlHelper.glUniform1i(OpenGlHelper.glGetUniformLocation(this.program, (CharSequence)this.samplerNames.get(i)), i);
+                    OpenGlHelper.glUniform1i(OpenGlHelper.glGetUniformLocation(this.program, this.samplerNames.get(i)), i);
                 }
             }
         }
@@ -257,9 +260,10 @@ public class ShaderManager
     /**
      * gets a shader uniform for the name given. null if not found.
      */
+    @Nullable
     public ShaderUniform getShaderUniform(String name)
     {
-        return this.mappedShaderUniforms.containsKey(name) ? (ShaderUniform)this.mappedShaderUniforms.get(name) : null;
+        return this.mappedShaderUniforms.get(name);
     }
 
     /**
@@ -267,7 +271,8 @@ public class ShaderManager
      */
     public ShaderUniform getShaderUniformOrDefault(String name)
     {
-        return (ShaderUniform)(this.mappedShaderUniforms.containsKey(name) ? (ShaderUniform)this.mappedShaderUniforms.get(name) : DEFAULT_SHADER_UNIFORM);
+        ShaderUniform shaderuniform = this.getShaderUniform(name);
+        return (ShaderUniform)(shaderuniform == null ? DEFAULT_SHADER_UNIFORM : shaderuniform);
     }
 
     /**
@@ -279,12 +284,12 @@ public class ShaderManager
 
         for (int j = 0; i < this.samplerNames.size(); ++j)
         {
-            String s = (String)this.samplerNames.get(i);
+            String s = this.samplerNames.get(i);
             int k = OpenGlHelper.glGetUniformLocation(this.program, s);
 
             if (k == -1)
             {
-                LOGGER.warn("Shader " + this.programFilename + "could not find sampler named " + s + " in the specified shader program.");
+                LOGGER.warn("Shader {}could not find sampler named {} in the specified shader program.", this.programFilename, s);
                 this.shaderSamplers.remove(s);
                 this.samplerNames.remove(j);
                 --j;
@@ -304,7 +309,7 @@ public class ShaderManager
 
             if (l == -1)
             {
-                LOGGER.warn("Could not find uniform named " + s1 + " in the specified" + " shader program.");
+                LOGGER.warn("Could not find uniform named {} in the specified shader program.", (Object)s1);
             }
             else
             {

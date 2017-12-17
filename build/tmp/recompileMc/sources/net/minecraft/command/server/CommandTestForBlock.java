@@ -25,7 +25,7 @@ public class CommandTestForBlock extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "testforblock";
     }
@@ -41,7 +41,7 @@ public class CommandTestForBlock extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.testforblock.usage";
     }
@@ -59,7 +59,7 @@ public class CommandTestForBlock extends CommandBase
         {
             sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, 0);
             BlockPos blockpos = parseBlockPos(sender, args, 0, false);
-            Block block = Block.getBlockFromName(args[3]);
+            Block block = getBlockByText(sender, args[3]);
 
             if (block == null)
             {
@@ -67,13 +67,6 @@ public class CommandTestForBlock extends CommandBase
             }
             else
             {
-                int i = -1;
-
-                if (args.length >= 5)
-                {
-                    i = parseInt(args[4], -1, 15);
-                }
-
                 World world = sender.getEntityWorld();
 
                 if (!world.isBlockLoaded(blockpos))
@@ -85,9 +78,9 @@ public class CommandTestForBlock extends CommandBase
                     NBTTagCompound nbttagcompound = new NBTTagCompound();
                     boolean flag = false;
 
-                    if (args.length >= 6 && block.hasTileEntity(block.getStateFromMeta(i)))
+                    if (args.length >= 6 && block.hasTileEntity())
                     {
-                        String s = getChatComponentFromNthArg(sender, args, 5).getUnformattedText();
+                        String s = buildString(args, 5);
 
                         try
                         {
@@ -105,47 +98,59 @@ public class CommandTestForBlock extends CommandBase
 
                     if (block1 != block)
                     {
-                        throw new CommandException("commands.testforblock.failed.tile", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ()), block1.getLocalizedName(), block.getLocalizedName()});
+                        throw new CommandException("commands.testforblock.failed.tile", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ(), block1.getLocalizedName(), block.getLocalizedName()});
+                    }
+                    else if (args.length >= 5 && !CommandBase.convertArgToBlockStatePredicate(block, args[4]).apply(iblockstate))
+                    {
+                        try
+                        {
+                            int i = iblockstate.getBlock().getMetaFromState(iblockstate);
+                            throw new CommandException("commands.testforblock.failed.data", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ(), i, Integer.parseInt(args[4])});
+                        }
+                        catch (NumberFormatException var13)
+                        {
+                            throw new CommandException("commands.testforblock.failed.data", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ(), iblockstate.toString(), args[4]});
+                        }
                     }
                     else
                     {
-                        if (i > -1)
-                        {
-                            int j = iblockstate.getBlock().getMetaFromState(iblockstate);
-
-                            if (j != i)
-                            {
-                                throw new CommandException("commands.testforblock.failed.data", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ()), Integer.valueOf(j), Integer.valueOf(i)});
-                            }
-                        }
-
                         if (flag)
                         {
                             TileEntity tileentity = world.getTileEntity(blockpos);
 
                             if (tileentity == null)
                             {
-                                throw new CommandException("commands.testforblock.failed.tileEntity", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                                throw new CommandException("commands.testforblock.failed.tileEntity", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                             }
 
                             NBTTagCompound nbttagcompound1 = tileentity.writeToNBT(new NBTTagCompound());
 
                             if (!NBTUtil.areNBTEquals(nbttagcompound, nbttagcompound1, true))
                             {
-                                throw new CommandException("commands.testforblock.failed.nbt", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                                throw new CommandException("commands.testforblock.failed.nbt", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                             }
                         }
 
                         sender.setCommandStat(CommandResultStats.Type.AFFECTED_BLOCKS, 1);
-                        notifyCommandListener(sender, this, "commands.testforblock.success", new Object[] {Integer.valueOf(blockpos.getX()), Integer.valueOf(blockpos.getY()), Integer.valueOf(blockpos.getZ())});
+                        notifyCommandListener(sender, this, "commands.testforblock.success", new Object[] {blockpos.getX(), blockpos.getY(), blockpos.getZ()});
                     }
                 }
             }
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length > 0 && args.length <= 3 ? getTabCompletionCoordinate(args, 0, pos) : (args.length == 4 ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.<String>emptyList());
+        if (args.length > 0 && args.length <= 3)
+        {
+            return getTabCompletionCoordinate(args, 0, targetPos);
+        }
+        else
+        {
+            return args.length == 4 ? getListOfStringsMatchingLastWord(args, Block.REGISTRY.getKeys()) : Collections.emptyList();
+        }
     }
 }

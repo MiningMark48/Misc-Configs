@@ -3,6 +3,7 @@ package net.minecraft.entity.passive;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIFollowParent;
 import net.minecraft.entity.ai.EntityAILookIdle;
@@ -10,15 +11,17 @@ import net.minecraft.entity.ai.EntityAIMate;
 import net.minecraft.entity.ai.EntityAIPanic;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityAITempt;
-import net.minecraft.entity.ai.EntityAIWander;
+import net.minecraft.entity.ai.EntityAIWanderAvoidWater;
 import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.datafix.DataFixer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.loot.LootTableList;
@@ -31,6 +34,11 @@ public class EntityCow extends EntityAnimal
         this.setSize(0.9F, 1.4F);
     }
 
+    public static void registerFixesCow(DataFixer fixer)
+    {
+        EntityLiving.registerFixesMob(fixer, EntityCow.class);
+    }
+
     protected void initEntityAI()
     {
         this.tasks.addTask(0, new EntityAISwimming(this));
@@ -38,7 +46,7 @@ public class EntityCow extends EntityAnimal
         this.tasks.addTask(2, new EntityAIMate(this, 1.0D));
         this.tasks.addTask(3, new EntityAITempt(this, 1.25D, Items.WHEAT, false));
         this.tasks.addTask(4, new EntityAIFollowParent(this, 1.25D));
-        this.tasks.addTask(5, new EntityAIWander(this, 1.0D));
+        this.tasks.addTask(5, new EntityAIWanderAvoidWater(this, 1.0D));
         this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
         this.tasks.addTask(7, new EntityAILookIdle(this));
     }
@@ -55,7 +63,7 @@ public class EntityCow extends EntityAnimal
         return SoundEvents.ENTITY_COW_AMBIENT;
     }
 
-    protected SoundEvent getHurtSound()
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn)
     {
         return SoundEvents.ENTITY_COW_HURT;
     }
@@ -84,13 +92,16 @@ public class EntityCow extends EntityAnimal
         return LootTableList.ENTITIES_COW;
     }
 
-    public boolean processInteract(EntityPlayer player, EnumHand hand, @Nullable ItemStack stack)
+    public boolean processInteract(EntityPlayer player, EnumHand hand)
     {
-        if (stack != null && stack.getItem() == Items.BUCKET && !player.capabilities.isCreativeMode && !this.isChild())
+        ItemStack itemstack = player.getHeldItem(hand);
+
+        if (itemstack.getItem() == Items.BUCKET && !player.capabilities.isCreativeMode && !this.isChild())
         {
             player.playSound(SoundEvents.ENTITY_COW_MILK, 1.0F, 1.0F);
+            itemstack.shrink(1);
 
-            if (--stack.stackSize == 0)
+            if (itemstack.isEmpty())
             {
                 player.setHeldItem(hand, new ItemStack(Items.MILK_BUCKET));
             }
@@ -103,13 +114,13 @@ public class EntityCow extends EntityAnimal
         }
         else
         {
-            return super.processInteract(player, hand, stack);
+            return super.processInteract(player, hand);
         }
     }
 
     public EntityCow createChild(EntityAgeable ageable)
     {
-        return new EntityCow(this.worldObj);
+        return new EntityCow(this.world);
     }
 
     public float getEyeHeight()

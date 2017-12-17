@@ -38,9 +38,9 @@ public class ModelEnderMite extends ModelBase
     {
         this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
 
-        for (int i = 0; i < this.bodyParts.length; ++i)
+        for (ModelRenderer modelrenderer : this.bodyParts)
         {
-            this.bodyParts[i].render(scale);
+            modelrenderer.render(scale);
         }
     }
 

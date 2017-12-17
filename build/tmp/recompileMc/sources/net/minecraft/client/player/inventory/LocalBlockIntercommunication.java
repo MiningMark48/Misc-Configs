@@ -11,8 +11,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class LocalBlockIntercommunication implements IInteractionObject
 {
-    private String guiID;
-    private ITextComponent displayName;
+    private final String guiID;
+    private final ITextComponent displayName;
 
     public LocalBlockIntercommunication(String guiIdIn, ITextComponent displayNameIn)
     {

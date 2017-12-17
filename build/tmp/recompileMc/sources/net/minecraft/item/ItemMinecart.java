@@ -26,14 +26,14 @@ public class ItemMinecart extends Item
          */
         public ItemStack dispenseStack(IBlockSource source, ItemStack stack)
         {
-            EnumFacing enumfacing = BlockDispenser.getFacing(source.getBlockMetadata());
+            EnumFacing enumfacing = (EnumFacing)source.getBlockState().getValue(BlockDispenser.FACING);
             World world = source.getWorld();
             double d0 = source.getX() + (double)enumfacing.getFrontOffsetX() * 1.125D;
             double d1 = Math.floor(source.getY()) + (double)enumfacing.getFrontOffsetY();
             double d2 = source.getZ() + (double)enumfacing.getFrontOffsetZ() * 1.125D;
             BlockPos blockpos = source.getBlockPos().offset(enumfacing);
             IBlockState iblockstate = world.getBlockState(blockpos);
-            BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = iblockstate.getBlock() instanceof BlockRailBase ? (BlockRailBase.EnumRailDirection)iblockstate.getValue(((BlockRailBase)iblockstate.getBlock()).getShapeProperty()) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
+            BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = iblockstate.getBlock() instanceof BlockRailBase ? ((BlockRailBase)iblockstate.getBlock()).getRailDirection(world, blockpos, iblockstate, null) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
             double d3;
 
             if (BlockRailBase.isRailBlock(iblockstate))
@@ -55,7 +55,7 @@ public class ItemMinecart extends Item
                 }
 
                 IBlockState iblockstate1 = world.getBlockState(blockpos.down());
-                BlockRailBase.EnumRailDirection blockrailbase$enumraildirection1 = iblockstate1.getBlock() instanceof BlockRailBase ? (BlockRailBase.EnumRailDirection)iblockstate1.getValue(((BlockRailBase)iblockstate1.getBlock()).getShapeProperty()) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
+                BlockRailBase.EnumRailDirection blockrailbase$enumraildirection1 = iblockstate1.getBlock() instanceof BlockRailBase ? ((BlockRailBase)iblockstate1.getBlock()).getRailDirection(world, blockpos.down(), iblockstate1, null) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
 
                 if (enumfacing != EnumFacing.DOWN && blockrailbase$enumraildirection1.isAscending())
                 {
@@ -74,8 +74,8 @@ public class ItemMinecart extends Item
                 entityminecart.setCustomNameTag(stack.getDisplayName());
             }
 
-            world.spawnEntityInWorld(entityminecart);
-            stack.splitStack(1);
+            world.spawnEntity(entityminecart);
+            stack.shrink(1);
             return stack;
         }
         /**
@@ -99,7 +99,7 @@ public class ItemMinecart extends Item
     /**
      * Called when a Block is right-clicked with this Item
      */
-    public EnumActionResult onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
+    public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
         IBlockState iblockstate = worldIn.getBlockState(pos);
 
@@ -109,9 +109,11 @@ public class ItemMinecart extends Item
         }
         else
         {
+            ItemStack itemstack = player.getHeldItem(hand);
+
             if (!worldIn.isRemote)
             {
-                BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = iblockstate.getBlock() instanceof BlockRailBase ? (BlockRailBase.EnumRailDirection)iblockstate.getValue(((BlockRailBase)iblockstate.getBlock()).getShapeProperty()) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
+                BlockRailBase.EnumRailDirection blockrailbase$enumraildirection = iblockstate.getBlock() instanceof BlockRailBase ? ((BlockRailBase)iblockstate.getBlock()).getRailDirection(worldIn, pos, iblockstate, null) : BlockRailBase.EnumRailDirection.NORTH_SOUTH;
                 double d0 = 0.0D;
 
                 if (blockrailbase$enumraildirection.isAscending())
@@ -121,15 +123,15 @@ public class ItemMinecart extends Item
 
                 EntityMinecart entityminecart = EntityMinecart.create(worldIn, (double)pos.getX() + 0.5D, (double)pos.getY() + 0.0625D + d0, (double)pos.getZ() + 0.5D, this.minecartType);
 
-                if (stack.hasDisplayName())
+                if (itemstack.hasDisplayName())
                 {
-                    entityminecart.setCustomNameTag(stack.getDisplayName());
+                    entityminecart.setCustomNameTag(itemstack.getDisplayName());
                 }
 
-                worldIn.spawnEntityInWorld(entityminecart);
+                worldIn.spawnEntity(entityminecart);
             }
 
-            --stack.stackSize;
+            itemstack.shrink(1);
             return EnumActionResult.SUCCESS;
         }
     }

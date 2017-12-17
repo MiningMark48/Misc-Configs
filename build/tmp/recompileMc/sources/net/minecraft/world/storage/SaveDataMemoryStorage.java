@@ -1,7 +1,6 @@
 package net.minecraft.world.storage;
 
 import javax.annotation.Nullable;
-import net.minecraft.world.WorldSavedData;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -20,7 +19,7 @@ public class SaveDataMemoryStorage extends MapStorage
     @Nullable
     public WorldSavedData getOrLoadData(Class <? extends WorldSavedData > clazz, String dataIdentifier)
     {
-        return (WorldSavedData)this.loadedDataMap.get(dataIdentifier);
+        return this.loadedDataMap.get(dataIdentifier);
     }
 
     /**

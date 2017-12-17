@@ -1,13 +1,20 @@
 /*
- * Forge Mod Loader
- * Copyright (c) 2012-2013 cpw.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser Public License v2.1
- * which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+ * Minecraft Forge
+ * Copyright (c) 2016.
  *
- * Contributors:
- *     cpw - implementation
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.fml.common.network;
@@ -42,6 +49,8 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+
+import javax.annotation.Nullable;
 
 /**
  * @author cpw
@@ -217,7 +226,7 @@ public enum NetworkRegistry
         ModContainer mc = FMLCommonHandler.instance().findContainerFor(mod);
         if (mc == null)
         {
-            FMLLog.log(Level.ERROR, "Mod of type %s attempted to register a gui network handler during a construction phase", mod.getClass().getName());
+            FMLLog.log.error("Mod of type {} attempted to register a gui network handler during a construction phase", mod.getClass().getName());
             throw new RuntimeException("Invalid attempt to create a GUI during mod construction. Use an EventHandler instead");
         }
         serverGuiHandlers.put(mc, handler);
@@ -235,6 +244,7 @@ public enum NetworkRegistry
      * @param z Z coord
      * @return The server side GUI object (An instance of {@link Container})
      */
+    @Nullable
     public Container getRemoteGuiContainer(ModContainer mc, EntityPlayerMP player, int modGuiId, World world, int x, int y, int z)
     {
         IGuiHandler handler = serverGuiHandlers.get(mc);
@@ -260,6 +270,7 @@ public enum NetworkRegistry
      * @param z Z coord
      * @return The client side GUI object (An instance of {@link net.minecraft.client.gui.Gui})
      */
+    @Nullable
     public Object getLocalGuiContainer(ModContainer mc, EntityPlayer player, int modGuiId, World world, int x, int y, int z)
     {
         IGuiHandler handler = clientGuiHandlers.get(mc);
@@ -284,7 +295,7 @@ public enum NetworkRegistry
      * @param remoteVersionRange the acceptable remote range
      * @param asmHarvestedData internal data
      */
-    public void register(ModContainer fmlModContainer, Class<?> clazz, String remoteVersionRange, ASMDataTable asmHarvestedData)
+    public void register(ModContainer fmlModContainer, Class<?> clazz, @Nullable String remoteVersionRange, ASMDataTable asmHarvestedData)
     {
         NetworkModHolder networkModHolder = new NetworkModHolder(fmlModContainer, clazz, remoteVersionRange, asmHarvestedData);
         registry.put(fmlModContainer, networkModHolder);

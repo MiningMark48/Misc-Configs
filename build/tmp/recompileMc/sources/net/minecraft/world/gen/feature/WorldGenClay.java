@@ -9,9 +9,9 @@ import net.minecraft.world.World;
 
 public class WorldGenClay extends WorldGenerator
 {
-    private Block block = Blocks.CLAY;
+    private final Block block = Blocks.CLAY;
     /** The number of blocks to generate. */
-    private int numberOfBlocks;
+    private final int numberOfBlocks;
 
     public WorldGenClay(int p_i2011_1_)
     {
@@ -38,7 +38,7 @@ public class WorldGenClay extends WorldGenerator
 
                     if (i1 * i1 + j1 * j1 <= i * i)
                     {
-                        for (int k1 = position.getY() - j; k1 <= position.getY() + j; ++k1)
+                        for (int k1 = position.getY() - 1; k1 <= position.getY() + 1; ++k1)
                         {
                             BlockPos blockpos = new BlockPos(k, k1, l);
                             Block block = worldIn.getBlockState(blockpos).getBlock();

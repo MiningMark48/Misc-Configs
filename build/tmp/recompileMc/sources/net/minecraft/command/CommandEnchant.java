@@ -15,7 +15,7 @@ public class CommandEnchant extends CommandBase
     /**
      * Gets the name of the command
      */
-    public String getCommandName()
+    public String getName()
     {
         return "enchant";
     }
@@ -31,7 +31,7 @@ public class CommandEnchant extends CommandBase
     /**
      * Gets the usage string for the command.
      */
-    public String getCommandUsage(ICommandSender sender)
+    public String getUsage(ICommandSender sender)
     {
         return "commands.enchant.usage";
     }
@@ -62,14 +62,14 @@ public class CommandEnchant extends CommandBase
 
             if (enchantment == null)
             {
-                throw new NumberInvalidException("commands.enchant.notFound", new Object[] {Integer.valueOf(Enchantment.getEnchantmentID(enchantment))});
+                throw new NumberInvalidException("commands.enchant.notFound", new Object[] {args[1]});
             }
             else
             {
                 int i = 1;
                 ItemStack itemstack = entitylivingbase.getHeldItemMainhand();
 
-                if (itemstack == null)
+                if (itemstack.isEmpty())
                 {
                     throw new CommandException("commands.enchant.noItem", new Object[0]);
                 }
@@ -88,20 +88,17 @@ public class CommandEnchant extends CommandBase
                     {
                         NBTTagList nbttaglist = itemstack.getEnchantmentTagList();
 
-                        if (nbttaglist != null)
+                        for (int j = 0; j < nbttaglist.tagCount(); ++j)
                         {
-                            for (int j = 0; j < nbttaglist.tagCount(); ++j)
+                            int k = nbttaglist.getCompoundTagAt(j).getShort("id");
+
+                            if (Enchantment.getEnchantmentByID(k) != null)
                             {
-                                int k = nbttaglist.getCompoundTagAt(j).getShort("id");
+                                Enchantment enchantment1 = Enchantment.getEnchantmentByID(k);
 
-                                if (Enchantment.getEnchantmentByID(k) != null)
+                                if (!enchantment.isCompatibleWith(enchantment1))
                                 {
-                                    Enchantment enchantment1 = Enchantment.getEnchantmentByID(k);
-
-                                    if (!enchantment.canApplyTogether(enchantment1) || !enchantment1.canApplyTogether(enchantment)) //Forge BugFix: Let Both enchantments veto being together
-                                    {
-                                        throw new CommandException("commands.enchant.cantCombine", new Object[] {enchantment.getTranslatedName(i), enchantment1.getTranslatedName(nbttaglist.getCompoundTagAt(j).getShort("lvl"))});
-                                    }
+                                    throw new CommandException("commands.enchant.cantCombine", new Object[] {enchantment.getTranslatedName(i), enchantment1.getTranslatedName(nbttaglist.getCompoundTagAt(j).getShort("lvl"))});
                                 }
                             }
                         }
@@ -115,9 +112,19 @@ public class CommandEnchant extends CommandBase
         }
     }
 
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos)
+    /**
+     * Get a list of options for when the user presses the TAB key
+     */
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos)
     {
-        return args.length == 1 ? getListOfStringsMatchingLastWord(args, server.getAllUsernames()) : (args.length == 2 ? getListOfStringsMatchingLastWord(args, Enchantment.REGISTRY.getKeys()) : Collections.<String>emptyList());
+        if (args.length == 1)
+        {
+            return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
+        }
+        else
+        {
+            return args.length == 2 ? getListOfStringsMatchingLastWord(args, Enchantment.REGISTRY.getKeys()) : Collections.emptyList();
+        }
     }
 
     /**

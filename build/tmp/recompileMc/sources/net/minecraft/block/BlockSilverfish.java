@@ -1,6 +1,5 @@
 package net.minecraft.block;
 
-import java.util.List;
 import java.util.Random;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
@@ -10,13 +9,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.monster.EntitySilverfish;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class BlockSilverfish extends Block
 {
@@ -44,7 +41,7 @@ public class BlockSilverfish extends Block
         return blockState == Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.STONE) || block == Blocks.COBBLESTONE || block == Blocks.STONEBRICK;
     }
 
-    protected ItemStack createStackedBlock(IBlockState state)
+    protected ItemStack getSilkTouchDrop(IBlockState state)
     {
         switch ((BlockSilverfish.EnumType)state.getValue(VARIANT))
         {
@@ -72,7 +69,7 @@ public class BlockSilverfish extends Block
         {
             EntitySilverfish entitysilverfish = new EntitySilverfish(worldIn);
             entitysilverfish.setLocationAndAngles((double)pos.getX() + 0.5D, (double)pos.getY(), (double)pos.getZ() + 0.5D, 0.0F, 0.0F);
-            worldIn.spawnEntityInWorld(entitysilverfish);
+            worldIn.spawnEntity(entitysilverfish);
             entitysilverfish.spawnExplosionParticle();
         }
     }
@@ -85,12 +82,11 @@ public class BlockSilverfish extends Block
     /**
      * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
      */
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list)
+    public void getSubBlocks(CreativeTabs itemIn, NonNullList<ItemStack> items)
     {
         for (BlockSilverfish.EnumType blocksilverfish$enumtype : BlockSilverfish.EnumType.values())
         {
-            list.add(new ItemStack(itemIn, 1, blocksilverfish$enumtype.getMetadata()));
+            items.add(new ItemStack(this, 1, blocksilverfish$enumtype.getMetadata()));
         }
     }
 

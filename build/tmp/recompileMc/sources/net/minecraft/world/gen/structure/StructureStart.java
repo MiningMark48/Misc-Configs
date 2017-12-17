@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 
 public abstract class StructureStart
 {
+    /** List of all StructureComponents that are part of this structure */
     protected List<StructureComponent> components = Lists.<StructureComponent>newLinkedList();
     protected StructureBoundingBox boundingBox;
     private int chunkPosX;
@@ -45,7 +46,7 @@ public abstract class StructureStart
 
         while (iterator.hasNext())
         {
-            StructureComponent structurecomponent = (StructureComponent)iterator.next();
+            StructureComponent structurecomponent = iterator.next();
 
             if (structurecomponent.getBoundingBox().intersectsWith(structurebb) && !structurecomponent.addComponentParts(worldIn, rand, structurebb))
             {
@@ -144,7 +145,7 @@ public abstract class StructureStart
     protected void setRandomHeight(World worldIn, Random rand, int p_75070_3_, int p_75070_4_)
     {
         int i = p_75070_4_ - p_75070_3_ + 1 - this.boundingBox.getYSize();
-        int j = 1;
+        int j;
 
         if (i > 1)
         {

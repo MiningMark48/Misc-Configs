@@ -1,6 +1,20 @@
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 package net.minecraftforge.client.gui;
@@ -40,7 +54,6 @@ import net.minecraftforge.fml.common.ModContainer;
 import static net.minecraftforge.common.ForgeModContainer.VERSION_CHECK_CAT;
 
 import net.minecraftforge.fml.client.IModGuiFactory.RuntimeOptionCategoryElement;
-import net.minecraftforge.fml.client.IModGuiFactory.RuntimeOptionGuiHandler;
 
 /**
  * This is the base GuiConfig screen class that all the other Forge-specific config screens will be called from.
@@ -86,21 +99,22 @@ public class ForgeGuiFactory implements IModGuiFactory
 {
     @Override
     public void initialize(Minecraft minecraftInstance) {}
+    
 
     @Override
-    public Class<? extends GuiScreen> mainConfigGuiClass() { return ForgeConfigGui.class; }
+    public boolean hasConfigGui() { return true; }
+
+    @Override
+    public GuiScreen createConfigGui(GuiScreen parent) { return new ForgeConfigGui(parent); }
 
     @Override
     public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() { return null; }
-
-    @Override
-    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element) { return null; }
 
     public static class ForgeConfigGui extends GuiConfig
     {
         public ForgeConfigGui(GuiScreen parentScreen)
         {
-            super(parentScreen, getConfigElements(), "Forge", false, false, I18n.format("forge.configgui.forgeConfigTitle"));
+            super(parentScreen, getConfigElements(), ForgeVersion.MOD_ID, false, false, I18n.format("forge.configgui.forgeConfigTitle"));
         }
 
         private static List<IConfigElement> getConfigElements()
@@ -219,14 +233,7 @@ public class ForgeGuiFactory implements IModGuiFactory
                     props.add(ForgeModContainer.getConfig().get(VERSION_CHECK_CAT, mod.getModId(), true)); //Get or make the value in the config
                 }
                 props.addAll(values.values()); // Add any left overs from the config
-                Collections.sort(props, new Comparator<Property>()
-                {
-                    @Override
-                    public int compare(Property o1, Property o2)
-                    {
-                        return o1.getName().compareTo(o2.getName());
-                    }
-                });
+                props.sort(Comparator.comparing(Property::getName));
 
                 List<IConfigElement> list = new ArrayList<IConfigElement>();
                 list.add(new ConfigElement(global));

@@ -11,7 +11,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -76,10 +75,7 @@ public class CryptManager
     {
         try
         {
-            /**
-             * Compute a message digest on arbitrary byte[] data
-             */
-            return digestOperation("SHA-1", new byte[][] {serverId.getBytes("ISO_8859_1"), secretKey.getEncoded(), publicKey.getEncoded()});
+            return digestOperation("SHA-1", serverId.getBytes("ISO_8859_1"), secretKey.getEncoded(), publicKey.getEncoded());
         }
         catch (UnsupportedEncodingException unsupportedencodingexception)
         {
@@ -149,9 +145,6 @@ public class CryptManager
     @SideOnly(Side.CLIENT)
     public static byte[] encryptData(Key key, byte[] data)
     {
-        /**
-         * Encrypt or decrypt byte[] data using the specified key
-         */
         return cipherOperation(1, key, data);
     }
 
@@ -160,9 +153,6 @@ public class CryptManager
      */
     public static byte[] decryptData(Key key, byte[] data)
     {
-        /**
-         * Encrypt or decrypt byte[] data using the specified key
-         */
         return cipherOperation(2, key, data);
     }
 
@@ -173,9 +163,6 @@ public class CryptManager
     {
         try
         {
-            /**
-             * Creates the Cipher Instance.
-             */
             return createTheCipherInstance(opMode, key.getAlgorithm(), key).doFinal(data);
         }
         catch (IllegalBlockSizeException illegalblocksizeexception)
@@ -227,7 +214,7 @@ public class CryptManager
         try
         {
             Cipher cipher = Cipher.getInstance("AES/CFB8/NoPadding");
-            cipher.init(opMode, (Key)key, (AlgorithmParameterSpec)(new IvParameterSpec(key.getEncoded())));
+            cipher.init(opMode, key, new IvParameterSpec(key.getEncoded()));
             return cipher;
         }
         catch (GeneralSecurityException generalsecurityexception)

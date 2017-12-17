@@ -34,12 +34,12 @@ public class ElytraSound extends MovingSound
             this.xPosF = (float)this.player.posX;
             this.yPosF = (float)this.player.posY;
             this.zPosF = (float)this.player.posZ;
-            float f = MathHelper.sqrt_double(this.player.motionX * this.player.motionX + this.player.motionZ * this.player.motionZ + this.player.motionY * this.player.motionY);
+            float f = MathHelper.sqrt(this.player.motionX * this.player.motionX + this.player.motionZ * this.player.motionZ + this.player.motionY * this.player.motionY);
             float f1 = f / 2.0F;
 
             if ((double)f >= 0.01D)
             {
-                this.volume = MathHelper.clamp_float(f1 * f1, 0.0F, 1.0F);
+                this.volume = MathHelper.clamp(f1 * f1, 0.0F, 1.0F);
             }
             else
             {

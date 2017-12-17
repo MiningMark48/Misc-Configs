@@ -51,7 +51,7 @@ public class AnimationMetadataSection implements IMetadataSection
 
     private AnimationFrame getAnimationFrame(int frame)
     {
-        return (AnimationFrame)this.animationFrames.get(frame);
+        return this.animationFrames.get(frame);
     }
 
     public int getFrameTimeSingle(int frame)

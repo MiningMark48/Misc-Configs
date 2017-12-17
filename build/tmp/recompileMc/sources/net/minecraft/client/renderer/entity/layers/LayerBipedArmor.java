@@ -49,7 +49,7 @@ public class LayerBipedArmor extends LayerArmorBase<ModelBiped>
 
     protected void setModelVisible(ModelBiped model)
     {
-        model.setInvisible(false);
+        model.setVisible(false);
     }
 
     @Override
